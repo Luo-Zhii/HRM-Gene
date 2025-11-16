@@ -1,0 +1,31 @@
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { AuthModule } from "./modules/auth/auth.module";
+import { TimeKeepingModule } from "./modules/timekeeping/timekeeping.module";
+import { AdminModule } from "./modules/admin/admin.module";
+import { LeaveModule } from "./modules/leave/leave.module";
+import { PayrollModule } from "./modules/payroll/payroll.module";
+import { ReportsModule } from "./modules/reports/reports.module";
+import * as path from "path";
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: "postgres",
+      host: process.env.DB_HOST || "localhost",
+      port: parseInt(process.env.DB_PORT || "5432", 10),
+      username: process.env.DB_USER || "postgres",
+      password: process.env.DB_PASS || "postgres",
+      database: process.env.DB_NAME || "hrm",
+      entities: [path.join(__dirname, "/entities/*.js")],
+      synchronize: true,
+    } as any),
+    AuthModule,
+    TimeKeepingModule,
+    AdminModule,
+    LeaveModule,
+    PayrollModule,
+    ReportsModule,
+  ],
+})
+export class AppModule {}

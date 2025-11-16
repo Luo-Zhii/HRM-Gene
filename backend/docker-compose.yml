@@ -1,0 +1,28 @@
+# Đây là file cấu hình cho Docker Compose
+version: "3.8"
+
+services:
+  # Tên dịch vụ, bạn có thể gọi là 'postgres' hoặc 'db'
+  db:
+    image: postgres:15-alpine # Dùng ảnh (image) postgres phiên bản 15
+    restart: always
+
+    # Đọc các biến từ file .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+
+    # Ánh xạ cổng:
+    # Cổng 5432 của máy bạn (host) sẽ trỏ vào cổng 5432 của container
+    ports:
+      - "${DB_PORT}:5432"
+
+    # Lưu trữ dữ liệu:
+    # Giữ lại data ngay cả khi bạn tắt/xóa container
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+# Định nghĩa volume (nơi lưu trữ)
+volumes:
+  pgdata:
