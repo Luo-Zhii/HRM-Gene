@@ -39,7 +39,7 @@ export class TimeKeepingService {
 
   async generateDynamicQr(): Promise<{ token: string }> {
     const token = uuidv4();
-    await this.cacheManager.set(`qr-token-${token}`, true, 100000); // 10 seconds TTL
+    await this.cacheManager.set(`qr-token-${token}`, true, 10000000); // 10 seconds TTL
     return { token: token };
   }
   async recordCheckInByDynamicQr(

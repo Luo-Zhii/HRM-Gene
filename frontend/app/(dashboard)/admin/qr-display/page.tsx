@@ -51,7 +51,7 @@ export default function QrDisplayPage() {
       fetchQr();
 
       // Set up interval to fetch every 3 seconds
-      const interval = setInterval(fetchQr, 3000);
+      const interval = setInterval(fetchQr, 100000);
 
       // Cleanup interval on unmount
       return () => clearInterval(interval);

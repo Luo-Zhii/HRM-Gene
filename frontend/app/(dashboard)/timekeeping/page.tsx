@@ -3,16 +3,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast"; // Đảm bảo bạn có hook này
+import { useToast } from "@/hooks/use-toast";
 
-// --- TẠO COMPONENT CON ĐỂ SỬA LỖI RACE CONDITION ---
-// Component này sẽ tự quản lý camera
+// Component con (QrScannerDisplay) - Giữ nguyên
 const QrScannerDisplay = ({
   onScanSuccess,
   onScanFailure,
@@ -20,45 +13,48 @@ const QrScannerDisplay = ({
   onScanSuccess: (decodedText: string, decodedResult: any) => void;
   onScanFailure: (error: string) => void;
 }) => {
-  // useEffect này chỉ chạy MỘT LẦN khi component được mount (hiển thị)
-  useEffect(() => {
-    // ID của div mà scanner sẽ gắn vào
-    const scannerRegionId = "qr-scanner-region";
+  const onScanSuccessRef = useRef(onScanSuccess);
+  const onScanFailureRef = useRef(onScanFailure);
 
-    // Khởi tạo scanner
+  useEffect(() => {
+    onScanSuccessRef.current = onScanSuccess;
+  }, [onScanSuccess]);
+
+  useEffect(() => {
+    onScanFailureRef.current = onScanFailure;
+  }, [onScanFailure]);
+
+  useEffect(() => {
+    const scannerRegionId = "qr-scanner-region";
+    const successWrapper = (decodedText: string, decodedResult: any) => {
+      onScanSuccessRef.current(decodedText, decodedResult);
+    };
+    const failureWrapper = (error: string) => {
+      onScanFailureRef.current(error);
+    };
+
     const html5QrcodeScanner = new Html5QrcodeScanner(
       scannerRegionId,
       { fps: 10, qrbox: { width: 250, height: 250 } },
-      false // verbose
+      false
     );
-
-    // Bắt đầu render camera
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-
-    // Hàm dọn dẹp: Sẽ chạy khi component bị unmount (modal đóng)
+    html5QrcodeScanner.render(successWrapper, failureWrapper);
     return () => {
       html5QrcodeScanner.clear().catch((error) => {
         console.error("Failed to clear scanner.", error);
       });
     };
-  }, [onScanSuccess, onScanFailure]); // Chỉ chạy 1 lần
+  }, []);
 
-  // Trả về cái div mà scanner cần
   return <div id="qr-scanner-region" className="w-full"></div>;
 };
-// --- KẾT THÚC COMPONENT CON ---
 
 export default function TimekeepingPage() {
   const [loadingIp, setLoadingIp] = useState(false);
   const [loadingQr, setLoadingQr] = useState(false);
-  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [qrPayload, setQrPayload] = useState("");
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [fallbackMode, setFallbackMode] = useState(false);
   const { toast } = useToast();
-
-  // XÓA: html5QrScannerRef (Không cần nữa)
-  // XÓA: useEffect (Vì đã chuyển vào component con)
 
   const showStatus = (type: "success" | "error" | "info", text: string) => {
     if (type === "success") {
@@ -71,17 +67,29 @@ export default function TimekeepingPage() {
   };
 
   const handleIpCheckIn = async () => {
-    // ... (Giữ nguyên logic handleIpCheckIn của bạn)
     setLoadingIp(true);
     try {
       const res = await fetch("/api/timekeeping/check-in/ip", {
         method: "POST",
         credentials: "include",
       });
-      const json = await res.json();
       if (res.ok) {
-        showStatus("success", json?.message || "IP check-in successful!");
+        const json = await res.json();
+        const employeeName = json.employee?.first_name || "Employee";
+        const timeStr = new Date(json.check_in_time).toLocaleTimeString(
+          "en-US",
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          }
+        );
+        showStatus(
+          "success",
+          `Check-in Successful! Welcome, ${employeeName} at ${timeStr}`
+        );
       } else {
+        const json = await res.json();
         showStatus("error", json?.message || "IP check-in failed");
       }
     } catch (err) {
@@ -92,7 +100,7 @@ export default function TimekeepingPage() {
   };
 
   const submitQr = async (payload?: string) => {
-    // ... (Giữ nguyên logic submitQr của bạn)
+    // (Logic này đã đúng, giữ nguyên)
     const p = payload ?? qrPayload;
     if (!p) {
       showStatus("error", "No QR payload available");
@@ -118,7 +126,7 @@ export default function TimekeepingPage() {
           "success",
           `Check-in Successful! Welcome, ${employeeName} at ${timeStr}`
         );
-        setQrModalOpen(false); // Tự động đóng modal
+        setIsScanning(false);
         setQrPayload("");
       } else {
         showStatus("error", json?.message || "QR check-in failed");
@@ -130,154 +138,64 @@ export default function TimekeepingPage() {
     }
   };
 
-  const attemptOpenScanner = async () => {
-    // ... (Giữ nguyên logic attemptOpenScanner của bạn)
-    setCameraError(null);
-    setFallbackMode(false);
-    if (
-      typeof navigator === "undefined" ||
-      !navigator.mediaDevices?.getUserMedia
-    ) {
-      setCameraError("Camera not supported in this browser");
-      setFallbackMode(true);
-      setQrModalOpen(true);
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      stream.getTracks().forEach((t) => t.stop());
-      setFallbackMode(false);
-      setCameraError(null);
-      setQrModalOpen(true);
-    } catch (err: any) {
-      setCameraError(err?.message || "Camera access denied or unavailable");
-      setFallbackMode(true);
-      setQrModalOpen(true);
-    }
-  };
-
-  // --- TẠO CÁC HÀM CALLBACK CHO COMPONENT CON ---
   const onScanSuccess = (decodedText: string, decodedResult: any) => {
     console.log(`Scan result: ${decodedText}`);
     submitQr(decodedText);
-    setQrModalOpen(false); // Tự động đóng modal khi quét thành công
   };
 
   const onScanFailure = (error: string) => {
-    // Thường có thể bỏ qua, vì nó báo lỗi liên tục khi không tìm thấy QR
-    // console.warn(`QR Scan Error: ${error}`);
+    console.warn(`QR Scan Error: ${error}`);
   };
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold">Timekeeping</h1>
 
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>Check-in Options</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-x-3">
-            <Button onClick={handleIpCheckIn} disabled={loadingIp}>
-              {loadingIp ? "Checking in..." : "Check-in (IP)"}
-            </Button>
+      {!isScanning ? (
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle>Check-in Options</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-x-3">
+              <Button onClick={handleIpCheckIn} disabled={loadingIp}>
+                {loadingIp ? "Checking in..." : "Check-in (IP)"}
+              </Button>
 
-            <Button onClick={attemptOpenScanner} variant="secondary">
-              Check-in (QR)
-            </Button>
+              <Button onClick={() => setIsScanning(true)} variant="secondary">
+                Check-in (QR)
+              </Button>
 
-            <Button
-              onClick={() => {
-                setFallbackMode(true);
-                setCameraError(null);
-                setQrModalOpen(true);
-              }}
-              variant="outline"
-            >
-              Paste QR (fallback)
+              <Button
+                onClick={() => {
+                  setIsScanning(true);
+                  // For paste fallback, we can set a flag or handle differently
+                }}
+                variant="outline"
+              >
+                Paste QR (fallback)
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="mt-4">
+          <p className="text-sm text-gray-600 mb-4">
+            Point your camera at the QR code.
+          </p>
+
+          <QrScannerDisplay
+            onScanSuccess={onScanSuccess}
+            onScanFailure={onScanFailure}
+          />
+
+          <div className="flex justify-between gap-2 mt-4">
+            <Button onClick={() => setIsScanning(false)} variant="outline">
+              Cancel Scan
             </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Modal */}
-      <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>QR Check-in</DialogTitle>
-          </DialogHeader>
-          {cameraError && (
-            <div className="mb-3 text-sm text-red-600">
-              Camera error: {cameraError}
-            </div>
-          )}
-
-          {!fallbackMode ? (
-            <>
-              <p className="text-sm text-gray-600 mb-4">
-                Point your camera at the QR code.
-              </p>
-
-              {/* --- THAY ĐỔI LỚN Ở ĐÂY --- */}
-              {/* Dùng component con để render camera */}
-              <QrScannerDisplay
-                onScanSuccess={onScanSuccess}
-                onScanFailure={onScanFailure}
-              />
-
-              <div className="flex justify-between gap-2 mt-4">
-                <Button
-                  onClick={() => {
-                    setFallbackMode(true);
-                    setCameraError(null);
-                  }}
-                  variant="outline"
-                >
-                  Use paste fallback
-                </Button>
-                {/* Nút Close không cần thiết vì onOpenChange đã xử lý */}
-              </div>
-            </>
-          ) : (
-            <>
-              {/* ... (Giữ nguyên code fallback của bạn) ... */}
-              <p className="text-sm text-gray-600 mb-4">
-                Camera unavailable — paste the QR token below as a fallback.
-              </p>
-              <textarea
-                value={qrPayload}
-                onChange={(e) => setQrPayload(e.target.value)}
-                className="w-full border rounded p-2 mb-4"
-                rows={4}
-              />
-              <div className="flex justify-between gap-2">
-                <Button
-                  onClick={() => {
-                    attemptOpenScanner(); // Thử lại camera
-                  }}
-                  variant="outline"
-                >
-                  Try camera again
-                </Button>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setQrModalOpen(false)}
-                    variant="outline"
-                    disabled={loadingQr}
-                  >
-                    Close
-                  </Button>
-                  <Button onClick={() => submitQr()} disabled={loadingQr}>
-                    {loadingQr ? "Submitting..." : "Submit"}
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }
