@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { CacheModule } from "@nestjs/cache-manager";
 import { AuthModule } from "./modules/auth/auth.module";
 import { TimeKeepingModule } from "./modules/timekeeping/timekeeping.module";
 import { AdminModule } from "./modules/admin/admin.module";
@@ -10,6 +11,12 @@ import * as path from "path";
 
 @Module({
   imports: [
+    CacheModule.register({
+      store: "redis",
+      host: process.env.REDIS_HOST || "localhost",
+      port: parseInt(process.env.REDIS_PORT || "6379", 10),
+      ttl: 10, // default TTL in seconds
+    }),
     TypeOrmModule.forRoot({
       type: "postgres",
       host: process.env.DB_HOST || "localhost",

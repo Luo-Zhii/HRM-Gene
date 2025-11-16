@@ -51,6 +51,12 @@ function Sidebar() {
             Permissions
           </Link>
           <Link
+            href="/admin/qr-display"
+            className="block pl-6 py-1 rounded hover:bg-gray-100 transition-colors font-bold text-blue-600"
+          >
+            QR Display (Tablet)
+          </Link>
+          <Link
             href="/admin/settings"
             className="block pl-6 py-1 rounded hover:bg-gray-100 transition-colors"
           >

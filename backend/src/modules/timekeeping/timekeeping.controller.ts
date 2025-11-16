@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   Req,
   UseGuards,
@@ -16,14 +17,21 @@ export class TimeKeepingController {
   constructor(private readonly svc: TimeKeepingService) {}
 
   @UseGuards(JwtAuthGuard)
+  @Get("dynamic-qr")
+  async getDynamicQr(@Req() req: any) {
+    const user = req.user;
+    if (!user) throw new ForbiddenException("Unauthorized");
+    return this.svc.generateDynamicQr();
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post("check-in/qr")
   async checkInQr(@Req() req: any, @Body("payload") payload: string) {
     // req.user should be set by auth
     const user = req.user;
     if (!user) throw new ForbiddenException("Unauthorized");
-    // Here we should validate JWT payload scanned from QR
-    // For now assume payload valid
-    return this.svc.recordCheckInByQR(user.employee_id, payload);
+    // Validate UUID payload from dynamic QR
+    return this.svc.recordCheckInByDynamicQr(user.employee_id, payload);
   }
 
   @UseGuards(JwtAuthGuard, IPWhitelistGuard)

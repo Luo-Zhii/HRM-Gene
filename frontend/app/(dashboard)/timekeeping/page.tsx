@@ -8,9 +8,45 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"; // Đảm bảo bạn có hook này
+
+// --- TẠO COMPONENT CON ĐỂ SỬA LỖI RACE CONDITION ---
+// Component này sẽ tự quản lý camera
+const QrScannerDisplay = ({
+  onScanSuccess,
+  onScanFailure,
+}: {
+  onScanSuccess: (decodedText: string, decodedResult: any) => void;
+  onScanFailure: (error: string) => void;
+}) => {
+  // useEffect này chỉ chạy MỘT LẦN khi component được mount (hiển thị)
+  useEffect(() => {
+    // ID của div mà scanner sẽ gắn vào
+    const scannerRegionId = "qr-scanner-region";
+
+    // Khởi tạo scanner
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      scannerRegionId,
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      false // verbose
+    );
+
+    // Bắt đầu render camera
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+    // Hàm dọn dẹp: Sẽ chạy khi component bị unmount (modal đóng)
+    return () => {
+      html5QrcodeScanner.clear().catch((error) => {
+        console.error("Failed to clear scanner.", error);
+      });
+    };
+  }, [onScanSuccess, onScanFailure]); // Chỉ chạy 1 lần
+
+  // Trả về cái div mà scanner cần
+  return <div id="qr-scanner-region" className="w-full"></div>;
+};
+// --- KẾT THÚC COMPONENT CON ---
 
 export default function TimekeepingPage() {
   const [loadingIp, setLoadingIp] = useState(false);
@@ -21,31 +57,21 @@ export default function TimekeepingPage() {
   const [fallbackMode, setFallbackMode] = useState(false);
   const { toast } = useToast();
 
-  // Thêm một ref để giữ instance của scanner
-  const html5QrScannerRef = useRef<Html5QrcodeScanner | null>(null);
+  // XÓA: html5QrScannerRef (Không cần nữa)
+  // XÓA: useEffect (Vì đã chuyển vào component con)
 
-  // Auto-dismiss status message after 4 seconds
   const showStatus = (type: "success" | "error" | "info", text: string) => {
     if (type === "success") {
-      toast({
-        title: "Success",
-        description: text,
-      });
+      toast({ title: "Success", description: text });
     } else if (type === "error") {
-      toast({
-        title: "Error",
-        description: text,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: text, variant: "destructive" });
     } else {
-      toast({
-        title: "Info",
-        description: text,
-      });
+      toast({ title: "Info", description: text });
     }
   };
 
   const handleIpCheckIn = async () => {
+    // ... (Giữ nguyên logic handleIpCheckIn của bạn)
     setLoadingIp(true);
     try {
       const res = await fetch("/api/timekeeping/check-in/ip", {
@@ -66,6 +92,7 @@ export default function TimekeepingPage() {
   };
 
   const submitQr = async (payload?: string) => {
+    // ... (Giữ nguyên logic submitQr của bạn)
     const p = payload ?? qrPayload;
     if (!p) {
       showStatus("error", "No QR payload available");
@@ -81,8 +108,17 @@ export default function TimekeepingPage() {
       });
       const json = await res.json();
       if (res.ok) {
-        showStatus("success", json?.message || "QR check-in successful!");
-        setQrModalOpen(false); // Tự động đóng modal khi thành công
+        const employeeName =
+          json.employee?.first_name + " " + json.employee?.last_name;
+        const timeStr = new Date(json.check_in_time).toLocaleTimeString(
+          "en-US",
+          { hour: "2-digit", minute: "2-digit", second: "2-digit" }
+        );
+        showStatus(
+          "success",
+          `Check-in Successful! Welcome, ${employeeName} at ${timeStr}`
+        );
+        setQrModalOpen(false); // Tự động đóng modal
         setQrPayload("");
       } else {
         showStatus("error", json?.message || "QR check-in failed");
@@ -95,6 +131,7 @@ export default function TimekeepingPage() {
   };
 
   const attemptOpenScanner = async () => {
+    // ... (Giữ nguyên logic attemptOpenScanner của bạn)
     setCameraError(null);
     setFallbackMode(false);
     if (
@@ -106,7 +143,6 @@ export default function TimekeepingPage() {
       setQrModalOpen(true);
       return;
     }
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
@@ -122,54 +158,17 @@ export default function TimekeepingPage() {
     }
   };
 
-  // <-- THÊM LOGIC MỚI TẠI ĐÂY -->
-  // Hook này sẽ quản lý vòng đời của camera scanner
-  useEffect(() => {
-    // Chỉ chạy khi modal mở và không ở chế độ dự phòng
-    if (qrModalOpen && !fallbackMode) {
-      // Hàm callback khi quét thành công
-      const onScanSuccess = (decodedText: string, decodedResult: any) => {
-        console.log(`Scan result: ${decodedText}`);
-        // Tắt scanner (nếu không nó sẽ quét liên tục)
-        if (html5QrScannerRef.current) {
-          html5QrScannerRef.current.clear().catch(console.error);
-          html5QrScannerRef.current = null;
-        }
-        // Gửi kết quả
-        submitQr(decodedText);
-      };
+  // --- TẠO CÁC HÀM CALLBACK CHO COMPONENT CON ---
+  const onScanSuccess = (decodedText: string, decodedResult: any) => {
+    console.log(`Scan result: ${decodedText}`);
+    submitQr(decodedText);
+    setQrModalOpen(false); // Tự động đóng modal khi quét thành công
+  };
 
-      // Hàm callback khi quét lỗi (thường có thể bỏ qua)
-      const onScanFailure = (error: string) => {
-        // console.warn(`QR Scan Error: ${error}`);
-      };
-
-      // Chỉ khởi tạo nếu chưa có
-      if (!html5QrScannerRef.current) {
-        const scanner = new Html5QrcodeScanner(
-          "qr-scanner-region", // ID của div
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          false // verbose
-        );
-        scanner.render(onScanSuccess, onScanFailure);
-        html5QrScannerRef.current = scanner;
-      }
-    } else {
-      // Nếu modal đóng (hoặc chuyển sang fallback), hãy dọn dẹp
-      if (html5QrScannerRef.current) {
-        html5QrScannerRef.current.clear().catch(console.error);
-        html5QrScannerRef.current = null;
-      }
-    }
-
-    // Hàm cleanup (chạy khi component unmount hoặc state thay đổi)
-    return () => {
-      if (html5QrScannerRef.current) {
-        html5QrScannerRef.current.clear().catch(console.error);
-        html5QrScannerRef.current = null;
-      }
-    };
-  }, [qrModalOpen, fallbackMode]); // Phụ thuộc vào 2 state này
+  const onScanFailure = (error: string) => {
+    // Thường có thể bỏ qua, vì nó báo lỗi liên tục khi không tìm thấy QR
+    // console.warn(`QR Scan Error: ${error}`);
+  };
 
   return (
     <div className="p-6">
@@ -221,8 +220,12 @@ export default function TimekeepingPage() {
                 Point your camera at the QR code.
               </p>
 
-              {/* Div này là nơi camera sẽ được gắn vào */}
-              <div id="qr-scanner-region" className="w-full"></div>
+              {/* --- THAY ĐỔI LỚN Ở ĐÂY --- */}
+              {/* Dùng component con để render camera */}
+              <QrScannerDisplay
+                onScanSuccess={onScanSuccess}
+                onScanFailure={onScanFailure}
+              />
 
               <div className="flex justify-between gap-2 mt-4">
                 <Button
@@ -234,17 +237,12 @@ export default function TimekeepingPage() {
                 >
                   Use paste fallback
                 </Button>
-                <Button
-                  onClick={() => setQrModalOpen(false)}
-                  variant="outline"
-                  disabled={loadingQr}
-                >
-                  Close
-                </Button>
+                {/* Nút Close không cần thiết vì onOpenChange đã xử lý */}
               </div>
             </>
           ) : (
             <>
+              {/* ... (Giữ nguyên code fallback của bạn) ... */}
               <p className="text-sm text-gray-600 mb-4">
                 Camera unavailable — paste the QR token below as a fallback.
               </p>

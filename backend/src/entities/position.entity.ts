@@ -7,7 +7,7 @@ export class Position {
   @PrimaryGeneratedColumn()
   position_id!: number;
 
-  @Column()
+  @Column({ unique: true })
   position_name!: string;
 
   @OneToMany(() => Employee, (e) => e.position)
