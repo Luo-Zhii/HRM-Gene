@@ -45,4 +45,45 @@ export class AuthController {
     if (!user || !user.employee_id) return null;
     return await this.authService.getProfile(user.employee_id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("navigation")
+  async navigation(@Request() req: any) {
+    const user = req.user;
+    if (!user || !user.employee_id) return null;
+    const profile = await this.authService.getProfile(user.employee_id);
+    const permissions = profile.permissions || [];
+
+    // Define navigation structure
+    const navigation = {
+      main: [
+        { name: "Dashboard", href: "/dashboard", icon: "LayoutDashboard" },
+        { name: "Timekeeping", href: "/dashboard/timekeeping", icon: "Clock" },
+        { name: "Leave", href: "/dashboard/leave", icon: "Calendar" },
+      ],
+      admin: [
+        {
+          name: "Leave Approvals",
+          href: "/admin/leave-approvals",
+          icon: "CheckCircle",
+        },
+        { name: "Organization", href: "/admin/organization", icon: "Building" },
+        { name: "Permissions", href: "/admin/permissions", icon: "Shield" },
+        {
+          name: "QR Display (Tablet)",
+          href: "/admin/qr-display",
+          icon: "Tablet",
+        },
+        { name: "Settings", href: "/admin/settings", icon: "Settings" },
+      ],
+    };
+
+    // Filter admin section based on permissions
+    const hasAdminAccess = permissions.includes("manage:system");
+    if (!hasAdminAccess) {
+      navigation.admin = [];
+    }
+
+    return navigation;
+  }
 }
