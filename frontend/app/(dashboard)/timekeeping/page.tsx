@@ -4,6 +4,7 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { MapPin, QrCode, FileText } from "lucide-react";
 
 // Component con (QrScannerDisplay) - Giữ nguyên
 const QrScannerDisplay = ({
@@ -152,32 +153,61 @@ export default function TimekeepingPage() {
       <h1 className="text-2xl font-bold">Timekeeping</h1>
 
       {!isScanning ? (
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle>Check-in Options</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-x-3">
-              <Button onClick={handleIpCheckIn} disabled={loadingIp}>
-                {loadingIp ? "Checking in..." : "Check-in (IP)"}
-              </Button>
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold mb-4">Check-in Options</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border-2 hover:border-blue-200">
+              <CardContent
+                className="p-6 text-center"
+                onClick={handleIpCheckIn}
+              >
+                <MapPin className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                <h3 className="font-semibold text-lg mb-2">IP Check-in</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Check-in using your current IP address
+                </p>
+                <Button className="w-full" disabled={loadingIp} size="lg">
+                  {loadingIp ? "Checking in..." : "Check-in"}
+                </Button>
+              </CardContent>
+            </Card>
 
-              <Button onClick={() => setIsScanning(true)} variant="secondary">
-                Check-in (QR)
-              </Button>
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border-2 hover:border-green-200">
+              <CardContent
+                className="p-6 text-center"
+                onClick={() => setIsScanning(true)}
+              >
+                <QrCode className="w-12 h-12 mx-auto mb-3 text-green-600" />
+                <h3 className="font-semibold text-lg mb-2">QR Check-in</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Scan QR code to check-in
+                </p>
+                <Button className="w-full" variant="secondary" size="lg">
+                  Scan QR
+                </Button>
+              </CardContent>
+            </Card>
 
-              <Button
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border-2 hover:border-purple-200">
+              <CardContent
+                className="p-6 text-center"
                 onClick={() => {
                   setIsScanning(true);
                   // For paste fallback, we can set a flag or handle differently
                 }}
-                variant="outline"
               >
-                Paste QR (fallback)
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                <FileText className="w-12 h-12 mx-auto mb-3 text-purple-600" />
+                <h3 className="font-semibold text-lg mb-2">Paste QR</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Paste QR code text as fallback
+                </p>
+                <Button className="w-full" variant="outline" size="lg">
+                  Paste Code
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       ) : (
         <div className="mt-4">
           <p className="text-sm text-gray-600 mb-4">

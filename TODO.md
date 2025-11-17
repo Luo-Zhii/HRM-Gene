@@ -1,18 +1,29 @@
-# TODO: Implement Dynamic QR System
+# HRM Dashboard Development Tasks
 
-## Task 1: Setup Backend (NestJS + Redis)
+## 1. Backend RBAC Fix (HIGH PRIORITY)
 
-- [ ] Add ioredis and cache-manager dependencies to backend/package.json
-- [ ] Run npm install in backend directory
-- [ ] Update backend/src/app.module.ts to import CacheModule with Redis
-- [ ] Update backend/src/modules/timekeeping/timekeeping.module.ts to import CacheModule
-- [ ] Modify backend/src/modules/timekeeping/timekeeping.controller.ts: add GET /api/timekeeping/dynamic-qr endpoint
-- [ ] Modify backend/src/modules/timekeeping/timekeeping.controller.ts: update POST /api/timekeeping/check-in/qr logic
-- [ ] Update backend/src/modules/timekeeping/timekeeping.service.ts: implement Redis operations for check-in
+- [x] Add `/auth/navigation` endpoint in `auth.controller.ts` that returns menu items filtered by user permissions (only show admin section if user has "manage:system")
 
-## Task 2: Create Frontend Display Page
+## 2. Frontend Navigation Update
 
-- [ ] Check frontend/package.json for QR code library (add if needed, e.g., qrcode.react)
-- [ ] Create frontend/app/(dashboard)/admin/qr-display/page.tsx
-- [ ] Implement page to fetch GET /api/timekeeping/dynamic-qr every 3 seconds
-- [ ] Display the live-changing QR code on the page
+- [x] Modify `layout.tsx` to fetch navigation from backend API instead of hardcoding
+- [x] Add descriptive icons to menu items using lucide-react
+- [x] Implement active page highlighting based on current pathname
+
+## 3. Timekeeping UI Redesign
+
+- [x] Replace plain buttons with larger, interactive cards/buttons in `timekeeping/page.tsx`
+- [x] Add relevant icons (location for IP, QR code for QR, paste for fallback)
+- [x] Apply box-shadow and visual depth
+
+## 4. General UI Modernization
+
+- [x] Update color palette in `globals.css` to a more contemporary scheme
+- [x] Ensure full responsiveness for desktop and tablet
+
+## Followup Steps
+
+- [ ] Install lucide-react if not present
+- [ ] Test RBAC with different user roles (admin vs HR)
+- [ ] Verify responsive design on different screen sizes
+- [ ] Test timekeeping check-in functionality after UI changes
