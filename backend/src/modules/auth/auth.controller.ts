@@ -78,8 +78,8 @@ export class AuthController {
       ],
     };
 
-    // Filter admin section based on permissions
-    const hasAdminAccess = permissions.includes("manage:system");
+    // Filter admin section based on position_name
+    const hasAdminAccess = profile.position?.position_name === "admin";
     if (!hasAdminAccess) {
       navigation.admin = [];
     }

@@ -1,68 +1,121 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "../../src/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 
+type NavigationItem = {
+  name: string;
+  href: string;
+  icon?: string;
+};
+
+type Navigation = {
+  main: NavigationItem[];
+  admin: NavigationItem[];
+};
+
 function Sidebar() {
+  const { user } = useAuth();
+  const [navigation, setNavigation] = useState<Navigation | null>(null);
+  const [navLoading, setNavLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      const fetchNavigation = async () => {
+        try {
+          const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+          const res = await fetch(
+            `${apiBase.replace(/\/api$|\/$/, "")}/api/auth/navigation`,
+            {
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          if (res.ok) {
+            const navData = await res.json();
+            setNavigation(navData);
+          } else if (res.status === 401 || res.status === 403) {
+            // Token expired or invalid, redirect to login
+            console.error("Authentication failed, redirecting to login");
+            window.location.href = "/login";
+          } else {
+            console.error(
+              "Failed to fetch navigation:",
+              res.status,
+              res.statusText
+            );
+          }
+        } catch (err) {
+          console.error("Failed to fetch navigation:", err);
+        } finally {
+          setNavLoading(false);
+        }
+      };
+      fetchNavigation();
+    } else {
+      setNavLoading(false);
+    }
+  }, [user]);
+
+  if (navLoading) {
+    return (
+      <aside className="w-64 bg-white border-r border-gray-200 p-4">
+        <h2 className="text-lg font-semibold mb-4">Navigation</h2>
+        <div className="space-y-2">
+          <div className="animate-pulse bg-gray-200 h-8 rounded"></div>
+          <div className="animate-pulse bg-gray-200 h-8 rounded"></div>
+          <div className="animate-pulse bg-gray-200 h-8 rounded"></div>
+        </div>
+      </aside>
+    );
+  }
+
+  if (!navigation) {
+    return (
+      <aside className="w-64 bg-white border-r border-gray-200 p-4">
+        <h2 className="text-lg font-semibold mb-4">Navigation</h2>
+        <p className="text-sm text-gray-500">Unable to load navigation</p>
+      </aside>
+    );
+  }
+
   return (
     <aside className="w-64 bg-white border-r border-gray-200 p-4">
       <h2 className="text-lg font-semibold mb-4">Navigation</h2>
       <nav className="space-y-2">
-        <Link
-          href="/dashboard"
-          className="block px-3 py-2 rounded hover:bg-gray-100 transition-colors"
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/dashboard/timekeeping"
-          className="block px-3 py-2 rounded hover:bg-gray-100 transition-colors"
-        >
-          Timekeeping
-        </Link>
-        <Link
-          href="/dashboard/leave"
-          className="block px-3 py-2 rounded hover:bg-gray-100 transition-colors"
-        >
-          Leave
-        </Link>
-        <div className="space-y-1">
-          <div className="px-3 py-2 text-sm font-medium text-gray-700">
-            Admin
+        {navigation.main.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="block px-3 py-2 rounded hover:bg-gray-100 transition-colors"
+          >
+            {item.name}
+          </Link>
+        ))}
+        {navigation.admin.length > 0 && (
+          <div className="space-y-1">
+            <div className="px-3 py-2 text-sm font-medium text-gray-700">
+              Admin
+            </div>
+            {navigation.admin.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`block pl-6 py-1 rounded hover:bg-gray-100 transition-colors ${
+                  item.name === "QR Display (Tablet)"
+                    ? "font-bold text-blue-600"
+                    : ""
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
           </div>
-          <Link
-            href="/admin/leave-approvals"
-            className="block pl-6 py-1 rounded hover:bg-gray-100 transition-colors"
-          >
-            Leave Approvals
-          </Link>
-          <Link
-            href="/admin/organization"
-            className="block pl-6 py-1 rounded hover:bg-gray-100 transition-colors"
-          >
-            Organization
-          </Link>
-          <Link
-            href="/admin/permissions"
-            className="block pl-6 py-1 rounded hover:bg-gray-100 transition-colors"
-          >
-            Permissions
-          </Link>
-          <Link
-            href="/admin/qr-display"
-            className="block pl-6 py-1 rounded hover:bg-gray-100 transition-colors font-bold text-blue-600"
-          >
-            QR Display (Tablet)
-          </Link>
-          <Link
-            href="/admin/settings"
-            className="block pl-6 py-1 rounded hover:bg-gray-100 transition-colors"
-          >
-            Settings
-          </Link>
-        </div>
+        )}
       </nav>
     </aside>
   );
