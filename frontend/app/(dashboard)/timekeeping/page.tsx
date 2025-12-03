@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, QrCode, FileText } from "lucide-react";
 
-// Component con (QrScannerDisplay) - Giữ nguyên
+// --- Scanner Component (Unchanged) ---
 const QrScannerDisplay = ({
   onScanSuccess,
   onScanFailure,
@@ -50,6 +50,7 @@ const QrScannerDisplay = ({
   return <div id="qr-scanner-region" className="w-full"></div>;
 };
 
+// --- Main Page ---
 export default function TimekeepingPage() {
   const [loadingIp, setLoadingIp] = useState(false);
   const [loadingQr, setLoadingQr] = useState(false);
@@ -57,13 +58,35 @@ export default function TimekeepingPage() {
   const [qrPayload, setQrPayload] = useState("");
   const { toast } = useToast();
 
-  const showStatus = (type: "success" | "error" | "info", text: string) => {
+  // --- UPDATED: Status Helper with English Titles & Variants ---
+  const showStatus = (
+    type: "success" | "error" | "info" | "warning",
+    text: string
+  ) => {
     if (type === "success") {
-      toast({ title: "Success", description: text });
+      toast({
+        variant: "success", // Green color + Check icon
+        title: "Success",
+        description: text,
+      });
     } else if (type === "error") {
-      toast({ title: "Error", description: text, variant: "destructive" });
+      toast({
+        variant: "destructive", // Red color + Alert icon
+        title: "Error",
+        description: text,
+      });
+    } else if (type === "warning") {
+      toast({
+        variant: "warning", // Yellow color + Triangle icon
+        title: "Warning",
+        description: text,
+      });
     } else {
-      toast({ title: "Info", description: text });
+      toast({
+        variant: "info", // Blue color + Info icon
+        title: "Info",
+        description: text,
+      });
     }
   };
 
@@ -94,14 +117,13 @@ export default function TimekeepingPage() {
         showStatus("error", json?.message || "IP check-in failed");
       }
     } catch (err) {
-      showStatus("error", "IP check-in failed");
+      showStatus("error", "IP check-in connection failed");
     } finally {
       setLoadingIp(false);
     }
   };
 
   const submitQr = async (payload?: string) => {
-    // (Logic này đã đúng, giữ nguyên)
     const p = payload ?? qrPayload;
     if (!p) {
       showStatus("error", "No QR payload available");
@@ -118,22 +140,24 @@ export default function TimekeepingPage() {
       const json = await res.json();
       if (res.ok) {
         const employeeName =
-          json.employee?.first_name + " " + json.employee?.last_name;
+          (json.employee?.first_name || "") +
+          " " +
+          (json.employee?.last_name || "");
         const timeStr = new Date(json.check_in_time).toLocaleTimeString(
           "en-US",
           { hour: "2-digit", minute: "2-digit", second: "2-digit" }
         );
         showStatus(
           "success",
-          `Check-in Successful! Welcome, ${employeeName} at ${timeStr}`
+          `QR Check-in Successful! Welcome, ${employeeName} at ${timeStr}`
         );
         setIsScanning(false);
         setQrPayload("");
       } else {
-        showStatus("error", json?.message || "QR check-in failed");
+        showStatus("error", json?.message || "Invalid QR code or system error");
       }
     } catch (err) {
-      showStatus("error", "QR check-in failed");
+      showStatus("error", "QR check-in connection failed");
     } finally {
       setLoadingQr(false);
     }
@@ -141,29 +165,39 @@ export default function TimekeepingPage() {
 
   const onScanSuccess = (decodedText: string, decodedResult: any) => {
     console.log(`Scan result: ${decodedText}`);
+    // Stop scanning immediately to prevent spam
+    setIsScanning(false);
     submitQr(decodedText);
   };
 
   const onScanFailure = (error: string) => {
+    // Only log warning, don't spam toasts
     console.warn(`QR Scan Error: ${error}`);
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Timekeeping</h1>
+    <div className="p-6 max-w-5xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+        Timekeeping
+      </h1>
 
       {!isScanning ? (
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">Check-in Options</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border-2 hover:border-blue-200">
-              <CardContent
-                className="p-6 text-center"
-                onClick={handleIpCheckIn}
-              >
-                <MapPin className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                <h3 className="font-semibold text-lg mb-2">IP Check-in</h3>
-                <p className="text-sm text-gray-600 mb-4">
+        <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
+            Check-in Options
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* --- CARD 1: IP Check-in --- */}
+            <Card
+              className="cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-400 group"
+              onClick={handleIpCheckIn}
+            >
+              <CardContent className="p-8 text-center flex flex-col items-center h-full justify-center">
+                <div className="p-4 bg-blue-50 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                  <MapPin className="w-10 h-10 text-blue-600" />
+                </div>
+                <h3 className="font-bold text-lg mb-2">IP Check-in</h3>
+                <p className="text-sm text-gray-500 mb-6">
                   Check-in using your current IP address
                 </p>
                 <Button className="w-full" disabled={loadingIp} size="lg">
@@ -172,57 +206,78 @@ export default function TimekeepingPage() {
               </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border-2 hover:border-green-200">
-              <CardContent
-                className="p-6 text-center"
-                onClick={() => setIsScanning(true)}
-              >
-                <QrCode className="w-12 h-12 mx-auto mb-3 text-green-600" />
-                <h3 className="font-semibold text-lg mb-2">QR Check-in</h3>
-                <p className="text-sm text-gray-600 mb-4">
+            {/* --- CARD 2: QR Check-in --- */}
+            <Card
+              className="cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-green-400 group"
+              onClick={() => setIsScanning(true)}
+            >
+              <CardContent className="p-8 text-center flex flex-col items-center h-full justify-center">
+                <div className="p-4 bg-green-50 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                  <QrCode className="w-10 h-10 text-green-600" />
+                </div>
+                <h3 className="font-bold text-lg mb-2">QR Check-in</h3>
+                <p className="text-sm text-gray-500 mb-6">
                   Scan QR code to check-in
                 </p>
-                <Button className="w-full" variant="secondary" size="lg">
+                <Button className="w-full" variant="outline" size="lg">
                   Scan QR
                 </Button>
               </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border-2 hover:border-purple-200">
-              <CardContent
-                className="p-6 text-center"
-                onClick={() => {
-                  setIsScanning(true);
-                  // For paste fallback, we can set a flag or handle differently
-                }}
-              >
-                <FileText className="w-12 h-12 mx-auto mb-3 text-purple-600" />
-                <h3 className="font-semibold text-lg mb-2">Paste QR</h3>
-                <p className="text-sm text-gray-600 mb-4">
+            {/* --- CARD 3: Paste Code --- */}
+            <Card
+              className="cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-400 group"
+              onClick={() => {
+                // Clipboard logic
+                navigator.clipboard
+                  .readText()
+                  .then((text) => {
+                    if (text) submitQr(text);
+                    else showStatus("info", "Clipboard is empty");
+                  })
+                  .catch(() => showStatus("error", "Cannot read clipboard"));
+              }}
+            >
+              <CardContent className="p-8 text-center flex flex-col items-center h-full justify-center">
+                <div className="p-4 bg-purple-50 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                  <FileText className="w-10 h-10 text-purple-600" />
+                </div>
+                <h3 className="font-bold text-lg mb-2">Paste QR</h3>
+                <p className="text-sm text-gray-500 mb-6">
                   Paste QR code text as fallback
                 </p>
                 <Button className="w-full" variant="outline" size="lg">
-                  Paste Code
+                  Paste from Clipboard
                 </Button>
               </CardContent>
             </Card>
           </div>
         </div>
       ) : (
-        <div className="mt-4">
-          <p className="text-sm text-gray-600 mb-4">
-            Point your camera at the QR code.
-          </p>
+        /* --- SCANNING UI --- */
+        <div className="mt-8 max-w-lg mx-auto animate-in zoom-in-95 duration-300">
+          <div className="bg-white p-4 rounded-xl shadow-lg border">
+            <h3 className="text-center font-semibold mb-4 text-lg">
+              Scanning QR Code...
+            </h3>
 
-          <QrScannerDisplay
-            onScanSuccess={onScanSuccess}
-            onScanFailure={onScanFailure}
-          />
+            <div className="overflow-hidden rounded-lg border-2 border-dashed border-gray-300">
+              <QrScannerDisplay
+                onScanSuccess={onScanSuccess}
+                onScanFailure={onScanFailure}
+              />
+            </div>
 
-          <div className="flex justify-between gap-2 mt-4">
-            <Button onClick={() => setIsScanning(false)} variant="outline">
-              Cancel Scan
-            </Button>
+            <div className="flex justify-center mt-6">
+              <Button
+                onClick={() => setIsScanning(false)}
+                variant="destructive"
+                className="w-full"
+              >
+                Cancel Scan
+              </Button>
+            </div>
           </div>
         </div>
       )}

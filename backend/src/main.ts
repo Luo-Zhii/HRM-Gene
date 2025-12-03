@@ -6,7 +6,8 @@ async function bootstrap() {
 
   // Enable CORS for frontend development
   app.enableCors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: true, // Cho phép tất cả các nguồn (chỉ dùng để dev)
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   });
 
@@ -14,7 +15,7 @@ async function bootstrap() {
   app.setGlobalPrefix("api");
 
   const port = process.env.PORT || 3001;
-  await app.listen(port);
+  await app.listen(port, "0.0.0.0");
   console.log(`✅ HRM Backend listening on http://localhost:${port}`);
 }
 

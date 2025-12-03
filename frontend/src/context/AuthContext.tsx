@@ -39,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
       const res = await fetch(
         `${apiBase.replace(/\/api$|\/$/, "")}/api/auth/profile`,
+        // `http://10.221.54.32:3001/api/auth/profile`,
         {
           credentials: "include",
         }
