@@ -130,7 +130,7 @@ function Sidebar({
             <QrCode size={20} />
             <span>QR Display (Tablet)</span>
           </Link>
-        </nav>
+        </nav>                                                                                
 
         {/* Footer của Sidebar (Optional: Settings ở dưới cùng) */}
         <div className="p-4 border-t border-gray-100 shrink-0">

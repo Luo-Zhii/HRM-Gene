@@ -6,6 +6,7 @@ import {
   UseGuards,
   Get,
   Res,
+  Patch,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
@@ -15,6 +16,21 @@ import { Response } from "express";
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Get("profile")
+  async getProfile(@Request() req: any) {
+    // Gọi service lấy full thông tin user + permissions + lương thưởng
+    return this.authService.getProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch("profile/update")
+  async updateProfile(
+    @Request() req: any,
+    @Body() updateData: { phone_number: string; address: string }
+  ) {
+    return this.authService.updateContactInfo(req.user.id, updateData);
+  }
   @Post("login")
   async login(@Body() body: any, @Res({ passthrough: true }) res: Response) {
     const user = await this.authService.validateUser(body.email, body.password);
