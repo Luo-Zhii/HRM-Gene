@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, In } from "typeorm"; // Thêm In để query mảng ID
+import { Repository, In } from "typeorm";
 import * as bcrypt from "bcrypt";
 import { Employee } from "../../entities/employee.entity";
 import { PositionPermission } from "../../entities/position-permission.entity";
@@ -20,17 +20,18 @@ export class AuthService {
     private employeeRepo: Repository<Employee>,
 
     @InjectRepository(PositionPermission)
-    private ppRepo: Repository<PositionPermission>, // Bỏ dấu ? để bắt buộc inject
+    private ppRepo: Repository<PositionPermission>,
 
     @InjectRepository(Permission)
-    private permissionRepo: Repository<Permission> // Bỏ dấu ? để bắt buộc inject
+    private permissionRepo: Repository<Permission>
   ) {}
 
-  // --- HÀM HELPER: Lấy danh sách quyền hạn (Tránh lặp code) ---
+  // --- HÀM HELPER: Lấy danh sách quyền hạn ---
   private async getUserPermissions(positionId: number): Promise<string[]> {
     if (!positionId) return [];
 
-    // 1. Tìm các permission_id dựa trên position_id
+    // Cách 1: Giữ nguyên cách của bạn (An toàn nếu chưa config Relation chuẩn)
+    // Cách này tuy 2 query nhưng rất rõ ràng và dễ debug.
     const pps = await this.ppRepo.find({
       where: { position_id: positionId },
     });
@@ -39,9 +40,8 @@ export class AuthService {
 
     const permIds = pps.map((pp) => pp.permission_id);
 
-    // 2. Tìm chi tiết Permission dựa trên danh sách ID
     const perms = await this.permissionRepo.find({
-      where: { permission_id: In(permIds) }, // Dùng toán tử In của TypeORM
+      where: { permission_id: In(permIds) },
     });
 
     return perms.map((p) => p.permission_name);
@@ -53,7 +53,7 @@ export class AuthService {
     userId: number,
     data: { phone_number: string; address: string }
   ) {
-    // 1. Cập nhật bằng TypeORM (update không trả về data mới ngay lập tức)
+    // 1. Update
     await this.employeeRepo.update(
       { employee_id: userId },
       {
@@ -62,7 +62,7 @@ export class AuthService {
       }
     );
 
-    // 2. Gọi lại hàm getProfile để trả về dữ liệu mới nhất cho Frontend
+    // 2. Return fresh data (Quan trọng để UI cập nhật ngay lập tức)
     return this.getProfile(userId);
   }
 
@@ -77,7 +77,6 @@ export class AuthService {
     const match = await bcrypt.compare(pass, user.password);
     if (!match) return null;
 
-    // Sử dụng hàm helper đã tách ra
     const permissions = user.position
       ? await this.getUserPermissions(user.position.position_id)
       : [];
@@ -87,16 +86,16 @@ export class AuthService {
   }
 
   async getProfile(employee_id: number): Promise<any> {
+    // Luôn lấy dữ liệu mới nhất từ DB
     const user = await this.employeeRepo.findOne({
       where: { employee_id },
-      relations: ["position", "department"], // Thêm department nếu cần hiển thị phòng ban
+      relations: ["position", "department"],
     });
 
     if (!user) {
       throw new NotFoundException("User not found");
     }
 
-    // Sử dụng hàm helper đã tách ra
     const permissions = user.position
       ? await this.getUserPermissions(user.position.position_id)
       : [];
@@ -109,8 +108,10 @@ export class AuthService {
     const payload = {
       sub: user.employee_id,
       email: user.email,
-      positionId: user.position?.position_id,
+      // Thêm role vào token nếu cần verify nhanh ở Guard mà không cần query DB
+      role: user.position?.position_name,
     };
+
     return {
       access_token: this.jwtService.sign(payload),
     };

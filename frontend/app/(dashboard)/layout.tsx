@@ -130,7 +130,7 @@ function Sidebar({
             <QrCode size={20} />
             <span>QR Display (Tablet)</span>
           </Link>
-        </nav>                                                                                
+        </nav>
 
         {/* Footer của Sidebar (Optional: Settings ở dưới cùng) */}
         <div className="p-4 border-t border-gray-100 shrink-0">
@@ -241,7 +241,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right">
                 <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
                   <p className="text-sm font-semibold text-gray-800 truncate">
-                    {user.email}
+                    {user.email || "U"}
                   </p>
                 </div>
                 <div className="p-1">

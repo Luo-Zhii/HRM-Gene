@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation"; // Không cần dùng router nữa cho logout
 
 type User = {
   employee_id?: number;
@@ -31,17 +31,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const router = useRouter();
+  // const router = useRouter();
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      // Thêm timestamp để tránh cache trình duyệt tuyệt đối
       const res = await fetch(
-        `${apiBase.replace(/\/api$|\/$/, "")}/api/auth/profile`,
-        // `http://10.221.54.32:3001/api/auth/profile`,
+        `${apiBase.replace(
+          /\/api$|\/$/,
+          ""
+        )}/api/auth/profile?t=${new Date().getTime()}`,
         {
           credentials: "include",
+          cache: "no-store", // <--- QUAN TRỌNG: Không cache request này
+          headers: {
+            "Content-Type": "application/json",
+            Pragma: "no-cache", // <--- Header chống cache HTTP 1.0
+          },
         }
       );
       if (!res.ok) {
@@ -58,7 +66,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    // on mount, try load profile if token exists
     fetchProfile();
   }, [fetchProfile]);
 
@@ -71,15 +78,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           credentials: "include",
         });
       } catch (err) {
-        // ignore
+        console.error("Logout error", err);
       }
+
+      // Xóa sạch storage
       if (typeof window !== "undefined") {
-        localStorage.removeItem("access_token");
+        localStorage.clear(); // Xóa sạch LocalStorage
+        sessionStorage.clear(); // Xóa sạch SessionStorage
       }
+
       setUser(null);
-      router.push("/login");
+
+      // --- SỬA LỖI TẠI ĐÂY ---
+      // Thay vì router.push("/login"), dùng window.location.href
+      // Để ép trình duyệt reload lại hoàn toàn, xóa sạch Router Cache của Next.js
+      window.location.href = "/login";
     })();
-  }, [router]);
+  }, []); // Bỏ dependency [router] vì không dùng nữa
 
   const value: AuthContextValue = {
     user,

@@ -16,59 +16,90 @@ import { Response } from "express";
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Get("profile")
-  async getProfile(@Request() req: any) {
-    // Gọi service lấy full thông tin user + permissions + lương thưởng
-    return this.authService.getProfile(req.user.id);
+  // --- 1. LOGIN ---
+  @Post("login")
+  async login(@Body() body: any, @Res({ passthrough: true }) res: Response) {
+    const user = await this.authService.validateUser(body.email, body.password);
+    if (!user) return { error: "Invalid credentials" };
+
+    const tokenData = await this.authService.login(user); // Giả sử trả về { access_token }
+
+    // Set Cookie
+    res.cookie("access_token", tokenData.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return { success: true, user: user }; // Có thể trả về user info cơ bản luôn
   }
 
+  // --- 2. LOGOUT ---
+  @Post("logout")
+  async logout(@Res({ passthrough: true }) res: Response) {
+    // Xóa cookie, quan trọng là option phải giống lúc set (trừ maxAge)
+    res.clearCookie("access_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+    return { success: true };
+  }
+
+  // --- 3. GET PROFILE (Đã gộp và thêm chống cache) ---
+  @UseGuards(JwtAuthGuard)
+  @Get("profile")
+  async getProfile(
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    // 👇 QUAN TRỌNG: Thêm Header chống Cache cho trình duyệt 👇
+    res.set({
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    });
+
+    const user = req.user;
+    // Kiểm tra xem user lấy từ token có id hay employee_id
+    const userId = user.employee_id || user.id;
+
+    if (!userId) return null;
+
+    return this.authService.getProfile(userId);
+  }
+
+  // --- 4. UPDATE PROFILE ---
   @UseGuards(JwtAuthGuard)
   @Patch("profile/update")
   async updateProfile(
     @Request() req: any,
     @Body() updateData: { phone_number: string; address: string }
   ) {
-    return this.authService.updateContactInfo(req.user.id, updateData);
-  }
-  @Post("login")
-  async login(@Body() body: any, @Res({ passthrough: true }) res: Response) {
-    const user = await this.authService.validateUser(body.email, body.password);
-    if (!user) return { error: "Invalid credentials" };
-    const token = this.authService.login(user);
-    // login() returns { access_token }
-    const access = (await token).access_token;
-    // set HttpOnly cookie
-    res.cookie("access_token", access, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    });
-    return { success: true };
+    const userId = req.user.employee_id || req.user.id;
+    return this.authService.updateContactInfo(userId, updateData);
   }
 
-  @Post("logout")
-  async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie("access_token");
-    return { success: true };
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get("profile")
-  async profile(@Request() req: any) {
-    const user = req.user;
-    if (!user || !user.employee_id) return null;
-    return await this.authService.getProfile(user.employee_id);
-  }
-
+  // --- 5. NAVIGATION (Cũng nên chống cache nếu phân quyền thay đổi) ---
   @UseGuards(JwtAuthGuard)
   @Get("navigation")
-  async navigation(@Request() req: any) {
+  async navigation(
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    // Chống cache cho menu luôn để tránh logout admin vào user vẫn thấy menu admin
+    res.set({
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    });
+
     const user = req.user;
-    if (!user || !user.employee_id) return null;
-    const profile = await this.authService.getProfile(user.employee_id);
-    const permissions = profile.permissions || [];
+    const userId = user.employee_id || user.id;
+    if (!userId) return null;
+
+    const profile = await this.authService.getProfile(userId);
 
     // Define navigation structure
     const navigation = {
@@ -94,8 +125,12 @@ export class AuthController {
       ],
     };
 
-    // Filter admin section based on position_name
-    const hasAdminAccess = profile.position?.position_name === "admin";
+    // Filter admin logic
+    // Lưu ý: Nên check permissions thay vì check cứng tên "admin" nếu có thể
+    const hasAdminAccess =
+      profile.position?.position_name === "admin" ||
+      profile.position?.position_name === "System Admin";
+
     if (!hasAdminAccess) {
       navigation.admin = [];
     }
