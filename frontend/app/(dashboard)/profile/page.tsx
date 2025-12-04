@@ -49,7 +49,7 @@ interface ProfileData {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user: currentUser, loading: authLoading, refresh } = useAuth();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(
@@ -76,13 +76,25 @@ export default function ProfilePage() {
   // Load profile data
   useEffect(() => {
     const loadProfile = async () => {
-      if (!user?.employee_id) return;
+      if (!currentUser?.employee_id) return;
 
       try {
         setLoading(true);
-        const response = await fetch("/api/auth/profile", {
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+        const url = `${apiBase.replace(/\/$/, "")}/auth/profile`;
+
+        // include token from localStorage if present (fallback to cookie)
+        const token =
+          typeof window !== "undefined"
+            ? window.localStorage.getItem("access_token")
+            : null;
+        const headers: any = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const response = await fetch(url, {
           method: "GET",
           credentials: "include",
+          headers,
         });
 
         if (response.ok) {
@@ -99,19 +111,17 @@ export default function ProfilePage() {
         setStatusMessage({
           type: "error",
           text:
-            error instanceof Error
-              ? error.message
-              : "Error loading profile",
+            error instanceof Error ? error.message : "Error loading profile",
         });
       } finally {
         setLoading(false);
       }
     };
 
-    if (!authLoading && user) {
+    if (!authLoading && currentUser) {
       loadProfile();
     }
-  }, [authLoading, user]);
+  }, [authLoading, currentUser]);
 
   // Auto-dismiss status message
   useEffect(() => {
@@ -133,10 +143,20 @@ export default function ProfilePage() {
   const handleSaveContact = async () => {
     setIsSavingContact(true);
     try {
-      const response = await fetch("/api/auth/profile/update", {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const url = `${apiBase.replace(/\/$/, "")}/auth/profile/update`;
+
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("access_token")
+          : null;
+      const headers: any = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const response = await fetch(url, {
         method: "PATCH",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           phone_number: formData.phone_number,
           address: formData.address,
@@ -144,7 +164,8 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update profile");
+        const text = await response.text();
+        throw new Error(text || "Failed to update profile");
       }
 
       const updatedData = await response.json();
@@ -154,11 +175,13 @@ export default function ProfilePage() {
         text: "Profile updated successfully!",
       });
       setIsEditingContact(false);
+
+      // refresh global auth context
+      if (typeof refresh === "function") await refresh();
     } catch (error) {
       setStatusMessage({
         type: "error",
-        text:
-          error instanceof Error ? error.message : "Error updating profile",
+        text: error instanceof Error ? error.message : "Error updating profile",
       });
     } finally {
       setIsSavingContact(false);
@@ -325,7 +348,9 @@ export default function ProfilePage() {
             {/* Editable fields */}
             {isEditingContact && (
               <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 space-y-4">
-                <h4 className="font-semibold text-gray-900">Edit Contact Info</h4>
+                <h4 className="font-semibold text-gray-900">
+                  Edit Contact Info
+                </h4>
 
                 <div>
                   <Label htmlFor="phone_number" className="text-sm">

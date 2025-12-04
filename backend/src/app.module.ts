@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { EmployeesModule } from "./modules/employees/employees.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CacheModule } from "@nestjs/cache-manager";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -34,6 +35,8 @@ import * as path from "path";
     LeaveModule,
     PayrollModule,
     ReportsModule,
+    // Employees module for CRUD on Employee entity
+    EmployeesModule,
   ],
 })
 export class AppModule {}

@@ -7,6 +7,7 @@ import {
   OneToOne,
   JoinColumn,
 } from "typeorm";
+import { Exclude } from "class-transformer";
 import { Department } from "./department.entity";
 import { Position } from "./position.entity";
 import { BankInfo } from "./bank-info.entity";
@@ -21,6 +22,7 @@ export class Employee {
   email!: string;
 
   @Column()
+  @Exclude()
   password!: string;
 
   @Column()
