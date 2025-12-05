@@ -8,6 +8,7 @@ import { Payslip } from "@/entities/payslip.entity";
 import { Employee } from "@/entities/employee.entity";
 import { PositionPermission } from "@/entities/position-permission.entity";
 import { Permission } from "@/entities/permission.entity";
+import { Position } from "@/entities/position.entity";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Permission } from "@/entities/permission.entity";
       Employee,
       PositionPermission,
       Permission,
+      Position,
     ]),
   ],
   providers: [PayrollService],

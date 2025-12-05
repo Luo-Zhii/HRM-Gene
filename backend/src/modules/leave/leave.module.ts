@@ -8,6 +8,7 @@ import { PositionPermission } from "../../entities/position-permission.entity";
 import { Permission } from "../../entities/permission.entity";
 import { LeaveService } from "./leave.service";
 import { LeaveController } from "./leave.controller";
+import { Position } from "@/entities/position.entity";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { LeaveController } from "./leave.controller";
       Employee,
       PositionPermission,
       Permission,
+      Position,
     ]),
   ],
   providers: [LeaveService],

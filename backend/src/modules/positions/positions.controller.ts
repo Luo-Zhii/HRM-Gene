@@ -9,12 +9,18 @@ import {
   ParseIntPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
+  UseGuards,
 } from "@nestjs/common";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { RolesGuard } from "../auth/roles.guard";
+import { Permissions } from "../auth/permissions.decorator";
 import { PositionsService } from "./positions.service";
 import { CreatePositionDto } from "./dto/create-position.dto";
 import { UpdatePositionDto } from "./dto/update-position.dto";
 
-@Controller("positions")
+@Controller("admin/positions")
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Permissions("manage:system")
 @UseInterceptors(ClassSerializerInterceptor)
 export class PositionsController {
   constructor(private readonly svc: PositionsService) {}

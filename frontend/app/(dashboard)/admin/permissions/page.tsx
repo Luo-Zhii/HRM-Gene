@@ -22,6 +22,8 @@ export default function PermissionMatrixPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
+  const canEdit = !!user?.permissions?.includes("manage:system");
+
   const [matrix, setMatrix] = useState<PermissionData[]>([]);
   const [allPermissions, setAllPermissions] = useState<
     Array<{ permission_id: number; permission_name: string }>
@@ -35,8 +37,11 @@ export default function PermissionMatrixPage() {
   // Check authorization
   useEffect(() => {
     if (!authLoading && user) {
-      const hasPermission = user.permissions?.includes("manage:system");
-      if (!hasPermission) {
+      const canView =
+        user.permissions?.includes("manage:system") ||
+        user.permissions?.includes("view:permissions");
+
+      if (!canView) {
         setStatusMessage({
           type: "error",
           text: "You do not have permission to access this page.",
@@ -87,7 +92,11 @@ export default function PermissionMatrixPage() {
   };
 
   useEffect(() => {
-    if (user && user.permissions?.includes("manage:system")) {
+    if (
+      user &&
+      (user.permissions?.includes("manage:system") ||
+        user.permissions?.includes("view:permissions"))
+    ) {
       loadMatrix();
     }
   }, [user]);
@@ -117,6 +126,16 @@ export default function PermissionMatrixPage() {
   ) => {
     const cellKey = `${positionId}-${permissionId}`;
     setProcessingCell(cellKey);
+
+    // Security: ensure only editable users can make API calls
+    if (!canEdit) {
+      setStatusMessage({
+        type: "error",
+        text: "You do not have permission to make changes.",
+      });
+      setProcessingCell(null);
+      return;
+    }
 
     try {
       const endpoint = checked
@@ -164,7 +183,13 @@ export default function PermissionMatrixPage() {
     );
   }
 
-  if (!user || !user.permissions?.includes("manage:system")) {
+  if (
+    !user ||
+    !(
+      user.permissions?.includes("manage:system") ||
+      user.permissions?.includes("view:permissions")
+    )
+  ) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow p-6 max-w-md">
@@ -272,8 +297,16 @@ export default function PermissionMatrixPage() {
                                   e.target.checked
                                 )
                               }
-                              disabled={isProcessing}
-                              className="w-5 h-5 rounded cursor-pointer accent-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={isProcessing || !canEdit}
+                              title={
+                                !canEdit
+                                  ? "Read-only: you cannot modify permissions"
+                                  : undefined
+                              }
+                              aria-disabled={!canEdit}
+                              className={`w-5 h-5 rounded cursor-pointer accent-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                !canEdit ? "opacity-70" : ""
+                              }`}
                             />
                           </td>
                         );
@@ -288,7 +321,9 @@ export default function PermissionMatrixPage() {
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
               <p className="text-sm text-gray-600">
                 <strong>Legend:</strong> Check a box to assign a permission to a
-                position. Uncheck to revoke.
+                position. Uncheck to revoke. Users without edit privileges
+                (read-only) can view the current assignments but cannot make
+                changes.
               </p>
               <p className="text-xs text-gray-500 mt-2">
                 Showing {matrix.length} position{matrix.length !== 1 ? "s" : ""}{" "}
