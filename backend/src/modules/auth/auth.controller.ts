@@ -20,11 +20,13 @@ export class AuthController {
   @Post("login")
   async login(@Body() body: any, @Res({ passthrough: true }) res: Response) {
     const user = await this.authService.validateUser(body.email, body.password);
-    if (!user) return { error: "Invalid credentials" };
+    if (!user) {
+      return { error: "Invalid credentials" }; // Trả về object lỗi thay vì throw để Frontend dễ xử lý
+    }
 
-    const tokenData = await this.authService.login(user); // Giả sử trả về { access_token }
+    const tokenData = await this.authService.login(user);
 
-    // Set Cookie
+    // Set Cookie: Quan trọng là httpOnly để bảo mật
     res.cookie("access_token", tokenData.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -32,13 +34,12 @@ export class AuthController {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
 
-    return { success: true, user: user }; // Có thể trả về user info cơ bản luôn
+    return { success: true, user: user, access_token: tokenData.access_token };
   }
 
   // --- 2. LOGOUT ---
   @Post("logout")
   async logout(@Res({ passthrough: true }) res: Response) {
-    // Xóa cookie, quan trọng là option phải giống lúc set (trừ maxAge)
     res.clearCookie("access_token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -47,14 +48,14 @@ export class AuthController {
     return { success: true };
   }
 
-  // --- 3. GET PROFILE (Đã gộp và thêm chống cache) ---
+  // --- 3. GET PROFILE ---
   @UseGuards(JwtAuthGuard)
   @Get("profile")
   async getProfile(
     @Request() req: any,
     @Res({ passthrough: true }) res: Response
   ) {
-    // 👇 QUAN TRỌNG: Thêm Header chống Cache cho trình duyệt 👇
+    // Chống Cache tuyệt đối cho Profile
     res.set({
       "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
       Pragma: "no-cache",
@@ -62,7 +63,6 @@ export class AuthController {
     });
 
     const user = req.user;
-    // Kiểm tra xem user lấy từ token có id hay employee_id
     const userId = user.employee_id || user.id;
 
     if (!userId) return null;
@@ -81,14 +81,14 @@ export class AuthController {
     return this.authService.updateContactInfo(userId, updateData);
   }
 
-  // --- 5. NAVIGATION (Cũng nên chống cache nếu phân quyền thay đổi) ---
+  // --- 5. NAVIGATION (Menu Sidebar) ---
   @UseGuards(JwtAuthGuard)
   @Get("navigation")
   async navigation(
     @Request() req: any,
     @Res({ passthrough: true }) res: Response
   ) {
-    // Chống cache cho menu luôn để tránh logout admin vào user vẫn thấy menu admin
+    // Chống cache cho Menu
     res.set({
       "Cache-Control": "no-store, no-cache, must-revalidate",
       Pragma: "no-cache",
@@ -97,16 +97,18 @@ export class AuthController {
 
     const user = req.user;
     const userId = user.employee_id || user.id;
-    if (!userId) return null;
+    if (!userId) return { main: [], admin: [] };
 
+    // Lấy profile mới nhất từ DB để check chức vụ
     const profile = await this.authService.getProfile(userId);
+    const positionName = profile.position?.position_name || "";
 
-    // Define navigation structure
+    // --- CẤU TRÚC MENU ---
     const navigation = {
       main: [
         { name: "Dashboard", href: "/dashboard", icon: "LayoutDashboard" },
         { name: "Timekeeping", href: "/dashboard/timekeeping", icon: "Clock" },
-        { name: "Leave", href: "/dashboard/leave", icon: "Calendar" },
+        { name: "My Leave", href: "/dashboard/leave", icon: "Calendar" },
       ],
       admin: [
         {
@@ -117,7 +119,7 @@ export class AuthController {
         { name: "Organization", href: "/admin/organization", icon: "Building" },
         { name: "Permissions", href: "/admin/permissions", icon: "Shield" },
         {
-          name: "QR Display (Tablet)",
+          name: "QR Display",
           href: "/admin/qr-display",
           icon: "Tablet",
         },
@@ -125,14 +127,16 @@ export class AuthController {
       ],
     };
 
-    // Filter admin logic
-    // Lưu ý: Nên check permissions thay vì check cứng tên "admin" nếu có thể
-    const hasAdminAccess =
-      profile.position?.position_name === "admin" ||
-      profile.position?.position_name === "System Admin";
+    // --- LOGIC CHECK ADMIN (QUAN TRỌNG) ---
+    // Chấp nhận nhiều trường hợp viết hoa/thường để tránh lỗi
+    const isAdmin =
+      positionName === "Admin" ||
+      positionName.toLowerCase() === "admin" ||
+      positionName === "System Admin" ||
+      positionName === "Director"; // Thêm chức vụ này nếu có
 
-    if (!hasAdminAccess) {
-      navigation.admin = [];
+    if (!isAdmin) {
+      navigation.admin = []; // Nếu không phải Admin thì xóa menu Admin
     }
 
     return navigation;

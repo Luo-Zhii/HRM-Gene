@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nest start",
-    "start:dev": "nest start --watch",
+    "dev:i": "nest start",
+    "dev": "nest start --watch",
     "build": "nest build",
     "lint": "eslint . --ext .ts",
     "seed": "ts-node scripts/seed.ts"
