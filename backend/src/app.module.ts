@@ -8,9 +8,13 @@ import { LeaveModule } from "./modules/leave/leave.module";
 import { PayrollModule } from "./modules/payroll/payroll.module";
 import { ReportsModule } from "./modules/reports/reports.module";
 import * as path from "path";
+import { ConfigModule } from "@nestjs/config";
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // Giúp .env dùng được ở mọi nơi trong app
+    }),
     CacheModule.register({
       store: "redis",
       host: process.env.REDIS_HOST || "localhost",

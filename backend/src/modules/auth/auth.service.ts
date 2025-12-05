@@ -2,12 +2,14 @@ import {
   Injectable,
   UnauthorizedException,
   NotFoundException,
+  BadRequestException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, In } from "typeorm";
 import * as bcrypt from "bcrypt";
 import { Employee } from "../../entities/employee.entity";
+import { Position } from "../../entities/position.entity";
 import { PositionPermission } from "../../entities/position-permission.entity";
 import { Permission } from "../../entities/permission.entity";
 
@@ -18,6 +20,9 @@ export class AuthService {
 
     @InjectRepository(Employee)
     private employeeRepo: Repository<Employee>,
+
+    @InjectRepository(Position)
+    private positionRepo: Repository<Position>,
 
     @InjectRepository(PositionPermission)
     private ppRepo: Repository<PositionPermission>,
@@ -115,5 +120,56 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
     };
+  }
+
+  async registerAdminUser(data: {
+    email: string;
+    password: string;
+    role: "Admin" | "Developer";
+    secretKey: string;
+  }) {
+    const { email, password, role, secretKey } = data;
+    console.log("Current Env Key:", process.env.ADMIN_SECRET_KEY); // <--- Thêm dòng này để kiểm tra
+    const expectedKey = process.env.ADMIN_SECRET_KEY;
+    if (!expectedKey) {
+      throw new UnauthorizedException("Admin registration is disabled");
+    }
+
+    if (secretKey !== expectedKey) {
+      throw new UnauthorizedException("Invalid system secret key");
+    }
+
+    if (!["Admin", "Developer"].includes(role)) {
+      throw new BadRequestException("Invalid role selected");
+    }
+    const existing = await this.employeeRepo.findOne({ where: { email } });
+    if (existing) {
+      throw new BadRequestException("Email already exists");
+    }
+
+    let position = await this.positionRepo.findOne({
+      where: { position_name: role },
+    });
+
+    if (!position) {
+      // Bootstrap: create missing position if it does not exist yet
+      position = this.positionRepo.create({ position_name: role });
+      position = await this.positionRepo.save(position);
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const employee = this.employeeRepo.create({
+      email,
+      password: hashedPassword,
+      first_name: role, // minimal defaults for required fields
+      last_name: "User",
+      position,
+    });
+
+    const saved = await this.employeeRepo.save(employee);
+
+    // Return a fresh profile with relations and without password
+    return this.getProfile(saved.employee_id);
   }
 }

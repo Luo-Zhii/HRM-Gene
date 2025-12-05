@@ -7,6 +7,7 @@ import {
   Get,
   Res,
   Patch,
+  BadRequestException,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
@@ -140,5 +141,42 @@ export class AuthController {
     }
 
     return navigation;
+  }
+
+  // --- 6. ADMIN/DEVELOPER REGISTRATION (Bootstrap only) ---
+  @Post("admin-register")
+  async adminRegister(
+    @Body()
+    body: {
+      email: string;
+      password: string;
+      role: "Admin" | "Developer";
+      secretKey: string;
+    },
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const { email, password, role, secretKey } = body;
+
+    if (!email || !password || !role || !secretKey) {
+      throw new BadRequestException("All fields are required");
+    }
+
+    const user = await this.authService.registerAdminUser({
+      email,
+      password,
+      role,
+      secretKey,
+    });
+
+    const tokenData = await this.authService.login(user);
+
+    res.cookie("access_token", tokenData.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return { success: true, user, access_token: tokenData.access_token };
   }
 }
