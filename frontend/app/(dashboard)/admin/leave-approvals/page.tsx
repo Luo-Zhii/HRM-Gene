@@ -3,25 +3,44 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 interface LeaveRequest {
-  leave_request_id: string;
-  employee_id: string;
+  request_id: number; // Fixed: backend returns request_id, not leave_request_id
+  employee_email?: string;
   employee_name?: string;
-  leave_type_id: string;
   leave_type_name: string;
   start_date: string;
   end_date: string;
-  reason: string;
+  reason?: string;
   status: string;
   manager_approver?: string;
-  created_at: string;
 }
 
 interface StatusMessage {
   type: "success" | "error" | "info";
   text: string;
 }
+
+// Skeleton Loading Component
+const SkeletonTable = () => (
+  <div className="space-y-2">
+    {[1, 2, 3, 4, 5].map((i) => (
+      <div key={i} className="h-16 bg-gray-100 rounded animate-pulse"></div>
+    ))}
+  </div>
+);
 
 export default function LeaveApprovalsPage() {
   const router = useRouter();
@@ -31,7 +50,12 @@ export default function LeaveApprovalsPage() {
   const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(
     null
   );
-  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(
+    null
+  );
+  const [rejectionReason, setRejectionReason] = useState("");
 
   // Check authorization
   useEffect(() => {
@@ -62,7 +86,8 @@ export default function LeaveApprovalsPage() {
       }
 
       const data = await response.json();
-      setRequests(data.data || []);
+      // Fixed: Backend returns array directly, not wrapped in data.data
+      setRequests(Array.isArray(data) ? data : data.data || []);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error loading requests";
@@ -86,11 +111,8 @@ export default function LeaveApprovalsPage() {
     }
   }, [statusMessage]);
 
-  // Handle approval/rejection
-  const handleAction = async (
-    requestId: string,
-    status: "Approved" | "Rejected"
-  ) => {
+  // Handle approval
+  const handleApprove = async (requestId: number) => {
     try {
       setProcessingIds((prev) => new Set(prev).add(requestId));
 
@@ -98,16 +120,17 @@ export default function LeaveApprovalsPage() {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status: "Approved" }),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to ${status.toLowerCase()} request`);
+        const json = await response.json();
+        throw new Error(json?.message || "Failed to approve request");
       }
 
       setStatusMessage({
         type: "success",
-        text: `Request ${status.toLowerCase()} successfully!`,
+        text: "Request approved successfully!",
       });
 
       // Refresh requests
@@ -116,7 +139,7 @@ export default function LeaveApprovalsPage() {
       const message =
         error instanceof Error
           ? error.message
-          : `Error ${status.toLowerCase()}ing request`;
+          : "Error approving request";
       setStatusMessage({ type: "error", text: message });
     } finally {
       setProcessingIds((prev) => {
@@ -127,11 +150,66 @@ export default function LeaveApprovalsPage() {
     }
   };
 
+  // Handle rejection (opens confirmation dialog)
+  const handleRejectClick = (requestId: number) => {
+    setSelectedRequestId(requestId);
+    setRejectionReason("");
+    setRejectDialogOpen(true);
+  };
+
+  // Confirm rejection
+  const handleConfirmReject = async () => {
+    if (selectedRequestId === null) return;
+
+    try {
+      setProcessingIds((prev) => new Set(prev).add(selectedRequestId));
+
+      const response = await fetch(
+        `/api/leave/request/${selectedRequestId}/approve`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "Rejected" }),
+        }
+      );
+
+      if (!response.ok) {
+        const json = await response.json();
+        throw new Error(json?.message || "Failed to reject request");
+      }
+
+      setStatusMessage({
+        type: "success",
+        text: "Request rejected successfully!",
+      });
+
+      // Close dialog and refresh
+      setRejectDialogOpen(false);
+      setSelectedRequestId(null);
+      setRejectionReason("");
+      await loadRequests();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Error rejecting request";
+      setStatusMessage({ type: "error", text: message });
+    } finally {
+      setProcessingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(selectedRequestId);
+        return newSet;
+      });
+    }
+  };
+
   // Render authorization check
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -177,8 +255,8 @@ export default function LeaveApprovalsPage() {
 
         {/* Loading State */}
         {loading ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-600">Loading pending requests...</p>
+          <div className="bg-white rounded-lg shadow p-8">
+            <SkeletonTable />
           </div>
         ) : requests.length === 0 ? (
           // Empty State
@@ -210,6 +288,9 @@ export default function LeaveApprovalsPage() {
                       End Date
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Days
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                       Reason
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
@@ -221,74 +302,85 @@ export default function LeaveApprovalsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {requests.map((request) => (
-                    <tr
-                      key={request.leave_request_id}
-                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {request.employee_name ||
-                          `Employee #${request.employee_id}`}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {request.leave_type_name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {new Date(request.start_date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {new Date(request.end_date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                        {request.reason || "-"}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`inline-block px-3 py-1 rounded-full font-medium ${
-                            request.status === "Pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : request.status === "Approved"
-                              ? "bg-green-100 text-green-800"
-                              : request.status === "Rejected"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {request.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() =>
-                              handleAction(request.leave_request_id, "Approved")
+                  {requests.map((request) => {
+                    const start = new Date(request.start_date);
+                    const end = new Date(request.end_date);
+                    const days =
+                      Math.floor(
+                        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+                      ) + 1;
+                    const isProcessing = processingIds.has(request.request_id);
+
+                    return (
+                      <tr
+                        key={request.request_id}
+                        className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {request.employee_name ||
+                            request.employee_email ||
+                            `Employee #${request.request_id}`}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {request.leave_type_name}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {new Date(request.start_date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {new Date(request.end_date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {days}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                          {request.reason || "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <Badge
+                            variant={
+                              request.status === "Approved"
+                                ? "default"
+                                : request.status === "Rejected"
+                                ? "destructive"
+                                : "outline"
                             }
-                            disabled={processingIds.has(
-                              request.leave_request_id
-                            )}
-                            className="px-4 py-2 bg-green-600 text-white rounded font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {processingIds.has(request.leave_request_id)
-                              ? "Processing..."
-                              : "Approve"}
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleAction(request.leave_request_id, "Rejected")
+                            className={
+                              request.status === "Pending"
+                                ? "bg-yellow-100 text-yellow-800 border-yellow-300"
+                                : request.status === "Approved"
+                                ? "bg-green-100 text-green-800 border-green-300"
+                                : request.status === "Rejected"
+                                ? "bg-red-100 text-red-800 border-red-300"
+                                : ""
                             }
-                            disabled={processingIds.has(
-                              request.leave_request_id
-                            )}
-                            className="px-4 py-2 bg-red-600 text-white rounded font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            {processingIds.has(request.leave_request_id)
-                              ? "Processing..."
-                              : "Reject"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {request.status}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleApprove(request.request_id)}
+                              disabled={isProcessing}
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              {isProcessing ? "Processing..." : "Approve"}
+                            </Button>
+                            <Button
+                              onClick={() => handleRejectClick(request.request_id)}
+                              disabled={isProcessing}
+                              size="sm"
+                              variant="destructive"
+                            >
+                              {isProcessing ? "Processing..." : "Reject"}
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -303,6 +395,55 @@ export default function LeaveApprovalsPage() {
           </div>
         )}
       </div>
+
+      {/* Rejection Confirmation Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Rejection</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reject this leave request? You can
+              optionally provide a reason for the rejection.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="rejection-reason">
+                Rejection Reason (optional)
+              </Label>
+              <Textarea
+                id="rejection-reason"
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+                placeholder="Enter reason for rejection..."
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialogOpen(false);
+                setSelectedRequestId(null);
+                setRejectionReason("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmReject}
+              disabled={processingIds.has(selectedRequestId || 0)}
+            >
+              {processingIds.has(selectedRequestId || 0)
+                ? "Processing..."
+                : "Confirm Rejection"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
