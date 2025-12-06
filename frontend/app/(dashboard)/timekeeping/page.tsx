@@ -200,7 +200,12 @@ export default function TimekeepingPage() {
                 <p className="text-sm text-gray-500 mb-6">
                   Check-in using your current IP address
                 </p>
-                <Button className="w-full" disabled={loadingIp} size="lg">
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={loadingIp}
+                  size="lg"
+                >
                   {loadingIp ? "Checking in..." : "Check-in"}
                 </Button>
               </CardContent>
