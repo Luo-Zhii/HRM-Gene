@@ -12,9 +12,9 @@ import { ConfigModule } from "@nestjs/config";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true, // Giúp .env dùng được ở mọi nơi trong app
-    }),
+    // ConfigModule.forRoot({
+    //   isGlobal: true, // Giúp .env dùng được ở mọi nơi trong app
+    // }),
     CacheModule.register({
       store: "redis",
       host: process.env.REDIS_HOST || "localhost",
