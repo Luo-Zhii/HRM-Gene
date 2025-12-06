@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -20,9 +20,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, KeyRound, ShieldCheck } from "lucide-react";
+import { Mail, Lock, KeyRound, ShieldCheck, Building2, Briefcase } from "lucide-react";
 
 const roles = ["Admin", "Developer"] as const;
+
+interface Department {
+  department_id: number;
+  department_name: string;
+}
+
+interface Position {
+  position_id: number;
+  position_name: string;
+}
 
 export default function AdminRegisterPage() {
   const router = useRouter();
@@ -33,8 +43,58 @@ export default function AdminRegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<(typeof roles)[number]>("Admin");
   const [secretKey, setSecretKey] = useState("");
+  const [departmentId, setDepartmentId] = useState<number | "">("");
+  const [positionId, setPositionId] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Departments and Positions state
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+
+  // Load departments and positions on mount
+  useEffect(() => {
+    loadDepartmentsAndPositions();
+  }, []);
+
+  const loadDepartmentsAndPositions = async () => {
+    setLoadingData(true);
+    try {
+      const [deptsRes, posRes] = await Promise.all([
+        fetch("/api/admin/departments", {
+          method: "GET",
+          credentials: "include",
+        }),
+        fetch("/api/admin/positions", {
+          method: "GET",
+          credentials: "include",
+        }),
+      ]);
+
+      if (deptsRes.ok) {
+        const deptsData = await deptsRes.json();
+        setDepartments(Array.isArray(deptsData) ? deptsData : []);
+      } else {
+        console.error("Failed to load departments");
+        setDepartments([]);
+      }
+
+      if (posRes.ok) {
+        const posData = await posRes.json();
+        setPositions(Array.isArray(posData) ? posData : []);
+      } else {
+        console.error("Failed to load positions");
+        setPositions([]);
+      }
+    } catch (err) {
+      console.error("Error loading departments/positions:", err);
+      setDepartments([]);
+      setPositions([]);
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -56,6 +116,8 @@ export default function AdminRegisterPage() {
           password,
           role,
           secretKey,
+          department_id: departmentId ? Number(departmentId) : undefined,
+          position_id: positionId ? Number(positionId) : undefined,
         }),
       });
 
@@ -138,6 +200,91 @@ export default function AdminRegisterPage() {
                           {r}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Department and Position Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="department"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Department
+                </Label>
+                <div className="relative">
+                  <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Select
+                    value={departmentId.toString()}
+                    onValueChange={(v) =>
+                      setDepartmentId(v ? parseInt(v, 10) : "")
+                    }
+                    disabled={loadingData}
+                  >
+                    <SelectTrigger id="department" className="pl-10">
+                      <SelectValue placeholder="Select a department" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50">
+                      {departments.length > 0 ? (
+                        departments.map((dept) => (
+                          <SelectItem
+                            key={dept.department_id}
+                            value={dept.department_id.toString()}
+                          >
+                            {dept.department_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="none" disabled>
+                          {loadingData
+                            ? "Loading..."
+                            : "No departments available"}
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="position"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Position
+                </Label>
+                <div className="relative">
+                  <Briefcase className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Select
+                    value={positionId.toString()}
+                    onValueChange={(v) =>
+                      setPositionId(v ? parseInt(v, 10) : "")
+                    }
+                    disabled={loadingData}
+                  >
+                    <SelectTrigger id="position" className="pl-10">
+                      <SelectValue placeholder="Select a position" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50">
+                      {positions.length > 0 ? (
+                        positions.map((pos) => (
+                          <SelectItem
+                            key={pos.position_id}
+                            value={pos.position_id.toString()}
+                          >
+                            {pos.position_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="none" disabled>
+                          {loadingData
+                            ? "Loading..."
+                            : "No positions available"}
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
