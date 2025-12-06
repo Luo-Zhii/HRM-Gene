@@ -40,6 +40,12 @@ function Sidebar({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const { user } = useAuth();
+
+  // Check if user has manage:system permission
+  const hasManageSystemPermission =
+    user?.permissions?.includes("manage:system") ?? false;
+
   return (
     <>
       {/* Màn đen mờ khi mở menu trên mobile (Thêm backdrop-blur cho đẹp) */}
@@ -99,48 +105,56 @@ function Sidebar({
             onClick={onClose}
           />
 
-          <div className="mt-8 mb-2 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
-            Admin Administration
-          </div>
+          {/* Admin Administration Section - Only visible if user has manage:system permission */}
+          {hasManageSystemPermission && (
+            <>
+              <div className="mt-8 mb-2 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Admin Administration
+              </div>
 
-          <NavItem
-            href="/admin/leave-approvals"
-            icon={<ShieldCheck size={20} />}
-            label="Leave Approvals"
-            onClick={onClose}
-          />
-          <NavItem
-            href="/admin/organization"
-            icon={<Building2 size={20} />}
-            label="Organization"
-            onClick={onClose}
-          />
-          <NavItem
-            href="/admin/permissions"
-            icon={<LockKeyhole size={20} />}
-            label="Permissions"
-            onClick={onClose}
-          />
+              <NavItem
+                href="/admin/leave-approvals"
+                icon={<ShieldCheck size={20} />}
+                label="Leave Approvals"
+                onClick={onClose}
+              />
+              <NavItem
+                href="/admin/organization"
+                icon={<Building2 size={20} />}
+                label="Organization"
+                onClick={onClose}
+              />
+              <NavItem
+                href="/admin/permissions"
+                icon={<LockKeyhole size={20} />}
+                label="Permissions"
+                onClick={onClose}
+              />
 
-          <Link
-            href="/admin/qr-display"
-            onClick={onClose}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-all mt-2"
-          >
-            <QrCode size={20} />
-            <span>QR Display (Tablet)</span>
-          </Link>
+              <Link
+                href="/admin/qr-display"
+                onClick={onClose}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-all mt-2"
+              >
+                <QrCode size={20} />
+                <span>QR Display (Tablet)</span>
+              </Link>
+            </>
+          )}
         </nav>
 
         {/* Footer của Sidebar (Optional: Settings ở dưới cùng) */}
-        <div className="p-4 border-t border-gray-100 shrink-0">
-          <NavItem
-            href="/admin/settings"
-            icon={<Settings size={20} />}
-            label="System Settings"
-            onClick={onClose}
-          />
-        </div>
+        {/* System Settings - Only visible if user has manage:system permission */}
+        {hasManageSystemPermission && (
+          <div className="p-4 border-t border-gray-100 shrink-0">
+            <NavItem
+              href="/admin/settings"
+              icon={<Settings size={20} />}
+              label="System Settings"
+              onClick={onClose}
+            />
+          </div>
+        )}
       </aside>
     </>
   );
