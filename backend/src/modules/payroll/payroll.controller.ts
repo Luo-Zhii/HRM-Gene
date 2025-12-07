@@ -5,9 +5,13 @@ import {
   Body,
   Query,
   Param,
+  Patch,
   UseGuards,
   Request,
   ParseIntPipe,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { PayrollService } from "./payroll.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
@@ -67,5 +71,84 @@ export class PayrollController {
   async run(@Body() body: { month: number; year: number }) {
     const { month, year } = body;
     return this.svc.runPayroll(month, year);
+  }
+
+  // ============= Salary Config Management =============
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Permissions("manage:payroll", "manage:system")
+  @Get("config")
+  async getSalaryConfigs() {
+    try {
+      return await this.svc.getAllSalaryConfigs();
+    } catch (error) {
+      console.error("Error fetching salary configs:", error);
+      throw error;
+    }
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Permissions("manage:payroll", "manage:system")
+  @Get("config/:employeeId")
+  async getSalaryConfig(@Param("employeeId", ParseIntPipe) employeeId: number) {
+    try {
+      if (!employeeId || isNaN(employeeId) || employeeId <= 0) {
+        throw new BadRequestException(`Invalid employee ID: ${employeeId}`);
+      }
+
+      const config = await this.svc.getSalaryConfigByEmployeeId(employeeId);
+      if (!config) {
+        throw new NotFoundException(
+          `Salary configuration not found for employee ID: ${employeeId}`
+        );
+      }
+      return config;
+    } catch (error) {
+      console.error(`Error fetching salary config for employee ${employeeId}:`, error);
+      // Re-throw NestJS exceptions as-is (they have proper HTTP status codes)
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
+      // Wrap unexpected errors
+      throw new BadRequestException(
+        error instanceof Error ? error.message : "Failed to fetch salary configuration"
+      );
+    }
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Permissions("manage:payroll", "manage:system")
+  @Patch("config/:employeeId")
+  async updateSalaryConfig(
+    @Param("employeeId", ParseIntPipe) employeeId: number,
+    @Body() body: {
+      base_salary: string;
+      transport_allowance: string;
+      lunch_allowance: string;
+      responsibility_allowance: string;
+    }
+  ) {
+    try {
+      if (!employeeId || isNaN(employeeId)) {
+        throw new BadRequestException("Invalid employee ID");
+      }
+
+      return await this.svc.updateSalaryConfig(employeeId, body);
+    } catch (error) {
+      console.error(`Error updating salary config for employee ${employeeId}:`, error);
+      // Re-throw NestJS exceptions as-is, wrap others
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException(
+        error instanceof Error ? error.message : "Failed to update salary configuration"
+      );
+    }
   }
 }

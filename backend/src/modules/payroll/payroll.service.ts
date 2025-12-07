@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, Between, DataSource } from "typeorm";
 import { Employee } from "../../entities/employee.entity";
@@ -361,5 +361,177 @@ export class PayrollService {
       total_net: totalNet.toFixed(2),
       generated,
     };
+  }
+
+  // ============= Salary Config Management =============
+  async getAllSalaryConfigs() {
+    try {
+      // Use LEFT JOIN to get ALL employees, even those without salary configs
+      // Start from Employee table and LEFT JOIN salary_config
+      const results = await this.employeeRepo
+        .createQueryBuilder("employee")
+        .leftJoin("employee.position", "position")
+        .leftJoin("employee.department", "department")
+        .leftJoin(
+          SalaryConfig,
+          "sc",
+          "sc.employee_id = employee.employee_id"
+        )
+        .select([
+          "employee.employee_id",
+          "employee.email",
+          "employee.first_name",
+          "employee.last_name",
+          "employee.avatar_url",
+          "position.position_id",
+          "position.position_name",
+          "department.department_id",
+          "department.department_name",
+          "sc.config_id",
+          "sc.base_salary",
+          "sc.transport_allowance",
+          "sc.lunch_allowance",
+          "sc.responsibility_allowance",
+        ])
+        .orderBy("employee.first_name", "ASC")
+        .getRawMany();
+
+      // Transform raw results into the expected format
+      const configs = results.map((row) => {
+        // If salary config exists, use it; otherwise return null config with employee data
+        // Raw query prefixes column names with alias, so sc.config_id becomes sc_config_id
+        const hasConfig = row.sc_config_id !== null && row.sc_config_id !== undefined;
+
+        return {
+          config_id: hasConfig ? row.sc_config_id : null,
+          employee: {
+            employee_id: row.employee_employee_id,
+            email: row.employee_email,
+            first_name: row.employee_first_name,
+            last_name: row.employee_last_name,
+            avatar_url: row.employee_avatar_url || null,
+            position: row.position_position_id
+              ? {
+                  position_id: row.position_position_id,
+                  position_name: row.position_position_name,
+                }
+              : null,
+            department: row.department_department_id
+              ? {
+                  department_id: row.department_department_id,
+                  department_name: row.department_department_name,
+                }
+              : null,
+          },
+          base_salary: hasConfig && row.sc_base_salary ? String(row.sc_base_salary) : "0.00",
+          transport_allowance: hasConfig && row.sc_transport_allowance ? String(row.sc_transport_allowance) : "0.00",
+          lunch_allowance: hasConfig && row.sc_lunch_allowance ? String(row.sc_lunch_allowance) : "0.00",
+          responsibility_allowance: hasConfig && row.sc_responsibility_allowance ? String(row.sc_responsibility_allowance) : "0.00",
+        };
+      });
+
+      return configs;
+    } catch (error) {
+      console.error("Error in getAllSalaryConfigs:", error);
+      // Log full error for debugging
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
+      throw error;
+    }
+  }
+
+  async getSalaryConfigByEmployeeId(employeeId: number) {
+    try {
+      if (!employeeId || isNaN(employeeId) || employeeId <= 0) {
+        throw new BadRequestException(`Invalid employee ID: ${employeeId}`);
+      }
+
+      // Use query builder for more reliable querying with OneToOne relations
+      const config = await this.salaryConfigRepo
+        .createQueryBuilder("sc")
+        .leftJoinAndSelect("sc.employee", "employee")
+        .where("employee.employee_id = :employeeId", { employeeId })
+        .getOne();
+
+      return config;
+    } catch (error) {
+      console.error(`Error in getSalaryConfigByEmployeeId for employee ${employeeId}:`, error);
+      // Log the full error for debugging
+      if (error instanceof Error) {
+        console.error("Error details:", error.message);
+        console.error("Stack trace:", error.stack);
+      }
+      // Re-throw NestJS exceptions as-is
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      // Wrap other errors
+      throw new BadRequestException(
+        `Failed to fetch salary configuration: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+  }
+
+  async updateSalaryConfig(
+    employeeId: number,
+    data: {
+      base_salary: string;
+      transport_allowance: string;
+      lunch_allowance: string;
+      responsibility_allowance: string;
+    }
+  ) {
+    try {
+      if (!employeeId || isNaN(employeeId)) {
+        throw new BadRequestException("Invalid employee ID");
+      }
+
+      // Validate required fields
+      if (
+        !data.base_salary ||
+        data.transport_allowance === undefined ||
+        data.lunch_allowance === undefined ||
+        data.responsibility_allowance === undefined
+      ) {
+        throw new BadRequestException("All salary fields are required");
+      }
+
+      let config = await this.salaryConfigRepo.findOne({
+        where: { employee: { employee_id: employeeId } },
+        relations: ["employee"],
+      });
+
+      if (!config) {
+        // If config doesn't exist, create it
+        const employee = await this.employeeRepo.findOne({
+          where: { employee_id: employeeId },
+        });
+        if (!employee) {
+          throw new NotFoundException(
+            `Employee with ID ${employeeId} not found`
+          );
+        }
+        config = this.salaryConfigRepo.create({
+          employee,
+          base_salary: data.base_salary,
+          transport_allowance: data.transport_allowance,
+          lunch_allowance: data.lunch_allowance,
+          responsibility_allowance: data.responsibility_allowance,
+        });
+      } else {
+        // Update existing config
+        config.base_salary = data.base_salary;
+        config.transport_allowance = data.transport_allowance;
+        config.lunch_allowance = data.lunch_allowance;
+        config.responsibility_allowance = data.responsibility_allowance;
+      }
+
+      return await this.salaryConfigRepo.save(config);
+    } catch (error) {
+      console.error(`Error in updateSalaryConfig for employee ${employeeId}:`, error);
+      throw error;
+    }
   }
 }
