@@ -50,13 +50,9 @@ export default function SalaryPage() {
   const loadPayslips = async () => {
     try {
       setLoading(true);
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
-      const res = await fetch(
-        `${apiBase.replace(/\/api$|\/$/, "")}/api/payroll/my-payslips`,
-        {
-          credentials: "include",
-        }
-      );
+      const res = await fetch("/api/payroll/my-payslips", {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to fetch payslips");
       const data = await res.json();
       setPayslips(data || []);
