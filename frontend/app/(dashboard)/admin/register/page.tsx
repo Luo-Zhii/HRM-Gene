@@ -118,7 +118,7 @@ export default function AdminRegisterPage() {
         setLastName("");
         setEmail("");
         setPassword("");
-        setConfirmPassword("");
+        setConfirmPassword("");                   
         setDepartmentId("");
         setPositionId("");
         // setSecretKey("");

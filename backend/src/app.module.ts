@@ -7,6 +7,8 @@ import { AdminModule } from "./modules/admin/admin.module";
 import { LeaveModule } from "./modules/leave/leave.module";
 import { PayrollModule } from "./modules/payroll/payroll.module";
 import { ReportsModule } from "./modules/reports/reports.module";
+import { ContractsModule } from "./modules/contracts/contracts.module";
+import { ViolationsModule } from "./modules/violations/violations.module";
 
 import * as path from "path";
 import { ConfigModule } from "@nestjs/config";
@@ -39,6 +41,8 @@ import { ConfigModule } from "@nestjs/config";
     LeaveModule,
     PayrollModule,
     ReportsModule,
+    ContractsModule,
+    ViolationsModule,
   ],
 })
 export class AppModule {}

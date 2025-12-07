@@ -19,6 +19,9 @@ import {
   LockKeyhole,
   QrCode,
   Settings,
+  DollarSign,
+  FileText,
+  BarChart3,
 } from "lucide-react"; // Import thêm icon cho đẹp
 
 type NavigationItem = {
@@ -46,6 +49,18 @@ function Sidebar({
   const hasManageSystemPermission =
     user?.permissions?.includes("manage:system") ?? false;
 
+  // Check if user has manage:payroll permission
+  const hasManagePayrollPermission =
+    user?.permissions?.includes("manage:payroll") ?? false;
+
+  // Check if user can access reports (system, payroll, or Admin/Director/HR Manager)
+  const canAccessReports =
+    hasManageSystemPermission ||
+    hasManagePayrollPermission ||
+    user?.position?.position_name === "Admin" ||
+    user?.position?.position_name === "Director" ||
+    user?.position?.position_name === "HR Manager";
+
   return (
     <>
       {/* Màn đen mờ khi mở menu trên mobile (Thêm backdrop-blur cho đẹp) */}
@@ -60,25 +75,25 @@ function Sidebar({
       <aside
         className={`
           fixed md:sticky md:top-0 md:h-screen z-50
-          w-72 md:w-64 bg-white border-r border-gray-200 
+          w-72 md:w-64 bg-blue-900 border-r border-blue-800 
           transform transition-transform duration-300 ease-in-out flex flex-col
           ${isOpen ? "translate-x-0" : "-translate-x-full"} 
           md:translate-x-0 shadow-2xl md:shadow-none h-full
         `}
       >
         {/* Header của Sidebar */}
-        <div className="flex justify-between items-center h-16 px-6 border-b border-gray-100 shrink-0">
+        <div className="flex justify-between items-center h-16 px-6 border-b border-blue-800 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+            <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-bold">
               HR
             </div>
-            <h2 className="text-xl font-bold text-gray-800 tracking-tight">
+            <h2 className="text-xl font-bold text-white tracking-tight">
               HRM App
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+            className="md:hidden p-2 text-blue-200 hover:bg-blue-800 rounded-full transition-colors"
           >
             <X size={20} />
           </button>
@@ -104,11 +119,17 @@ function Sidebar({
             label="Leave Management"
             onClick={onClose}
           />
+          <NavItem
+            href="/dashboard/salary"
+            icon={<FileText size={20} />}
+            label="My Salary"
+            onClick={onClose}
+          />
 
           {/* Admin Administration Section - Only visible if user has manage:system permission */}
           {hasManageSystemPermission && (
             <>
-              <div className="mt-8 mb-2 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <div className="mt-8 mb-2 px-3 text-xs font-bold text-blue-300 uppercase tracking-wider">
                 Admin Administration
               </div>
 
@@ -134,11 +155,49 @@ function Sidebar({
               <Link
                 href="/admin/qr-display"
                 onClick={onClose}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-all mt-2"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-700 transition-all mt-2"
               >
                 <QrCode size={20} />
                 <span>QR Display (Tablet)</span>
               </Link>
+            </>
+          )}
+
+          {/* Payroll Section - Only visible if user has manage:payroll permission */}
+          {hasManagePayrollPermission && (
+            <>
+              <div className="mt-8 mb-2 px-3 text-xs font-bold text-blue-300 uppercase tracking-wider">
+                Payroll Management
+              </div>
+
+              <NavItem
+                href="/admin/payroll/config"
+                icon={<DollarSign size={20} />}
+                label="Salary Config"
+                onClick={onClose}
+              />
+              <NavItem
+                href="/admin/payroll/generate"
+                icon={<FileText size={20} />}
+                label="Generate Payroll"
+                onClick={onClose}
+              />
+            </>
+          )}
+
+          {/* Reports Section - Visible to Admin, Director, HR Manager, or users with manage:system/manage:payroll */}
+          {canAccessReports && (
+            <>
+              <div className="mt-8 mb-2 px-3 text-xs font-bold text-blue-300 uppercase tracking-wider">
+                Analytics
+              </div>
+
+              <NavItem
+                href="/admin/reports"
+                icon={<BarChart3 size={20} />}
+                label="Reports & Analytics"
+                onClick={onClose}
+              />
             </>
           )}
         </nav>
@@ -146,7 +205,7 @@ function Sidebar({
         {/* Footer của Sidebar (Optional: Settings ở dưới cùng) */}
         {/* System Settings - Only visible if user has manage:system permission */}
         {hasManageSystemPermission && (
-          <div className="p-4 border-t border-gray-100 shrink-0">
+          <div className="p-4 border-t border-blue-800 shrink-0">
             <NavItem
               href="/admin/settings"
               icon={<Settings size={20} />}
@@ -176,12 +235,12 @@ function NavItem({
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all group"
+      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-blue-800 hover:text-white transition-all group"
     >
-      <span className="text-gray-400 group-hover:text-blue-600 transition-colors">
+      <span className="text-blue-300 group-hover:text-white transition-colors">
         {icon}
       </span>
-      <span className="font-medium text-sm">{label}</span>
+      <span className="font-medium text-sm text-white">{label}</span>
     </Link>
   );
 }
@@ -206,7 +265,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
   }, []);
 
   return (
-    <header className="flex items-center justify-between px-4 md:px-6 h-16 border-b border-gray-200 bg-white/80 backdrop-blur-md sticky top-0 z-30 transition-all">
+    <header className="flex items-center justify-between px-4 md:px-6 h-16 border-b border-gray-200 bg-white shadow-sm sticky top-0 z-30 transition-all">
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
@@ -216,7 +275,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
         </button>
         {/* Trên Mobile hiện tiêu đề ngắn, PC hiện tiêu đề dài hoặc ẩn đi nếu thích */}
         <span className="font-bold text-lg text-gray-800 md:hidden">HRM</span>
-        <span className="hidden md:block font-semibold text-lg text-gray-700">
+        <span className="hidden md:block font-semibold text-lg text-slate-800">
           Overview
         </span>
       </div>
@@ -306,11 +365,11 @@ export default function DashboardLayout({
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Wrapper cho nội dung chính */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-slate-50">
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
         <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
-          <div className="max-w-6xl mx-auto space-y-6">{children}</div>
+          <div className="max-w-7xl mx-auto space-y-6">{children}</div>
         </main>
         <Toaster />
       </div>

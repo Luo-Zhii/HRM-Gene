@@ -43,13 +43,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           /\/api$|\/$/,
           ""
         )}/api/auth/profile?t=${new Date().getTime()}`,
+        // `http://10.78.101.32:3001/api/auth/profile`,
         {
           credentials: "include",
-          cache: "no-store", // <--- QUAN TRỌNG: Không cache request này
-          headers: {
-            "Content-Type": "application/json",
-            Pragma: "no-cache", // <--- Header chống cache HTTP 1.0
-          },
+          
         }
       );
       if (!res.ok) {

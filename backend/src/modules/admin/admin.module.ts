@@ -7,6 +7,12 @@ import { Department } from "../../entities/department.entity";
 import { Position } from "../../entities/position.entity";
 import { Permission } from "../../entities/permission.entity";
 import { PositionPermission } from "../../entities/position-permission.entity";
+import { Employee } from "../../entities/employee.entity";
+import { Contract } from "../../entities/contract.entity";
+import { SalaryHistory } from "../../entities/salary-history.entity";
+import { Payslip } from "../../entities/payslip.entity";
+import { PayrollPeriod } from "../../entities/payroll-period.entity";
+import { SalaryConfig } from "../../entities/salary-config.entity";
 
 @Module({
   imports: [
@@ -16,6 +22,12 @@ import { PositionPermission } from "../../entities/position-permission.entity";
       Position,
       Permission,
       PositionPermission,
+      Employee,
+      Contract,
+      SalaryHistory,
+      Payslip,
+      PayrollPeriod,
+      SalaryConfig,
     ]),
   ],
   providers: [AdminService],
