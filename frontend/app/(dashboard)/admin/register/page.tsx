@@ -19,10 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, KeyRound, ShieldCheck, Building2, Briefcase } from "lucide-react";
-
-const roles = ["Admin", "Developer"] as const;
+// 1. THÊM ICON USER
+import { Mail, Lock, KeyRound, Building2, Briefcase, User } from "lucide-react";
+import { useShowStatus } from "@/hooks/use-status";
 
 interface Department {
   department_id: number;
@@ -36,24 +35,25 @@ interface Position {
 
 export default function AdminRegisterPage() {
   const router = useRouter();
-  const { toast } = useToast();
+  const showStatus = useShowStatus();
+
+  // 2. THÊM STATE CHO TÊN
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<(typeof roles)[number]>("Admin");
   const [secretKey, setSecretKey] = useState("");
   const [departmentId, setDepartmentId] = useState<number | "">("");
   const [positionId, setPositionId] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Departments and Positions state
   const [departments, setDepartments] = useState<Department[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [loadingData, setLoadingData] = useState(false);
 
-  // Load departments and positions on mount
   useEffect(() => {
     loadDepartmentsAndPositions();
   }, []);
@@ -62,35 +62,22 @@ export default function AdminRegisterPage() {
     setLoadingData(true);
     try {
       const [deptsRes, posRes] = await Promise.all([
-        fetch("/api/admin/departments", {
-          method: "GET",
-          credentials: "include",
-        }),
-        fetch("/api/admin/positions", {
-          method: "GET",
-          credentials: "include",
-        }),
+        fetch("/api/admin/departments", { method: "GET" }),
+        fetch("/api/admin/positions", { method: "GET" }),
       ]);
 
       if (deptsRes.ok) {
         const deptsData = await deptsRes.json();
         setDepartments(Array.isArray(deptsData) ? deptsData : []);
-      } else {
-        console.error("Failed to load departments");
-        setDepartments([]);
       }
 
       if (posRes.ok) {
         const posData = await posRes.json();
         setPositions(Array.isArray(posData) ? posData : []);
-      } else {
-        console.error("Failed to load positions");
-        setPositions([]);
       }
     } catch (err) {
-      console.error("Error loading departments/positions:", err);
-      setDepartments([]);
-      setPositions([]);
+      console.error("Error loading data:", err);
+      showStatus("error", "Failed to load departments or positions");
     } finally {
       setLoadingData(false);
     }
@@ -110,11 +97,12 @@ export default function AdminRegisterPage() {
       const res = await fetch("/api/auth/admin-register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
+          // 3. GỬI FIRST NAME VÀ LAST NAME LÊN BACKEND
+          first_name: firstName,
+          last_name: lastName,
           email,
           password,
-          role,
           secretKey,
           department_id: departmentId ? Number(departmentId) : undefined,
           position_id: positionId ? Number(positionId) : undefined,
@@ -123,17 +111,24 @@ export default function AdminRegisterPage() {
 
       const json = await res.json();
 
-      if (res.ok && json.success) {
-        toast({
-          title: "Registration successful",
-          description: "You have been signed in.",
-        });
-        router.push("/dashboard/timekeeping");
+      if (res.ok) {
+        showStatus("success", `Account created successfully! ID: ${json.id}`);
+        // router.push("/dashboard/timekeeping");
+        setFirstName("");
+        setLastName("");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        setDepartmentId("");
+        setPositionId("");
+        // setSecretKey("");
       } else {
-        setError(json.message || json.error || "Registration failed");
+        setError(json.message || "Registration failed");
+        showStatus("error", json.message || "Registration failed");
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError("An unexpected error occurred.");
+      showStatus("error", "Connection error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -159,54 +154,73 @@ export default function AdminRegisterPage() {
               </div>
             )}
 
+            {/* 4. UI: THÊM Ô NHẬP FIRST NAME & LAST NAME */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <Label
-                  htmlFor="email"
+                  htmlFor="firstName"
                   className="text-sm font-medium text-slate-700"
                 >
-                  Username / Email
+                  First Name
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="firstName"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="pl-10"
-                    placeholder="admin@company.com"
+                    className="pl-10 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                    placeholder="John"
                   />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label
-                  htmlFor="role"
+                  htmlFor="lastName"
                   className="text-sm font-medium text-slate-700"
                 >
-                  Role
+                  Last Name
                 </Label>
                 <div className="relative">
-                  <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Select value={role} onValueChange={(v) => setRole(v as any)}>
-                    <SelectTrigger id="role" className="pl-10">
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent className="z-50">
-                      {roles.map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {r}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    className="pl-10 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                    placeholder="Doe"
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Department and Position Selection */}
+            {/* Email Input */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-slate-700"
+              >
+                Username / Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="pl-10 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                  placeholder="admin@company.com"
+                />
+              </div>
+            </div>
+
+            {/* Department & Position Selects */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <Label
@@ -216,7 +230,7 @@ export default function AdminRegisterPage() {
                   Department
                 </Label>
                 <div className="relative">
-                  <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 z-10" />
                   <Select
                     value={departmentId.toString()}
                     onValueChange={(v) =>
@@ -224,10 +238,13 @@ export default function AdminRegisterPage() {
                     }
                     disabled={loadingData}
                   >
-                    <SelectTrigger id="department" className="pl-10">
+                    <SelectTrigger
+                      id="department"
+                      className="pl-10 bg-slate-50 border-slate-200"
+                    >
                       <SelectValue placeholder="Select a department" />
                     </SelectTrigger>
-                    <SelectContent className="z-50">
+                    <SelectContent className="z-50 bg-white shadow-xl border border-slate-100">
                       {departments.length > 0 ? (
                         departments.map((dept) => (
                           <SelectItem
@@ -239,9 +256,7 @@ export default function AdminRegisterPage() {
                         ))
                       ) : (
                         <SelectItem value="none" disabled>
-                          {loadingData
-                            ? "Loading..."
-                            : "No departments available"}
+                          {loadingData ? "Loading..." : "No departments"}
                         </SelectItem>
                       )}
                     </SelectContent>
@@ -257,7 +272,7 @@ export default function AdminRegisterPage() {
                   Position
                 </Label>
                 <div className="relative">
-                  <Briefcase className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Briefcase className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 z-10" />
                   <Select
                     value={positionId.toString()}
                     onValueChange={(v) =>
@@ -265,10 +280,13 @@ export default function AdminRegisterPage() {
                     }
                     disabled={loadingData}
                   >
-                    <SelectTrigger id="position" className="pl-10">
+                    <SelectTrigger
+                      id="position"
+                      className="pl-10 bg-slate-50 border-slate-200"
+                    >
                       <SelectValue placeholder="Select a position" />
                     </SelectTrigger>
-                    <SelectContent className="z-50">
+                    <SelectContent className="z-50 bg-white shadow-xl border border-slate-100">
                       {positions.length > 0 ? (
                         positions.map((pos) => (
                           <SelectItem
@@ -280,9 +298,7 @@ export default function AdminRegisterPage() {
                         ))
                       ) : (
                         <SelectItem value="none" disabled>
-                          {loadingData
-                            ? "Loading..."
-                            : "No positions available"}
+                          {loadingData ? "Loading..." : "No positions"}
                         </SelectItem>
                       )}
                     </SelectContent>
@@ -291,6 +307,7 @@ export default function AdminRegisterPage() {
               </div>
             </div>
 
+            {/* Password Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <Label
@@ -308,7 +325,7 @@ export default function AdminRegisterPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={8}
-                    className="pl-10"
+                    className="pl-10 bg-slate-50 border-slate-200 focus:bg-white"
                     placeholder="At least 8 characters"
                   />
                 </div>
@@ -330,13 +347,14 @@ export default function AdminRegisterPage() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={8}
-                    className="pl-10"
+                    className="pl-10 bg-slate-50 border-slate-200 focus:bg-white"
                     placeholder="Re-enter password"
                   />
                 </div>
               </div>
             </div>
 
+            {/* Secret Key Input */}
             <div className="space-y-2">
               <Label
                 htmlFor="secretKey"
@@ -352,7 +370,7 @@ export default function AdminRegisterPage() {
                   value={secretKey}
                   onChange={(e) => setSecretKey(e.target.value)}
                   required
-                  className="pl-10"
+                  className="pl-10 bg-slate-50 border-slate-200 focus:bg-white"
                   placeholder="Enter the provided secret key"
                 />
               </div>
@@ -366,7 +384,7 @@ export default function AdminRegisterPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="min-w-[180px] bg-indigo-600 hover:bg-indigo-700"
+                className="min-w-[180px] bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
               >
                 {loading ? "Registering…" : "Create Account"}
               </Button>

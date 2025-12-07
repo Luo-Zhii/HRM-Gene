@@ -12,7 +12,8 @@ import { Employee } from "../../entities/employee.entity";
 import { Position } from "../../entities/position.entity";
 import { PositionPermission } from "../../entities/position-permission.entity";
 import { Permission } from "../../entities/permission.entity";
-
+import "dotenv/config";
+import { Department } from "@/entities/department.entity";
 @Injectable()
 export class AuthService {
   constructor(
@@ -23,6 +24,9 @@ export class AuthService {
 
     @InjectRepository(Position)
     private positionRepo: Repository<Position>,
+
+    @InjectRepository(Department)
+    private departmentRepo: Repository<Department>,
 
     @InjectRepository(PositionPermission)
     private ppRepo: Repository<PositionPermission>,
@@ -125,51 +129,63 @@ export class AuthService {
   async registerAdminUser(data: {
     email: string;
     password: string;
-    role: "Admin" | "Developer";
     secretKey: string;
+    department_id: number;
+    position_id: number;
+    first_name: string; // 1. Thêm dòng này
+    last_name: string; // 1. Thêm dòng này
   }) {
-    const { email, password, role, secretKey } = data;
-    console.log("Current Env Key:", process.env.ADMIN_SECRET_KEY); // <--- Thêm dòng này để kiểm tra
-    const expectedKey = process.env.ADMIN_SECRET_KEY;
-    if (!expectedKey) {
-      throw new UnauthorizedException("Admin registration is disabled");
-    }
+    // 2. Lấy dữ liệu tên ra từ data
+    const {
+      email,
+      password,
+      secretKey,
+      department_id,
+      position_id,
+      first_name,
+      last_name,
+    } = data;
 
-    if (secretKey !== expectedKey) {
+    // --- Các đoạn check Secret Key và Email giữ nguyên ---
+    const expectedKey = process.env.ADMIN_SECRET_KEY;
+    if (!expectedKey || secretKey !== expectedKey) {
       throw new UnauthorizedException("Invalid system secret key");
     }
 
-    if (!["Admin", "Developer"].includes(role)) {
-      throw new BadRequestException("Invalid role selected");
-    }
     const existing = await this.employeeRepo.findOne({ where: { email } });
     if (existing) {
       throw new BadRequestException("Email already exists");
     }
 
-    let position = await this.positionRepo.findOne({
-      where: { position_name: role },
+    // --- Tìm Position và Department giữ nguyên ---
+    const position = await this.positionRepo.findOne({
+      where: { position_id: position_id },
     });
-
     if (!position) {
-      // Bootstrap: create missing position if it does not exist yet
-      position = this.positionRepo.create({ position_name: role });
-      position = await this.positionRepo.save(position);
+      throw new BadRequestException("Position not found (Invalid ID)");
     }
 
+    const department = await this.departmentRepo.findOne({
+      where: { department_id: department_id },
+    });
+    if (!department) {
+      throw new BadRequestException("Department not found (Invalid ID)");
+    }
+
+    // --- Tạo User mới ---
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const employee = this.employeeRepo.create({
       email,
       password: hashedPassword,
-      first_name: role, // minimal defaults for required fields
-      last_name: "User",
-      position,
+      first_name: first_name, // 3. Gán tên thật từ Frontend
+      last_name: last_name, // 3. Gán họ thật từ Frontend
+      position: position,
+      department: department,
     });
 
     const saved = await this.employeeRepo.save(employee);
 
-    // Return a fresh profile with relations and without password
-    return this.getProfile(saved.employee_id);
+    return { message: "Account created successfully", id: saved.employee_id };
   }
 }
