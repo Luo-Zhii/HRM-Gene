@@ -1,5 +1,9 @@
-install docker (document,...)
+install docker (document,...) <br/>
 
+---
+<h1>Git</h1>
+git clone https://github.com/Luo-Zhii/HRM-Gene.git </br>
+cd HRM-Gene</br>
 ---
 <h1>backend</h1> </br> 
   cd backend</br> 
