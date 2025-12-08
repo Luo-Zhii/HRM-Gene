@@ -1,7 +1,7 @@
 install docker (document,...)
 
 ---
-backend
+<h1>backend</h1> </br> 
   cd backend
   npm i 
   docker-compose up 
@@ -10,7 +10,7 @@ backend
 
 
 ----
-frontend 
+<h1>frontend</h1> </br>
   cd frontend 
   npm i 
   npm run dev 
