@@ -280,10 +280,17 @@ export class PayrollService {
     });
 
     const standardDays = period.standard_work_days;
+    const HOURS_PER_DAY = 8;
     let totalGross = 0;
     let totalDeductions = 0;
     let totalNet = 0;
     let generated = 0;
+
+    // Helpers for volatility
+    const randomInt = (min: number, max: number) =>
+      Math.floor(Math.random() * (max - min + 1)) + min;
+    const randomFloat = (min: number, max: number) =>
+      Math.random() * (max - min) + min;
 
     // Generate payslips
     await this.dataSource.transaction(async (manager) => {
@@ -294,20 +301,52 @@ export class PayrollService {
 
         if (!salaryConfig) continue;
 
-        const actualDays = workDaysMap[employee.employee_id] || 0;
-        const salaryPerDay =
-          parseFloat(salaryConfig.base_salary) / standardDays;
+        const baseSalaryNum = parseFloat(salaryConfig.base_salary);
+
+        // Macro seasonal adjustments
+        let actualDays = workDaysMap[employee.employee_id] || 0;
+        // Month 2: holiday → low days
+        if (month === 2) {
+          actualDays = randomInt(15, 20);
+        }
+        // Clamp to standard working days
+        actualDays = Math.min(actualDays, standardDays);
+
+        // Month 6: high OT, Month 8: zero OT, otherwise keep 0 (simplified)
+        let otHours = 0;
+        if (month === 6) {
+          otHours = randomInt(20, 40);
+        } else if (month === 8) {
+          otHours = 0;
+        }
+
+        // 13th month salary bonus for Tet/Year-end (months 1 & 12)
+        const thirteenthMonthBonus =
+          month === 1 || month === 12 ? baseSalaryNum : 0;
+
+        // Random performance bonus for ~5% employees each month
+        const performanceBonus =
+          Math.random() < 0.05 ? randomFloat(5_000_000, 10_000_000) : 0;
+
+        // Core salary components
+        const salaryPerDay = baseSalaryNum / standardDays;
         const workSalary = salaryPerDay * actualDays;
+
+        const hourlyRate = baseSalaryNum / (standardDays * HOURS_PER_DAY);
+        const overtimePay = otHours * hourlyRate * 1.5; // 150% rate
 
         const totalAllowance =
           parseFloat(salaryConfig.transport_allowance) +
           parseFloat(salaryConfig.lunch_allowance) +
           parseFloat(salaryConfig.responsibility_allowance);
 
-        const grossIncome = workSalary + totalAllowance;
+        const totalBonus =
+          overtimePay + thirteenthMonthBonus + performanceBonus;
+
+        const grossIncome = workSalary + totalAllowance + totalBonus;
 
         // Deductions: Insurance 10.5% of base salary
-        const insurance = parseFloat(salaryConfig.base_salary) * 0.105;
+        const insurance = baseSalaryNum * 0.105;
         const deductions = insurance;
         const netSalary = grossIncome - deductions;
 
@@ -325,6 +364,8 @@ export class PayrollService {
         if (existing) {
           // Update existing
           existing.actual_work_days = actualDays;
+          existing.ot_hours = otHours;
+          existing.bonus = totalBonus.toFixed(2);
           existing.gross_salary = grossIncome.toFixed(2);
           existing.deductions = deductions.toFixed(2);
           existing.net_salary = netSalary.toFixed(2);
@@ -335,7 +376,8 @@ export class PayrollService {
             employee,
             payroll_period: period,
             actual_work_days: actualDays,
-            ot_hours: 0,
+            ot_hours: otHours,
+            bonus: totalBonus.toFixed(2),
             gross_salary: grossIncome.toFixed(2),
             deductions: deductions.toFixed(2),
             net_salary: netSalary.toFixed(2),

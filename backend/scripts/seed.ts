@@ -12,7 +12,7 @@ import { Department } from "../src/entities/department.entity";
 import { BankInfo } from "../src/entities/bank-info.entity";
 import { Contract, ContractType, ContractStatus } from "../src/entities/contract.entity";
 import { TimeKeeping } from "../src/entities/timekeeping.entity";
-import { Payslip } from "../src/entities/payslip.entity";
+import { Payslip, PayslipStatus } from "../src/entities/payslip.entity";
 import { LeaveRequest } from "../src/entities/leave-request.entity";
 import { LeaveType } from "../src/entities/leave-type.entity";
 import { LeaveBalance } from "../src/entities/leave-balance.entity";
@@ -192,7 +192,28 @@ async function run() {
   for (const employee of employees) {
     const joinDate = randomDate(twoYearsAgo, now);
     const contractType = randomElement([ContractType.OFFICIAL, ContractType.PROBATION, ContractType.PART_TIME]);
-    const baseSalary = randomBetween(10000000, 50000000); // 10M - 50M
+    // Salary variance by position to create a wide spread (5M - 100M)
+    let baseSalary = 0;
+    switch (employee.position?.position_name) {
+      case "Intern":
+        baseSalary = randomBetween(5_000_000, 12_000_000);
+        break;
+      case "Senior Staff":
+        baseSalary = randomBetween(20_000_000, 40_000_000);
+        break;
+      case "Team Leader":
+        baseSalary = randomBetween(25_000_000, 50_000_000);
+        break;
+      case "Manager":
+        baseSalary = randomBetween(30_000_000, 60_000_000);
+        break;
+      case "Director":
+        baseSalary = randomBetween(60_000_000, 100_000_000);
+        break;
+      default:
+        baseSalary = randomBetween(10_000_000, 25_000_000);
+        break;
+    }
 
     const contract = await contractRepo.save(contractRepo.create({
       employee: employee,
@@ -236,30 +257,91 @@ async function run() {
     const p = await payrollPeriodRepo.save(payrollPeriodRepo.create({
       month: d.getMonth() + 1,
       year: d.getFullYear(),
-      status: PayrollPeriodStatus.DRAFT,
+      status: PayrollPeriodStatus.PAID,
       standard_work_days: 26
     }));
     periods.push(p);
   }
 
-  // Create Payslips
+  // Create Payslips with Chaos Logic (high volatility)
+  const HOURS_PER_DAY = 8;
   for (const period of periods) {
+    const month = period.month;
     for (const emp of activeEmployees) {
       const contract = contracts.find(c => c.employee.employee_id === emp.employee_id);
       if (!contract) continue;
-      
-      const gross = parseFloat((contract as any).salary_rate);
-      const net = gross * 0.895;
+
+      const baseSalary = parseFloat((contract as any).salary_rate);
+      const standardDays = period.standard_work_days;
+
+      // Seasonal base days
+      let actualDays = randomBetween(24, 26);
+      if (month === 2) {
+        actualDays = randomBetween(15, 18); // Post-Tet dip
+      }
+      // Unpaid leave (5% employees): reduce days further and add deduction
+      let unpaidLeaveDays = 0;
+      if (Math.random() < 0.05) {
+        unpaidLeaveDays = randomBetween(1, 3);
+        actualDays = Math.max(10, actualDays - unpaidLeaveDays);
+      }
+      actualDays = Math.min(actualDays, standardDays);
+
+      // OT hours
+      let otHours = randomBetween(0, 10);
+      if (month === 6 && emp.department?.department_name === "Engineering") {
+        otHours = randomBetween(30, 50); // Crunch
+      } else if (month === 9) {
+        otHours = 0; // Low season
+      }
+
+      // Bonuses
+      const thirteenthBonus =
+        month === 1 || month === 12 ? baseSalary : 0;
+      const tetBonus =
+        month === 1 || month === 12 ? randomBetween(2_000_000, 8_000_000) : 0;
+      const performanceBonus =
+        Math.random() < 0.10 ? randomBetween(2_000_000, 10_000_000) : 0;
+
+      // Core pay
+      const salaryPerDay = baseSalary / standardDays;
+      const workSalary = salaryPerDay * actualDays;
+      const hourlyRate = baseSalary / (standardDays * HOURS_PER_DAY);
+      const overtimePay = otHours * hourlyRate * 1.5;
+
+      // Allowances from salary config ratios
+      const transportAllowance = baseSalary * 0.1;
+      const lunchAllowance = 730_000;
+      const responsibilityAllowance =
+        emp.position?.position_name === "Manager"
+          ? baseSalary * 0.15
+          : 0;
+
+      const totalAllowance =
+        transportAllowance + lunchAllowance + responsibilityAllowance;
+
+      const totalBonus =
+        overtimePay + thirteenthBonus + tetBonus + performanceBonus;
+
+      const grossIncome = workSalary + totalAllowance + totalBonus;
+
+      // Deductions: insurance + unpaid leave
+      const insurance = baseSalary * 0.105;
+      const unpaidDeduction = salaryPerDay * unpaidLeaveDays;
+      const deductions = insurance + unpaidDeduction;
+
+      const netSalary = grossIncome - deductions;
 
       await payslipRepo.save(payslipRepo.create({
         employee: emp,
         payroll_period: period,
-        actual_work_days: randomBetween(24, 26),
-        ot_hours: randomBetween(0, 10),
-        gross_salary: gross.toFixed(2),
-        deductions: (gross * 0.105).toFixed(2),
-        net_salary: net.toFixed(2),
-        status: "Pending" as any,
+        actual_work_days: actualDays,
+        ot_hours: otHours,
+        bonus: totalBonus.toFixed(2),
+        gross_salary: grossIncome.toFixed(2),
+        deductions: deductions.toFixed(2),
+        net_salary: netSalary.toFixed(2),
+        status: PayslipStatus.PAID,
         pay_period: `${String(period.month).padStart(2, '0')}/${period.year}`
       }));
     }
