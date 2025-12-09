@@ -131,8 +131,8 @@ export default function SalaryConfigPage() {
 
   // Handle Edit button click - Open modal with employee data
   const handleEdit = (config: SalaryConfig, event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
+      event.preventDefault();
+      event.stopPropagation();
     
     // Prevent scroll behavior
     document.body.style.overflow = "hidden";
@@ -420,7 +420,7 @@ export default function SalaryConfigPage() {
         </div>
 
         {/* Edit Salary Modal */}
-        <Dialog 
+        <Dialog
           open={isEditModalOpen} 
           onOpenChange={(open) => {
             if (!open && !saving) {
