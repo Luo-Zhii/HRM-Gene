@@ -45,6 +45,12 @@ function Sidebar({
 }) {
   const { user } = useAuth();
 
+  const positionName = user?.position?.position_name?.toLowerCase();
+  const isAdminOrHr =
+    positionName === "admin" ||
+    positionName === "hr" ||
+    positionName === "hr manager";
+
   // Check if user has manage:system permission
   const hasManageSystemPermission =
     user?.permissions?.includes("manage:system") ?? false;
@@ -126,40 +132,55 @@ function Sidebar({
             onClick={onClose}
           />
 
-          {/* Admin Administration Section - Only visible if user has manage:system permission */}
-          {hasManageSystemPermission && (
+          {/* Admin Administration Section */}
+          {(hasManageSystemPermission || isAdminOrHr) && (
             <>
               <div className="mt-8 mb-2 px-3 text-xs font-bold text-blue-300 uppercase tracking-wider">
                 Admin Administration
               </div>
 
-              <NavItem
-                href="/admin/leave-approvals"
-                icon={<ShieldCheck size={20} />}
-                label="Leave Approvals"
-                onClick={onClose}
-              />
-              <NavItem
-                href="/admin/organization"
-                icon={<Building2 size={20} />}
-                label="Organization"
-                onClick={onClose}
-              />
-              <NavItem
-                href="/admin/permissions"
-                icon={<LockKeyhole size={20} />}
-                label="Permissions"
-                onClick={onClose}
-              />
+              {hasManageSystemPermission && (
+                <>
+                  <NavItem
+                    href="/admin/leave-approvals"
+                    icon={<ShieldCheck size={20} />}
+                    label="Leave Approvals"
+                    onClick={onClose}
+                  />
+                  <NavItem
+                    href="/admin/organization"
+                    icon={<Building2 size={20} />}
+                    label="Organization"
+                    onClick={onClose}
+                  />
+                  <NavItem
+                    href="/admin/permissions"
+                    icon={<LockKeyhole size={20} />}
+                    label="Permissions"
+                    onClick={onClose}
+                  />
+                </>
+              )}
 
-              <Link
-                href="/admin/qr-display"
-                onClick={onClose}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-700 transition-all mt-2"
-              >
-                <QrCode size={20} />
-                <span>QR Display (Tablet)</span>
-              </Link>
+              {(isAdminOrHr || hasManageSystemPermission) && (
+                <NavItem
+                  href="/admin/attendance"
+                  icon={<Clock size={20} />}
+                  label="Attendance History"
+                  onClick={onClose}
+                />
+              )}
+
+              {hasManageSystemPermission && (
+                <Link
+                  href="/admin/qr-display"
+                  onClick={onClose}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-700 transition-all mt-2"
+                >
+                  <QrCode size={20} />
+                  <span>QR Display (Tablet)</span>
+                </Link>
+              )}
             </>
           )}
 

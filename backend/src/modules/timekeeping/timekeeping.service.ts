@@ -308,7 +308,9 @@ export class TimeKeepingService {
    */
   async getAllForAdmin(
     page: number,
-    limit: number
+    limit: number,
+    startDate?: string,
+    endDate?: string
   ): Promise<{
     data: TimeKeeping[];
     total: number;
@@ -316,9 +318,52 @@ export class TimeKeepingService {
     limit: number;
     totalPages: number;
   }> {
+    const parseDateOnly = (value?: string): Date | undefined => {
+      if (!value) return undefined;
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return undefined;
+      return new Date(
+        Date.UTC(
+          parsed.getUTCFullYear(),
+          parsed.getUTCMonth(),
+          parsed.getUTCDate()
+        )
+      );
+    };
+
+    const start = parseDateOnly(startDate);
+    const end = parseDateOnly(endDate);
+
+    let rangeStart: Date;
+    let rangeEnd: Date;
+
+    if (start && end) {
+      rangeStart = start;
+      rangeEnd = end;
+    } else if (start && !end) {
+      // Single day filter
+      rangeStart = start;
+      rangeEnd = start;
+    } else {
+      // Default to last 30 days to avoid over-fetching
+      const now = new Date();
+      rangeEnd = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+      );
+      rangeStart = new Date(rangeEnd);
+      rangeStart.setUTCDate(rangeStart.getUTCDate() - 29);
+    }
+
+    const rangeStartStr = rangeStart.toISOString().slice(0, 10);
+    const rangeEndStr = rangeEnd.toISOString().slice(0, 10);
+
     const [items, total] = await this.tkRepo
       .createQueryBuilder("tk")
       .leftJoinAndSelect("tk.employee", "employee")
+      .where("tk.work_date BETWEEN :start AND :end", {
+        start: rangeStartStr,
+        end: rangeEndStr,
+      })
       .orderBy("tk.work_date", "DESC")
       .addOrderBy("tk.check_in_time", "DESC")
       .skip((page - 1) * limit)

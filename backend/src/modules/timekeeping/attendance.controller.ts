@@ -22,7 +22,9 @@ export class AttendanceAdminController {
   @Permissions("manage:system", "manage:leave")
   async getAllForAdmin(
     @Query("page") page: string,
-    @Query("limit") limit: string
+    @Query("limit") limit: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string
   ) {
     const pageNum = Math.max(1, parseInt(page || "1", 10) || 1);
     const limitNum = Math.min(
@@ -30,7 +32,7 @@ export class AttendanceAdminController {
       Math.max(1, parseInt(limit || "50", 10) || 50)
     );
 
-    return this.svc.getAllForAdmin(pageNum, limitNum);
+    return this.svc.getAllForAdmin(pageNum, limitNum, startDate, endDate);
   }
 }
 

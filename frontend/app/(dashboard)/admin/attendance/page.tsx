@@ -46,6 +46,10 @@ export default function AttendanceHistoryPage() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [appliedStartDate, setAppliedStartDate] = useState<string | null>(null);
+  const [appliedEndDate, setAppliedEndDate] = useState<string | null>(null);
 
   const canViewAttendance =
     user?.permissions?.includes("manage:system") ||
@@ -57,7 +61,11 @@ export default function AttendanceHistoryPage() {
     }
   }, [authLoading, user, router]);
 
-  const loadAttendance = async (pageToLoad: number) => {
+  const loadAttendance = async (
+    pageToLoad: number,
+    start?: string | null,
+    end?: string | null
+  ) => {
     try {
       setLoading(true);
       setError(null);
@@ -65,12 +73,17 @@ export default function AttendanceHistoryPage() {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
       const base = apiBase.replace(/\/api$|\/$/, "");
 
-      const res = await fetch(
-        `${base}/api/attendance/admin/all?page=${pageToLoad}&limit=50`,
-        {
-          credentials: "include",
-        }
-      );
+      const params = new URLSearchParams({
+        page: String(pageToLoad),
+        limit: "50",
+      });
+
+      if (start) params.append("startDate", start);
+      if (end) params.append("endDate", end);
+
+      const res = await fetch(`${base}/api/attendance/admin/all?${params.toString()}`, {
+        credentials: "include",
+      });
 
       if (res.status === 403) {
         setAccessDenied(true);
@@ -90,6 +103,8 @@ export default function AttendanceHistoryPage() {
       setRecords(json.data || []);
       setPage(json.page || pageToLoad);
       setTotalPages(json.totalPages || 1);
+      setAppliedStartDate(start || null);
+      setAppliedEndDate(end || null);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Error loading attendance records"
@@ -102,9 +117,13 @@ export default function AttendanceHistoryPage() {
 
   useEffect(() => {
     if (!authLoading && user && canViewAttendance) {
-      loadAttendance(1);
+      loadAttendance(1, startDate || null, endDate || null);
     }
   }, [authLoading, user]);
+
+  const applyFilter = () => {
+    loadAttendance(1, startDate || null, endDate || null);
+  };
 
   const formatDateTime = (value: string | null) => {
     if (!value) return "-";
@@ -131,6 +150,21 @@ export default function AttendanceHistoryPage() {
 
   const getEmployeeName = (rec: AttendanceRecord) =>
     `${rec.employee.first_name} ${rec.employee.last_name}`.trim();
+
+  const currentRangeLabel = () => {
+    if (!appliedStartDate && !appliedEndDate) {
+      return "Showing last 30 days (default)";
+    }
+    if (appliedStartDate && appliedEndDate) {
+      return `Showing ${formatDate(appliedStartDate)} - ${formatDate(
+        appliedEndDate
+      )}`;
+    }
+    if (appliedStartDate) {
+      return `Showing ${formatDate(appliedStartDate)}`;
+    }
+    return "Showing all records";
+  };
 
   if (authLoading || loading) {
     return (
@@ -174,6 +208,52 @@ export default function AttendanceHistoryPage() {
             {error}
           </div>
         )}
+
+        <Card className="shadow-md border-none">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row md:items-end md:space-x-4 space-y-3 md:space-y-0">
+              <div className="flex flex-col space-y-1">
+                <label className="text-sm text-slate-600">Start Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="border rounded px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label className="text-sm text-slate-600">End Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="border rounded px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={applyFilter}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+                >
+                  Filter
+                </button>
+                <button
+                  onClick={() => {
+                    setStartDate("");
+                    setEndDate("");
+                    loadAttendance(1, null, null);
+                  }}
+                  className="text-sm px-3 py-2 rounded border"
+                >
+                  Reset
+                </button>
+              </div>
+              <div className="flex-1 text-sm text-slate-600 md:text-right">
+                {currentRangeLabel()}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card className="shadow-md border-none">
           <CardHeader>
@@ -232,14 +312,20 @@ export default function AttendanceHistoryPage() {
                 <button
                   className="px-3 py-1 rounded border bg-white dark:bg-slate-800 disabled:opacity-50"
                   disabled={page <= 1}
-                  onClick={() => page > 1 && loadAttendance(page - 1)}
+                  onClick={() =>
+                    page > 1 &&
+                    loadAttendance(page - 1, appliedStartDate, appliedEndDate)
+                  }
                 >
                   Previous
                 </button>
                 <button
                   className="px-3 py-1 rounded border bg-white dark:bg-slate-800 disabled:opacity-50"
                   disabled={page >= totalPages}
-                  onClick={() => page < totalPages && loadAttendance(page + 1)}
+                  onClick={() =>
+                    page < totalPages &&
+                    loadAttendance(page + 1, appliedStartDate, appliedEndDate)
+                  }
                 >
                   Next
                 </button>
