@@ -67,11 +67,11 @@ export default function ProfilePage() {
   // Check authorization
   useEffect(() => {
     if (!authLoading) {
-      if (!user) {
+      if (!currentUser) {
         router.push("/login");
       }
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, currentUser, router]);
 
   // Load profile data
   useEffect(() => {
