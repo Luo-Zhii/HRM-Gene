@@ -2,15 +2,18 @@ import {
   Injectable,
   UnauthorizedException,
   NotFoundException,
+  BadRequestException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, In } from "typeorm";
 import * as bcrypt from "bcrypt";
 import { Employee } from "../../entities/employee.entity";
+import { Position } from "../../entities/position.entity";
 import { PositionPermission } from "../../entities/position-permission.entity";
 import { Permission } from "../../entities/permission.entity";
-
+import "dotenv/config";
+import { Department } from "@/entities/department.entity";
 @Injectable()
 export class AuthService {
   constructor(
@@ -18,6 +21,12 @@ export class AuthService {
 
     @InjectRepository(Employee)
     private employeeRepo: Repository<Employee>,
+
+    @InjectRepository(Position)
+    private positionRepo: Repository<Position>,
+
+    @InjectRepository(Department)
+    private departmentRepo: Repository<Department>,
 
     @InjectRepository(PositionPermission)
     private ppRepo: Repository<PositionPermission>,
@@ -115,5 +124,68 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
     };
+  }
+
+  async registerAdminUser(data: {
+    email: string;
+    password: string;
+    secretKey: string;
+    department_id: number;
+    position_id: number;
+    first_name: string; // 1. Thêm dòng này
+    last_name: string; // 1. Thêm dòng này
+  }) {
+    // 2. Lấy dữ liệu tên ra từ data
+    const {
+      email,
+      password,
+      secretKey,
+      department_id,
+      position_id,
+      first_name,
+      last_name,
+    } = data;
+
+    // --- Các đoạn check Secret Key và Email giữ nguyên ---
+    const expectedKey = process.env.ADMIN_SECRET_KEY;
+    if (!expectedKey || secretKey !== expectedKey) {
+      throw new UnauthorizedException("Invalid system secret key");
+    }
+
+    const existing = await this.employeeRepo.findOne({ where: { email } });
+    if (existing) {
+      throw new BadRequestException("Email already exists");
+    }
+
+    // --- Tìm Position và Department giữ nguyên ---
+    const position = await this.positionRepo.findOne({
+      where: { position_id: position_id },
+    });
+    if (!position) {
+      throw new BadRequestException("Position not found (Invalid ID)");
+    }
+
+    const department = await this.departmentRepo.findOne({
+      where: { department_id: department_id },
+    });
+    if (!department) {
+      throw new BadRequestException("Department not found (Invalid ID)");
+    }
+
+    // --- Tạo User mới ---
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const employee = this.employeeRepo.create({
+      email,
+      password: hashedPassword,
+      first_name: first_name, // 3. Gán tên thật từ Frontend
+      last_name: last_name, // 3. Gán họ thật từ Frontend
+      position: position,
+      department: department,
+    });
+
+    const saved = await this.employeeRepo.save(employee);
+
+    return { message: "Account created successfully", id: saved.employee_id };
   }
 }

@@ -81,4 +81,16 @@ export class AdminController {
       body.permission_id
     );
   }
+
+  // ============= Employee Management =============
+  @Get("employees")
+  async getAllEmployees() {
+    return this.svc.getAllEmployees();
+  }
+
+  // ============= Seed Demo Data =============
+  @Post("seed/demo-data")
+  async seedDemoData(@Body() body?: { employee_id?: number }) {
+    return this.svc.seedDemoData(body?.employee_id);
+  }
 }

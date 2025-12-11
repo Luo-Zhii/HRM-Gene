@@ -7,15 +7,17 @@ import "react-datepicker/dist/react-datepicker.css";
 import { cn } from "@/lib/utils";
 
 interface DatePickerProps {
-  selected?: Date;
+  selected?: Date | null;
   onSelect?: (date: Date | null) => void;
   placeholderText?: string;
   className?: string;
   disabled?: boolean;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
 const CustomDatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
-  ({ selected, onSelect, placeholderText, className, disabled }, ref) => {
+  ({ selected, onSelect, placeholderText, className, disabled, minDate, maxDate }, ref) => {
     return (
       <DatePicker
         selected={selected}
@@ -26,6 +28,8 @@ const CustomDatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
           className
         )}
         disabled={disabled}
+        minDate={minDate}
+        maxDate={maxDate}
         dateFormat="yyyy-MM-dd"
       />
     );

@@ -13,8 +13,6 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
 
-    # Ánh xạ cổng:
-    # Cổng 5432 của máy bạn (host) sẽ trỏ vào cổng 5432 của container
     ports:
       - "${DB_PORT}:5432"
 

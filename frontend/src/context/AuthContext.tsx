@@ -6,8 +6,8 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import "dotenv/config";
 // import { useRouter } from "next/navigation"; // Không cần dùng router nữa cho logout
-
 type User = {
   employee_id?: number;
   email?: string;
@@ -39,17 +39,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
       // Thêm timestamp để tránh cache trình duyệt tuyệt đối
       const res = await fetch(
-        `${apiBase.replace(
+        `${"http://localhost:3001".replace(
           /\/api$|\/$/,
           ""
+          // `http://10.78.101.32:3001
+          // `http://localhost:3001
         )}/api/auth/profile?t=${new Date().getTime()}`,
+        // `http://10.78.101.32:3001/api/auth/profile`,
         {
           credentials: "include",
-          cache: "no-store", // <--- QUAN TRỌNG: Không cache request này
-          headers: {
-            "Content-Type": "application/json",
-            Pragma: "no-cache", // <--- Header chống cache HTTP 1.0
-          },
         }
       );
       if (!res.ok) {

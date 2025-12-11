@@ -10,6 +10,7 @@ import { Employee } from "../../entities/employee.entity";
 import { Position } from "../../entities/position.entity";
 import { PositionPermission } from "../../entities/position-permission.entity";
 import { Permission } from "../../entities/permission.entity";
+import { Department } from "@/entities/department.entity";
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { Permission } from "../../entities/permission.entity";
       Position,
       PositionPermission,
       Permission,
+      Department,
     ]),
   ],
   controllers: [AuthController],

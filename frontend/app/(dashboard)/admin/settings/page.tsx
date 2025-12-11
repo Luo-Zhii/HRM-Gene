@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/src/hooks/useAuth";
 
 interface CompanySetting {
@@ -154,11 +156,18 @@ export default function SystemSettingsPage() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
-          <p className="text-gray-600 mt-2">
-            Configure application-wide settings
-          </p>
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
+            <p className="text-gray-600 mt-2">
+              Configure application-wide settings
+            </p>
+          </div>
+          <Link href="/admin/register">
+            <Button className="bg-indigo-600 hover:bg-indigo-700">
+              Create Admin/Dev Account
+            </Button>
+          </Link>
         </div>
 
         {/* Status Message */}

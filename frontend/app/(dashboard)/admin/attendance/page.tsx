@@ -81,12 +81,9 @@ export default function AttendanceHistoryPage() {
       if (start) params.append("startDate", start);
       if (end) params.append("endDate", end);
 
-      const res = await fetch(
-        `${base}/api/attendance/admin/all?${params.toString()}`,
-        {
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${base}/api/attendance/admin/all?${params.toString()}`, {
+        credentials: "include",
+      });
 
       if (res.status === 403) {
         setAccessDenied(true);

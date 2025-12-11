@@ -78,7 +78,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" variant="outline" disabled={loading}>
                 {loading ? "Signing in…" : "Sign in"}
               </Button>
             </div>

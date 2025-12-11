@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nest start",
-    "start:dev": "nest start --watch",
+    "instance:dev": "nest start",
+    "dev": "nest start --watch",
     "build": "nest build",
     "lint": "eslint . --ext .ts",
     "seed": "ts-node scripts/seed.ts"
@@ -12,6 +12,7 @@
   "dependencies": {
     "@nestjs/cache-manager": "^2.0.0",
     "@nestjs/common": "^9.0.0",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^9.0.0",
     "@nestjs/jwt": "^9.0.0",
     "@nestjs/mapped-types": "^2.1.0",

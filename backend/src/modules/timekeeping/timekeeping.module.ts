@@ -3,6 +3,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { CacheModule } from "@nestjs/cache-manager";
 import { TimeKeepingService } from "./timekeeping.service";
 import { TimeKeepingController } from "./timekeeping.controller";
+import { AttendanceAdminController } from "./attendance.controller";
 import { IPWhitelistGuard } from "./ip-whitelist.guard";
 import { CompanySettings } from "../../entities/company-settings.entity";
 import { TimeKeeping } from "../../entities/timekeeping.entity";
@@ -14,6 +15,6 @@ import { Employee } from "../../entities/employee.entity";
     CacheModule.register(),
   ],
   providers: [TimeKeepingService, IPWhitelistGuard],
-  controllers: [TimeKeepingController],
+  controllers: [TimeKeepingController, AttendanceAdminController],
 })
 export class TimeKeepingModule {}

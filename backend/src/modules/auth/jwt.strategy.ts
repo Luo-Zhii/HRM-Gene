@@ -1,6 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Employee } from "../../entities/employee.entity"; // ⚠️ Sửa đường dẫn nếu cần
 
 const cookieExtractor = (req: any) => {
   let token = null;
@@ -17,7 +20,11 @@ const cookieExtractor = (req: any) => {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  constructor(
+    // 👇 Inject Repository để query database
+    @InjectRepository(Employee)
+    private employeeRepo: Repository<Employee>
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         cookieExtractor,
@@ -29,11 +36,33 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // payload contains sub, email, positionId
+    // 👇 Thay vì trả về payload thô, ta query DB để lấy quyền mới nhất
+    const user = await this.employeeRepo.findOne({
+      where: { employee_id: payload.sub } as any,
+      relations: [
+        "position",
+        "position.permissions", // 👈 Tên này phải chuẩn theo Entity Position
+        "position.permissions.permission", // 👈 Lấy tên permission
+      ],
+    });
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    // 👇 "Làm phẳng" quyền thành mảng string: ['manage:system', 'view:leave']
+    const permissions =
+      user.position?.permissions
+        ?.map((pp) => pp.permission?.permission_name)
+        .filter((p) => p) || [];
+
+    // 👇 Trả về User kèm Permissions để Guard sử dụng
     return {
+      ...user,
       employee_id: payload.sub,
       email: payload.email,
-      positionId: payload.positionId,
+      role: user.position?.position_name, // Gán role để dùng cho Admin Bypass
+      permissions: permissions, // ✅ Guard cần cái này nhất
     };
   }
 }

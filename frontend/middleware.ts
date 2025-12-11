@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
 
   // Lấy đường dẫn mà user đang cố truy cập
-  const isPublicPath = pathname === "/login"; // (Bạn có thể thêm /register, v.v.)
+  const isPublicPath = pathname === "/login" || pathname === "/admin-register"; // (Bạn có thể thêm /register, v.v.)
 
   // --- LOGIC XỬ LÝ ---
 

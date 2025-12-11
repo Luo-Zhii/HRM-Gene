@@ -6,45 +6,62 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { PERMISSIONS_KEY } from "./permissions.decorator";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { PositionPermission } from "../../entities/position-permission.entity";
-import { Permission } from "../../entities/permission.entity";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(
-    private reflector: Reflector,
-    @InjectRepository(PositionPermission)
-    private ppRepo?: Repository<PositionPermission>,
-    @InjectRepository(Permission)
-    private permissionRepo?: Repository<Permission>
-  ) {}
+  constructor(private reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
+    // 1. Lấy danh sách quyền yêu cầu từ Decorator @Permissions(...)
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()]
     );
-    if (!requiredPermissions || requiredPermissions.length === 0) return true;
 
-    const req = context.switchToHttp().getRequest();
-    const user = req.user;
-    if (!user) throw new ForbiddenException("Unauthorized");
-
-    // Load permissions for user's position
-    let userPermissions: string[] = [];
-    if (user.positionId && this.ppRepo && this.permissionRepo) {
-      const pps = await this.ppRepo.find({
-        where: { position_id: user.positionId } as any,
-      } as any);
-      const permIds = pps.map((x: any) => x.permission_id);
-      const perms = await this.permissionRepo.findByIds(permIds as any);
-      userPermissions = perms.map((p: any) => p.permission_name);
+    // Nếu API không yêu cầu quyền gì -> Cho qua
+    if (!requiredPermissions || requiredPermissions.length === 0) {
+      return true;
     }
 
-    const ok = requiredPermissions.every((p) => userPermissions.includes(p));
-    if (!ok) throw new ForbiddenException("Insufficient permissions");
+    // 2. Lấy User từ Request
+    const { user } = context.switchToHttp().getRequest();
+    if (!user) {
+      throw new ForbiddenException("Unauthenticated user");
+    }
+
+    // ============================================================
+    // 🚀 QUAN TRỌNG: ADMIN BYPASS (Thẻ bài miễn tử)
+    // Nếu là Admin, cho phép truy cập ngay lập tức, bỏ qua check quyền
+    // ============================================================
+    const positionName = user.position?.position_name || user.role || "";
+
+    if (
+      positionName === "Admin" ||
+      positionName === "System Admin" ||
+      positionName.toLowerCase() === "admin" // Chấp nhận cả chữ thường
+    ) {
+      return true;
+    }
+
+    // 3. Logic check quyền cho nhân viên thường
+    // user.permissions được lấy từ JwtStrategy (đã gộp sẵn ở bước Login/Validate)
+    const userPermissions = user.permissions || [];
+
+    // Kiểm tra: User có chứa ít nhất một quyền trong danh sách yêu cầu hay không
+    // (Dùng .some() linh hoạt hơn .every())
+    const hasPermission = requiredPermissions.some((permission) =>
+      userPermissions.includes(permission)
+    );
+
+    if (!hasPermission) {
+      // Log ra để debug nếu bị lỗi 403
+      console.log(`⛔ Access Denied! User: ${user.email}`);
+      console.log(`   Required: ${JSON.stringify(requiredPermissions)}`);
+      console.log(`   User Has: ${JSON.stringify(userPermissions)}`);
+
+      throw new ForbiddenException("Insufficient permissions");
+    }
+
     return true;
   }
 }

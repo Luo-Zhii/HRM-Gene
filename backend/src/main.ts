@@ -1,5 +1,6 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
+import * as os from 'os'; // 1. Import module OS
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,7 +17,22 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port, "0.0.0.0");
-  console.log(`✅ HRM Backend listening on http://localhost:${port}`);
+  // 2. Logic lấy địa chỉ IP của máy
+  const networkInterfaces = os.networkInterfaces();
+  
+  // Tìm địa chỉ IPv4 không phải là internal (127.0.0.1)
+  const ipAddress = Object.values(networkInterfaces)
+    .flat()
+    .find((details) => details?.family === 'IPv4' && !details.internal)?.address;
+
+  // 3. In ra console đẹp và đầy đủ thông tin
+  console.log(`\n🚀 HRM Backend is running!`);
+  console.log(`--------------------------------------------------`);
+  console.log(`✅ Local:    http://localhost:${port}/api`);
+  if (ipAddress) {
+    console.log(`✅ Network:  http://${ipAddress}:${port}/api`);
+  }
+  console.log(`--------------------------------------------------\n`);
 }
 
 bootstrap().catch((err) => {
