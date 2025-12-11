@@ -29,7 +29,7 @@ export class AuthController {
 
     res.cookie("access_token", tokenData.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "development",
+      secure: false,
       sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
@@ -42,7 +42,7 @@ export class AuthController {
   async logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie("access_token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "development",
+      secure: false,
       sameSite: "lax",
     });
     return { success: true };
@@ -55,11 +55,11 @@ export class AuthController {
     @Request() req: any,
     @Res({ passthrough: true }) res: Response
   ) {
-    res.set({
-      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-      Pragma: "no-cache",
-      Expires: "0",
-    });
+    // res.set({
+    //   "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    //   Pragma: "no-cache",
+    //   Expires: "0",
+    // });
 
     const user = req.user;
     const userId = user.employee_id || user.id;
