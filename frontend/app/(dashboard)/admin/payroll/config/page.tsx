@@ -60,7 +60,7 @@ export default function SalaryConfigPage() {
   const [configs, setConfigs] = useState<SalaryConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState<SalaryConfig | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(true);
   const [editForm, setEditForm] = useState({
     base_salary: "",
     transport_allowance: "",
@@ -68,6 +68,15 @@ export default function SalaryConfigPage() {
     responsibility_allowance: "",
   });
   const [saving, setSaving] = useState(false);
+
+  // Debug: Log modal state changes
+  useEffect(() => {
+    console.log("Modal state changed:", {
+      isEditModalOpen,
+      hasSelectedEmployee: !!selectedEmployee,
+      selectedEmployeeId: selectedEmployee?.employee.employee_id,
+    });
+  }, [isEditModalOpen, selectedEmployee]);
 
   // Check authorization
   useEffect(() => {
@@ -131,12 +140,11 @@ export default function SalaryConfigPage() {
 
   // Handle Edit button click - Open modal with employee data
   const handleEdit = (config: SalaryConfig, event: React.MouseEvent) => {
-      event.preventDefault();
-      event.stopPropagation();
-    
-    // Prevent scroll behavior
-    document.body.style.overflow = "hidden";
-    
+    event.preventDefault();
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
+    console.log("Edit button clicked for employee:", config.employee.employee_id);
+    console.log("Current modal state before update:", isEditModalOpen);
     // Set selected employee and initialize form
     setSelectedEmployee(config);
     setEditForm({
@@ -146,15 +154,18 @@ export default function SalaryConfigPage() {
       responsibility_allowance: config.responsibility_allowance || "0",
     });
     
-    // Open modal
+    // Open modal - Radix UI Dialog handles scroll locking automatically
     setIsEditModalOpen(true);
+    
+    console.log("Modal state set to true, selectedEmployee:", config.employee.employee_id);
   };
 
   // Close modal and reset state
   const handleCloseModal = () => {
+    console.log("Closing modal, current state:", isEditModalOpen);
     setIsEditModalOpen(false);
     setSelectedEmployee(null);
-    document.body.style.overflow = "auto";
+    // Radix UI Dialog handles scroll unlocking automatically - no manual DOM manipulation needed
   };
 
   // Save changes
@@ -278,7 +289,9 @@ export default function SalaryConfigPage() {
   }
 
   return (
+    
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -342,13 +355,13 @@ export default function SalaryConfigPage() {
                       <TableRow
                         key={rowKey}
                         className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                        onClick={(e) => {
-                          // Prevent row click from interfering with button clicks
-                          // Only prevent if clicking directly on the row, not on interactive elements
-                          if (e.target === e.currentTarget) {
-                            e.preventDefault();
-                          }
-                        }}
+                        // onClick={(e) => {
+                        //   // Prevent row click from interfering with button clicks
+                        //   // Only prevent if clicking directly on the row, not on interactive elements
+                        //   if (e.target === e.currentTarget) {
+                        //     e.preventDefault();
+                        //   }
+                        // }}
                       >
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -418,168 +431,171 @@ export default function SalaryConfigPage() {
             </Table>
           </div>
         </div>
-
-        {/* Edit Salary Modal */}
-        <Dialog
-          open={isEditModalOpen} 
-          onOpenChange={(open) => {
-            if (!open && !saving) {
-              handleCloseModal();
-            }
-          }}
-        >
-          <DialogContent 
-            className="sm:max-w-lg dark:bg-gray-800"
-            onInteractOutside={(e) => {
-              if (saving) {
-                e.preventDefault();
-              }
+        {/* VÙNG HIỂN THỊ TEST - BẮT BUỘC PHẢI CÓ ĐOẠN NÀY MỚI HIỆN */}
+        {isEditModalOpen && (
+          <div 
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+            onClick={(e) => {
+              // Click ra ngoài vùng đen thì đóng modal (nếu không đang lưu)
+              if (!saving) handleCloseModal();
             }}
           >
-            <DialogHeader>
-              <DialogTitle className="dark:text-white text-xl">
-                Edit Salary Configuration
-              </DialogTitle>
-              <DialogDescription className="dark:text-gray-400">
+            {/* Modal Container */}
+            <div 
+              className="bg-white dark:bg-gray-800 w-full max-w-lg p-6 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 relative animate-in fade-in zoom-in duration-200"
+              onClick={(e) => e.stopPropagation()} // Chặn sự kiện click để không bị đóng khi bấm vào form
+            >
+              
+              {/* --- HEADER --- */}
+              <div className="flex flex-col space-y-1.5 text-center sm:text-left mb-4">
+                <h2 className="text-xl font-semibold leading-none tracking-tight dark:text-white">
+                  Edit Salary Configuration
+                </h2>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {selectedEmployee && (
+                    <div className="mt-2">
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {getEmployeeName(selectedEmployee.employee)}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Employee ID: {selectedEmployee.employee.employee_id}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* --- BODY (FORM) --- */}
+              <div className="space-y-4 py-2">
+                {/* Employee Info (Read-only) */}
                 {selectedEmployee && (
-                  <div className="mt-2">
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {getEmployeeName(selectedEmployee.employee)}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Employee ID: {selectedEmployee.employee.employee_id}
-                    </p>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400">Department:</span>
+                        <p className="font-medium text-gray-900 dark:text-white mt-1">
+                          {selectedEmployee.employee.department?.department_name || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400">Position:</span>
+                        <p className="font-medium text-gray-900 dark:text-white mt-1">
+                          {selectedEmployee.employee.position?.position_name || "-"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
-              </DialogDescription>
-            </DialogHeader>
 
-            <div className="space-y-4 py-4">
-              {/* Employee Info (Read-only) */}
-              {selectedEmployee && (
-                <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">Department:</span>
-                      <p className="font-medium text-gray-900 dark:text-white mt-1">
-                        {selectedEmployee.employee.department?.department_name || "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">Position:</span>
-                      <p className="font-medium text-gray-900 dark:text-white mt-1">
-                        {selectedEmployee.employee.position?.position_name || "-"}
-                      </p>
-                    </div>
-                  </div>
+                {/* Base Salary */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Base Salary <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editForm.base_salary}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, base_salary: e.target.value })
+                    }
+                    placeholder="0.00"
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    disabled={saving}
+                  />
                 </div>
-              )}
 
-              {/* Base Salary */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                  Base Salary <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={editForm.base_salary}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, base_salary: e.target.value })
-                  }
-                  placeholder="0.00"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  disabled={saving}
-                />
+                {/* Transport Allowance */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Transport Allowance
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editForm.transport_allowance}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        transport_allowance: e.target.value,
+                      })
+                    }
+                    placeholder="0.00"
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    disabled={saving}
+                  />
+                </div>
+
+                {/* Lunch Allowance */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Lunch Allowance
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editForm.lunch_allowance}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, lunch_allowance: e.target.value })
+                    }
+                    placeholder="0.00"
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    disabled={saving}
+                  />
+                </div>
+
+                {/* Responsibility Allowance */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Responsibility Allowance
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editForm.responsibility_allowance}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        responsibility_allowance: e.target.value,
+                      })
+                    }
+                    placeholder="0.00"
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    disabled={saving}
+                  />
+                </div>
               </div>
 
-              {/* Transport Allowance */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                  Transport Allowance
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={editForm.transport_allowance}
-                  onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      transport_allowance: e.target.value,
-                    })
-                  }
-                  placeholder="0.00"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              {/* --- FOOTER (BUTTONS) --- */}
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={handleCloseModal}
                   disabled={saving}
-                />
+                  className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSave} 
+                  disabled={saving}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Save className="w-4 h-4 mr-1" />
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
               </div>
 
-              {/* Lunch Allowance */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                  Lunch Allowance
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={editForm.lunch_allowance}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, lunch_allowance: e.target.value })
-                  }
-                  placeholder="0.00"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  disabled={saving}
-                />
-              </div>
-
-              {/* Responsibility Allowance */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                  Responsibility Allowance
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={editForm.responsibility_allowance}
-                  onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      responsibility_allowance: e.target.value,
-                    })
-                  }
-                  placeholder="0.00"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  disabled={saving}
-                />
-              </div>
             </div>
-
-            <DialogFooter className="gap-2">
-              <Button
-                variant="outline"
-                onClick={handleCloseModal}
-                disabled={saving}
-                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              >
-                <X className="w-4 h-4 mr-1" />
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSave} 
-                disabled={saving}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Save className="w-4 h-4 mr-1" />
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
+        )}
+              </div>
     </div>
   );
 }
