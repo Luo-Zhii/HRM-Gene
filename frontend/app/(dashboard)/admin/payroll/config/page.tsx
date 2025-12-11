@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { ArrowUpDown } from "lucide-react"; // Import icon
 import {
   Table,
   TableBody,
@@ -60,7 +61,7 @@ export default function SalaryConfigPage() {
   const [configs, setConfigs] = useState<SalaryConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState<SalaryConfig | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     base_salary: "",
     transport_allowance: "",
@@ -94,6 +95,37 @@ export default function SalaryConfigPage() {
       }
     }
   }, [authLoading, user, router, toast]);
+
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
+const handleSort = (key) => {
+  let direction = 'asc';
+  if (sortConfig.key === key && sortConfig.direction === 'asc') {
+    direction = 'desc';
+  }
+  setSortConfig({ key, direction });
+};
+
+// Tạo danh sách đã sắp xếp dựa trên configs gốc
+const sortedConfigs = useMemo(() => {
+  let sortableItems = [...configs];
+  if (sortConfig.key !== null) {
+    sortableItems.sort((a, b) => {
+      // Xử lý null/undefined thành 0 để không bị lỗi
+      const aValue = a[sortConfig.key] || 0;
+      const bValue = b[sortConfig.key] || 0;
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+  return sortableItems;
+}, [configs, sortConfig]);
 
   // Load salary configs
   const loadConfigs = async () => {
@@ -305,133 +337,171 @@ export default function SalaryConfigPage() {
 
         {/* Table */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="dark:text-gray-200">Employee</TableHead>
-                  <TableHead className="dark:text-gray-200">Email</TableHead>
-                  <TableHead className="dark:text-gray-200">Department</TableHead>
-                  <TableHead className="dark:text-gray-200">Position</TableHead>
-                  <TableHead className="text-right dark:text-gray-200">
-                    Base Salary
-                  </TableHead>
-                  <TableHead className="text-right dark:text-gray-200">
-                    Transport
-                  </TableHead>
-                  <TableHead className="text-right dark:text-gray-200">
-                    Lunch
-                  </TableHead>
-                  <TableHead className="text-right dark:text-gray-200">
-                    Responsibility
-                  </TableHead>
-                  <TableHead className="text-right dark:text-gray-200">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {configs.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-12">
-                      <div className="flex flex-col items-center justify-center">
-                        <FileText className="w-12 h-12 text-gray-400 mb-4" />
-                        <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                          No salary configurations found
-                        </p>
-                        <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
-                          Salary configurations will appear here once they are created
-                        </p>
+  <div className="overflow-x-auto">
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="p-0 dark:text-gray-200"><Button
+    variant="ghost"
+    onClick={() => handleSort('base_salary')}
+    className="flex w-full items-center justify-end gap-2 whitespace-nowrap px-4 py-3 font-bold hover:bg-transparent dark:text-gray-200"
+  >Employee
+    <ArrowUpDown className="h-4 w-4 shrink-0" /> {/* shrink-0: icon không bị méo */}
+  </Button></TableHead>
+          <TableHead className="dark:text-gray-200">Email</TableHead>
+          <TableHead className="dark:text-gray-200">Department</TableHead>
+          <TableHead className="dark:text-gray-200">Position</TableHead>
+
+          <TableHead className="p-0 dark:text-gray-200"> {/* Bỏ padding của TableHead */}
+  <Button
+    variant="ghost"
+    onClick={() => handleSort('base_salary')}
+    // Thêm flex, items-center, justify-end để căn chỉnh
+    // whitespace-nowrap: ngăn chữ bị xuống dòng
+    // w-full: chiếm hết chiều rộng ô
+    // px-4 h-full: thêm padding và chiều cao để dễ bấm
+    className="flex w-full items-center justify-end gap-2 whitespace-nowrap px-4 py-3 font-bold hover:bg-transparent dark:text-gray-200"
+  >
+    Base Salary
+    <ArrowUpDown className="h-4 w-4 shrink-0" /> {/* shrink-0: icon không bị méo */}
+  </Button>
+</TableHead>
+
+{/* --- Cột Transport (Đã chỉnh lại) --- */}
+<TableHead className="p-0 dark:text-gray-200">
+  <Button
+    variant="ghost"
+    onClick={() => handleSort('transport_allowance')}
+    className="flex w-full items-center justify-end gap-2 whitespace-nowrap px-4 py-3 font-bold hover:bg-transparent dark:text-gray-200"
+  >
+    Transport
+    <ArrowUpDown className="h-4 w-4 shrink-0" />
+  </Button>
+</TableHead>
+
+{/* --- Cột Lunch (Đã chỉnh lại) --- */}
+<TableHead className="p-0 dark:text-gray-200">
+   <Button
+    variant="ghost"
+    onClick={() => handleSort('lunch_allowance')}
+    className="flex w-full items-center justify-end gap-2 whitespace-nowrap px-4 py-3 font-bold hover:bg-transparent dark:text-gray-200"
+  >
+    Lunch
+    <ArrowUpDown className="h-4 w-4 shrink-0" />
+  </Button>
+</TableHead>
+
+{/* --- Cột Responsibility (Đã chỉnh lại) --- */}
+<TableHead className="p-0 dark:text-gray-200">
+   <Button
+    variant="ghost"
+    onClick={() => handleSort('responsibility_allowance')}
+    className="flex w-full items-center justify-end gap-2 whitespace-nowrap px-4 py-3 font-bold hover:bg-transparent dark:text-gray-200"
+  >
+    Responsibility
+    <ArrowUpDown className="h-4 w-4 shrink-0" />
+  </Button>
+</TableHead>
+          <TableHead className="text-right dark:text-gray-200">
+            Actions
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+      
+      <TableBody>
+        {sortedConfigs.length === 0 ? (  // <-- Đổi configs thành sortedConfigs
+          <TableRow>
+            <TableCell colSpan={9} className="text-center py-12">
+              <div className="flex flex-col items-center justify-center">
+                <FileText className="w-12 h-12 text-gray-400 mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                  No salary configurations found
+                </p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                  Salary configurations will appear here once they are created
+                </p>
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : (
+          sortedConfigs.map((config) => { // <-- Đổi configs thành sortedConfigs
+            const rowKey = config.config_id || `emp-${config.employee.employee_id}`;
+            const hasConfig = config.config_id !== null;
+            
+            return (
+              <TableRow
+                key={rowKey}
+                className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+              >
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    {config.employee.avatar_url ? (
+                      <img
+                        src={config.employee.avatar_url}
+                        alt={getEmployeeName(config.employee)}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                        {getInitials(config.employee)}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  configs.map((config) => {
-                    // Use config_id or employee_id as key (for employees without config)
-                    const rowKey = config.config_id || `emp-${config.employee.employee_id}`;
-                    const hasConfig = config.config_id !== null;
-                    
-                    return (
-                      <TableRow
-                        key={rowKey}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                        // onClick={(e) => {
-                        //   // Prevent row click from interfering with button clicks
-                        //   // Only prevent if clicking directly on the row, not on interactive elements
-                        //   if (e.target === e.currentTarget) {
-                        //     e.preventDefault();
-                        //   }
-                        // }}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            {config.employee.avatar_url ? (
-                              <img
-                                src={config.employee.avatar_url}
-                                alt={getEmployeeName(config.employee)}
-                                className="w-10 h-10 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-                                {getInitials(config.employee)}
-                              </div>
-                            )}
-                            <div className="flex flex-col">
-                              <span className="font-medium dark:text-white">
-                                {getEmployeeName(config.employee)}
-                              </span>
-                              {!hasConfig && (
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  Not Configured
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-600 dark:text-gray-400">
-                          {config.employee.email}
-                        </TableCell>
-                        <TableCell className="text-gray-600 dark:text-gray-400">
-                          {config.employee.department?.department_name || "-"}
-                        </TableCell>
-                        <TableCell className="text-gray-600 dark:text-gray-400">
-                          {config.employee.position?.position_name || "-"}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold dark:text-white">
-                          {formatCurrency(config.base_salary)}
-                        </TableCell>
-                        <TableCell className="text-right dark:text-gray-300">
-                          {formatCurrency(config.transport_allowance)}
-                        </TableCell>
-                        <TableCell className="text-right dark:text-gray-300">
-                          {formatCurrency(config.lunch_allowance)}
-                        </TableCell>
-                        <TableCell className="text-right dark:text-gray-300">
-                          {formatCurrency(config.responsibility_allowance)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => handleEdit(config, e)}
-                              className="gap-2"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                              {hasConfig ? "Edit" : "Configure"}
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-        {/* VÙNG HIỂN THỊ TEST - BẮT BUỘC PHẢI CÓ ĐOẠN NÀY MỚI HIỆN */}
+                    )}
+                    <div className="flex flex-col">
+                      <span className="font-medium dark:text-white">
+                        {getEmployeeName(config.employee)}
+                      </span>
+                      {!hasConfig && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Not Configured
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-400">
+                  {config.employee.email}
+                </TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-400">
+                  {config.employee.department?.department_name || "-"}
+                </TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-400">
+                  {config.employee.position?.position_name || "-"}
+                </TableCell>
+                <TableCell className="text-right font-semibold dark:text-white">
+                  {formatCurrency(config.base_salary)}
+                </TableCell>
+                <TableCell className="text-right dark:text-gray-300">
+                  {formatCurrency(config.transport_allowance)}
+                </TableCell>
+                <TableCell className="text-right dark:text-gray-300">
+                  {formatCurrency(config.lunch_allowance)}
+                </TableCell>
+                <TableCell className="text-right dark:text-gray-300">
+                  {formatCurrency(config.responsibility_allowance)}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleEdit(config, e)}
+                      className="gap-2"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      {hasConfig ? "Edit" : "Configure"}
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })
+        )}
+      </TableBody>
+    </Table>
+  </div>
+</div>
+   {/* VÙNG HIỂN THỊ TEST - BẮT BUỘC PHẢI CÓ ĐOẠN NÀY MỚI HIỆN */}
         {isEditModalOpen && (
           <div 
             className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
