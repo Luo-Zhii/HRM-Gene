@@ -302,4 +302,37 @@ export class TimeKeepingService {
     await this.cacheManager.set(`qr-token-${token}`, true, 10000); // 10 seconds TTL
     return { token: token };
   }
+
+  /**
+   * Admin/HR: Get all attendance records with employee info
+   */
+  async getAllForAdmin(
+    page: number,
+    limit: number
+  ): Promise<{
+    data: TimeKeeping[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const [items, total] = await this.tkRepo
+      .createQueryBuilder("tk")
+      .leftJoinAndSelect("tk.employee", "employee")
+      .orderBy("tk.work_date", "DESC")
+      .addOrderBy("tk.check_in_time", "DESC")
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    const totalPages = Math.max(1, Math.ceil(total / limit) || 1);
+
+    return {
+      data: items,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
 }
