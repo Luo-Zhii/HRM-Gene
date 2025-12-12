@@ -3,6 +3,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { DepartmentsService } from "./departments.service";
 import { DepartmentsController } from "./departments.controller";
 import { Department } from "../../entities/department.entity";
+import { Employee } from "../../entities/employee.entity";
 import { Position } from "@/entities/position.entity";
 import { Permission } from "@/entities/permission.entity";
 import { PositionPermission } from "@/entities/position-permission.entity";
@@ -11,6 +12,7 @@ import { PositionPermission } from "@/entities/position-permission.entity";
   imports: [
     TypeOrmModule.forFeature([
       Department,
+      Employee,
       Position,
       Permission,
       PositionPermission,

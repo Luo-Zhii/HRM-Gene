@@ -3,8 +3,10 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
+  ParseIntPipe,
   UseGuards,
 } from "@nestjs/common";
 import { AdminService } from "./admin.service";

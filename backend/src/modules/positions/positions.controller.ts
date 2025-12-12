@@ -18,9 +18,7 @@ import { PositionsService } from "./positions.service";
 import { CreatePositionDto } from "./dto/create-position.dto";
 import { UpdatePositionDto } from "./dto/update-position.dto";
 
-@Controller("admin/positions")
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Permissions("manage:system")
+@Controller("positions")
 @UseInterceptors(ClassSerializerInterceptor)
 export class PositionsController {
   constructor(private readonly svc: PositionsService) {}
@@ -49,6 +47,8 @@ export class PositionsController {
   }
 
   @Delete(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Permissions("manage:system")
   remove(@Param("id", ParseIntPipe) id: number) {
     return this.svc.remove(id);
   }

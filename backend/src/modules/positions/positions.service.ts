@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Position } from "../../entities/position.entity";
+import { Employee } from "../../entities/employee.entity";
 import { CreatePositionDto } from "./dto/create-position.dto";
 import { UpdatePositionDto } from "./dto/update-position.dto";
 
@@ -9,7 +14,9 @@ import { UpdatePositionDto } from "./dto/update-position.dto";
 export class PositionsService {
   constructor(
     @InjectRepository(Position)
-    private readonly posRepo: Repository<Position>
+    private readonly posRepo: Repository<Position>,
+    @InjectRepository(Employee)
+    private readonly employeeRepo: Repository<Employee>
   ) {}
 
   async create(dto: CreatePositionDto) {
@@ -48,6 +55,18 @@ export class PositionsService {
       where: { position_id: id } as any,
     });
     if (!pos) throw new NotFoundException("Position not found");
+
+    // Check if there are employees assigned to this position
+    const employeeCount = await this.employeeRepo.count({
+      where: { position: { position_id: id } } as any,
+    });
+
+    if (employeeCount > 0) {
+      throw new BadRequestException(
+        `Cannot delete because employees are assigned to this Position`
+      );
+    }
+
     await this.posRepo.remove(pos);
     return { deleted: true };
   }

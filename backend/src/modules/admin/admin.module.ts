@@ -13,6 +13,10 @@ import { SalaryHistory } from "../../entities/salary-history.entity";
 import { Payslip } from "../../entities/payslip.entity";
 import { PayrollPeriod } from "../../entities/payroll-period.entity";
 import { SalaryConfig } from "../../entities/salary-config.entity";
+import { DepartmentsController } from "../departments/departments.controller";
+import { PositionsController } from "../positions/positions.controller";
+import { DepartmentsService } from "../departments/departments.service";
+import { PositionsService } from "../positions/positions.service";
 
 @Module({
   imports: [
@@ -30,7 +34,8 @@ import { SalaryConfig } from "../../entities/salary-config.entity";
       SalaryConfig,
     ]),
   ],
-  providers: [AdminService],
-  controllers: [AdminController],
+  providers: [AdminService, DepartmentsService, PositionsService],
+  controllers: [AdminController, 
+    DepartmentsController, PositionsController],
 })
 export class AdminModule {}

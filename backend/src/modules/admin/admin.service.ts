@@ -72,6 +72,30 @@ export class AdminService {
     return this.deptRepo.save(dept);
   }
 
+  async deleteDepartment(id: number) {
+    const dept = await this.deptRepo.findOne({
+      where: { department_id: id } as any,
+      relations: ["employees"],
+    });
+    if (!dept) {
+      throw new NotFoundException("Department not found");
+    }
+
+    // Check if there are employees assigned to this department
+    const employeeCount = await this.employeeRepo.count({
+      where: { department: { department_id: id } } as any,
+    });
+
+    if (employeeCount > 0) {
+      throw new BadRequestException(
+        `Cannot delete department because ${employeeCount} employee(s) are assigned to this department`
+      );
+    }
+
+    await this.deptRepo.remove(dept);
+    return { deleted: true, message: "Department deleted successfully" };
+  }
+
   // ============= Position Management =============
   async getAllPositions() {
     return this.positionRepo.find({
@@ -85,6 +109,30 @@ export class AdminService {
     }
     const pos = this.positionRepo.create({ position_name: positionName });
     return this.positionRepo.save(pos);
+  }
+
+  async deletePosition(id: number) {
+    const pos = await this.positionRepo.findOne({
+      where: { position_id: id } as any,
+      relations: ["employees"],
+    });
+    if (!pos) {
+      throw new NotFoundException("Position not found");
+    }
+
+    // Check if there are employees assigned to this position
+    const employeeCount = await this.employeeRepo.count({
+      where: { position: { position_id: id } } as any,
+    });
+
+    if (employeeCount > 0) {
+      throw new BadRequestException(
+        `Cannot delete position because ${employeeCount} employee(s) are assigned to this position`
+      );
+    }
+
+    await this.positionRepo.remove(pos);
+    return { deleted: true, message: "Position deleted successfully" };
   }
 
   // ============= Permission Management =============

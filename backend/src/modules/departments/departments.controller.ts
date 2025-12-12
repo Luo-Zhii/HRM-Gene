@@ -9,12 +9,14 @@ import {
   ParseIntPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
-  HttpCode,
-  HttpStatus,
+  UseGuards,
 } from "@nestjs/common";
 import { DepartmentsService } from "./departments.service";
 import { CreateDepartmentDto } from "./dto/create-department.dto";
 import { UpdateDepartmentDto } from "./dto/update-department.dto";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { RolesGuard } from "../auth/roles.guard";
+import { Permissions } from "../auth/permissions.decorator";
 
 @Controller("departments")
 @UseInterceptors(ClassSerializerInterceptor)
@@ -45,6 +47,8 @@ export class DepartmentsController {
   }
 
   @Delete(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Permissions("manage:system")
   remove(@Param("id", ParseIntPipe) id: number) {
     return this.svc.remove(id);
   }
