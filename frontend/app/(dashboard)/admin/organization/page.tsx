@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import { Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Department {
   department_id: number;
@@ -38,6 +40,7 @@ export default function OrganizationPage() {
   const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(
     null
   );
+  const { toast } = useToast();
 
   // Check authorization
   useEffect(() => {
@@ -172,6 +175,84 @@ export default function OrganizationPage() {
     }
   };
 
+  // Delete department (instant)
+  const handleDeleteDepartment = async (department: Department) => {
+    try {
+      const response = await fetch(
+        `/api/departments/${department.department_id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || "Failed to delete department"
+        );
+      }
+
+      toast({
+        variant: "default",
+        title: "Success",
+        description: "Department deleted successfully",
+      });
+
+      // Remove from UI immediately
+      setDepartments((prev) =>
+        prev.filter((d) => d.department_id !== department.department_id)
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Error deleting department";
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
+    }
+  };
+
+  // Delete position (instant)
+  const handleDeletePosition = async (position: Position) => {
+    try {
+      const response = await fetch(
+        `/api/positions/${position.position_id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || "Failed to delete position"
+        );
+      }
+
+      toast({
+        variant: "default",
+        title: "Success",
+        description: "Position deleted successfully",
+      });
+
+      // Remove from UI immediately
+      setPositions((prev) =>
+        prev.filter((p) => p.position_id !== position.position_id)
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Error deleting position";
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
+    }
+  };
+
   // Render authorization check
   if (authLoading) {
     return (
@@ -273,6 +354,9 @@ export default function OrganizationPage() {
                             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                               Name
                             </th>
+                            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                              Actions
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -286,6 +370,15 @@ export default function OrganizationPage() {
                               </td>
                               <td className="px-6 py-3 text-sm text-gray-900 font-medium">
                                 {dept.department_name}
+                              </td>
+                              <td className="px-6 py-3">
+                                <button
+                                  onClick={() => handleDeleteDepartment(dept)}
+                                  className="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                                  title="Delete department"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -349,6 +442,9 @@ export default function OrganizationPage() {
                             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                               Name
                             </th>
+                            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                              Actions
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -362,6 +458,15 @@ export default function OrganizationPage() {
                               </td>
                               <td className="px-6 py-3 text-sm text-gray-900 font-medium">
                                 {pos.position_name}
+                              </td>
+                              <td className="px-6 py-3">
+                                <button
+                                  onClick={() => handleDeletePosition(pos)}
+                                  className="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                                  title="Delete position"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
                               </td>
                             </tr>
                           ))}
