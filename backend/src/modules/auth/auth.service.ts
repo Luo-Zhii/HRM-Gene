@@ -58,21 +58,28 @@ export class AuthService {
 
   // --- LOGIC CHÍNH ---
 
-  async updateContactInfo(
-    userId: number,
-    data: { phone_number: string; address: string }
-  ) {
-    // 1. Update
-    await this.employeeRepo.update(
-      { employee_id: userId },
-      {
-        phone_number: data.phone_number,
-        address: data.address,
-      }
-    );
-
-    // 2. Return fresh data (Quan trọng để UI cập nhật ngay lập tức)
-    return this.getProfile(userId);
+  async updateContactInfo(id: number, data: any) {
+    const employee = await this.employeeRepo.findOne({
+      where: { employee_id: id },
+      relations: ["bankInfo"]
+    });
+    
+    if (!employee) throw new NotFoundException();
+  
+    // Cập nhật thông tin cơ bản
+    if (data.phone_number) employee.phone_number = data.phone_number;
+    if (data.address) employee.address = data.address;
+  
+    // Xử lý Bank Info (Vì có cascade: true trong Entity Employee, ta có thể gán trực tiếp)
+    if (data.bank_info) {
+      // Nếu chưa có bankInfo thì tạo mới, nếu có rồi thì gán đè các trường
+      employee.bankInfo = {
+        ...employee.bankInfo, // giữ lại id nếu có
+        ...data.bank_info     // ghi đè thông tin mới
+      };
+    }
+  
+    return await this.employeeRepo.save(employee);
   }
 
   async validateUser(email: string, pass: string): Promise<any> {

@@ -80,6 +80,17 @@ export class AuthController {
     return this.authService.updateContactInfo(userId, updateData);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Patch("profile/update")
+  async updateBankInfo(
+    @Request() req: any,
+    @Body() updateData: { phone_number: string; address: string }
+  ) {
+    const userId = req.user.employee_id || req.user.id;
+    return this.authService.updateContactInfo(userId, updateData);
+  }
+
+
   // --- 5. NAVIGATION (Menu Sidebar) ---
   @UseGuards(JwtAuthGuard)
   @Get("navigation")

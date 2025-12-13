@@ -37,8 +37,17 @@ import {
   DollarSign,
   FileText,
   AlertTriangle,
+  CreditCard, // Đã thêm icon CreditCard
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+// 1. Interface cho Bank Info
+interface BankInfo {
+  bank_info_id?: number;
+  bank_name: string;
+  account_number: string;
+  account_holder_name: string;
+}
 
 interface ProfileData {
   employee_id: number;
@@ -57,6 +66,7 @@ interface ProfileData {
     department_name: string;
   };
   permissions?: string[];
+  bankInfo?: BankInfo; // Đã thêm bankInfo vào ProfileData
 }
 
 interface Contract {
@@ -99,32 +109,41 @@ export default function ProfilePage() {
   const employeeId = searchParams.get("id");
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  
+  // States
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [violations, setViolations] = useState<Violation[]>([]);
   const [salaryHistory, setSalaryHistory] = useState<SalaryHistory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isEditingContact, setIsEditingContact] = useState(false);
-  const [isSavingContact, setIsSavingContact] = useState(false);
   const [activeTab, setActiveTab] = useState("job-info");
 
-  // Form state for editable fields
+  // Edit States for Contact Info
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [isSavingContact, setIsSavingContact] = useState(false);
   const [formData, setFormData] = useState({
     phone_number: "",
     address: "",
   });
 
-  // Determine if viewing own profile or someone else's
+  // Edit States for Bank Info (MỚI)
+  const [isEditingBank, setIsEditingBank] = useState(false);
+  const [isSavingBank, setIsSavingBank] = useState(false);
+  const [bankFormData, setBankFormData] = useState({
+    bank_name: "",
+    account_number: "",
+    account_holder_name: "",
+  });
+
+  // Determine permissions
   const viewingOwnProfile = !employeeId || parseInt(employeeId) === user?.employee_id;
   const targetEmployeeId = employeeId ? parseInt(employeeId) : user?.employee_id;
 
-  // Check if user has HR/Admin permissions
   const isHRorAdmin =
     user?.permissions?.includes("manage:employees") ||
     user?.permissions?.includes("manage:system") ||
     user?.permissions?.includes("manage:payroll");
 
-  // Check if can view salary (own profile or HR/Admin)
   const canViewSalary = viewingOwnProfile || isHRorAdmin;
 
   // Load profile data
@@ -142,10 +161,21 @@ export default function ProfilePage() {
         if (response.ok) {
           const data = await response.json();
           setProfileData(data);
+          
+          // Set initial data for Contact Form
           setFormData({
             phone_number: data.phone_number || "",
             address: data.address || "",
           });
+
+          // Set initial data for Bank Form (MỚI)
+          if (data.bankInfo) {
+            setBankFormData({
+              bank_name: data.bankInfo.bank_name || "",
+              account_number: data.bankInfo.account_number || "",
+              account_holder_name: data.bankInfo.account_holder_name || "",
+            });
+          }
         } else {
           throw new Error("Failed to load profile");
         }
@@ -169,22 +199,16 @@ export default function ProfilePage() {
   useEffect(() => {
     const loadContracts = async () => {
       if (!targetEmployeeId) return;
-
       try {
         const url = employeeId
           ? `/api/contracts?employeeId=${employeeId}`
           : "/api/contracts";
-        const response = await fetch(url, {
-          credentials: "include",
-        });
+        const response = await fetch(url, { credentials: "include" });
 
         if (response.ok) {
           const data = await response.json();
-          // If viewing another employee, filter by employeeId on frontend
           const filtered = employeeId
-            ? data.filter(
-                (c: Contract) => c.employee?.employee_id === parseInt(employeeId)
-              )
+            ? data.filter((c: Contract) => c.employee?.employee_id === parseInt(employeeId))
             : data;
           setContracts(filtered || []);
         }
@@ -193,31 +217,23 @@ export default function ProfilePage() {
       }
     };
 
-    if (user) {
-      loadContracts();
-    }
+    if (user) loadContracts();
   }, [user, targetEmployeeId, employeeId]);
 
   // Load violations
   useEffect(() => {
     const loadViolations = async () => {
       if (!targetEmployeeId) return;
-
       try {
         const url = employeeId
           ? `/api/violations?employeeId=${employeeId}`
           : "/api/violations";
-        const response = await fetch(url, {
-          credentials: "include",
-        });
+        const response = await fetch(url, { credentials: "include" });
 
         if (response.ok) {
           const data = await response.json();
-          // If viewing another employee, filter by employeeId on frontend
           const filtered = employeeId
-            ? data.filter(
-                (v: Violation) => v.employee?.employee_id === parseInt(employeeId)
-              )
+            ? data.filter((v: Violation) => v.employee?.employee_id === parseInt(employeeId))
             : data;
           setViolations(filtered || []);
         }
@@ -226,22 +242,17 @@ export default function ProfilePage() {
       }
     };
 
-    if (user) {
-      loadViolations();
-    }
+    if (user) loadViolations();
   }, [user, targetEmployeeId, employeeId]);
 
   // Load salary history
   useEffect(() => {
     const loadSalaryHistory = async () => {
       if (!targetEmployeeId || !canViewSalary) return;
-
       try {
         const response = await fetch(
           `/api/salary-history${employeeId ? `?employeeId=${employeeId}` : ""}`,
-          {
-            credentials: "include",
-          }
+          { credentials: "include" }
         );
 
         if (response.ok) {
@@ -253,12 +264,12 @@ export default function ProfilePage() {
       }
     };
 
-    if (user && canViewSalary) {
-      loadSalaryHistory();
-    }
+    if (user && canViewSalary) loadSalaryHistory();
   }, [user, targetEmployeeId, employeeId, canViewSalary]);
 
-  // Handle form input change
+  // --- Handlers ---
+
+  // Handle Contact Input
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -266,7 +277,13 @@ export default function ProfilePage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Save contact information
+  // Handle Bank Input (MỚI)
+  const handleBankInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setBankFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Save Contact Info
   const handleSaveContact = async () => {
     setIsSavingContact(true);
     try {
@@ -280,9 +297,7 @@ export default function ProfilePage() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
+      if (!response.ok) throw new Error("Failed to update profile");
 
       const updatedData = await response.json();
       setProfileData(updatedData);
@@ -300,6 +315,41 @@ export default function ProfilePage() {
       });
     } finally {
       setIsSavingContact(false);
+    }
+  };
+
+  // Save Bank Info (MỚI)
+  const handleSaveBankInfo = async () => {
+    setIsSavingBank(true);
+    try {
+      const response = await fetch("/api/auth/profile/update", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bank_info: bankFormData,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update bank info");
+
+      const updatedData = await response.json();
+      setProfileData(updatedData);
+      
+      toast({
+        variant: "default",
+        title: "Success",
+        description: "Bank information updated successfully!",
+      });
+      setIsEditingBank(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not save bank information.",
+      });
+    } finally {
+      setIsSavingBank(false);
     }
   };
 
@@ -322,16 +372,14 @@ export default function ProfilePage() {
     });
   };
 
-  // Prepare salary chart data
   const salaryChartData = salaryHistory
     .map((item) => ({
       date: formatDate(item.change_date),
       salary: parseFloat(item.new_salary),
       reason: item.reason || "Salary change",
     }))
-    .reverse(); // Show oldest to newest
+    .reverse();
 
-  // Get current active contract
   const activeContract = contracts.find(
     (c) => c.status === "Active" && (!c.end_date || new Date(c.end_date) > new Date())
   );
@@ -371,7 +419,6 @@ export default function ProfilePage() {
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 mb-6">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-start gap-6">
-              {/* Avatar */}
               <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg flex-shrink-0">
                 {profileData.avatar_url ? (
                   <img
@@ -383,14 +430,11 @@ export default function ProfilePage() {
                   <User size={32} />
                 )}
               </div>
-
-              {/* Info */}
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   {profileData.first_name} {profileData.last_name}
                 </h2>
                 <p className="text-gray-600 mb-4">{profileData.email}</p>
-
                 <div className="flex flex-wrap gap-2">
                   {profileData.position?.position_name && (
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
@@ -422,6 +466,14 @@ export default function ProfilePage() {
                     >
                       <Briefcase className="w-4 h-4 mr-2" />
                       Job Info
+                    </TabsTrigger>
+                    {/* TRIGGER MỚI: BANK INFO */}
+                    <TabsTrigger
+                      value="bank-info"
+                      className="w-full justify-start data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Bank Info
                     </TabsTrigger>
                     {canViewSalary && (
                       <TabsTrigger
@@ -477,51 +529,36 @@ export default function ProfilePage() {
                   </CardHeader>
 
                   <CardContent className="space-y-6">
-                    {/* Read-only fields */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <Label className="text-sm font-semibold text-gray-700">
-                          Email
-                        </Label>
+                        <Label className="text-sm font-semibold text-gray-700">Email</Label>
                         <p className="mt-2 text-gray-900">{profileData.email}</p>
                       </div>
                       <div>
-                        <Label className="text-sm font-semibold text-gray-700">
-                          Full Name
-                        </Label>
+                        <Label className="text-sm font-semibold text-gray-700">Full Name</Label>
                         <p className="mt-2 text-gray-900">
                           {profileData.first_name} {profileData.last_name}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-semibold text-gray-700">
-                          Position
-                        </Label>
+                        <Label className="text-sm font-semibold text-gray-700">Position</Label>
                         <p className="mt-2 text-gray-900">
                           {profileData.position?.position_name || "N/A"}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-semibold text-gray-700">
-                          Department
-                        </Label>
+                        <Label className="text-sm font-semibold text-gray-700">Department</Label>
                         <p className="mt-2 text-gray-900">
                           {profileData.department?.department_name || "N/A"}
                         </p>
                       </div>
                     </div>
 
-                    {/* Editable fields */}
                     {isEditingContact && viewingOwnProfile && (
                       <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 space-y-4">
-                        <h4 className="font-semibold text-gray-900">
-                          Edit Contact Info
-                        </h4>
-
+                        <h4 className="font-semibold text-gray-900">Edit Contact Info</h4>
                         <div>
-                          <Label htmlFor="phone_number" className="text-sm">
-                            Phone Number
-                          </Label>
+                          <Label htmlFor="phone_number" className="text-sm">Phone Number</Label>
                           <Input
                             id="phone_number"
                             name="phone_number"
@@ -532,11 +569,8 @@ export default function ProfilePage() {
                             className="mt-2"
                           />
                         </div>
-
                         <div>
-                          <Label htmlFor="address" className="text-sm">
-                            Address
-                          </Label>
+                          <Label htmlFor="address" className="text-sm">Address</Label>
                           <Textarea
                             id="address"
                             name="address"
@@ -547,7 +581,6 @@ export default function ProfilePage() {
                             rows={3}
                           />
                         </div>
-
                         <div className="flex gap-3 pt-4">
                           <Button
                             onClick={handleSaveContact}
@@ -570,25 +603,145 @@ export default function ProfilePage() {
                       </div>
                     )}
 
-                    {/* Display current values when not editing */}
                     {!isEditingContact && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                         <div>
-                          <Label className="text-sm font-semibold text-gray-700">
-                            Phone Number
-                          </Label>
+                          <Label className="text-sm font-semibold text-gray-700">Phone Number</Label>
                           <p className="mt-2 text-gray-900">
                             {formData.phone_number || "Not provided"}
                           </p>
                         </div>
                         <div>
-                          <Label className="text-sm font-semibold text-gray-700">
-                            Address
-                          </Label>
+                          <Label className="text-sm font-semibold text-gray-700">Address</Label>
                           <p className="mt-2 text-gray-900">
                             {formData.address || "Not provided"}
                           </p>
                         </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Bank Info Tab (MỚI) */}
+              <TabsContent value="bank-info" className="space-y-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-3">
+                    <div>
+                      <CardTitle>Bank Account Details</CardTitle>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Payment and banking information for payroll
+                      </p>
+                    </div>
+                    {viewingOwnProfile && !isEditingBank && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditingBank(true)}
+                        className="gap-2"
+                      >
+                        <Edit2 size={16} />
+                        Edit
+                      </Button>
+                    )}
+                  </CardHeader>
+
+                  <CardContent>
+                    {isEditingBank && viewingOwnProfile ? (
+                      /* BANK FORM */
+                      <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="bank_name">Bank Name</Label>
+                            <Input
+                              id="bank_name"
+                              name="bank_name"
+                              placeholder="e.g. Vietcombank"
+                              value={bankFormData.bank_name}
+                              onChange={handleBankInputChange}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="account_number">Account Number</Label>
+                            <Input
+                              id="account_number"
+                              name="account_number"
+                              placeholder="e.g. 1900xxxxxx"
+                              value={bankFormData.account_number}
+                              onChange={handleBankInputChange}
+                            />
+                          </div>
+                          <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="account_holder_name">Account Holder Name</Label>
+                            <Input
+                              id="account_holder_name"
+                              name="account_holder_name"
+                              placeholder="Full name as registered with bank"
+                              value={bankFormData.account_holder_name}
+                              onChange={handleBankInputChange}
+                              className="uppercase"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                          <Button
+                            onClick={handleSaveBankInfo}
+                            disabled={isSavingBank}
+                            className="gap-2"
+                          >
+                            <Save size={16} />
+                            {isSavingBank ? "Saving..." : "Save Bank Info"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setIsEditingBank(false)}
+                            disabled={isSavingBank}
+                            className="gap-2"
+                          >
+                            <X size={16} />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* BANK DISPLAY */
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-4 bg-gray-50 rounded-lg border">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Bank Name
+                          </Label>
+                          <p className="mt-1 text-lg font-medium text-gray-900">
+                            {profileData.bankInfo?.bank_name || "Not provided"}
+                          </p>
+                        </div>
+                        
+                        <div className="p-4 bg-gray-50 rounded-lg border">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Account Number
+                          </Label>
+                          <p className="mt-1 text-lg font-medium text-gray-900 font-mono">
+                            {profileData.bankInfo?.account_number || "Not provided"}
+                          </p>
+                        </div>
+
+                        <div className="p-4 bg-gray-50 rounded-lg border md:col-span-2">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Account Holder Name
+                          </Label>
+                          <p className="mt-1 text-lg font-medium text-gray-900 uppercase">
+                            {profileData.bankInfo?.account_holder_name || "Not provided"}
+                          </p>
+                        </div>
+                        
+                        {!profileData.bankInfo && (
+                           <div className="md:col-span-2 flex items-center p-4 text-amber-800 bg-amber-50 rounded-lg border border-amber-200">
+                             <AlertTriangle className="w-5 h-5 mr-2" />
+                             <span className="text-sm">
+                               Banking information is missing. Please update it to ensure payroll processing.
+                             </span>
+                           </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
@@ -624,9 +777,7 @@ export default function ProfilePage() {
                               />
                               <YAxis
                                 tick={{ fontSize: 12 }}
-                                tickFormatter={(value) =>
-                                  `$${value.toLocaleString()}`
-                                }
+                                tickFormatter={(value) => `$${value.toLocaleString()}`}
                               />
                               <Tooltip
                                 formatter={(value: number) => formatCurrency(value)}
@@ -653,7 +804,6 @@ export default function ProfilePage() {
                     </CardContent>
                   </Card>
 
-                  {/* Salary History Table */}
                   {salaryHistory.length > 0 && (
                     <Card>
                       <CardHeader>
@@ -678,8 +828,7 @@ export default function ProfilePage() {
                                 const oldSalary = parseFloat(item.old_salary);
                                 const newSalary = parseFloat(item.new_salary);
                                 const change = newSalary - oldSalary;
-                                const changePercent =
-                                  ((change / oldSalary) * 100).toFixed(1);
+                                const changePercent = ((change / oldSalary) * 100).toFixed(1);
 
                                 return (
                                   <TableRow key={item.history_id}>
