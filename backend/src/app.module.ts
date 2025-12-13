@@ -12,6 +12,7 @@ import { ViolationsModule } from "./modules/violations/violations.module";
 
 import * as path from "path";
 import { ConfigModule } from "@nestjs/config";
+import { EmployeesModule } from "./modules/employees/employees.module";
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { ConfigModule } from "@nestjs/config";
     ReportsModule,
     ContractsModule,
     ViolationsModule,
+    EmployeesModule
   ],
 })
 export class AppModule {}

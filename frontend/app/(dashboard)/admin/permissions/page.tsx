@@ -22,7 +22,10 @@ export default function PermissionMatrixPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  const canEdit = !!user?.permissions?.includes("manage:system");
+  // 1. Cập nhật quyền chỉnh sửa (canEdit)
+  const canEdit =
+    !!user?.permissions?.includes("manage:system") ||
+    !!user?.permissions?.includes("manage:employee"); // <--- Đã thêm
 
   const [matrix, setMatrix] = useState<PermissionData[]>([]);
   const [allPermissions, setAllPermissions] = useState<
@@ -37,8 +40,10 @@ export default function PermissionMatrixPage() {
   // Check authorization
   useEffect(() => {
     if (!authLoading && user) {
+      // 2. Cập nhật quyền truy cập trang
       const canView =
         user.permissions?.includes("manage:system") ||
+        user.permissions?.includes("manage:employee") || // <--- Đã thêm
         user.permissions?.includes("view:permissions");
 
       if (!canView) {
@@ -92,9 +97,11 @@ export default function PermissionMatrixPage() {
   };
 
   useEffect(() => {
+    // 3. Cập nhật điều kiện để tải dữ liệu
     if (
       user &&
       (user.permissions?.includes("manage:system") ||
+        user.permissions?.includes("manage:employee") || // <--- Đã thêm
         user.permissions?.includes("view:permissions"))
     ) {
       loadMatrix();
@@ -183,10 +190,12 @@ export default function PermissionMatrixPage() {
     );
   }
 
+  // 4. Cập nhật giao diện Access Denied
   if (
     !user ||
     !(
       user.permissions?.includes("manage:system") ||
+      user.permissions?.includes("manage:employee") || // <--- Đã thêm
       user.permissions?.includes("view:permissions")
     )
   ) {

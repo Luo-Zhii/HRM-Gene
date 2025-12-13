@@ -98,6 +98,7 @@ async function run() {
   const p_system = await permRepo.save({ permission_name: "manage:system" });
   const p_payroll = await permRepo.save({ permission_name: "manage:payroll" });
   const p_leave = await permRepo.save({ permission_name: "manage:leave" });
+  const p_employee = await permRepo.save({ permission_name: "manage:employee" });
   const p_reports = await permRepo.save({ permission_name: "read:payroll_report" });
   const p_submit_leave = await permRepo.save({ permission_name: "submit:leave" });
   const p_read_balance = await permRepo.save({ permission_name: "read:balance" });

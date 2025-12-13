@@ -145,56 +145,65 @@ export default function ProfilePage() {
     user?.permissions?.includes("manage:payroll");
 
   const canViewSalary = viewingOwnProfile || isHRorAdmin;
+// Load profile data
+useEffect(() => {
+  const loadProfile = async () => {
+    // Nếu chưa load xong user hiện tại và cũng không có param id thì chưa làm gì
+    if (authLoading) return;
+    if (!user && !employeeId) return;
 
-  // Load profile data
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (!user?.employee_id && !employeeId) return;
+    try {
+      setLoading(true);
+      
+      // --- SỬA ĐỔI QUAN TRỌNG TẠI ĐÂY ---
+      // Mặc định là xem profile của chính mình
+      let url = "/api/auth/profile";
 
-      try {
-        setLoading(true);
-        const response = await fetch("/api/auth/profile", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setProfileData(data);
-          
-          // Set initial data for Contact Form
-          setFormData({
-            phone_number: data.phone_number || "",
-            address: data.address || "",
-          });
-
-          // Set initial data for Bank Form (MỚI)
-          if (data.bankInfo) {
-            setBankFormData({
-              bank_name: data.bankInfo.bank_name || "",
-              account_number: data.bankInfo.account_number || "",
-              account_holder_name: data.bankInfo.account_holder_name || "",
-            });
-          }
-        } else {
-          throw new Error("Failed to load profile");
-        }
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load profile",
-        });
-      } finally {
-        setLoading(false);
+      // Nếu có employeeId trên URL VÀ nó khác với ID của user đang đăng nhập
+      // Thì chuyển sang gọi API lấy chi tiết nhân viên (API mà ta vừa fix xong)
+      if (employeeId && user && parseInt(employeeId) !== user.employee_id) {
+        url = `/api/employees/${employeeId}`;
       }
-    };
+      // -----------------------------------
 
-    if (!authLoading && user) {
-      loadProfile();
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfileData(data);
+        
+        // Cập nhật state cho các form chỉnh sửa
+        setFormData({
+          phone_number: data.phone_number || "",
+          address: data.address || "",
+        });
+
+        if (data.bankInfo) {
+          setBankFormData({
+            bank_name: data.bankInfo.bank_name || "",
+            account_number: data.bankInfo.account_number || "",
+            account_holder_name: data.bankInfo.account_holder_name || "",
+          });
+        }
+      } else {
+        throw new Error("Failed to load profile");
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load profile details",
+      });
+    } finally {
+      setLoading(false);
     }
-  }, [authLoading, user, employeeId, toast]);
+  };
 
+  loadProfile();
+}, [authLoading, user, employeeId, toast]);
   // Load contracts
   useEffect(() => {
     const loadContracts = async () => {

@@ -58,8 +58,15 @@ export class EmployeesService {
     return await this.employeeRepo.save(emp);
   }
 
+  // Hàm này phục vụ cho trang Employee Directory
+  // TypeORM mặc định sẽ lấy tất cả các cột (bao gồm phone_number, address)
   findAll() {
-    return this.employeeRepo.find({ relations: ["department", "position"] });
+    return this.employeeRepo.find({
+      relations: ["department", "position"],
+      order: {
+        first_name: "ASC", // Sắp xếp mặc định cho đẹp
+      },
+    });
   }
 
   async findOne(id: number) {
@@ -71,22 +78,29 @@ export class EmployeesService {
     return emp;
   }
 
-  async update(id: number, dto: UpdateEmployeeDto) {
+  // CẬP NHẬT QUAN TRỌNG Ở ĐÂY
+  async update(id: number, dto: UpdateEmployeeDto & { bank_info?: any }) {
+    // 1. Load employee kèm theo bankInfo để có thể update đè lên hoặc tạo mới
     const emp = await this.employeeRepo.findOne({
       where: { employee_id: id } as any,
+      relations: ["bankInfo"], 
     });
+    
     if (!emp) throw new NotFoundException("Employee not found");
 
+    // Logic update Password
     if (dto.password) {
       emp.password = await bcrypt.hash(dto.password, 10);
     }
 
+    // Logic update thông tin cơ bản
     if (dto.first_name !== undefined) emp.first_name = dto.first_name;
     if (dto.last_name !== undefined) emp.last_name = dto.last_name;
     if (dto.avatar_url !== undefined) emp.avatar_url = dto.avatar_url;
     if (dto.phone_number !== undefined) emp.phone_number = dto.phone_number;
     if (dto.address !== undefined) emp.address = dto.address;
 
+    // Logic update Department
     if (dto.department_id !== undefined) {
       const dept = await this.deptRepo.findOne({
         where: { department_id: dto.department_id } as any,
@@ -94,6 +108,7 @@ export class EmployeesService {
       emp.department = dept || undefined;
     }
 
+    // Logic update Position
     if (dto.position_id !== undefined) {
       const pos = await this.posRepo.findOne({
         where: { position_id: dto.position_id } as any,
@@ -101,7 +116,24 @@ export class EmployeesService {
       emp.position = pos || undefined;
     }
 
+    // Logic update Bank Info (MỚI)
+    // Vì Employee entity có cascade: true với BankInfo, ta có thể gán trực tiếp
+    if (dto.bank_info) {
+      if (emp.bankInfo) {
+        // Nếu đã có bank info -> Merge dữ liệu mới vào dữ liệu cũ (giữ lại ID)
+        emp.bankInfo = {
+          ...emp.bankInfo,
+          ...dto.bank_info,
+        };
+      } else {
+        // Nếu chưa có -> Gán object mới
+        emp.bankInfo = dto.bank_info;
+      }
+    }
+
     await this.employeeRepo.save(emp as any);
+    
+    // Trả về data mới nhất
     return this.findOne(id);
   }
 

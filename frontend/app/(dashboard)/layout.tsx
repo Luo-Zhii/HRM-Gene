@@ -1,6 +1,9 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 
+// 1. IMPORT USEPATHNAME
+import { usePathname } from "next/navigation"; 
+
 import Link from "next/link";
 import { useAuth } from "../../src/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -22,17 +25,13 @@ import {
   DollarSign,
   FileText,
   BarChart3,
-} from "lucide-react"; // Import thêm icon cho đẹp
+  Users,
+} from "lucide-react";
 
 type NavigationItem = {
   name: string;
   href: string;
   icon?: string;
-};
-
-type Navigation = {
-  main: NavigationItem[];
-  admin: NavigationItem[];
 };
 
 // --- 1. COMPONENT SIDEBAR ---
@@ -44,6 +43,9 @@ function Sidebar({
   onClose: () => void;
 }) {
   const { user } = useAuth();
+  
+  // 2. LẤY PATHNAME HIỆN TẠI
+  const pathname = usePathname();
 
   const positionName = user?.position?.position_name?.toLowerCase();
   const isAdminOrHr =
@@ -51,15 +53,21 @@ function Sidebar({
     positionName === "hr" ||
     positionName === "hr manager";
 
-  // Check if user has manage:system permission
   const hasManageSystemPermission =
     user?.permissions?.includes("manage:system") ?? false;
 
-  // Check if user has manage:payroll permission
   const hasManagePayrollPermission =
     user?.permissions?.includes("manage:payroll") ?? false;
+    
+  const hasManageEmployeePermission =
+    user?.permissions?.includes("manage:employee") ?? false;
 
-  // Check if user can access reports (system, payroll, or Admin/Director/HR Manager)
+  const canViewDirectory = 
+    isAdminOrHr || 
+    hasManageSystemPermission || 
+    hasManageEmployeePermission || 
+    hasManagePayrollPermission;
+
   const canAccessReports =
     hasManageSystemPermission ||
     hasManagePayrollPermission ||
@@ -69,7 +77,6 @@ function Sidebar({
 
   return (
     <>
-      {/* Màn đen mờ khi mở menu trên mobile (Thêm backdrop-blur cho đẹp) */}
       <div
         className={`
           fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden
@@ -87,7 +94,6 @@ function Sidebar({
           md:translate-x-0 shadow-2xl md:shadow-none h-full
         `}
       >
-        {/* Header của Sidebar */}
         <div className="flex justify-between items-center h-16 px-6 border-b border-blue-800 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-bold">
@@ -105,39 +111,54 @@ function Sidebar({
           </button>
         </div>
 
-        {/* Danh sách Menu (Thêm Custom Scrollbar) */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
+          {/* 3. TRUYỀN isActive VÀO TỪNG MỤC 
+             Logic: isActive = {pathname === href}
+          */}
           <NavItem
             href="/dashboard"
             icon={<LayoutDashboard size={20} />}
             label="Dashboard"
+            isActive={pathname === "/dashboard"}
             onClick={onClose}
           />
           <NavItem
             href="/dashboard/timekeeping"
             icon={<Clock size={20} />}
             label="Timekeeping"
+            isActive={pathname === "/dashboard/timekeeping"}
             onClick={onClose}
           />
           <NavItem
             href="/dashboard/leave"
             icon={<CalendarDays size={20} />}
             label="Leave Management"
+            isActive={pathname?.startsWith("/dashboard/leave")} // Dùng startsWith nếu có trang con
             onClick={onClose}
           />
           <NavItem
             href="/dashboard/salary"
             icon={<FileText size={20} />}
             label="My Salary"
+            isActive={pathname === "/dashboard/salary"}
             onClick={onClose}
           />
 
-          {/* Admin Administration Section */}
-          {(hasManageSystemPermission || isAdminOrHr) && (
+          {(hasManageSystemPermission || isAdminOrHr || hasManageEmployeePermission) && (
             <>
               <div className="mt-8 mb-2 px-3 text-xs font-bold text-blue-300 uppercase tracking-wider">
                 Admin Administration
               </div>
+
+              {canViewDirectory && (
+                <NavItem
+                  href="/admin/employees"
+                  icon={<Users size={20} />}
+                  label="Employee Directory"
+                  isActive={pathname === "/admin/employees"}
+                  onClick={onClose}
+                />
+              )}
 
               {hasManageSystemPermission && (
                 <>
@@ -145,18 +166,21 @@ function Sidebar({
                     href="/admin/leave-approvals"
                     icon={<ShieldCheck size={20} />}
                     label="Leave Approvals"
+                    isActive={pathname === "/admin/leave-approvals"}
                     onClick={onClose}
                   />
                   <NavItem
                     href="/admin/organization"
                     icon={<Building2 size={20} />}
                     label="Organization"
+                    isActive={pathname === "/admin/organization"}
                     onClick={onClose}
                   />
                   <NavItem
                     href="/admin/permissions"
                     icon={<LockKeyhole size={20} />}
                     label="Permissions"
+                    isActive={pathname === "/admin/permissions"}
                     onClick={onClose}
                   />
                 </>
@@ -167,6 +191,7 @@ function Sidebar({
                   href="/admin/attendance"
                   icon={<Clock size={20} />}
                   label="Attendance History"
+                  isActive={pathname === "/admin/attendance"}
                   onClick={onClose}
                 />
               )}
@@ -175,7 +200,12 @@ function Sidebar({
                 <Link
                   href="/admin/qr-display"
                   onClick={onClose}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-700 transition-all mt-2"
+                  // Xử lý active thủ công cho thẻ Link này
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all mt-2 ${
+                    pathname === "/admin/qr-display" 
+                      ? "bg-blue-600 text-white shadow-md" // Active style
+                      : "bg-blue-800 text-blue-100 hover:bg-blue-700 hover:text-white"
+                  }`}
                 >
                   <QrCode size={20} />
                   <span>QR Display (Tablet)</span>
@@ -184,7 +214,6 @@ function Sidebar({
             </>
           )}
 
-          {/* Payroll Section - Only visible if user has manage:payroll permission */}
           {hasManagePayrollPermission && (
             <>
               <div className="mt-8 mb-2 px-3 text-xs font-bold text-blue-300 uppercase tracking-wider">
@@ -195,18 +224,19 @@ function Sidebar({
                 href="/admin/payroll/config"
                 icon={<DollarSign size={20} />}
                 label="Salary Config"
+                isActive={pathname === "/admin/payroll/config"}
                 onClick={onClose}
               />
               <NavItem
                 href="/admin/payroll/generate"
                 icon={<FileText size={20} />}
                 label="Generate Payroll"
+                isActive={pathname === "/admin/payroll/generate"}
                 onClick={onClose}
               />
             </>
           )}
 
-          {/* Reports Section - Visible to Admin, Director, HR Manager, or users with manage:system/manage:payroll */}
           {canAccessReports && (
             <>
               <div className="mt-8 mb-2 px-3 text-xs font-bold text-blue-300 uppercase tracking-wider">
@@ -217,20 +247,20 @@ function Sidebar({
                 href="/admin/reports"
                 icon={<BarChart3 size={20} />}
                 label="Reports & Analytics"
+                isActive={pathname === "/admin/reports"}
                 onClick={onClose}
               />
             </>
           )}
         </nav>
 
-        {/* Footer của Sidebar (Optional: Settings ở dưới cùng) */}
-        {/* System Settings - Only visible if user has manage:system permission */}
         {hasManageSystemPermission && (
           <div className="p-4 border-t border-blue-800 shrink-0">
             <NavItem
               href="/admin/settings"
               icon={<Settings size={20} />}
               label="System Settings"
+              isActive={pathname === "/admin/settings"}
               onClick={onClose}
             />
           </div>
@@ -240,33 +270,43 @@ function Sidebar({
   );
 }
 
-// Helper Component để render Link cho gọn
+// 4. CẬP NHẬT NAVITEM ĐỂ NHẬN PROP isActive VÀ ĐỔI STYLE
 function NavItem({
   href,
   icon,
   label,
+  isActive, // <--- Nhận prop này
   onClick,
 }: {
   href: string;
   icon: any;
   label: string;
+  isActive?: boolean; // <--- Thêm type
   onClick: () => void;
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-blue-800 hover:text-white transition-all group"
+      // Logic CSS: Nếu active thì nền sáng (blue-700/600), chữ trắng, đậm hơn
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+        isActive
+          ? "bg-blue-600 text-white shadow-md font-medium" // Active State
+          : "text-blue-100 hover:bg-blue-800 hover:text-white" // Inactive State
+      }`}
     >
-      <span className="text-blue-300 group-hover:text-white transition-colors">
+      <span
+        className={`transition-colors ${
+          isActive ? "text-white" : "text-blue-300 group-hover:text-white"
+        }`}
+      >
         {icon}
       </span>
-      <span className="font-medium text-sm text-white">{label}</span>
+      <span className="text-sm">{label}</span>
     </Link>
   );
 }
 
-// --- 2. COMPONENT HEADER ---
 function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, loading, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -294,7 +334,6 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
         >
           <Menu size={24} />
         </button>
-        {/* Trên Mobile hiện tiêu đề ngắn, PC hiện tiêu đề dài hoặc ẩn đi nếu thích */}
         <span className="font-bold text-lg text-gray-800 md:hidden">HRM</span>
         <span className="hidden md:block font-semibold text-lg text-slate-800">
           Overview
@@ -372,7 +411,6 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
   );
 }
 
-// --- 3. LAYOUT CHÍNH ---
 export default function DashboardLayout({
   children,
 }: {
@@ -382,13 +420,9 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar bây giờ là sticky trên PC, nên nó nằm cùng cấp với div content */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      {/* Wrapper cho nội dung chính */}
       <div className="flex-1 flex flex-col min-w-0 bg-slate-50">
         <Header onMenuClick={() => setSidebarOpen(true)} />
-
         <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
           <div className="max-w-7xl mx-auto space-y-6">{children}</div>
         </main>
