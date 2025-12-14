@@ -257,16 +257,16 @@ export default function SalaryPage() {
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b mb-3 pb-1">Earnings</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Gross Salary (Base + All Allowances)</span>
+                    <span className="text-gray-600 dark:text-gray-400">Gross Salary (Base - All Allowances)</span>
                     <span className="font-semibold">
                       {/* FIX LỖI CRASH Ở ĐÂY:
                          1. Kiểm tra selectSalary có tồn tại không.
                          2. Dùng parseFloat cho từng số hạng để tránh cộng chuỗi.
                       */}
                       {selectSalary ? formatCurrency(
-                        (parseFloat(selectSalary.base_salary || "0") + 
-                         parseFloat(selectSalary.transport_allowance || "0") + 
-                         parseFloat(selectSalary.lunch_allowance || "0") + 
+                        (parseFloat(selectSalary.base_salary || "0") -
+                         parseFloat(selectSalary.transport_allowance || "0") -
+                         parseFloat(selectSalary.lunch_allowance || "0") -
                          parseFloat(selectSalary.responsibility_allowance || "0"))
                       ) : "Loading..."}
                     </span>
