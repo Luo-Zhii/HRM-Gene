@@ -21,14 +21,14 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
         # Quan trọng: Chỉ định đường dẫn file lock để cache hoạt động đúng
-        cache-dependency-path: | 
+        cache-dependency-path: |
           backend/package-lock.json
           frontend/package-lock.json
 
     # --- PHẦN BACKEND (NestJS) ---
     - name: Install Backend Dependencies
       working-directory: ./backend  # Đi vào thư mục backend
-      run: npm ci
+      run: npm ci --legacy-peer-deps
 
     - name: Build Backend
       working-directory: ./backend
@@ -37,7 +37,7 @@ jobs:
     # --- PHẦN FRONTEND (Next.js) ---
     - name: Install Frontend Dependencies
       working-directory: ./frontend  # Đi vào thư mục frontend
-      run: npm ci
+      run: npm ci --legacy-peer-deps
 
     - name: Build Frontend
       working-directory: ./frontend
