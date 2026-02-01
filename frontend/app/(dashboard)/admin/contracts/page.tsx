@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, FileText, Loader2, Edit2, Trash2, X, Save } from "lucide-react";
+import { Plus, FileText, Loader2, Edit2, Trash2, X, Save } from "lucide-center";
 import {
   Dialog,
   DialogContent,
@@ -33,77 +33,25 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-// ============= TYPES & INTERFACES =============
-export enum ContractType {
-  PROBATION = "Probation",
-  OFFICIAL = "Official",
-  PART_TIME = "Part-time",
-}
-
-export enum ContractStatus {
-  ACTIVE = "Active",
-  EXPIRED = "Expired",
-  TERMINATED = "Terminated",
-}
-
-interface Employee {
-  employee_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-}
-
-export interface Contract {
-  contract_id: number;
-  contract_number: string;
-  contract_type: ContractType;
-  start_date: string;
-  end_date?: string | null;
-  status: ContractStatus;
-  salary_rate: string;
-  file_url?: string | null;
-  employee: Employee;
-}
-
-export interface CreateContractDto {
-  employee_id: number;
-  contract_number: string;
-  contract_type: ContractType;
-  start_date: string;
-  end_date?: string;
-  status?: ContractStatus;
-  salary_rate: string;
-  file_url?: string;
-}
-
-export interface UpdateContractDto {
-  contract_number?: string;
-  contract_type?: ContractType;
-  start_date?: string;
-  end_date?: string;
-  status?: ContractStatus;
-  salary_rate?: string;
-  file_url?: string;
-}
+// Import các types từ file vừa tạo
+import {
+  Contract,
+  ContractStatus,
+  ContractType,
+  CreateContractDto,
+  UpdateContractDto
+} from "./contract.types";
 
 // ============= API SERVICE FUNCTIONS =============
 const contractsApi = {
   async getAll(employeeId?: number): Promise<Contract[]> {
-    const url = employeeId
-      ? `/api/contracts?employeeId=${employeeId}`
-      : "/api/contracts";
-    const res = await fetch(url, {
-      credentials: "include",
-    });
-
+    const url = employeeId ? `/api/contracts?employeeId=${employeeId}` : "/api/contracts";
+    const res = await fetch(url, { credentials: "include" });
     if (!res.ok) {
-      if (res.status === 403) {
-        throw new Error("Permission Denied");
-      }
+      if (res.status === 403) throw new Error("Permission Denied");
       const error = await res.json().catch(() => ({}));
       throw new Error(error.message || `Failed to fetch contracts (${res.status})`);
     }
-
     return res.json();
   },
 
@@ -114,15 +62,10 @@ const contractsApi = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-
     if (!res.ok) {
-      if (res.status === 403) {
-        throw new Error("Permission Denied");
-      }
       const error = await res.json().catch(() => ({}));
-      throw new Error(error.message || `Failed to create contract (${res.status})`);
+      throw new Error(error.message || "Failed to create contract");
     }
-
     return res.json();
   },
 
@@ -133,15 +76,10 @@ const contractsApi = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-
     if (!res.ok) {
-      if (res.status === 403) {
-        throw new Error("Permission Denied");
-      }
       const error = await res.json().catch(() => ({}));
-      throw new Error(error.message || `Failed to update contract (${res.status})`);
+      throw new Error(error.message || "Failed to update contract");
     }
-
     return res.json();
   },
 
@@ -150,14 +88,7 @@ const contractsApi = {
       method: "DELETE",
       credentials: "include",
     });
-
-    if (!res.ok) {
-      if (res.status === 403) {
-        throw new Error("Permission Denied");
-      }
-      const error = await res.json().catch(() => ({}));
-      throw new Error(error.message || `Failed to delete contract (${res.status})`);
-    }
+    if (!res.ok) throw new Error("Failed to delete contract");
   },
 };
 
@@ -165,6 +96,7 @@ export default function ContractsManagementPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,7 +109,6 @@ export default function ContractsManagementPage() {
   const [deleting, setDeleting] = useState<number | null>(null);
   const [employees, setEmployees] = useState<any[]>([]);
 
-  // Permission checks
   const canManageEmployees = user?.permissions?.includes("manage:employees") ?? false;
   const canManageSystem = user?.permissions?.includes("manage:system") ?? false;
   const canEditOrDelete = canManageSystem;
@@ -347,7 +278,7 @@ export default function ContractsManagementPage() {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Set the contract data and open dialog
     setEditingContract(contract);
     setEditFormData({
@@ -776,8 +707,8 @@ export default function ContractsManagementPage() {
         </Dialog>
 
         {/* Edit Contract Dialog */}
-        <Dialog 
-          open={editDialogOpen} 
+        <Dialog
+          open={editDialogOpen}
           onOpenChange={(open) => {
             if (!open) {
               setEditDialogOpen(false);
