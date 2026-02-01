@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, FileText, Loader2, Edit2, Trash2, X, Save } from "lucide-center";
+import { Plus, FileText, Loader2, Edit2, Trash2, X, Save } from "lucide-react";
 import {
   Dialog,
   DialogContent,
