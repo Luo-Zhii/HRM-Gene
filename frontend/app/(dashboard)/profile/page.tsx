@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,13 +103,13 @@ interface SalaryHistory {
   reason?: string;
 }
 
-export default function ProfilePage() {
+function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const employeeId = searchParams.get("id");
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  
+
   // States
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -145,65 +145,65 @@ export default function ProfilePage() {
     user?.permissions?.includes("manage:payroll");
 
   const canViewSalary = viewingOwnProfile || isHRorAdmin;
-// Load profile data
-useEffect(() => {
-  const loadProfile = async () => {
-    // Nếu chưa load xong user hiện tại và cũng không có param id thì chưa làm gì
-    if (authLoading) return;
-    if (!user && !employeeId) return;
+  // Load profile data
+  useEffect(() => {
+    const loadProfile = async () => {
+      // Nếu chưa load xong user hiện tại và cũng không có param id thì chưa làm gì
+      if (authLoading) return;
+      if (!user && !employeeId) return;
 
-    try {
-      setLoading(true);
-      
-      // --- SỬA ĐỔI QUAN TRỌNG TẠI ĐÂY ---
-      // Mặc định là xem profile của chính mình
-      let url = "/api/auth/profile";
+      try {
+        setLoading(true);
 
-      // Nếu có employeeId trên URL VÀ nó khác với ID của user đang đăng nhập
-      // Thì chuyển sang gọi API lấy chi tiết nhân viên (API mà ta vừa fix xong)
-      if (employeeId && user && parseInt(employeeId) !== user.employee_id) {
-        url = `/api/employees/${employeeId}`;
-      }
-      // -----------------------------------
+        // --- SỬA ĐỔI QUAN TRỌNG TẠI ĐÂY ---
+        // Mặc định là xem profile của chính mình
+        let url = "/api/auth/profile";
 
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
+        // Nếu có employeeId trên URL VÀ nó khác với ID của user đang đăng nhập
+        // Thì chuyển sang gọi API lấy chi tiết nhân viên (API mà ta vừa fix xong)
+        if (employeeId && user && parseInt(employeeId) !== user.employee_id) {
+          url = `/api/employees/${employeeId}`;
+        }
+        // -----------------------------------
 
-      if (response.ok) {
-        const data = await response.json();
-        setProfileData(data);
-        
-        // Cập nhật state cho các form chỉnh sửa
-        setFormData({
-          phone_number: data.phone_number || "",
-          address: data.address || "",
+        const response = await fetch(url, {
+          method: "GET",
+          credentials: "include",
         });
 
-        if (data.bankInfo) {
-          setBankFormData({
-            bank_name: data.bankInfo.bank_name || "",
-            account_number: data.bankInfo.account_number || "",
-            account_holder_name: data.bankInfo.account_holder_name || "",
-          });
-        }
-      } else {
-        throw new Error("Failed to load profile");
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load profile details",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (response.ok) {
+          const data = await response.json();
+          setProfileData(data);
 
-  loadProfile();
-}, [authLoading, user, employeeId, toast]);
+          // Cập nhật state cho các form chỉnh sửa
+          setFormData({
+            phone_number: data.phone_number || "",
+            address: data.address || "",
+          });
+
+          if (data.bankInfo) {
+            setBankFormData({
+              bank_name: data.bankInfo.bank_name || "",
+              account_number: data.bankInfo.account_number || "",
+              account_holder_name: data.bankInfo.account_holder_name || "",
+            });
+          }
+        } else {
+          throw new Error("Failed to load profile");
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load profile details",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [authLoading, user, employeeId, toast]);
   // Load contracts
   useEffect(() => {
     const loadContracts = async () => {
@@ -344,7 +344,7 @@ useEffect(() => {
 
       const updatedData = await response.json();
       setProfileData(updatedData);
-      
+
       toast({
         variant: "default",
         title: "Success",
@@ -724,7 +724,7 @@ useEffect(() => {
                             {profileData.bankInfo?.bank_name || "Not provided"}
                           </p>
                         </div>
-                        
+
                         <div className="p-4 bg-gray-50 rounded-lg border">
                           <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             Account Number
@@ -742,14 +742,14 @@ useEffect(() => {
                             {profileData.bankInfo?.account_holder_name || "Not provided"}
                           </p>
                         </div>
-                        
+
                         {!profileData.bankInfo && (
-                           <div className="md:col-span-2 flex items-center p-4 text-amber-800 bg-amber-50 rounded-lg border border-amber-200">
-                             <AlertTriangle className="w-5 h-5 mr-2" />
-                             <span className="text-sm">
-                               Banking information is missing. Please update it to ensure payroll processing.
-                             </span>
-                           </div>
+                          <div className="md:col-span-2 flex items-center p-4 text-amber-800 bg-amber-50 rounded-lg border border-amber-200">
+                            <AlertTriangle className="w-5 h-5 mr-2" />
+                            <span className="text-sm">
+                              Banking information is missing. Please update it to ensure payroll processing.
+                            </span>
+                          </div>
                         )}
                       </div>
                     )}
@@ -953,8 +953,8 @@ useEffect(() => {
                                       contract.status === "Active"
                                         ? "default"
                                         : contract.status === "Expired"
-                                        ? "outline"
-                                        : "destructive"
+                                          ? "outline"
+                                          : "destructive"
                                     }
                                   >
                                     {contract.status}
@@ -1037,5 +1037,15 @@ useEffect(() => {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+
+export default function ProfilePage() {
+  return (
+    // fallback là cái sẽ hiện ra khi đang load URL, bạn có thể để <Loader2 /> hoặc text
+    <Suspense fallback={<div>Loading profile...</div>}>
+      <ProfileContent />
+    </Suspense>
   );
 }
