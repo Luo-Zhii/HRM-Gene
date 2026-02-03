@@ -52,6 +52,14 @@ export default function LoginPage() {
           <CardTitle>Login</CardTitle>
           <CardDescription>
             Enter your credentials to access your account
+            <div>
+              <p>
+                ADMIN tk: admin@example.com, mk: admin
+              </p>
+              <p>
+                EMPLOYEE tk: user21@company.com, mk: password123
+              </p>
+            </div>
           </CardDescription>
         </CardHeader>
         <CardContent>
