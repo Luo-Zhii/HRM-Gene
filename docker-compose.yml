@@ -1,0 +1,73 @@
+version: "3.8"
+
+services:
+  # --- DATABASE (PostgreSQL) ---
+  db:
+    image: postgres:15-alpine
+    container_name: hrm_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432" # Map port ra ngoài máy thật (ví dụ 5432)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - hrm-network
+
+  # --- BACKEND (NestJS) ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hrm_backend
+    restart: always
+    ports:
+      - "3001:3000" # Backend chạy cổng 3001 ở máy ngoài
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      # Cấu hình kết nối DB
+      - DB_HOST=db             # Tên service của database ở trên
+      - DB_PORT=5432           # Port trong nội bộ mạng docker
+      - DB_USERNAME=${DB_USER} # Lấy từ file .env
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_NAME}
+      - PORT=3000
+    depends_on:
+      - db # Đợi DB chạy xong mới chạy backend
+    networks:
+      - hrm-network
+
+  # --- FRONTEND (Next.js) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hrm_frontend
+    restart: always
+    ports:
+      - "3000:3000" # Frontend chạy cổng 3000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      # Next.js gọi API Backend từ trình duyệt người dùng (Client Side)
+      - NEXT_PUBLIC_API_URL=http://localhost:3001 
+      # Next.js gọi API Backend từ Server Side (SSR) - gọi trực tiếp trong mạng Docker
+      - INTERNAL_API_URL=http://backend:3000 
+    networks:
+      - hrm-network
+
+# Định nghĩa volume để lưu dữ liệu DB bền vững
+volumes:
+  pgdata:
+
+# Định nghĩa mạng nội bộ
+networks:
+  hrm-network:
+    driver: bridge

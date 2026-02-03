@@ -36,20 +36,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
+      // const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      //const res = await fetch(
+      //  `${"http://47.130.182.18:3001".replace(
+      //    /\/api$|\/$/,
+      //    ""
+      // `http://10.78.101.32:3001
+      // `http://localhost:3001
+      //   )}/api/auth/profile?t=${new Date().getTime()}`,
+      // `http://10.78.101.32:3001/api/auth/profile`,
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
-      // Thêm timestamp để tránh cache trình duyệt tuyệt đối
-      const res = await fetch(
-        `${"http://localhost:3001".replace(
-          /\/api$|\/$/,
-          ""
-          // `http://10.78.101.32:3001
-          // `http://localhost:3001
-        )}/api/auth/profile?t=${new Date().getTime()}`,
-        // `http://10.78.101.32:3001/api/auth/profile`,
-        {
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${apiBase}/auth/profile?t=${new Date().getTime()}`, {
+        credentials: "include",
+      });
+
       if (!res.ok) {
         setUser(null);
         return;
