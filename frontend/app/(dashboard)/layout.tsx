@@ -94,7 +94,7 @@ function Sidebar({
           md:translate-x-0 shadow-2xl md:shadow-none h-full
         `}
       >
-        <div className="flex justify-between items-center h-16 px-6 border-b  shrink-0">
+        <div className="flex justify-between items-center h-16 px-6 border-b border-blue-800 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-bold">
               HR
