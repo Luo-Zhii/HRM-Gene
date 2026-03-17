@@ -35,6 +35,7 @@ import { EmployeesModule } from "./modules/employees/employees.module";
       entities: [path.join(__dirname, "/entities/*.js")],
       migrations: [path.join(__dirname, "/migrations/*.js")],
       synchronize: false,
+      ssl: false,
     } as any),
     AuthModule,
     TimeKeepingModule,
@@ -47,4 +48,4 @@ import { EmployeesModule } from "./modules/employees/employees.module";
     EmployeesModule
   ],
 })
-export class AppModule {}
+export class AppModule { }

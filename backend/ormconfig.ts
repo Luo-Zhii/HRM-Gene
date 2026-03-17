@@ -11,6 +11,7 @@ const AppDataSource = new DataSource({
   entities: [path.join(__dirname, "src/entities/*.ts")],
   migrations: [path.join(__dirname, "src/migrations/*.ts")],
   synchronize: false, // Disable synchronize for migrations
+  ssl: false,
 });
 
 export default AppDataSource;

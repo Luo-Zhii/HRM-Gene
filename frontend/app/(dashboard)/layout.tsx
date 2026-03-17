@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 
 // 1. IMPORT USEPATHNAME
-import { usePathname } from "next/navigation"; 
+import { usePathname } from "next/navigation";
 
 import Link from "next/link";
 import { useAuth } from "../../src/hooks/useAuth";
@@ -43,7 +43,7 @@ function Sidebar({
   onClose: () => void;
 }) {
   const { user } = useAuth();
-  
+
   // 2. LẤY PATHNAME HIỆN TẠI
   const pathname = usePathname();
 
@@ -58,14 +58,14 @@ function Sidebar({
 
   const hasManagePayrollPermission =
     user?.permissions?.includes("manage:payroll") ?? false;
-    
+
   const hasManageEmployeePermission =
     user?.permissions?.includes("manage:employee") ?? false;
 
-  const canViewDirectory = 
-    isAdminOrHr || 
-    hasManageSystemPermission || 
-    hasManageEmployeePermission || 
+  const canViewDirectory =
+    isAdminOrHr ||
+    hasManageSystemPermission ||
+    hasManageEmployeePermission ||
     hasManagePayrollPermission;
 
   const canAccessReports =
@@ -94,13 +94,18 @@ function Sidebar({
           md:translate-x-0 shadow-2xl md:shadow-none h-full
         `}
       >
-        <div className="flex justify-between items-center h-16 px-6 border-b border-blue-800 shrink-0">
+        <div className="flex justify-between items-center h-16 px-6 border-b  shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-bold">
               HR
             </div>
             <h2 className="text-xl font-bold text-white tracking-tight">
-              HRM App
+              <img
+                src="/Logo.png"
+                alt="DashStack Logo"
+                className="h-8 w-auto object-contain"
+              />
+
             </h2>
           </div>
           <button
@@ -201,11 +206,10 @@ function Sidebar({
                   href="/admin/qr-display"
                   onClick={onClose}
                   // Xử lý active thủ công cho thẻ Link này
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all mt-2 ${
-                    pathname === "/admin/qr-display" 
-                      ? "bg-blue-600 text-white shadow-md" // Active style
-                      : "bg-blue-800 text-blue-100 hover:bg-blue-700 hover:text-white"
-                  }`}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all mt-2 ${pathname === "/admin/qr-display"
+                    ? "bg-blue-600 text-white shadow-md" // Active style
+                    : "bg-blue-800 text-blue-100 hover:bg-blue-700 hover:text-white"
+                    }`}
                 >
                   <QrCode size={20} />
                   <span>QR Display (Tablet)</span>
@@ -289,16 +293,14 @@ function NavItem({
       href={href}
       onClick={onClick}
       // Logic CSS: Nếu active thì nền sáng (blue-700/600), chữ trắng, đậm hơn
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
-        isActive
-          ? "bg-blue-600 text-white shadow-md font-medium" // Active State
-          : "text-blue-100 hover:bg-blue-800 hover:text-white" // Inactive State
-      }`}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${isActive
+        ? "bg-blue-600 text-white shadow-md font-medium" // Active State
+        : "text-blue-100 hover:bg-blue-800 hover:text-white" // Inactive State
+        }`}
     >
       <span
-        className={`transition-colors ${
-          isActive ? "text-white" : "text-blue-300 group-hover:text-white"
-        }`}
+        className={`transition-colors ${isActive ? "text-white" : "text-blue-300 group-hover:text-white"
+          }`}
       >
         {icon}
       </span>

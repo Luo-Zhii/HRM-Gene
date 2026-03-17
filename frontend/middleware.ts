@@ -7,12 +7,12 @@ export const config = {
     /*
      * Khớp với tất cả các đường dẫn, NGOẠI TRỪ:
      * - /api (đường dẫn API)
-     * - /_next/static (file tĩnh)
-     * - /_next/image (tối ưu hóa ảnh)
+     * - /_next/static (file tĩnh của Next)
+     * - /_next/image (tối ưu hóa ảnh của Next)
      * - /favicon.ico (icon)
-     * Việc này đảm bảo nó chạy trên CẢ /login VÀ /dashboard
+     * - Các file hình ảnh tĩnh (svg, png, jpg, jpeg, webp) nằm trong public
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
 
