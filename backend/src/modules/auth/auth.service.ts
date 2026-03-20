@@ -67,8 +67,17 @@ export class AuthService {
     if (!employee) throw new NotFoundException();
   
     // Cập nhật thông tin cơ bản
-    if (data.phone_number) employee.phone_number = data.phone_number;
-    if (data.address) employee.address = data.address;
+    if (data.phone_number !== undefined) employee.phone_number = data.phone_number;
+    if (data.address !== undefined) employee.address = data.address;
+    if (data.description !== undefined) employee.description = data.description;
+    
+    // Preferences & Settings
+    if (data.email_notifications !== undefined) employee.email_notifications = data.email_notifications;
+    if (data.push_reminders !== undefined) employee.push_reminders = data.push_reminders;
+    if (data.push_announcements !== undefined) employee.push_announcements = data.push_announcements;
+    if (data.push_daily_reports !== undefined) employee.push_daily_reports = data.push_daily_reports;
+    if (data.dark_mode !== undefined) employee.dark_mode = data.dark_mode;
+    if (data.language !== undefined) employee.language = data.language;
   
     // Xử lý Bank Info (Vì có cascade: true trong Entity Employee, ta có thể gán trực tiếp)
     if (data.bank_info) {

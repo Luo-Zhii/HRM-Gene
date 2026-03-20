@@ -10,7 +10,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME || "hrm",
   entities: [path.join(__dirname, "src/entities/*.ts")],
   migrations: [path.join(__dirname, "src/migrations/*.ts")],
-  synchronize: false, // Disable synchronize for migrations
+  synchronize: true, // Disable synchronize for migrations
   ssl: false,
 });
 

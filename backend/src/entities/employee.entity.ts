@@ -51,4 +51,25 @@ export class Employee {
 
   @OneToMany(() => Contract, (c) => c.employee)
   contracts?: Contract[];
+
+  @Column({ nullable: true, type: "text" })
+  description?: string;
+
+  @Column({ default: true })
+  email_notifications!: boolean;
+
+  @Column({ default: true })
+  push_reminders!: boolean;
+
+  @Column({ default: true })
+  push_announcements!: boolean;
+
+  @Column({ default: true })
+  push_daily_reports!: boolean;
+
+  @Column({ default: false })
+  dark_mode!: boolean;
+
+  @Column({ default: "en" })
+  language!: string;
 }

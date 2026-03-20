@@ -74,17 +74,7 @@ export class AuthController {
   @Patch("profile/update")
   async updateProfile(
     @Request() req: any,
-    @Body() updateData: { phone_number: string; address: string }
-  ) {
-    const userId = req.user.employee_id || req.user.id;
-    return this.authService.updateContactInfo(userId, updateData);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Patch("profile/update")
-  async updateBankInfo(
-    @Request() req: any,
-    @Body() updateData: { phone_number: string; address: string }
+    @Body() updateData: any
   ) {
     const userId = req.user.employee_id || req.user.id;
     return this.authService.updateContactInfo(userId, updateData);

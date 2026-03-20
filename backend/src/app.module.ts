@@ -34,7 +34,7 @@ import { EmployeesModule } from "./modules/employees/employees.module";
       database: process.env.DB_NAME || "hrm",
       entities: [path.join(__dirname, "/entities/*.js")],
       migrations: [path.join(__dirname, "/migrations/*.js")],
-      synchronize: false,
+      synchronize: true,
       ssl: false,
     } as any),
     AuthModule,
