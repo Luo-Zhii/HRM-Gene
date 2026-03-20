@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "../../src/hooks/useAuth";
+import { useAuth } from "@/src/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import { Menu, X, User, LogOut, ChevronDown } from "lucide-react";
@@ -12,7 +12,9 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const { user } = useAuth();
   const pathname = usePathname();
 
-  // GIỮ NGUYÊN LOGIC PHÂN QUYỀN CŨ CỦA BẠN
+  // State theo dõi trạng thái cuộn để làm hiệu ứng bóng mờ Logo
+  const [isScrolled, setIsScrolled] = useState(false);
+
   const positionName = user?.position?.position_name?.toLowerCase();
   const isAdminOrHr = positionName === "admin" || positionName === "hr" || positionName === "hr manager";
 
@@ -35,15 +37,54 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
 
       <aside className={`fixed md:sticky top-0 h-screen z-50 w-[260px] bg-white border-r border-gray-200 transform transition-transform duration-300 flex flex-col ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
 
-        {/* LOGO */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-100 shrink-0">
+        {/* LOGO - Có hiệu ứng đổ bóng mờ khi cuộn */}
+        <div
+          className={`flex items-center justify-between h-16 px-6 shrink-0 transition-all duration-200 relative z-10 ${isScrolled ? "border-transparent shadow-sm" : "border-b border-gray-100"
+            }`}
+        >
           <img src="/Logo.png" alt="DashStack Logo" className="h-8 w-auto object-contain" />
           <button onClick={onClose} className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-md"><X size={20} /></button>
         </div>
 
-        {/* MENU LIST */}
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1 custom-scrollbar">
+        {/* CSS Tùy chỉnh thanh cuộn mỏng & ẩn/hiện thông minh */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+          /* Cho Chrome, Edge, Safari */
+          .custom-thin-scrollbar::-webkit-scrollbar {
+            width: 5px; /* Độ mỏng của thanh cuộn */
+          }
+          .custom-thin-scrollbar::-webkit-scrollbar-track {
+            background: transparent; /* Nền trong suốt */
+          }
+          .custom-thin-scrollbar::-webkit-scrollbar-thumb {
+            background-color: transparent; /* Ẩn đi khi không tương tác */
+            border-radius: 10px; /* Bo tròn thanh cuộn */
+          }
+          /* Khi di chuột vào khu vực menu, thanh cuộn hiện mờ mờ */
+          .custom-thin-scrollbar:hover::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* Màu xám nhạt (slate-300) */
+          }
+          /* Khi di chuột trực tiếp vào thanh cuộn, màu đậm lên một chút */
+          .custom-thin-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: #94a3b8; /* Màu xám đậm hơn (slate-400) */
+          }
 
+          /* Hỗ trợ cho Firefox */
+          .custom-thin-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+            transition: scrollbar-color 0.3s;
+          }
+          .custom-thin-scrollbar:hover {
+            scrollbar-color: #cbd5e1 transparent;
+          }
+        `}} />
+
+        {/* MENU LIST - Thêm class custom-thin-scrollbar */}
+        <nav
+          onScroll={(e) => setIsScrolled(e.currentTarget.scrollTop > 0)}
+          className="flex-1 overflow-y-auto py-6 px-4 space-y-1 custom-thin-scrollbar"
+        >
           {/* CÁC MỤC CHUNG AI CŨNG THẤY */}
           <NavItem href="/dashboard" label="Dashboard" isActive={pathname === "/dashboard"} onClick={onClose} />
           <NavItem href="/dashboard/timekeeping" label="Timekeeping" isActive={pathname === "/dashboard/timekeeping"} onClick={onClose} />
