@@ -18,7 +18,9 @@
     "@nestjs/mapped-types": "^1.2.0",
     "@nestjs/passport": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
+    "@nestjs/platform-socket.io": "^11.1.17",
     "@nestjs/typeorm": "^9.0.0",
+    "@nestjs/websockets": "^11.1.17",
     "bcrypt": "^6.0.0",
     "cache-manager": "^5.0.0",
     "cache-manager-ioredis": "^2.1.0",
@@ -29,6 +31,7 @@
     "passport-jwt": "^4.0.0",
     "pg": "^8.0.0",
     "reflect-metadata": "^0.1.13",
+    "socket.io": "^4.8.3",
     "typeorm": "^0.3.0",
     "uuid": "^9.0.0"
   },

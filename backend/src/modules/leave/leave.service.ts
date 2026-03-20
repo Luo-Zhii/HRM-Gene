@@ -5,6 +5,8 @@ import { LeaveRequest } from "../../entities/leave-request.entity";
 import { LeaveBalance } from "../../entities/leave-balance.entity";
 import { LeaveType } from "../../entities/leave-type.entity";
 import { Employee } from "../../entities/employee.entity";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationType } from "../../entities/notification.entity";
 
 @Injectable()
 export class LeaveService {
@@ -14,7 +16,8 @@ export class LeaveService {
     @InjectRepository(LeaveBalance)
     private balanceRepo: Repository<LeaveBalance>,
     @InjectRepository(LeaveType) private leaveTypeRepo: Repository<LeaveType>,
-    @InjectRepository(Employee) private employeeRepo: Repository<Employee>
+    @InjectRepository(Employee) private employeeRepo: Repository<Employee>,
+    private notificationsService: NotificationsService
   ) {}
 
   // Get all leave types (for dropdown/selection)
@@ -164,6 +167,14 @@ export class LeaveService {
     leaveRequest.status = newStatus;
     leaveRequest.manager_approver = manager ?? undefined;
     await this.leaveReqRepo.save(leaveRequest);
+
+    // Call WebSocket Notification Service
+    await this.notificationsService.createNotification(
+      leaveRequest.employee.employee_id,
+      "Leave Request Update",
+      `Your leave request from ${leaveRequest.start_date} to ${leaveRequest.end_date} has been ${newStatus.toLowerCase()}.`,
+      NotificationType.LEAVE
+    );
 
     // CRITICAL LOGIC: If status is 'Approved', deduct days from LeaveBalance
     if (newStatus === "Approved") {

@@ -9,6 +9,7 @@ import { Permission } from "../../entities/permission.entity";
 import { LeaveService } from "./leave.service";
 import { LeaveController } from "./leave.controller";
 import { Position } from "@/entities/position.entity";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { Position } from "@/entities/position.entity";
       Permission,
       Position,
     ]),
+    NotificationsModule,
   ],
   providers: [LeaveService],
   controllers: [LeaveController],

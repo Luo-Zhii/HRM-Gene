@@ -13,6 +13,7 @@ import { ViolationsModule } from "./modules/violations/violations.module";
 import * as path from "path";
 import { ConfigModule } from "@nestjs/config";
 import { EmployeesModule } from "./modules/employees/employees.module";
+import { NotificationsModule } from "./modules/notifications/notifications.module";
 
 @Module({
   imports: [
@@ -45,7 +46,8 @@ import { EmployeesModule } from "./modules/employees/employees.module";
     ReportsModule,
     ContractsModule,
     ViolationsModule,
-    EmployeesModule
+    EmployeesModule,
+    NotificationsModule
   ],
 })
 export class AppModule { }
