@@ -6,7 +6,7 @@ export interface AppNotification {
   id: number;
   title: string;
   message: string;
-  type: 'leave' | 'task' | 'announcement' | 'report';
+  type: 'leave' | 'leave_request' | 'task' | 'announcement' | 'report';
   isRead: boolean;
   createdAt: string;
 }

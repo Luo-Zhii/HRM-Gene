@@ -10,6 +10,7 @@ import { Employee } from "./employee.entity";
 
 export enum NotificationType {
   LEAVE = "leave",
+  LEAVE_REQUEST = "leave_request",
   TASK = "task",
   ANNOUNCEMENT = "announcement",
   REPORT = "report",

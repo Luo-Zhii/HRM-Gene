@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useNotifications } from "@/src/hooks/useNotifications";
@@ -88,7 +88,7 @@ function NavItem({ href, label, isActive, onClick }: { href: string; label: stri
 }
 
 // --- NEW COMPONENT: NOTIFICATION DROPDOWN ---
-function NotificationDropdown({ notifications, onMarkAllRead }: { notifications: any[], onMarkAllRead: () => void }) {
+function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClick }: { notifications: any[], onMarkAllRead: () => void, onNotificationClick: (n: any) => void }) {
   return (
     <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-4 z-50 animate-in fade-in zoom-in-95 duration-200">
       <div className="px-4 pb-3 border-b border-gray-50 flex items-center justify-between">
@@ -102,9 +102,9 @@ function NotificationDropdown({ notifications, onMarkAllRead }: { notifications:
           <div className="py-10 text-center text-gray-400 text-sm">No new notifications</div>
         ) : (
           notifications.map((n) => (
-            <div key={n.id} className={`px-4 py-3 hover:bg-gray-50 cursor-pointer flex gap-3 border-b border-gray-50 last:border-0 ${!n.isRead ? 'bg-blue-50/30' : ''}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${n.type === 'leave' ? 'bg-green-100 text-green-600' : n.type === 'task' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
-                {n.type === 'leave' ? <FileText size={16} /> : n.type === 'task' ? <AlertCircle size={16} /> : <Megaphone size={16} />}
+            <div key={n.id} onClick={() => onNotificationClick(n)} className={`px-4 py-3 hover:bg-gray-50 cursor-pointer flex gap-3 border-b border-gray-50 last:border-0 ${!n.isRead ? 'bg-blue-50/30' : ''}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${(n.type === 'leave' || n.type === 'leave_request') ? 'bg-green-100 text-green-600' : n.type === 'task' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+                {(n.type === 'leave' || n.type === 'leave_request') ? <FileText size={16} /> : n.type === 'task' ? <AlertCircle size={16} /> : <Megaphone size={16} />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className={`text-xs ${!n.isRead ? 'font-bold text-gray-900' : 'text-gray-600'} truncate`}>{n.title}</p>
@@ -129,9 +129,22 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // --- LOGIC THÔNG BÁO ---
-  const { notifications, markAllAsRead, unreadCount } = useNotifications();
+  const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotifications();
+
+  const handleNotificationClick = async (notif: any) => {
+    if (!notif.isRead) {
+      await markAsRead(notif.id);
+    }
+    setIsNotifOpen(false);
+    if (notif.type === 'leave_request') {
+      router.push('/admin/leave-approvals');
+    } else if (notif.type === 'leave') {
+      router.push('/dashboard/leave');
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -162,7 +175,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
               </span>
             )}
           </button>
-          {isNotifOpen && <NotificationDropdown notifications={notifications} onMarkAllRead={markAllAsRead} />}
+          {isNotifOpen && <NotificationDropdown notifications={notifications} onMarkAllRead={markAllAsRead} onNotificationClick={handleNotificationClick} />}
         </div>
 
         {/* USER DROPDOWN */}

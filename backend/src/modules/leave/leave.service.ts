@@ -106,6 +106,37 @@ export class LeaveService {
 
     await this.leaveReqRepo.save(leaveRequest);
 
+    // Notify all Admins / HR / manage:system users
+    try {
+      const adminsAndHrs = await this.employeeRepo
+        .createQueryBuilder("emp")
+        .leftJoinAndSelect("emp.position", "pos")
+        .leftJoin("pos.permissions", "pp")
+        .leftJoin("pp.permission", "perm")
+        .where("LOWER(pos.position_name) LIKE :admin", { admin: "%admin%" })
+        .orWhere("LOWER(pos.position_name) LIKE :hr", { hr: "%hr%" })
+        .orWhere("LOWER(pos.position_name) LIKE :director", { director: "%director%" })
+        .orWhere("perm.permission_name = :permName", { permName: "manage:system" })
+        .getMany();
+
+      const uniqueAdmins = Array.from(new Set(adminsAndHrs.map(a => a.employee_id)))
+        .map(id => adminsAndHrs.find(a => a.employee_id === id));
+
+      const notifyPromises = uniqueAdmins.map((admin) => {
+        if (!admin) return Promise.resolve();
+        return this.notificationsService.createNotification(
+          admin.employee_id,
+          "New Leave Request",
+          `${employee.first_name} ${employee.last_name} has submitted a new ${leaveType.name} request for ${startDate}.`,
+          NotificationType.LEAVE_REQUEST
+        );
+      });
+
+      await Promise.all(notifyPromises);
+    } catch (err) {
+      console.error("Failed to notify admins of new leave request", err);
+    }
+
     return {
       request_id: leaveRequest.request_id,
       status: leaveRequest.status,
