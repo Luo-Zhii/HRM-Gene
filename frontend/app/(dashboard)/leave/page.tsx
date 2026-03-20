@@ -200,17 +200,15 @@ const CalendarView = ({ requests }: { requests: LeaveRequest[] }) => {
           return (
             <div
               key={day}
-              className={`aspect-square border rounded p-1 ${
-                isToday ? "ring-2 ring-blue-500" : ""
-              } ${
-                hasLeave
+              className={`aspect-square border rounded p-1 ${isToday ? "ring-2 ring-blue-500" : ""
+                } ${hasLeave
                   ? request?.status === "Approved"
                     ? "bg-green-100 border-green-300"
                     : request?.status === "Rejected"
-                    ? "bg-red-100 border-red-300"
-                    : "bg-yellow-100 border-yellow-300"
+                      ? "bg-red-100 border-red-300"
+                      : "bg-yellow-100 border-yellow-300"
                   : "bg-white"
-              }`}
+                }`}
             >
               <div className="text-xs font-medium">{day}</div>
               {hasLeave && request && (
@@ -449,13 +447,12 @@ export default function LeavePage() {
                       <>
                         <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                           <div
-                            className={`h-2 rounded-full transition-all ${
-                              percentage > 80
+                            className={`h-2 rounded-full transition-all ${percentage > 80
                                 ? "bg-red-500"
                                 : percentage > 50
-                                ? "bg-yellow-500"
-                                : "bg-green-500"
-                            }`}
+                                  ? "bg-yellow-500"
+                                  : "bg-green-500"
+                              }`}
                             style={{ width: `${Math.min(percentage, 100)}%` }}
                           ></div>
                         </div>
@@ -641,7 +638,7 @@ export default function LeavePage() {
                       const days =
                         Math.floor(
                           (end.getTime() - start.getTime()) /
-                            (1000 * 60 * 60 * 24)
+                          (1000 * 60 * 60 * 24)
                         ) + 1;
 
                       return (
@@ -665,17 +662,17 @@ export default function LeavePage() {
                                 req.status === "Approved"
                                   ? "default"
                                   : req.status === "Rejected"
-                                  ? "destructive"
-                                  : "outline"
+                                    ? "destructive"
+                                    : "outline"
                               }
                               className={
                                 req.status === "Pending"
                                   ? "bg-yellow-100 text-yellow-700 border-yellow-300"
                                   : req.status === "Approved"
-                                  ? "bg-green-100 text-green-700 border-green-300"
-                                  : req.status === "Rejected"
-                                  ? "bg-red-100 text-red-700 border-red-300"
-                                  : ""
+                                    ? "bg-green-100 text-green-700 border-green-300"
+                                    : req.status === "Rejected"
+                                      ? "bg-red-100 text-red-700 border-red-300"
+                                      : ""
                               }
                             >
                               {req.status}
