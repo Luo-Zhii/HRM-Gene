@@ -59,16 +59,22 @@ export class Employee {
   email_notifications!: boolean;
 
   @Column({ default: true })
-  push_reminders!: boolean;
+  push_notifications!: boolean;
 
   @Column({ default: true })
-  push_announcements!: boolean;
+  task_reminders!: boolean;
 
   @Column({ default: true })
-  push_daily_reports!: boolean;
+  announcements!: boolean;
+
+  @Column({ default: false })
+  daily_reports!: boolean;
 
   @Column({ default: false })
   dark_mode!: boolean;
+
+  @Column({ default: false })
+  two_factor_auth!: boolean;
 
   @Column({ default: "en" })
   language!: string;

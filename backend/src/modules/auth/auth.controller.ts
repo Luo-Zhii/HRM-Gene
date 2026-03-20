@@ -12,6 +12,7 @@ import {
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { Response } from "express";
+import { UpdateEmployeeDto } from "../employees/dto/update-employee.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -74,7 +75,7 @@ export class AuthController {
   @Patch("profile/update")
   async updateProfile(
     @Request() req: any,
-    @Body() updateData: any
+    @Body() updateData: UpdateEmployeeDto
   ) {
     const userId = req.user.employee_id || req.user.id;
     return this.authService.updateContactInfo(userId, updateData);

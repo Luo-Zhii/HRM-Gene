@@ -73,10 +73,12 @@ export class AuthService {
     
     // Preferences & Settings
     if (data.email_notifications !== undefined) employee.email_notifications = data.email_notifications;
-    if (data.push_reminders !== undefined) employee.push_reminders = data.push_reminders;
-    if (data.push_announcements !== undefined) employee.push_announcements = data.push_announcements;
-    if (data.push_daily_reports !== undefined) employee.push_daily_reports = data.push_daily_reports;
+    if (data.push_notifications !== undefined) employee.push_notifications = data.push_notifications;
+    if (data.task_reminders !== undefined) employee.task_reminders = data.task_reminders;
+    if (data.announcements !== undefined) employee.announcements = data.announcements;
+    if (data.daily_reports !== undefined) employee.daily_reports = data.daily_reports;
     if (data.dark_mode !== undefined) employee.dark_mode = data.dark_mode;
+    if (data.two_factor_auth !== undefined) employee.two_factor_auth = data.two_factor_auth;
     if (data.language !== undefined) employee.language = data.language;
   
     // Xử lý Bank Info (Vì có cascade: true trong Entity Employee, ta có thể gán trực tiếp)
@@ -88,7 +90,10 @@ export class AuthService {
       };
     }
   
-    return await this.employeeRepo.save(employee);
+    await this.employeeRepo.save(employee);
+
+    // Refetch the entity to return populated and updated data
+    return this.getProfile(id);
   }
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -114,7 +119,7 @@ export class AuthService {
     // Luôn lấy dữ liệu mới nhất từ DB
     const user = await this.employeeRepo.findOne({
       where: { employee_id },
-      relations: ["position", "department"],
+      relations: ["position", "department", "bankInfo"],
     });
 
     if (!user) {
