@@ -16,6 +16,23 @@ export class NotificationsService {
   ) {}
 
   async createNotification(userId: number, title: string, message: string, type: NotificationType) {
+    const employee = await this.employeeRepo.findOne({ where: { employee_id: userId } });
+    
+    if (employee) {
+      if ((type === NotificationType.LEAVE || type === NotificationType.LEAVE_REQUEST) && employee.push_notifications === false) {
+        return null;
+      }
+      if (type === NotificationType.ANNOUNCEMENT && employee.announcements === false) {
+        return null;
+      }
+      if (type === NotificationType.TASK && employee.task_reminders === false) {
+        return null;
+      }
+      if (type === NotificationType.REPORT && employee.daily_reports === false) {
+        return null;
+      }
+    }
+
     const notification = this.notificationRepo.create({
       userId,
       title,
@@ -47,7 +64,10 @@ export class NotificationsService {
   async sendAnnouncementToAll(title: string, message: string) {
     const employees = await this.employeeRepo.find();
     
-    const notifications = employees.map(emp => {
+    // Only send to those who have opted in to announcements
+    const targetEmployees = employees.filter(emp => emp.announcements !== false);
+
+    const notifications = targetEmployees.map(emp => {
       return this.notificationRepo.create({
         userId: emp.employee_id,
         title,
