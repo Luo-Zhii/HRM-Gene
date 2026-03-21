@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode.react";
 import { useAuthContext } from "@/src/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { RefreshCcw } from "lucide-react"; // Thêm cái icon cho ngầu
 
 export default function QrDisplayPage() {
   const { user, loading } = useAuthContext();
   const router = useRouter();
   const [qrToken, setQrToken] = useState<string>("");
+  const [countdown, setCountdown] = useState<number>(30); // State lưu số giây
 
   useEffect(() => {
     if (!loading) {
@@ -27,13 +29,14 @@ export default function QrDisplayPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchQr = async () => {
       try {
         const response = await fetch("/api/timekeeping/dynamic-qr", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            // Include auth headers if needed
           },
           credentials: "include",
         });
@@ -46,48 +49,59 @@ export default function QrDisplayPage() {
       }
     };
 
-    if (user) {
-      // Fetch immediately
-      fetchQr();
+    // Lần đầu tiên vào trang thì gọi luôn
+    fetchQr();
 
-      // Set up interval to fetch every 3 seconds
-      const interval = setInterval(fetchQr, 10000);
+    // Setup interval chạy mỗi 1 giây (1000ms) để đếm ngược
+    const timerInterval = setInterval(() => {
+      setCountdown((prevCount) => {
+        if (prevCount <= 1) {
+          fetchQr(); // Gọi lại API khi hết giờ
+          return 30; // Reset lại bộ đếm về 30 giây
+        }
+        return prevCount - 1; // Trừ đi 1 giây
+      });
+    }, 1000);
 
-      // Cleanup interval on unmount
-      return () => clearInterval(interval);
-    }
+    // Cleanup khi rời khỏi trang
+    return () => clearInterval(timerInterval);
   }, [user]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center font-medium text-gray-600">Loading...</div>;
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   const hasPermission =
     user.permissions?.includes("manage:system") ||
     user.permissions?.includes("manage:timekeeping");
   if (!hasPermission) {
-    return <div>Access denied</div>;
+    return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold">Access denied</div>;
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-8">Dynamic QR Code for Check-In</h1>
-      <div className="bg-white p-8 rounded-lg shadow-lg">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8FAFC]">
+      <h1 className="text-3xl font-bold mb-2 text-slate-800">Dynamic Check-In</h1>
+      <p className="mb-8 text-slate-500">Scan this QR code using the employee app</p>
+
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
         {qrToken ? (
-          <QRCode value={qrToken} size={256} />
+          <div className="p-4 bg-white border-4 border-blue-50 rounded-xl">
+            <QRCode value={qrToken} size={280} level="H" />
+          </div>
         ) : (
-          <div className="w-64 h-64 flex items-center justify-center border-2 border-dashed border-gray-300">
-            <span className="text-gray-500">Loading QR...</span>
+          <div className="w-[312px] h-[312px] flex items-center justify-center border-2 border-dashed border-gray-200 rounded-xl bg-slate-50">
+            <span className="text-slate-400 font-medium animate-pulse">Generating QR...</span>
           </div>
         )}
+
+        {/* --- KHU VỰC BỘ ĐẾM GIÂY --- */}
+        <div className={`mt-8 flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-colors ${countdown <= 5 ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+          <RefreshCcw size={16} className={`${countdown <= 5 ? 'animate-spin' : ''}`} />
+          <span>Refreshes in {countdown}s</span>
+        </div>
       </div>
-      <p className="mt-4 text-sm text-gray-600">
-        Scan this QR code to check in
-      </p>
     </div>
   );
 }

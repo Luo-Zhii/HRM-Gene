@@ -6,12 +6,7 @@ import { useAuth } from "@/src/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
   Search, LayoutGrid, List, Mail, User, Phone,
@@ -22,15 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 interface Position { position_id: number; position_name: string; }
 interface Department { department_id: number; department_name: string; }
 interface EmployeeData {
-  employee_id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  avatar_url?: string;
-  phone_number?: string;
-  address?: string;
-  position?: Position | null;
-  department?: Department | null;
+  employee_id: number; email: string; first_name: string; last_name: string;
+  avatar_url?: string; phone_number?: string; address?: string;
+  position?: Position | null; department?: Department | null;
 }
 
 export default function EmployeeDirectoryPage() {
@@ -62,11 +51,7 @@ export default function EmployeeDirectoryPage() {
         if (!res.ok) throw new Error("Failed to fetch employee list");
         const data = await res.json();
         setEmployees(data || []);
-      } catch (error) {
-        setEmployees([]);
-      } finally {
-        setLoading(false);
-      }
+      } catch (error) { setEmployees([]); } finally { setLoading(false); }
     };
     if (user && (user.permissions?.includes("manage:employee") || user.permissions?.includes("manage:system") || user.permissions?.includes("manage:payroll"))) {
       loadEmployees();
@@ -148,35 +133,27 @@ export default function EmployeeDirectoryPage() {
                         Employee <ArrowUpDown className="h-3.5 w-3.5" />
                       </Button>
                     </TableHead>
-
                     <TableHead className="font-semibold text-gray-700 px-4">Email</TableHead>
-
                     <TableHead className="p-0">
                       <Button variant="ghost" onClick={() => handleSort('department')} className="flex w-full justify-start gap-2 font-semibold text-gray-700">
                         Department <ArrowUpDown className="h-3.5 w-3.5" />
                       </Button>
                     </TableHead>
-
-                    {/* TRƯỜNG POSITION */}
                     <TableHead className="p-0">
                       <Button variant="ghost" onClick={() => handleSort('position')} className="flex w-full justify-start gap-2 font-semibold text-gray-700">
                         Position <ArrowUpDown className="h-3.5 w-3.5" />
                       </Button>
                     </TableHead>
-
                     <TableHead className="p-0">
                       <Button variant="ghost" onClick={() => handleSort('phone_number')} className="flex w-full justify-start gap-2 font-semibold text-gray-700">
                         <Phone className="w-4 h-4" /> Phone Number <ArrowUpDown className="h-3.5 w-3.5" />
                       </Button>
                     </TableHead>
-
-                    {/* TRƯỜNG ADDRESS */}
                     <TableHead className="p-0">
                       <Button variant="ghost" onClick={() => handleSort('address')} className="flex w-full justify-start gap-2 font-semibold text-gray-700">
                         <MapPin className="w-4 h-4" /> Address <ArrowUpDown className="h-3.5 w-3.5" />
                       </Button>
                     </TableHead>
-
                     <TableHead className="text-right font-semibold text-gray-700 px-4">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -185,33 +162,28 @@ export default function EmployeeDirectoryPage() {
                     <TableRow key={emp.employee_id} className="hover:bg-gray-50">
                       <TableCell className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-[#E0E7FF] flex items-center justify-center text-blue-600 font-bold text-sm shrink-0">
-                            {getInitials(emp)}
+                          {/* ĐỒNG BỘ AVATAR VÀO TABLE */}
+                          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0 overflow-hidden border border-gray-100">
+                            {emp.avatar_url ? (
+                              <img src={emp.avatar_url} alt={emp.first_name} className="w-full h-full object-cover" />
+                            ) : (
+                              getInitials(emp)
+                            )}
                           </div>
                           <span className="font-medium text-gray-900">{getEmployeeName(emp)}</span>
                         </div>
                       </TableCell>
-
                       <TableCell className="text-gray-600 px-4 py-3">{emp.email}</TableCell>
-
                       <TableCell className="text-gray-600 px-4 py-3">{emp.department?.department_name || "-"}</TableCell>
-
-                      {/* DỮ LIỆU POSITION */}
                       <TableCell className="text-gray-600 px-4 py-3">{emp.position?.position_name || "-"}</TableCell>
-
                       <TableCell className="px-4 py-3">
                         {emp.phone_number ? (
-                          <span className="bg-blue-50 text-blue-600 font-medium px-2 py-1 rounded-md text-sm">
-                            {emp.phone_number}
-                          </span>
+                          <span className="bg-blue-50 text-blue-600 font-medium px-2 py-1 rounded-md text-sm">{emp.phone_number}</span>
                         ) : "-"}
                       </TableCell>
-
-                      {/* DỮ LIỆU ADDRESS */}
                       <TableCell className="text-gray-600 px-4 py-3 max-w-[200px] truncate" title={emp.address}>
                         {emp.address || "-"}
                       </TableCell>
-
                       <TableCell className="text-right px-4 py-3">
                         <Button variant="ghost" size="sm" onClick={() => handleViewProfile(emp.employee_id)} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                           View Profile <ExternalLink className="w-4 h-4 ml-1.5" />
@@ -232,8 +204,13 @@ export default function EmployeeDirectoryPage() {
               {filteredAndSortedEmployees.map((emp) => (
                 <div key={emp.employee_id} className="bg-white rounded-2xl shadow-sm border p-6 flex flex-col hover:shadow-md transition-all">
                   <div className="flex items-start gap-4 mb-5">
-                    <div className="w-11 h-11 rounded-full bg-[#E0E7FF] border border-blue-100 flex items-center justify-center text-blue-600 font-bold shrink-0">
-                      {getInitials(emp)}
+                    {/* ĐỒNG BỘ AVATAR VÀO GRID */}
+                    <div className="w-11 h-11 rounded-full bg-blue-100 border border-blue-50 flex items-center justify-center text-blue-600 font-bold shrink-0 overflow-hidden">
+                      {emp.avatar_url ? (
+                        <img src={emp.avatar_url} alt={emp.first_name} className="w-full h-full object-cover" />
+                      ) : (
+                        getInitials(emp)
+                      )}
                     </div>
                     <div>
                       <h3 className="text-[16px] font-semibold text-gray-900 leading-tight">{getEmployeeName(emp)}</h3>

@@ -210,14 +210,6 @@ function ProfileContent() {
           </div>
         </div>
 
-        {/* NÚT SAVE / DISCARD */}
-        {isEditing && (
-          <div className="flex justify-end gap-4 pt-6 border-t">
-            <Button onClick={() => setIsEditing(false)} variant="outline" className="bg-red-50 text-red-500 border-none hover:bg-red-100 px-10">Discard</Button>
-            <Button onClick={handleSaveAll} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 px-10">{isSaving ? "Saving..." : "Save Changes"}</Button>
-          </div>
-        )}
-
         {/* BANK ACCOUNT AREA */}
         <Card className="rounded-2xl border-none shadow-sm bg-white p-8">
           <h2 className="text-lg font-bold flex items-center gap-3 mb-6"><CreditCard className="text-blue-500" /> Bank Account Information</h2>
@@ -227,6 +219,14 @@ function ProfileContent() {
             <BankField label="Account Holder" value={bankFormData.account_holder_name} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, account_holder_name: v })} uppercase />
           </div>
         </Card>
+
+        {/* NÚT SAVE / DISCARD */}
+        {isEditing && (
+          <div className="flex justify-end gap-4 pt-6 border-t">
+            <Button onClick={() => setIsEditing(false)} variant="outline" className="bg-red-50 text-red-500 border-none hover:bg-red-100 px-10">Discard</Button>
+            <Button onClick={handleSaveAll} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 px-10">{isSaving ? "Saving..." : "Save Changes"}</Button>
+          </div>
+        )}
 
         {/* HR RECORDS ACCORDION */}
         <div className="space-y-4">
