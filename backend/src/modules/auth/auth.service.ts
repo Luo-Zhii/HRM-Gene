@@ -33,7 +33,7 @@ export class AuthService {
 
     @InjectRepository(Permission)
     private permissionRepo: Repository<Permission>
-  ) {}
+  ) { }
 
   // --- HÀM HELPER: Lấy danh sách quyền hạn ---
   private async getUserPermissions(positionId: number): Promise<string[]> {
@@ -63,14 +63,19 @@ export class AuthService {
       where: { employee_id: id },
       relations: ["bankInfo"]
     });
-    
+
     if (!employee) throw new NotFoundException();
-  
+
     // Cập nhật thông tin cơ bản
+
+    if (data.first_name !== undefined) employee.first_name = data.first_name;
+    if (data.last_name !== undefined) employee.last_name = data.last_name;
+    if (data.email !== undefined) employee.email = data.email;
+
     if (data.phone_number !== undefined) employee.phone_number = data.phone_number;
     if (data.address !== undefined) employee.address = data.address;
     if (data.description !== undefined) employee.description = data.description;
-    
+
     // Preferences & Settings
     if (data.email_notifications !== undefined) employee.email_notifications = data.email_notifications;
     if (data.push_notifications !== undefined) employee.push_notifications = data.push_notifications;
@@ -80,19 +85,35 @@ export class AuthService {
     if (data.dark_mode !== undefined) employee.dark_mode = data.dark_mode;
     if (data.two_factor_auth !== undefined) employee.two_factor_auth = data.two_factor_auth;
     if (data.language !== undefined) employee.language = data.language;
-  
+
     // Xử lý Bank Info (Vì có cascade: true trong Entity Employee, ta có thể gán trực tiếp)
     if (data.bank_info) {
       // Nếu chưa có bankInfo thì tạo mới, nếu có rồi thì gán đè các trường
-      employee.bankInfo = {
-        ...employee.bankInfo, // giữ lại id nếu có
-        ...data.bank_info     // ghi đè thông tin mới
-      };
+      if (employee.bankInfo) {
+        employee.bankInfo.bank_name = data.bank_info.bank_name ?? employee.bankInfo.bank_name;
+        employee.bankInfo.account_number = data.bank_info.account_number ?? employee.bankInfo.account_number;
+        employee.bankInfo.account_holder_name = data.bank_info.account_holder_name ?? employee.bankInfo.account_holder_name;
+      } else {
+        employee.bankInfo = data.bank_info;
+      }
     }
-  
+
     await this.employeeRepo.save(employee);
 
     // Refetch the entity to return populated and updated data
+    return this.getProfile(id);
+  }
+
+  async updateAvatarUrl(id: number, url: string) {
+    const employee = await this.employeeRepo.findOne({
+      where: { employee_id: id },
+    });
+
+    if (!employee) throw new NotFoundException();
+
+    employee.avatar_url = url;
+    await this.employeeRepo.save(employee);
+
     return this.getProfile(id);
   }
 

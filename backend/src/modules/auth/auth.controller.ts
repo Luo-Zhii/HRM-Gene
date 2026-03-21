@@ -8,15 +8,20 @@ import {
   Res,
   Patch,
   BadRequestException,
+  UseInterceptors,
+  UploadedFile,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { Response } from "express";
 import { UpdateEmployeeDto } from "../employees/dto/update-employee.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { diskStorage } from "multer";
+import { extname } from "path";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   // --- 1. LOGIN ---
   @Post("login")
@@ -81,6 +86,42 @@ export class AuthController {
     return this.authService.updateContactInfo(userId, updateData);
   }
 
+
+  // --- 4.5. UPLOAD AVATAR ---
+  @UseGuards(JwtAuthGuard)
+  @Post("profile/avatar")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: diskStorage({
+        destination: "./uploads/avatars",
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+          return cb(new BadRequestException("Only image files are allowed!"), false);
+        }
+        cb(null, true);
+      },
+    })
+  )
+  async uploadAvatar(
+    @Request() req: any,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    if (!file) {
+      throw new BadRequestException("File is required or invalid format");
+    }
+    const userId = req.user.employee_id || req.user.id;
+    const protocol = req.protocol || "http";
+    const host = req.get("host") || "localhost:3001";
+    const avatarUrl = `${protocol}://${host}/uploads/avatars/${file.filename}`;
+
+    return this.authService.updateAvatarUrl(userId, avatarUrl);
+  }
 
   // --- 5. NAVIGATION (Menu Sidebar) ---
   @UseGuards(JwtAuthGuard)

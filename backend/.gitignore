@@ -38,4 +38,6 @@ Thumbs.db
 
 # Misc
 .cache/
-*.tmp
+*.
+
+uploads/avatars/*

@@ -2,8 +2,17 @@ import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import * as os from 'os'; // 1. Import module OS
 
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Serve the uploads folder statically
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
+  });
+
 
   // Enable CORS for frontend development
   app.enableCors({
@@ -19,7 +28,7 @@ async function bootstrap() {
   await app.listen(port, "0.0.0.0");
   // 2. Logic lấy địa chỉ IP của máy
   const networkInterfaces = os.networkInterfaces();
-  
+
   // Tìm địa chỉ IPv4 không phải là internal (127.0.0.1)
   const ipAddress = Object.values(networkInterfaces)
     .flat()

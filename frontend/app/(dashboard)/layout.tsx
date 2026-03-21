@@ -51,7 +51,9 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
                 </>
               )}
               {(isAdminOrHr || hasManageSystemPermission) && <NavItem href="/admin/attendance" label="Attendance History" isActive={pathname === "/admin/attendance"} onClick={onClose} />}
-              {hasManageSystemPermission && <NavItem href="/admin/qr-display" label="QR Display (Tablet)" isActive={pathname === "/admin/qr-display"} onClick={onClose} />}
+              {hasManageSystemPermission && (
+                <NavItem href="/admin/qr-display" label="QR Display (Tablet)" isActive={pathname === "/admin/qr-display"} onClick={onClose} />
+              )}
             </>
           )}
           {hasManagePayrollPermission && (
@@ -188,9 +190,17 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
                 <p className="text-sm font-semibold text-gray-800">{user.first_name || "User"}</p>
                 <p className="text-[11px] text-gray-500">{user.position?.position_name || "Employee"}</p>
               </div>
-              <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold overflow-hidden">
-                <span className="absolute">{user.first_name ? user.first_name[0].toUpperCase() : "U"}</span>
-              </div>
+              <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold overflow-hidden relative border border-gray-100 shadow-sm">
+                {user.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                    key={user.avatar_url} // Ép React render lại ngay khi sếp upload
+                  />
+                ) : (
+                  <span>{user.first_name ? user.first_name[0].toUpperCase() : "U"}</span>
+                )}              </div>
               <ChevronDown size={16} className="text-gray-400" />
             </button>
             {isDropdownOpen && (
