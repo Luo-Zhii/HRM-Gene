@@ -14,12 +14,25 @@ import { Employee } from "../../entities/employee.entity";
 
 @Injectable()
 export class TimeKeepingService {
+  // A simple in-memory store to manage dynamic QR tokens and their exact expiration times
+  private readonly dynamicQrTokens = new Map<string, number>();
+
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(TimeKeeping) private tkRepo: Repository<TimeKeeping>,
     @InjectRepository(Employee) private empRepo: Repository<Employee>,
     private dataSource: DataSource
-  ) {}
+  ) {
+    // Periodically clean up expired tokens directly to prevent memory leaks
+    setInterval(() => {
+      const now = Date.now();
+      for (const [token, expiration] of this.dynamicQrTokens.entries()) {
+        if (now > expiration) {
+          this.dynamicQrTokens.delete(token);
+        }
+      }
+    }, 60000);
+  }
 
   /**
    * Get today's date range in UTC (00:00:00 to 23:59:59)
@@ -93,13 +106,14 @@ export class TimeKeepingService {
     message: string;
     timekeeping_id: number;
   }> {
-    // Validate QR token
-    const isValid = await this.cacheManager.get(`qr-token-${token}`);
-    if (!isValid) {
+    // Validate QR token reliably using our local Map
+    const expiration = this.dynamicQrTokens.get(token);
+    if (!expiration || Date.now() > expiration) {
+      if (expiration) this.dynamicQrTokens.delete(token); // Cleanup if expired
       throw new BadRequestException("Invalid or expired QR token");
     }
-    // Remove token after use
-    await this.cacheManager.del(`qr-token-${token}`);
+    // Remove token immediately after use
+    this.dynamicQrTokens.delete(token);
 
     // Fetch employee details
     const employee = await this.empRepo.findOne({
@@ -299,7 +313,8 @@ export class TimeKeepingService {
 
   async generateDynamicQr(): Promise<{ token: string }> {
     const token = uuidv4();
-    await this.cacheManager.set(`qr-token-${token}`, true, 10000); // 10 seconds TTL
+    // Expiration: 35 seconds from now to gracefully handle the frontend's 30-second refresh countdown plus network lag
+    this.dynamicQrTokens.set(token, Date.now() + 35000);
     return { token: token };
   }
 

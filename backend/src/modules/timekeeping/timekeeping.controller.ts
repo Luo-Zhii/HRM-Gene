@@ -26,12 +26,12 @@ export class TimeKeepingController {
 
   @UseGuards(JwtAuthGuard)
   @Post("check-in/qr")
-  async checkInQr(@Req() req: any, @Body("payload") payload: string) {
+  async checkInQr(@Req() req: any, @Body("token") token: string) {
     // req.user should be set by auth
     const user = req.user;
     if (!user) throw new ForbiddenException("Unauthorized");
-    // Validate UUID payload from dynamic QR
-    return this.svc.recordCheckInByDynamicQr(user.employee_id, payload);
+    // Validate UUID token from dynamic QR
+    return this.svc.recordCheckInByDynamicQr(user.employee_id, token);
   }
 
   @UseGuards(JwtAuthGuard, IPWhitelistGuard)

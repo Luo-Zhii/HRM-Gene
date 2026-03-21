@@ -69,7 +69,8 @@ const TimekeepingSuccessModal = ({
   onClose: () => void;
   data: TimekeepingResponse | null;
 }) => {
-  if (!data) return null;
+  // Nếu không có dữ liệu hoặc modal đang đóng thì ẩn luôn
+  if (!data || !open) return null;
 
   const isCheckIn = data.status === "CHECK_IN";
   const timeStr = new Date(data.time).toLocaleTimeString("en-US", {
@@ -78,71 +79,68 @@ const TimekeepingSuccessModal = ({
     second: "2-digit",
   });
 
+  // CODE TAY 100%: Dùng fixed inset-0 để phủ đen toàn màn hình, z-[99999] để đè lên mọi thứ
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="flex flex-col items-center text-center space-y-4 py-4">
-            {/* Icon with colored background */}
-            <div
-              className={`p-6 rounded-full ${
-                isCheckIn
-                  ? "bg-green-100 dark:bg-green-900/20"
-                  : "bg-orange-100 dark:bg-orange-900/20"
-              }`}
-            >
-              {isCheckIn ? (
-                <Sun className="w-16 h-16 text-green-600 dark:text-green-400" />
-              ) : (
-                <Moon className="w-16 h-16 text-orange-600 dark:text-orange-400" />
-              )}
-            </div>
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
 
-            {/* Title */}
-            <DialogTitle className="text-2xl font-bold">
-              {isCheckIn ? "Checked In!" : "Checked Out!"}
-            </DialogTitle>
-
-            {/* Message */}
-            <DialogDescription className="text-base">
-              {data.message}
-            </DialogDescription>
-
-            {/* Time Display */}
-            <div className="w-full space-y-2 pt-2">
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {isCheckIn ? "Check-in Time" : "Check-out Time"}
-                </span>
-                <span className="text-lg font-semibold">{timeStr}</span>
-              </div>
-
-              {/* Duration (only for check-out) */}
-              {!isCheckIn && data.duration !== undefined && (
-                <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                  <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
-                    Total Work Duration
-                  </span>
-                  <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                    {data.duration.toFixed(2)} hrs
-                  </span>
-                </div>
-              )}
-            </div>
+        {/* NỘI DUNG MODAL */}
+        <div className="flex flex-col items-center text-center space-y-4 py-4">
+          <div className={`p-6 rounded-full ${isCheckIn ? "bg-green-100" : "bg-orange-100"}`}>
+            {isCheckIn ? (
+              <Sun className="w-16 h-16 text-green-600" />
+            ) : (
+              <Moon className="w-16 h-16 text-orange-600" />
+            )}
           </div>
-        </DialogHeader>
 
-        <div className="flex justify-center pt-4">
-          <Button onClick={onClose} className="w-full" size="lg">
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Close
-          </Button>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {isCheckIn ? "Checked In!" : "Checked Out!"}
+          </h2>
+
+          <p className="text-base text-gray-600 dark:text-gray-300">
+            {data.message}
+          </p>
+
+          {/* HIỂN THỊ THỜI GIAN */}
+          <div className="w-full space-y-3 pt-4">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                {isCheckIn ? "Check-in Time" : "Check-out Time"}
+              </span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">
+                {timeStr}
+              </span>
+            </div>
+
+            {/* Nếu là Check-out thì hiện tổng giờ làm */}
+            {!isCheckIn && data.duration !== undefined && (
+              <div className="flex items-center justify-between p-4 bg-orange-50 rounded-xl border border-orange-100">
+                <span className="text-sm font-bold text-orange-700">
+                  Total Work Duration
+                </span>
+                <span className="text-xl font-black text-orange-600">
+                  {data.duration.toFixed(2)} hrs
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        {/* NÚT ĐÓNG */}
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={onClose}
+            className="flex items-center justify-center w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-12 text-md font-bold transition-colors shadow-md"
+          >
+            <CheckCircle2 className="w-5 h-5 mr-2" />
+            Awesome, Close!
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
-
 // --- Main Page ---
 export default function TimekeepingPage() {
   const [loadingIp, setLoadingIp] = useState(false);
@@ -150,9 +148,11 @@ export default function TimekeepingPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [qrPayload, setQrPayload] = useState("");
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [successData, setSuccessData] = useState<TimekeepingResponse | null>(
     null
   );
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
   const { toast } = useToast();
   const { refresh: refreshAuth } = useAuth();
 
@@ -211,29 +211,35 @@ export default function TimekeepingPage() {
       setLoadingIp(false);
     }
   };
-
   const submitQr = async (payload?: string) => {
+    // CHỐT CHẶN: Nếu đang xử lý hoặc đã mở modal thì CẤM gọi API
+    if (isProcessing || successModalOpen) return;
+
     const p = payload ?? qrPayload;
     if (!p) {
       showStatus("error", "No QR payload available");
       return;
     }
+
+    // ĐÓNG VAN LẠI NGAY LẬP TỨC
+    setIsProcessing(true);
     setLoadingQr(true);
+
     try {
       const res = await fetch("/api/timekeeping/check-in/qr", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload: p }),
+        body: JSON.stringify({ token: p }),
       });
+
       const json: TimekeepingResponse = await res.json();
+
       if (res.ok) {
-        // Show success modal
         setSuccessData(json);
         setSuccessModalOpen(true);
         setIsScanning(false);
         setQrPayload("");
-        // Refresh auth context to update dashboard status
         await refreshAuth();
       } else {
         showStatus("error", json?.message || "Invalid QR code or system error");
@@ -241,13 +247,19 @@ export default function TimekeepingPage() {
     } catch (err) {
       showStatus("error", "QR check-in connection failed");
     } finally {
-      setLoadingQr(false);
+      // MỞ VAN LẠI SAU 1.5 GIÂY ĐỂ TRÁNH BỊ GỌI ĐÚP
+      setTimeout(() => {
+        setLoadingQr(false);
+        setIsProcessing(false);
+      }, 1500);
     }
   };
 
   const onScanSuccess = (decodedText: string, decodedResult: any) => {
+    // CHỐT CHẶN Ở MÁY QUÉT: Ngăn máy quét quét lại liên tục
+    if (isProcessing || successModalOpen) return;
+
     console.log(`Scan result: ${decodedText}`);
-    // Stop scanning immediately to prevent spam
     setIsScanning(false);
     submitQr(decodedText);
   };
