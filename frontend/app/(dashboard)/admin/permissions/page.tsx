@@ -225,13 +225,12 @@ export default function PermissionMatrixPage() {
         {/* Status Message */}
         {statusMessage && (
           <div
-            className={`mb-4 p-4 rounded-lg font-medium ${
-              statusMessage.type === "success"
-                ? "bg-green-100 text-green-800 border border-green-300"
-                : statusMessage.type === "error"
+            className={`mb-4 p-4 rounded-lg font-medium ${statusMessage.type === "success"
+              ? "bg-green-100 text-green-800 border border-green-300"
+              : statusMessage.type === "error"
                 ? "bg-red-100 text-red-800 border border-red-300"
                 : "bg-blue-100 text-blue-800 border border-blue-300"
-            }`}
+              }`}
           >
             {statusMessage.text}
           </div>
@@ -313,9 +312,8 @@ export default function PermissionMatrixPage() {
                                   : undefined
                               }
                               aria-disabled={!canEdit}
-                              className={`w-5 h-5 rounded cursor-pointer accent-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${
-                                !canEdit ? "opacity-70" : ""
-                              }`}
+                              className={`w-5 h-5 rounded cursor-pointer accent-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${!canEdit ? "opacity-70" : ""
+                                }`}
                             />
                           </td>
                         );

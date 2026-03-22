@@ -4,12 +4,14 @@ import {
   Post,
   Body,
   Patch,
+  Put,
   Param,
   Delete,
   UseGuards,
   Request,
   Query,
   ParseIntPipe,
+  ForbiddenException,
 } from "@nestjs/common";
 import { ContractsService } from "./contracts.service";
 import { CreateContractDto } from "./dto/create-contract.dto";
@@ -31,7 +33,15 @@ export class ContractsController {
   }
 
   @Get()
-  async findAll(@Request() req: any, @Query("employeeId") employeeId?: string) {
+  async findAll(
+    @Request() req: any, 
+    @Query("employeeId") employeeId?: string,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string,
+    @Query("search") search?: string,
+    @Query("status") status?: string,
+    @Query("type") type?: string
+  ) {
     const user = req.user;
     const isAdmin =
       user.permissions?.includes("manage:employees") ||
@@ -43,7 +53,28 @@ export class ContractsController {
         ? parseInt(employeeId, 10)
         : undefined
       : user.employee_id;
-    return this.contractsService.findAll(targetEmployeeId);
+      
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 10;
+
+    return this.contractsService.findAll(targetEmployeeId, pageNum, limitNum, search, status, type);
+  }
+
+  @Get("employee/:employeeId")
+  async findByEmployee(
+    @Param("employeeId", ParseIntPipe) employeeId: number,
+    @Request() req: any
+  ) {
+    const user = req.user;
+    const isAdmin =
+      user.permissions?.includes("manage:employees") ||
+      user.permissions?.includes("manage:system");
+
+    if (!isAdmin && user.employee_id !== employeeId) {
+      throw new ForbiddenException("You can only view your own contracts");
+    }
+
+    return this.contractsService.findByEmployee(employeeId);
   }
 
   @Get(":id")
@@ -65,6 +96,16 @@ export class ContractsController {
   @UseGuards(RolesGuard)
   @Permissions("manage:employees", "manage:system")
   update(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() updateDto: UpdateContractDto
+  ) {
+    return this.contractsService.update(id, updateDto);
+  }
+
+  @Put(":id")
+  @UseGuards(RolesGuard)
+  @Permissions("manage:employees", "manage:system")
+  updatePut(
     @Param("id", ParseIntPipe) id: number,
     @Body() updateDto: UpdateContractDto
   ) {

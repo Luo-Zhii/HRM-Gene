@@ -26,7 +26,7 @@ interface ProfileData {
 }
 
 // ==========================================
-// CUSTOM TOGGLE COMPONENT (Sửa lỗi nút hỏng, bể CSS)
+// CUSTOM TOGGLE COMPONENT
 // ==========================================
 function CustomToggle({ checked, onChange, disabled }: { checked: boolean, onChange: (c: boolean) => void, disabled?: boolean }) {
   return (
@@ -80,10 +80,28 @@ function ProfileContent() {
           fetch(`/api/violations?employeeId=${targetId}`, { credentials: "include" }),
           (viewingOwnProfile || user?.permissions?.includes("manage:payroll")) ? fetch(`/api/salary-history?employeeId=${targetId}`, { credentials: "include" }) : Promise.resolve({ json: () => [] })
         ]);
-        if (profRes.ok) { const d = await profRes.json(); setProfileData(d); syncState(d); }
+
+        if (profRes.ok) {
+          const d = await profRes.json();
+          setProfileData(d);
+          syncState(d);
+        }
+
         const [c, v, s] = await Promise.all([contRes.json(), violRes.json(), salRes.json()]);
-        setHrData({ contracts: c || [], violations: v || [], salary: s || [] });
-      } catch (e) { console.error(e); } finally { setLoading(false); }
+
+        // BẢO KÊ DỮ LIỆU: Ép kiểu mảng để chống lỗi .find() và .map()
+        setHrData({
+          contracts: Array.isArray(c) ? c : [],
+          violations: Array.isArray(v) ? v : [],
+          salary: Array.isArray(s) ? s : []
+        });
+      } catch (e) {
+        console.error(e);
+        // BẢO KÊ LÚC CATCH LỖI NETWORK
+        setHrData({ contracts: [], violations: [], salary: [] });
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [authLoading, user, employeeId]);
@@ -102,7 +120,6 @@ function ProfileContent() {
         const data = await res.json();
         setProfileData(prev => prev ? ({ ...prev, avatar_url: data.avatar_url }) : null);
         toast({ title: "Success", description: "Avatar updated! Syncing with header..." });
-        // Reload trang để cập nhật Avatar trên Header Layout
         setTimeout(() => window.location.reload(), 800);
       } else { throw new Error(); }
     } catch (e) { toast({ variant: "destructive", title: "Error", description: "Upload failed. Check backend Multer config." }); } finally { setIsSaving(false); }
@@ -122,8 +139,6 @@ function ProfileContent() {
         syncState(updated);
         toast({ title: "Success", description: "All settings saved successfully!" });
         setIsEditing(false);
-        // Tùy chọn: Reload nếu muốn Header nhận tên mới ngay lập tức
-        // setTimeout(() => window.location.reload(), 1000);
       } else { throw new Error(); }
     } catch (error) { toast({ variant: "destructive", title: "Error", description: "Failed to save. Ensure database columns exist!" }); } finally { setIsSaving(false); }
   };
@@ -138,10 +153,10 @@ function ProfileContent() {
       <div className="max-w-[1100px] mx-auto space-y-8">
         <h1 className="text-2xl font-bold text-slate-900">General Settings</h1>
 
-        {/* THẺ PERSONAL INFO - FIGMA STYLE */}
+        {/* THẺ PERSONAL INFO */}
         <Card className="rounded-2xl border-none shadow-sm overflow-hidden bg-white">
           <div className="grid grid-cols-1 md:grid-cols-12">
-            {/* Cột trái: Avatar (Đã chỉnh sang trái chuẩn bài) */}
+            {/* Cột trái: Avatar */}
             <div className="md:col-span-4 p-10 flex flex-col items-center justify-center border-r border-slate-50">
               <div className="relative group">
                 <div className="w-32 h-32 rounded-full bg-slate-100 flex items-center justify-center border-4 border-white shadow-md overflow-hidden text-slate-400 text-4xl font-bold">
@@ -174,7 +189,6 @@ function ProfileContent() {
                 <FormInput label="Email" name="email" value={formData.email} onChange={(e: any) => setFormData({ ...formData, email: e.target.value })} disabled={!isEditing} />
                 <FormInput label="Phone" name="phone_number" value={formData.phone_number} onChange={(e: any) => setFormData({ ...formData, phone_number: e.target.value })} disabled={!isEditing} />
                 <FormInput label="Address" name="address" value={formData.address} onChange={(e: any) => setFormData({ ...formData, address: e.target.value })} disabled={!isEditing} />
-                {/* KHÓA CỨNG JOB TITLE */}
                 <FormInput label="Job Title" value={profileData.position?.position_name} disabled={true} />
                 <div className="md:col-span-2">
                   <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Description / Bio</Label>
@@ -185,7 +199,7 @@ function ProfileContent() {
           </div>
         </Card>
 
-        {/* SETTINGS AREA (3 Columns) */}
+        {/* SETTINGS AREA */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-6">
             <h3 className="font-bold border-b pb-2">Notifications</h3>
@@ -232,18 +246,101 @@ function ProfileContent() {
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-slate-800">HR Administration Records</h2>
           <Accordion type="single" collapsible className="w-full space-y-3">
+
+            {/* TAB HỢP ĐỒNG */}
             <AccordionItem value="contracts" className="bg-white rounded-xl px-6 border-none shadow-sm">
               <AccordionTrigger className="hover:no-underline font-bold text-slate-700">Labor Contracts ({hrData.contracts.length})</AccordionTrigger>
-              <AccordionContent>
-                <Table><TableHeader><TableRow><TableHead>No.</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-                  <TableBody>{hrData.contracts.map((c: any) => (<TableRow key={c.contract_id}><TableCell className="font-bold">{c.contract_number}</TableCell><TableCell>{c.contract_type}</TableCell><TableCell><Badge className={c.status === 'Active' ? 'bg-green-500' : ''}>{c.status}</Badge></TableCell></TableRow>))}</TableBody></Table>
+              <AccordionContent className="pt-4 pb-6 space-y-6">
+                {(() => {
+                  // Đảm bảo hrData.contracts là mảng (an toàn tuyệt đối nhờ đã check ở trên)
+                  const activeContract = hrData.contracts.find((c: any) => c.status === 'Active');
+                  const historyContracts = hrData.contracts.filter((c: any) => c.status !== 'Active');
+
+                  return (
+                    <div className="space-y-6">
+                      {activeContract ? (
+                        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 relative overflow-hidden">
+                          <div className="absolute top-0 right-0 bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Active Contract</div>
+                          <div className="flex flex-col md:flex-row justify-between gap-4">
+                            <div className="space-y-3">
+                              <div>
+                                <h4 className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                                  {activeContract.contract_number}
+                                </h4>
+                                <p className="text-sm text-slate-500">{activeContract.contract_type}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                                <div>
+                                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Duration</span>
+                                  <span className="font-medium text-slate-700">{new Date(activeContract.start_date).toLocaleDateString()} - {activeContract.end_date ? new Date(activeContract.end_date).toLocaleDateString() : 'Indefinite'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Salary Rate</span>
+                                  <span className="font-bold text-slate-900">${parseFloat(activeContract.salary_rate).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-end">
+                              {activeContract.file_url && (
+                                <Button onClick={() => window.open(activeContract.file_url, "_blank")} className="bg-white hover:bg-slate-50 text-blue-600 border border-blue-200 shadow-sm w-full md:w-auto">
+                                  <FileText className="w-4 h-4 mr-2" /> View Document
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">No active contract found.</div>
+                      )}
+
+                      {historyContracts.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Contract History</h4>
+                          <div className="border border-slate-100 rounded-xl overflow-hidden">
+                            <Table>
+                              <TableHeader className="bg-slate-50">
+                                <TableRow>
+                                  <TableHead className="text-xs font-semibold">Contract No.</TableHead>
+                                  <TableHead className="text-xs font-semibold">Type</TableHead>
+                                  <TableHead className="text-xs font-semibold">Dates</TableHead>
+                                  <TableHead className="text-xs font-semibold">Status</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {historyContracts.map((c: any) => (
+                                  <TableRow key={c.contract_id} className="text-sm">
+                                    <TableCell className="font-medium">{c.contract_number}</TableCell>
+                                    <TableCell>{c.contract_type}</TableCell>
+                                    <TableCell className="text-slate-500">{new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : 'N/A'}</TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline" className={c.status === 'Expired' ? 'text-slate-500 border-slate-200 bg-slate-50' : 'text-red-500 border-red-200 bg-red-50'}>
+                                        {c.status}
+                                      </Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </AccordionContent>
             </AccordionItem>
+
+            {/* TAB LƯƠNG */}
             <AccordionItem value="salary" className="bg-white rounded-xl px-6 border-none shadow-sm">
               <AccordionTrigger className="hover:no-underline font-bold text-slate-700">Salary History</AccordionTrigger>
               <AccordionContent>
-                <Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead>New Salary</TableHead></TableRow></TableHeader>
-                  <TableBody>{hrData.salary.map((s: any) => (<TableRow key={s.history_id}><TableCell>{new Date(s.change_date).toLocaleDateString()}</TableCell><TableCell className="font-bold text-blue-600">{s.new_salary}</TableCell></TableRow>))}</TableBody></Table>
+                {hrData.salary.length > 0 ? (
+                  <Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead>New Salary</TableHead></TableRow></TableHeader>
+                    <TableBody>{hrData.salary.map((s: any) => (<TableRow key={s.history_id}><TableCell>{new Date(s.change_date).toLocaleDateString()}</TableCell><TableCell className="font-bold text-blue-600">{s.new_salary}</TableCell></TableRow>))}</TableBody>
+                  </Table>
+                ) : (
+                  <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">No salary history available.</div>
+                )}
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -265,4 +362,4 @@ function BankField({ label, value, isEditing, onChange, mono, uppercase }: any) 
   return (<div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">{label}</Label>{isEditing ? <Input value={value} onChange={(e) => onChange(e.target.value)} className="bg-slate-50 border-none focus-visible:ring-blue-500" /> : <p className={`font-bold ${mono ? 'font-mono' : ''} ${uppercase ? 'uppercase' : ''}`}>{value || "Not provided"}</p>}</div>);
 }
 
-export default function ProfilePage() { return (<Suspense fallback={<div className="p-10 text-center">Loading...</div>}><ProfileContent /></Suspense>); }
+export default function ProfilePage() { return (<Suspense fallback={<div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">Loading...</div>}><ProfileContent /></Suspense>); }

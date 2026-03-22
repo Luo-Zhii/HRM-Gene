@@ -11,7 +11,7 @@ import {
   CheckCheck, MessageSquare, AlertCircle, FileText, Megaphone
 } from "lucide-react";
 
-// --- COMPONENT SIDEBAR (Giữ nguyên logic của sếp) ---
+// --- COMPONENT SIDEBAR (Cập nhật Menu Contracts) ---
 function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { user } = useAuth();
   const pathname = usePathname();
@@ -41,12 +41,18 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           <NavItem href="/dashboard/salary" label="My Salary" isActive={pathname === "/dashboard/salary"} onClick={onClose} />
           {(hasManageSystemPermission || isAdminOrHr || hasManageEmployeePermission) && (
             <>
-              <NavGroup title="Admin Administration" />
-              {canViewDirectory && <NavItem href="/admin/employees" label="Employee Directory" isActive={pathname === "/admin/employees"} onClick={onClose} />}
+              <NavGroup title="HR Administration" />
+              {canViewDirectory && (
+                <>
+                  <NavItem href="/admin/employees" label="Employee Directory" isActive={pathname === "/admin/employees"} onClick={onClose} />
+                  {/* 👇 NÚT QUẢN LÝ HỢP ĐỒNG ĐÃ ĐƯỢC CHÈN VÀO ĐÂY 👇 */}
+                  <NavItem href="/admin/contracts" label="Employment contract" isActive={pathname === "/admin/contracts"} onClick={onClose} />
+                </>
+              )}
               {hasManageSystemPermission && (
                 <>
                   <NavItem href="/admin/leave-approvals" label="Leave Approvals" isActive={pathname === "/admin/leave-approvals"} onClick={onClose} />
-                  <NavItem href="/admin/organization" label="Organization" isActive={pathname === "/admin/organization"} onClick={onClose} />
+                  <NavItem href="/admin/organization" label="Organizational management" isActive={pathname === "/admin/organization"} onClick={onClose} />
                   <NavItem href="/admin/permissions" label="Permissions" isActive={pathname === "/admin/permissions"} onClick={onClose} />
                 </>
               )}
@@ -59,14 +65,14 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           {hasManagePayrollPermission && (
             <>
               <NavGroup title="Payroll Management" />
-              <NavItem href="/admin/payroll/config" label="Salary Config" isActive={pathname === "/admin/payroll/config"} onClick={onClose} />
-              <NavItem href="/admin/payroll/generate" label="Generate Payroll" isActive={pathname === "/admin/payroll/generate"} onClick={onClose} />
+              <NavItem href="/admin/payroll/config" label="Salary configuration" isActive={pathname === "/admin/payroll/config"} onClick={onClose} />
+              <NavItem href="/admin/payroll/generate" label="Create payroll" isActive={pathname === "/admin/payroll/generate"} onClick={onClose} />
             </>
           )}
           {canAccessReports && (
             <>
-              <NavGroup title="Analytics" />
-              <NavItem href="/admin/reports" label="Reports & Analytics" isActive={pathname === "/admin/reports"} onClick={onClose} />
+              <NavGroup title="System & Analytics" />
+              <NavItem href="/admin/reports" label="Analysis report" isActive={pathname === "/admin/reports"} onClick={onClose} />
             </>
           )}
         </nav>
@@ -196,11 +202,12 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
                     src={user.avatar_url}
                     alt="Avatar"
                     className="w-full h-full object-cover"
-                    key={user.avatar_url} // Ép React render lại ngay khi sếp upload
+                    key={user.avatar_url}
                   />
                 ) : (
                   <span>{user.first_name ? user.first_name[0].toUpperCase() : "U"}</span>
-                )}              </div>
+                )}
+              </div>
               <ChevronDown size={16} className="text-gray-400" />
             </button>
             {isDropdownOpen && (

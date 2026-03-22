@@ -64,6 +64,14 @@ export class ContractsService {
       file_url: createDto.file_url,
     });
 
+    if (contract.status === ContractStatus.ACTIVE) {
+      // Deactivate other active contracts for this employee
+      await this.contractRepo.update(
+        { employee: { employee_id: employee.employee_id }, status: ContractStatus.ACTIVE },
+        { status: ContractStatus.EXPIRED }
+      );
+    }
+
     const saved = await this.contractRepo.save(contract);
 
     // Record salary change in history if salary changed
@@ -83,16 +91,47 @@ export class ContractsService {
     return this.findOne(saved.contract_id);
   }
 
-  async findAll(employeeId?: number) {
-    const where: any = {};
+  async findAll(
+    employeeId?: number,
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    status?: string,
+    type?: string
+  ) {
+    const query = this.contractRepo.createQueryBuilder("contract")
+      .leftJoinAndSelect("contract.employee", "employee")
+      .orderBy("contract.start_date", "DESC");
+
     if (employeeId) {
-      where.employee = { employee_id: employeeId };
+      query.andWhere("employee.employee_id = :employeeId", { employeeId });
+    }
+    if (search) {
+      query.andWhere("contract.contract_number ILIKE :search", { search: `%${search}%` });
+    }
+    if (status) {
+      query.andWhere("contract.status = :status", { status });
+    }
+    if (type) {
+      query.andWhere("contract.contract_type = :type", { type });
     }
 
+    const [data, total] = await query
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return { data, total, page, limit };
+  }
+
+  async findByEmployee(employeeId: number) {
     return this.contractRepo.find({
-      where,
+      where: { employee: { employee_id: employeeId } },
       relations: ["employee"],
-      order: { start_date: "DESC" },
+      order: {
+        status: "ASC", // "Active" will come before "Expired" / "Terminated" alphabetically
+        start_date: "DESC"
+      },
     });
   }
 
@@ -124,6 +163,14 @@ export class ContractsService {
         contract.salary_rate,
         updateDto.salary_rate,
         `Contract ${contract.contract_number} updated`
+      );
+    }
+
+    // If changing status to ACTIVE, deactivate other active contracts
+    if (updateDto.status === ContractStatus.ACTIVE && contract.status !== ContractStatus.ACTIVE) {
+      await this.contractRepo.update(
+        { employee: { employee_id: contract.employee.employee_id }, status: ContractStatus.ACTIVE },
+        { status: ContractStatus.EXPIRED }
       );
     }
 
