@@ -61,7 +61,32 @@ export class AdminService {
 
   // ============= Department Management =============
   async getAllDepartments() {
-    return this.deptRepo.find({ relations: ["manager", "employees"] });
+    const departments = await this.deptRepo.find({
+      relations: ["manager", "employees", "employees.contracts"],
+    });
+
+    return departments.map((dept) => {
+      let total_budget = 0;
+      dept.employees?.forEach((emp) => {
+        const activeContract = emp.contracts?.find(
+          (c) => c.status === ContractStatus.ACTIVE
+        );
+        if (activeContract && activeContract.salary_rate) {
+          total_budget += parseFloat(activeContract.salary_rate);
+        }
+      });
+
+      return {
+        department_id: dept.department_id,
+        department_name: dept.department_name,
+        manager_id: dept.manager?.employee_id || null,
+        manager_name: dept.manager
+          ? `${dept.manager.first_name} ${dept.manager.last_name}`.trim()
+          : "Not assigned",
+        employee_count: dept.employees?.length || 0,
+        total_budget,
+      };
+    });
   }
 
   async createDepartment(departmentName: string) {
@@ -70,6 +95,45 @@ export class AdminService {
     }
     const dept = this.deptRepo.create({ department_name: departmentName });
     return this.deptRepo.save(dept);
+  }
+
+  async updateDepartment(
+    id: number,
+    departmentName: string,
+    managerId: number | null
+  ) {
+    if (!departmentName) {
+      throw new BadRequestException("Department name is required");
+    }
+
+    const dept = await this.deptRepo.findOne({
+      where: { department_id: id },
+    });
+
+    if (!dept) {
+      throw new NotFoundException("Department not found");
+    }
+
+    dept.department_name = departmentName;
+
+    if (managerId) {
+      const manager = await this.employeeRepo.findOne({
+        where: { employee_id: managerId },
+        relations: ["department"],
+      });
+      if (!manager) {
+        throw new NotFoundException(`Employee with ID ${managerId} not found`);
+      }
+      if (manager.department?.department_id !== id) {
+        throw new BadRequestException("Manager must belong to the department they manage.");
+      }
+      dept.manager = manager;
+    } else {
+      dept.manager = null as any;
+    }
+
+    await this.deptRepo.save(dept);
+    return { message: "Department updated successfully" };
   }
 
   async deleteDepartment(id: number) {
@@ -228,17 +292,96 @@ export class AdminService {
 
   // ============= Employee Management =============
   async getAllEmployees() {
-    return this.employeeRepo.find({
+    const employees = await this.employeeRepo.find({
       relations: ["position", "department"],
-      select: [
-        "employee_id",
-        "email",
-        "first_name",
-        "last_name",
-        "position",
-        "department",
-      ],
     });
+
+    const departments = await this.deptRepo.find({ relations: ["manager"] });
+    const managerIds = new Set(
+      departments.filter((d) => d.manager).map((d) => d.manager.employee_id)
+    );
+
+    return employees.map((emp) => ({
+      ...emp,
+      is_department_head: managerIds.has(emp.employee_id),
+    }));
+  }
+
+  async getBasicEmployees() {
+    const employees = await this.employeeRepo.find({
+      relations: ["department", "position"],
+      select: ["employee_id", "first_name", "last_name", "email", "department", "position"],
+    });
+
+    return employees.map((emp) => ({
+      employee_id: emp.employee_id,
+      first_name: emp.first_name,
+      last_name: emp.last_name,
+      email: emp.email,
+      department_id: emp.department?.department_id || null,
+      position_id: emp.position?.position_id || null,
+    }));
+  }
+
+  async transferEmployee(employeeId: number, departmentId: number, positionId: number) {
+    const employee = await this.employeeRepo.findOne({
+      where: { employee_id: employeeId },
+      relations: ["department"],
+    });
+
+    if (!employee) throw new NotFoundException(`Employee ${employeeId} not found`);
+
+    const department = await this.deptRepo.findOne({
+      where: { department_id: departmentId },
+    });
+    if (!department) throw new NotFoundException(`Department ${departmentId} not found`);
+
+    const position = await this.positionRepo.findOne({
+      where: { position_id: positionId },
+    });
+    if (!position) throw new NotFoundException(`Position ${positionId} not found`);
+
+    // Sync Trigger: If they were previously a manager of another department, remove them
+    const oldDeptAsManager = await this.deptRepo.findOne({
+      where: { manager: { employee_id: employeeId } } as any
+    });
+    if (oldDeptAsManager && oldDeptAsManager.department_id !== departmentId) {
+      oldDeptAsManager.manager = null as any;
+      await this.deptRepo.save(oldDeptAsManager);
+    }
+
+    employee.department = department;
+    employee.position = position;
+
+    await this.employeeRepo.save(employee);
+    return { message: "Employee transferred successfully" };
+  }
+
+  // ============= Organization Stats =============
+  async getOrganizationStats() {
+    const total_departments = await this.deptRepo.count();
+    
+    const employees = await this.employeeRepo.find({
+      relations: ["contracts"],
+    });
+
+    let total_employees = employees.length;
+    let total_budget = 0;
+
+    employees.forEach((emp) => {
+      const activeContract = emp.contracts?.find(
+        (c) => c.status === ContractStatus.ACTIVE
+      );
+      if (activeContract && activeContract.salary_rate) {
+        total_budget += parseFloat(activeContract.salary_rate);
+      }
+    });
+
+    return {
+      total_departments,
+      total_employees,
+      total_budget,
+    };
   }
 
   // ============= Seed Demo Data =============

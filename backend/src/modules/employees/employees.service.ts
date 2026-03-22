@@ -106,6 +106,15 @@ export class EmployeesService {
         where: { department_id: dto.department_id } as any,
       });
       emp.department = dept || undefined;
+
+      // Sync Trigger: If employee was a department head, and changes department, remove them as manager
+      const oldDeptAsManager = await this.deptRepo.findOne({
+        where: { manager: { employee_id: id } } as any
+      });
+      if (oldDeptAsManager && oldDeptAsManager.department_id !== dto.department_id) {
+        oldDeptAsManager.manager = null as any;
+        await this.deptRepo.save(oldDeptAsManager);
+      }
     }
 
     // Logic update Position
@@ -142,6 +151,16 @@ export class EmployeesService {
       where: { employee_id: id } as any,
     });
     if (!emp) throw new NotFoundException("Employee not found");
+
+    // Sync Trigger: Automatically unassign as manager if deleted
+    const managedDept = await this.deptRepo.findOne({
+      where: { manager: { employee_id: id } } as any
+    });
+    if (managedDept) {
+      managedDept.manager = null as any;
+      await this.deptRepo.save(managedDept);
+    }
+
     await this.employeeRepo.remove(emp);
     return { deleted: true };
   }

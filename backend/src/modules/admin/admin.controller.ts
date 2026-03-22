@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Put,
   Delete,
   Body,
   Param,
@@ -36,6 +37,12 @@ export class AdminController {
     return this.svc.updateSetting(body.key, body.value);
   }
 
+  // ============= Organization Management =============
+  @Get("organization/stats")
+  async getOrganizationStats() {
+    return this.svc.getOrganizationStats();
+  }
+
   // ============= Department Management =============
   @Get("departments")
   async getAllDepartments() {
@@ -45,6 +52,14 @@ export class AdminController {
   @Post("departments")
   async createDepartment(@Body() body: { department_name: string }) {
     return this.svc.createDepartment(body.department_name);
+  }
+
+  @Put("departments/:id")
+  async updateDepartment(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() body: { department_name: string; manager_id: number | null }
+  ) {
+    return this.svc.updateDepartment(id, body.department_name, body.manager_id);
   }
 
   // ============= Position Management =============
@@ -88,6 +103,19 @@ export class AdminController {
   @Get("employees")
   async getAllEmployees() {
     return this.svc.getAllEmployees();
+  }
+
+  @Get("employees/basic")
+  async getBasicEmployees() {
+    return this.svc.getBasicEmployees();
+  }
+
+  @Put("employees/:id/transfer")
+  async transferEmployee(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() body: { department_id: number; position_id: number }
+  ) {
+    return this.svc.transferEmployee(id, body.department_id, body.position_id);
   }
 
   // ============= Seed Demo Data =============

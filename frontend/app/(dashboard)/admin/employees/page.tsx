@@ -20,6 +20,7 @@ interface EmployeeData {
   employee_id: number; email: string; first_name: string; last_name: string;
   avatar_url?: string; phone_number?: string; address?: string;
   position?: Position | null; department?: Department | null;
+  is_department_head?: boolean;
 }
 
 export default function EmployeeDirectoryPage() {
@@ -170,7 +171,14 @@ export default function EmployeeDirectoryPage() {
                               getInitials(emp)
                             )}
                           </div>
-                          <span className="font-medium text-gray-900">{getEmployeeName(emp)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900">{getEmployeeName(emp)}</span>
+                            {emp.is_department_head && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-green-50 text-green-700 text-[10px] font-bold border border-green-200 uppercase tracking-wider">
+                                Head
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-gray-600 px-4 py-3">{emp.email}</TableCell>
@@ -213,7 +221,14 @@ export default function EmployeeDirectoryPage() {
                       )}
                     </div>
                     <div>
-                      <h3 className="text-[16px] font-semibold text-gray-900 leading-tight">{getEmployeeName(emp)}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-[16px] font-semibold text-gray-900 leading-tight">{getEmployeeName(emp)}</h3>
+                        {emp.is_department_head && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-green-50 text-green-700 text-[10px] font-bold border border-green-200 uppercase tracking-wider">
+                            Head
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[13px] text-gray-500 mt-1 font-medium">{emp.position?.position_name || "Employee"}</p>
                     </div>
                   </div>
