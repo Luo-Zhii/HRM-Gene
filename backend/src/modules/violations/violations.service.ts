@@ -5,8 +5,9 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { Violation, ViolationStatus } from "../../entities/violation.entity";
+import { Violation, ViolationStatus, ViolationSeverity } from "../../entities/violation.entity";
 import { Employee } from "../../entities/employee.entity";
+import { TimeKeeping } from "../../entities/timekeeping.entity";
 import { CreateViolationDto } from "./dto/create-violation.dto";
 import { UpdateViolationDto } from "./dto/update-violation.dto";
 
@@ -16,8 +17,10 @@ export class ViolationsService {
     @InjectRepository(Violation)
     private violationRepo: Repository<Violation>,
     @InjectRepository(Employee)
-    private employeeRepo: Repository<Employee>
-  ) {}
+    private employeeRepo: Repository<Employee>,
+    @InjectRepository(TimeKeeping)
+    private timeKeepingRepo: Repository<TimeKeeping>
+  ) { }
 
   async create(createDto: CreateViolationDto) {
     // Verify employee exists
@@ -30,10 +33,11 @@ export class ViolationsService {
 
     const violation = this.violationRepo.create({
       employee,
-      date: createDto.date,
+      violation_date: createDto.violation_date,
       violation_type: createDto.violation_type,
       description: createDto.description,
-      penalty_amount: createDto.penalty_amount || "0.00",
+      deduction_amount: createDto.deduction_amount || "0.00",
+      severity: createDto.severity || ViolationSeverity.NORMAL,
       status: createDto.status || ViolationStatus.PENDING,
     });
 
@@ -46,11 +50,16 @@ export class ViolationsService {
       where.employee = { employee_id: employeeId };
     }
 
-    return this.violationRepo.find({
+    const records = await this.violationRepo.find({
       where,
       relations: ["employee"],
-      order: { date: "DESC" },
+      order: { violation_date: "DESC" },
     });
+
+    const total = records.length;
+    const resolved = records.filter(r => r.status === ViolationStatus.RESOLVED).length;
+
+    return { records, stats: { total, resolved } };
   }
 
   async findOne(id: number, employeeId?: number) {
@@ -82,5 +91,68 @@ export class ViolationsService {
     await this.violationRepo.remove(violation);
     return { message: "Violation deleted successfully" };
   }
-}
+  async syncAttendance() {
+    const attendanceRecords = await this.timeKeepingRepo.find({
+      where: [
+        { status: "Late" },
+        { status: "Absent" }
+      ],
+      relations: ["employee"]
+    });
 
+    const GRACE_PERIOD_MINS = 15; // Set to 15 for production, change to 0 for testing
+
+    let createdCount = 0;
+    for (const record of attendanceRecords) {
+      if (!record.employee) continue;
+
+      let isViolation = false;
+      let violationType = "";
+
+      if (record.status === "Absent") {
+        isViolation = true;
+        violationType = "Absence";
+      } else if (record.status === "Late" && record.check_in_time) {
+        const checkInTime = new Date(record.check_in_time);
+        
+        // Define 08:00 AM standard start time for this specific day
+        const standardStartTime = new Date(checkInTime);
+        standardStartTime.setHours(8, 0 + GRACE_PERIOD_MINS, 0, 0);
+
+        // Only create Lateness violation if check_in_time > 08:00 AM + GRACE_PERIOD_MINS
+        if (checkInTime > standardStartTime) {
+          isViolation = true;
+          violationType = "Lateness";
+        }
+      }
+
+      if (!isViolation) continue;
+
+      // FIX: Chuyển string thành Date object
+      const workDateObj = new Date(record.work_date);
+
+      const existing = await this.violationRepo.findOne({
+        where: {
+          employee: { employee_id: record.employee.employee_id },
+          violation_date: workDateObj, // Bỏ cái object Date vào đây
+        }
+      });
+
+      if (!existing) {
+        const violation = this.violationRepo.create({
+          employee: record.employee,
+          violation_date: workDateObj, // Bỏ cái object Date vào đây luôn
+          violation_type: violationType,
+          description: `Auto-drafted from attendance on ${record.work_date} (${record.status})`,
+          deduction_amount: "0.00",
+          severity: ViolationSeverity.NORMAL,
+          status: ViolationStatus.PENDING
+        });
+        await this.violationRepo.save(violation);
+        createdCount++;
+      }
+    }
+
+    return { message: "Sync complete", createdCount };
+  }
+}

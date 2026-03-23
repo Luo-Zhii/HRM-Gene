@@ -5,12 +5,15 @@ import {
   IsEnum,
   IsOptional,
 } from "class-validator";
-import { ViolationStatus } from "../../../entities/violation.entity";
+import {
+  ViolationStatus,
+  ViolationSeverity,
+} from "../../../entities/violation.entity";
 
 export class UpdateViolationDto {
   @IsOptional()
   @IsDateString()
-  date?: string;
+  violation_date?: string;
 
   @IsOptional()
   @IsString()
@@ -22,7 +25,11 @@ export class UpdateViolationDto {
 
   @IsOptional()
   @IsDecimal()
-  penalty_amount?: string;
+  deduction_amount?: string;
+
+  @IsOptional()
+  @IsEnum(ViolationSeverity)
+  severity?: ViolationSeverity;
 
   @IsOptional()
   @IsEnum(ViolationStatus)

@@ -30,6 +30,13 @@ export class ViolationsController {
     return this.violationsService.create(createDto);
   }
 
+  @Post("sync-attendance")
+  @UseGuards(RolesGuard)
+  @Permissions("manage:employees", "manage:system")
+  syncAttendance() {
+    return this.violationsService.syncAttendance();
+  }
+
   @Get()
   async findAll(@Request() req: any, @Query("employeeId") employeeId?: string) {
     const user = req.user;
@@ -40,7 +47,7 @@ export class ViolationsController {
     // Admin/HR can filter by employeeId or see all, employees can only see their own
     const targetEmployeeId = isAdmin
       ? employeeId
-        ? parseInt(employeeId, 10)
+        ? +employeeId
         : undefined
       : user.employee_id;
     return this.violationsService.findAll(targetEmployeeId);

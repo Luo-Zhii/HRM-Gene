@@ -92,7 +92,7 @@ function ProfileContent() {
         // BẢO KÊ DỮ LIỆU: Ép kiểu mảng để chống lỗi .find() và .map()
         setHrData({
           contracts: Array.isArray(c) ? c : (c.data && Array.isArray(c.data)) ? c.data : [],
-          violations: Array.isArray(v) ? v : (v.data && Array.isArray(v.data)) ? v.data : [],
+          violations: Array.isArray(v) ? v : (v.records && Array.isArray(v.records)) ? v.records : ((v.data && Array.isArray(v.data)) ? v.data : []),
           salary: Array.isArray(s) ? s : (s.data && Array.isArray(s.data)) ? s.data : []
         });
       } catch (e) {
@@ -340,6 +340,49 @@ function ProfileContent() {
                   </Table>
                 ) : (
                   <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">No salary history available.</div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* TAB DISCIPLINE */}
+            <AccordionItem value="discipline" className="bg-white rounded-xl px-6 border-none shadow-sm">
+              <AccordionTrigger className="hover:no-underline font-bold text-slate-700">Discipline Records ({hrData.violations?.length || 0})</AccordionTrigger>
+              <AccordionContent className="pt-4 pb-6">
+                {hrData.violations && hrData.violations.length > 0 ? (
+                  <div className="border border-slate-100 rounded-xl overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow>
+                          <TableHead className="text-xs font-semibold">Date</TableHead>
+                          <TableHead className="text-xs font-semibold">Violation Type</TableHead>
+                          <TableHead className="text-xs font-semibold">Severity</TableHead>
+                          <TableHead className="text-xs font-semibold">Deduction</TableHead>
+                          <TableHead className="text-xs font-semibold">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {hrData.violations.map((v: any) => (
+                          <TableRow key={v.violation_id} className="text-sm">
+                            <TableCell className="text-slate-500">{new Date(v.violation_date).toLocaleDateString()}</TableCell>
+                            <TableCell className="font-medium text-slate-800">{v.violation_type}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={v.severity === 'High' ? 'text-red-500 border-red-200 bg-red-50' : v.severity === 'Normal' ? 'text-blue-500 border-blue-200 bg-blue-50' : 'text-slate-500 border-slate-200 bg-slate-50'}>
+                                {v.severity}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-bold text-red-600">${parseFloat(v.deduction_amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={v.status === 'Resolved' ? 'text-green-500 border-green-200 bg-green-50' : 'text-orange-500 border-orange-200 bg-orange-50'}>
+                                {v.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">No disciplinary records found.</div>
                 )}
               </AccordionContent>
             </AccordionItem>
