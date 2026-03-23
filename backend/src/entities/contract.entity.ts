@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
 import { Employee } from "./employee.entity";
 
 export enum ContractType {
@@ -19,6 +19,7 @@ export class Contract {
   contract_id!: number;
 
   @ManyToOne(() => Employee, (e) => e.contracts)
+  @JoinColumn({ name: "employee_id" })
   employee!: Employee;
 
   @Column({ nullable: true })

@@ -11,6 +11,9 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
+  duration?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const actionTypes = {
@@ -158,6 +161,10 @@ function toast({ ...props }: Toast) {
       },
     },
   });
+
+  setTimeout(() => {
+    dismiss();
+  }, props.duration || TOAST_REMOVE_DELAY);
 
   return {
     id: id,

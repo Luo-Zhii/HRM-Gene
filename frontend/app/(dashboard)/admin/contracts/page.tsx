@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Search, Plus, Edit2, FileText, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Interface Definitions
 interface Contract {
@@ -40,6 +41,24 @@ export default function AdminContractsPage() {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+
+  // Employees List
+  const [employees, setEmployees] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await fetch("/api/admin/employees/basic", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          setEmployees(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch employees", err);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -84,15 +103,15 @@ export default function AdminContractsPage() {
           setContracts(data.data);
           setTotal(data.total || 0);
         } else if (Array.isArray(data)) {
-           setContracts(data);
-           setTotal(data.length);
+          setContracts(data);
+          setTotal(data.length);
         }
       } else {
-        toast({ variant: "destructive", title: "Error", description: "Failed to fetch contracts." });
+        toast({ variant: "destructive", title: "Error", description: "Failed to fetch contracts.", duration: 3000 });
       }
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Error", description: "Failed to load data." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to load data.", duration: 3000 });
     } finally {
       setLoading(false);
     }
@@ -124,7 +143,7 @@ export default function AdminContractsPage() {
     try {
       const url = editingContract ? `/api/contracts/${editingContract.contract_id}` : `/api/contracts`;
       const method = editingContract ? "PUT" : "POST";
-      
+
       const payload = { ...formData, employee_id: parseInt(formData.employee_id) };
 
       const res = await fetch(url, {
@@ -135,15 +154,15 @@ export default function AdminContractsPage() {
       });
 
       if (res.ok) {
-        toast({ title: "Success", description: `Contract ${editingContract ? 'updated' : 'created'} successfully.` });
+        toast({ title: "Success", description: `Contract ${editingContract ? 'updated' : 'created'} successfully.`, duration: 3000 });
         setIsModalOpen(false);
         fetchContracts();
       } else {
         const errorData = await res.json();
-        toast({ variant: "destructive", title: "Error", description: errorData.message || "Failed to save contract." });
+        toast({ variant: "destructive", title: "Error", description: errorData.message || "Failed to save contract.", duration: 4000 });
       }
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "An unexpected error occurred." });
+      toast({ variant: "destructive", title: "Error", description: "An unexpected error occurred.", duration: 4000 });
     } finally {
       setIsSaving(false);
     }
@@ -167,7 +186,7 @@ export default function AdminContractsPage() {
   return (
     <div className="p-8 font-inter bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
-        
+
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -185,15 +204,15 @@ export default function AdminContractsPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <Input 
-                  placeholder="Search contract number..." 
+                <Input
+                  placeholder="Search contract number..."
                   className="pl-10 h-11 bg-slate-50 border-slate-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div>
-                <select 
+                <select
                   className="w-full h-11 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -205,7 +224,7 @@ export default function AdminContractsPage() {
                 </select>
               </div>
               <div>
-                <select 
+                <select
                   className="w-full h-11 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700"
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
@@ -289,17 +308,36 @@ export default function AdminContractsPage() {
               </div>
               <form onSubmit={handleSave} className="p-6 space-y-6 flex-1">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Employee ID</Label>
-                    <Input required disabled={!!editingContract} className="h-11 bg-slate-50 border-slate-200" placeholder="e.g. 1" value={formData.employee_id} onChange={(e) => setFormData({...formData, employee_id: e.target.value})} />
+
+                  {/* === CHỖ NÀY ĐÃ FIX DROPDOWN: THÊM BACKGROUND TRẮNG, THANH CUỘN === */}
+                  <div className="space-y-2 relative">
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Employee</Label>
+                    <Select
+                      disabled={!!editingContract}
+                      value={formData.employee_id}
+                      onValueChange={(val) => setFormData({ ...formData, employee_id: val })}
+                    >
+                      <SelectTrigger className="h-11 bg-slate-50 border-slate-200">
+                        <SelectValue placeholder="Select an employee" />
+                      </SelectTrigger>
+                      {/* BÍ KÍP LÀ ĐÂY: bg-white z-50 max-h-64 overflow-y-auto */}
+                      <SelectContent className="bg-white z-50 shadow-xl border border-slate-100 rounded-lg max-h-64 overflow-y-auto custom-thin-scrollbar">
+                        {employees.map((emp) => (
+                          <SelectItem key={emp.employee_id} value={emp.employee_id.toString()} className="cursor-pointer font-medium hover:bg-slate-50">
+                            {emp.first_name} {emp.last_name} ({emp.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Contract Number</Label>
-                    <Input required className="h-11 bg-slate-50 border-slate-200" placeholder="HD-2023-001" value={formData.contract_number} onChange={(e) => setFormData({...formData, contract_number: e.target.value})} />
+                    <Input required className="h-11 bg-slate-50 border-slate-200" placeholder="HD-2023-001" value={formData.contract_number} onChange={(e) => setFormData({ ...formData, contract_number: e.target.value })} />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Type</Label>
-                    <select className="w-full h-11 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.contract_type} onChange={(e) => setFormData({...formData, contract_type: e.target.value})}>
+                    <select className="w-full h-11 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.contract_type} onChange={(e) => setFormData({ ...formData, contract_type: e.target.value })}>
                       <option value="Probation">Probation</option>
                       <option value="Official">Official</option>
                       <option value="Part-time">Part-time</option>
@@ -307,7 +345,7 @@ export default function AdminContractsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status</Label>
-                    <select className="w-full h-11 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}>
+                    <select className="w-full h-11 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
                       <option value="Active">Active</option>
                       <option value="Expired">Expired</option>
                       <option value="Terminated">Terminated</option>
@@ -315,22 +353,22 @@ export default function AdminContractsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Start Date</Label>
-                    <Input type="date" required className="h-11 bg-slate-50 border-slate-200" value={formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : ''} onChange={(e) => setFormData({...formData, start_date: e.target.value})} />
+                    <Input type="date" required className="h-11 bg-slate-50 border-slate-200" value={formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : ''} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">End Date</Label>
-                    <Input type="date" className="h-11 bg-slate-50 border-slate-200" value={formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : ''} onChange={(e) => setFormData({...formData, end_date: e.target.value})} />
+                    <Input type="date" className="h-11 bg-slate-50 border-slate-200" value={formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : ''} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Salary Rate</Label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">$</span>
-                      <Input type="number" step="0.01" required className="pl-8 h-11 bg-slate-50 border-slate-200 font-bold text-slate-700" placeholder="5000.00" value={formData.salary_rate} onChange={(e) => setFormData({...formData, salary_rate: e.target.value})} />
+                      <Input type="number" step="0.01" required className="pl-8 h-11 bg-slate-50 border-slate-200 font-bold text-slate-700" placeholder="5000.00" value={formData.salary_rate} onChange={(e) => setFormData({ ...formData, salary_rate: e.target.value })} />
                     </div>
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">File URL (Optional)</Label>
-                    <Input className="h-11 bg-slate-50 border-slate-200" placeholder="https://..." value={formData.file_url} onChange={(e) => setFormData({...formData, file_url: e.target.value})} />
+                    <Input className="h-11 bg-slate-50 border-slate-200" placeholder="https://..." value={formData.file_url} onChange={(e) => setFormData({ ...formData, file_url: e.target.value })} />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">

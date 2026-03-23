@@ -91,9 +91,9 @@ function ProfileContent() {
 
         // BẢO KÊ DỮ LIỆU: Ép kiểu mảng để chống lỗi .find() và .map()
         setHrData({
-          contracts: Array.isArray(c) ? c : [],
-          violations: Array.isArray(v) ? v : [],
-          salary: Array.isArray(s) ? s : []
+          contracts: Array.isArray(c) ? c : (c.data && Array.isArray(c.data)) ? c.data : [],
+          violations: Array.isArray(v) ? v : (v.data && Array.isArray(v.data)) ? v.data : [],
+          salary: Array.isArray(s) ? s : (s.data && Array.isArray(s.data)) ? s.data : []
         });
       } catch (e) {
         console.error(e);
