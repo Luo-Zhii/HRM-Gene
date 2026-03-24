@@ -326,6 +326,7 @@ export default function AdminDisciplinePage() {
                     <select required className="w-full h-11 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.violation_type} onChange={(e) => setFormData({ ...formData, violation_type: e.target.value })}>
                       <option value="Lateness">Lateness</option>
                       <option value="Absence">Absence</option>
+                      <option value="Incomplete Shift">Incomplete Shift</option>
                       <option value="Policy Violation">Policy Violation</option>
                       <option value="Damage">Damage</option>
                       <option value="Other">Other</option>

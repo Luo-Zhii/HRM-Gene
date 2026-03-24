@@ -382,7 +382,7 @@ function ProfileContent() {
                     </Table>
                   </div>
                 ) : (
-                  <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">No disciplinary records found.</div>
+                  <div className="bg-slate-50 rounded-xl p-5 mt-2 text-center text-slate-500 text-sm">No disciplinary records found.</div>
                 )}
               </AccordionContent>
             </AccordionItem>

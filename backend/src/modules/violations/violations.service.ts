@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, LessThan } from "typeorm";
 import { Violation, ViolationStatus, ViolationSeverity } from "../../entities/violation.entity";
 import { Employee } from "../../entities/employee.entity";
 import { TimeKeeping } from "../../entities/timekeeping.entity";
@@ -93,57 +93,30 @@ export class ViolationsService {
   }
   async syncAttendance() {
     const attendanceRecords = await this.timeKeepingRepo.find({
-      where: [
-        { status: "Late" },
-        { status: "Absent" }
-      ],
+      where: { hours_worked: LessThan(8) },
       relations: ["employee"]
     });
-
-    const GRACE_PERIOD_MINS = 15; // Set to 15 for production, change to 0 for testing
 
     let createdCount = 0;
     for (const record of attendanceRecords) {
       if (!record.employee) continue;
 
-      let isViolation = false;
-      let violationType = "";
-
-      if (record.status === "Absent") {
-        isViolation = true;
-        violationType = "Absence";
-      } else if (record.status === "Late" && record.check_in_time) {
-        const checkInTime = new Date(record.check_in_time);
-        
-        // Define 08:00 AM standard start time for this specific day
-        const standardStartTime = new Date(checkInTime);
-        standardStartTime.setHours(8, 0 + GRACE_PERIOD_MINS, 0, 0);
-
-        // Only create Lateness violation if check_in_time > 08:00 AM + GRACE_PERIOD_MINS
-        if (checkInTime > standardStartTime) {
-          isViolation = true;
-          violationType = "Lateness";
-        }
-      }
-
-      if (!isViolation) continue;
-
-      // FIX: Chuyển string thành Date object
+      // CRITICAL FIX: Convert string to Date object
       const workDateObj = new Date(record.work_date);
 
       const existing = await this.violationRepo.findOne({
         where: {
           employee: { employee_id: record.employee.employee_id },
-          violation_date: workDateObj, // Bỏ cái object Date vào đây
+          violation_date: workDateObj,
         }
       });
 
       if (!existing) {
         const violation = this.violationRepo.create({
           employee: record.employee,
-          violation_date: workDateObj, // Bỏ cái object Date vào đây luôn
-          violation_type: violationType,
-          description: `Auto-drafted from attendance on ${record.work_date} (${record.status})`,
+          violation_date: workDateObj,
+          violation_type: "Incomplete Shift",
+          description: `Auto-drafted: Employee worked ${record.hours_worked} hours on ${record.work_date}. Minimum required is 8 hours.`,
           deduction_amount: "0.00",
           severity: ViolationSeverity.NORMAL,
           status: ViolationStatus.PENDING
