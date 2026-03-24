@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import {
   Menu, X, User, LogOut, ChevronDown, Bell,
-  CheckCheck, MessageSquare, AlertCircle, FileText, Megaphone
+  CheckCheck, MessageSquare, AlertCircle, FileText, Megaphone, AlertTriangle
 } from "lucide-react";
 
 // --- COMPONENT SIDEBAR (Cập nhật Menu Contracts) ---
@@ -97,7 +97,7 @@ function NavItem({ href, label, isActive, onClick }: { href: string; label: stri
 }
 
 // --- NEW COMPONENT: NOTIFICATION DROPDOWN ---
-function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClick }: { notifications: any[], onMarkAllRead: () => void, onNotificationClick: (n: any) => void }) {
+function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClick, onRemoveNotification }: { notifications: any[], onMarkAllRead: () => void, onNotificationClick: (n: any) => void, onRemoveNotification: (id: number) => void }) {
   return (
     <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-4 z-50 animate-in fade-in zoom-in-95 duration-200">
       <div className="px-4 pb-3 border-b border-gray-50 flex items-center justify-between">
@@ -112,13 +112,20 @@ function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClic
         ) : (
           notifications.map((n) => (
             <div key={n.id} onClick={() => onNotificationClick(n)} className={`px-4 py-3 hover:bg-gray-50 cursor-pointer flex gap-3 border-b border-gray-50 last:border-0 ${!n.isRead ? 'bg-blue-50/30' : ''}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${(n.type === 'leave' || n.type === 'leave_request') ? 'bg-green-100 text-green-600' : n.type === 'task' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
-                {(n.type === 'leave' || n.type === 'leave_request') ? <FileText size={16} /> : n.type === 'task' ? <AlertCircle size={16} /> : <Megaphone size={16} />}
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${(n.type === 'leave' || n.type === 'leave_request') ? 'bg-green-100 text-green-600' : n.type === 'task' ? 'bg-amber-100 text-amber-600' : (n.type === 'discipline' || n.type === 'warning') ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                {(n.type === 'leave' || n.type === 'leave_request') ? <FileText size={16} /> : n.type === 'task' ? <AlertCircle size={16} /> : (n.type === 'discipline' || n.type === 'warning') ? <AlertTriangle size={16} /> : <Megaphone size={16} />}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs ${!n.isRead ? 'font-bold text-gray-900' : 'text-gray-600'} truncate`}>{n.title}</p>
-                <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{n.message}</p>
+              <div className="flex-1 min-w-0 relative pr-6">
+                <p className={`text-xs ${!n.isRead ? 'font-bold text-gray-900' : 'text-gray-600'} truncate`}>{n.title || n.type}</p>
+                <p className="text-[11px] text-gray-500 line-clamp-3 mt-0.5">{n.message}</p>
                 <p className="text-[10px] text-gray-400 mt-1">{n.time}</p>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onRemoveNotification(n.id); }}
+                  className="absolute -top-1 -right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                  aria-label="Remove notification"
+                >
+                  <X size={14} />
+                </button>
               </div>
             </div>
           ))
@@ -141,7 +148,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const router = useRouter();
 
   // --- LOGIC THÔNG BÁO ---
-  const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotifications();
+  const { notifications, markAsRead, markAllAsRead, unreadCount, removeNotification } = useNotifications();
 
   const handleNotificationClick = async (notif: any) => {
     if (!notif.isRead) {
@@ -152,6 +159,14 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
       router.push('/admin/leave-approvals');
     } else if (notif.type === 'leave') {
       router.push('/dashboard/leave');
+    } else if (notif.type === 'discipline') {
+      const positionName = user?.position?.position_name?.toLowerCase();
+      const isAdminOrHr = positionName === "admin" || positionName === "hr" || positionName === "hr manager" || positionName === "director";
+      if (isAdminOrHr) {
+        router.push('/admin/discipline');
+      } else {
+        router.push('/profile');
+      }
     }
   };
 
@@ -184,7 +199,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
               </span>
             )}
           </button>
-          {isNotifOpen && <NotificationDropdown notifications={notifications} onMarkAllRead={markAllAsRead} onNotificationClick={handleNotificationClick} />}
+          {isNotifOpen && <NotificationDropdown notifications={notifications} onMarkAllRead={markAllAsRead} onNotificationClick={handleNotificationClick} onRemoveNotification={removeNotification} />}
         </div>
 
         {/* USER DROPDOWN */}

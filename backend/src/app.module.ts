@@ -14,9 +14,11 @@ import * as path from "path";
 import { ConfigModule } from "@nestjs/config";
 import { EmployeesModule } from "./modules/employees/employees.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     // ConfigModule.forRoot({
     //   isGlobal: true, // Giúp .env dùng được ở mọi nơi trong app
     // }),

@@ -14,6 +14,8 @@ export enum NotificationType {
   TASK = "task",
   ANNOUNCEMENT = "announcement",
   REPORT = "report",
+  DISCIPLINE = "discipline",
+  WARNING = "warning",
 }
 
 @Entity()

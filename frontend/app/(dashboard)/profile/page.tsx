@@ -92,7 +92,7 @@ function ProfileContent() {
         // BẢO KÊ DỮ LIỆU: Ép kiểu mảng để chống lỗi .find() và .map()
         setHrData({
           contracts: Array.isArray(c) ? c : (c.data && Array.isArray(c.data)) ? c.data : [],
-          violations: Array.isArray(v) ? v : (v.records && Array.isArray(v.records)) ? v.records : ((v.data && Array.isArray(v.data)) ? v.data : []),
+          violations: Array.isArray(v) ? v : (v.records || []),
           salary: Array.isArray(s) ? s : (s.data && Array.isArray(s.data)) ? s.data : []
         });
       } catch (e) {

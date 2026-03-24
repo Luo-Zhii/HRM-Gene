@@ -1,18 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './useAuth';
+import { useToast } from "@/components/ui/use-toast";
 
 export interface AppNotification {
   id: number;
   title: string;
   message: string;
-  type: 'leave' | 'leave_request' | 'task' | 'announcement' | 'report';
+  type: 'leave' | 'leave_request' | 'task' | 'announcement' | 'report' | 'discipline' | 'warning';
   isRead: boolean;
   createdAt: string;
 }
 
 export function useNotifications() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -60,6 +62,12 @@ export function useNotifications() {
 
     newSocket.on('newNotification', (notif: AppNotification) => {
       setNotifications((prev) => [notif, ...prev]);
+      
+      toast({
+        title: notif.title,
+        description: notif.message,
+        variant: notif.type === 'warning' ? 'destructive' : 'default',
+      });
     });
 
     setSocket(newSocket);
@@ -94,10 +102,25 @@ export function useNotifications() {
     }
   };
 
+  const removeNotification = async (id: number) => {
+    // Optimistic explicit UI update
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    
+    try {
+      await fetch(`/api/notifications/${id}`, { 
+        method: 'DELETE',
+        credentials: 'include' 
+      });
+    } catch (err) {
+      console.error("Failed to delete notification", err);
+    }
+  };
+
   return {
     notifications,
     unreadCount: notifications.filter(n => !n.isRead).length,
     markAsRead,
     markAllAsRead,
+    removeNotification,
   };
 }

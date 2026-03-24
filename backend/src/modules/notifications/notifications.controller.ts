@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Request, Patch } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, Request, Patch, Delete } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { NotificationType } from '../../entities/notification.entity';
@@ -18,6 +18,12 @@ export class NotificationsController {
   async markAsRead(@Param('id') id: string, @Request() req: any) {
     const userId = req.user.employee_id || req.user.id;
     return this.notificationsService.markAsRead(Number(id), userId);
+  }
+
+  @Delete(':id')
+  async deleteNotification(@Param('id') id: string, @Request() req: any) {
+    const userId = req.user.employee_id || req.user.id;
+    return this.notificationsService.deleteNotification(Number(id), userId);
   }
 
   // Admin endpoint for announcements

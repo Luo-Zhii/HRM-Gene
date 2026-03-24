@@ -202,8 +202,8 @@ export default function AdminDisciplinePage() {
             <p className="text-slate-500 text-sm mt-1">Manage employee violations and disciplinary actions</p>
           </div>
           <div className="flex gap-3">
-            <Button onClick={handleSyncAttendance} disabled={isSyncing} className="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-200 shadow-sm flex items-center gap-2">
-              <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Syncing..." : "Sync from Attendance"}
+            <Button onClick={handleSyncAttendance} disabled={isSyncing} className="bg-transparent hover:bg-slate-100 text-slate-600 border border-slate-200 shadow-sm flex items-center gap-2">
+              <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Syncing..." : "Force Sync Now"}
             </Button>
             <Button onClick={() => handleOpenModal()} className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 text-white shadow-sm">
               <Plus size={18} /> Add New Record

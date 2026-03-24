@@ -11,6 +11,9 @@ import { v4 as uuidv4 } from "uuid";
 import { TimeKeeping } from "../../entities/timekeeping.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Employee } from "../../entities/employee.entity";
+import { Notification, NotificationType } from "../../entities/notification.entity";
+import { Violation, ViolationSeverity, ViolationStatus } from "../../entities/violation.entity";
+import { NotificationsGateway } from "../notifications/notifications.gateway";
 
 @Injectable()
 export class TimeKeepingService {
@@ -21,6 +24,9 @@ export class TimeKeepingService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(TimeKeeping) private tkRepo: Repository<TimeKeeping>,
     @InjectRepository(Employee) private empRepo: Repository<Employee>,
+    @InjectRepository(Notification) private notificationRepo: Repository<Notification>,
+    @InjectRepository(Violation) private violationRepo: Repository<Violation>,
+    private notificationsGateway: NotificationsGateway,
     private dataSource: DataSource
   ) {
     // Periodically clean up expired tokens directly to prevent memory leaks
@@ -191,6 +197,32 @@ export class TimeKeepingService {
 
         const updated = await tkRepo.save(latestRecord);
 
+        // Immediate Notification Logic added here
+        if (updated.hours_worked < 8) {
+          // 1. AUTOMATICALLY create the Discipline Violation record
+          const violation = this.violationRepo.create({
+            employee: employee,
+            violation_date: updated.work_date,
+            violation_type: "Incomplete Shift",
+            description: `Auto-drafted: Employee worked ${updated.hours_worked} hours on ${updated.work_date}. Minimum required is 8 hours.`,
+            severity: ViolationSeverity.NORMAL,
+            status: ViolationStatus.PENDING,
+          });
+          await this.violationRepo.save(violation);
+
+          // 2. Send dynamic Notification
+          const warningNotif = this.notificationRepo.create({
+            title: "Warning: Incomplete Shift",
+            message: "You have checked out, but your total working hours today are less than 8 hours.",
+            type: NotificationType.WARNING,
+            user: employee,
+            isRead: false
+          });
+          const savedNotif = await this.notificationRepo.save(warningNotif);
+          // Emit via WebSocket
+          this.notificationsGateway.sendNotificationToUser(employee.employee_id, savedNotif);
+        }
+
         return {
           status: "CHECK_OUT",
           time: now,
@@ -291,6 +323,32 @@ export class TimeKeepingService {
         }
 
         const updated = await tkRepo.save(latestRecord);
+
+        // Immediate Notification Logic added here
+        if (updated.hours_worked < 8) {
+          // 1. AUTOMATICALLY create the Discipline Violation record
+          const violation = this.violationRepo.create({
+            employee: employee,
+            violation_date: updated.work_date,
+            violation_type: "Incomplete Shift",
+            description: `Auto-drafted: Employee worked ${updated.hours_worked} hours on ${updated.work_date}. Minimum required is 8 hours.`,
+            severity: ViolationSeverity.NORMAL,
+            status: ViolationStatus.PENDING,
+          });
+          await this.violationRepo.save(violation);
+
+          // 2. Send dynamic Notification
+          const warningNotif = this.notificationRepo.create({
+            title: "Warning: Incomplete Shift",
+            message: "You have checked out, but your total working hours today are less than 8 hours.",
+            type: NotificationType.WARNING,
+            user: employee,
+            isRead: false
+          });
+          const savedNotif = await this.notificationRepo.save(warningNotif);
+          // Emit via WebSocket
+          this.notificationsGateway.sendNotificationToUser(employee.employee_id, savedNotif);
+        }
 
         return {
           status: "CHECK_OUT",

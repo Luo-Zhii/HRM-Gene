@@ -24,8 +24,7 @@ export class UpdateViolationDto {
   description?: string;
 
   @IsOptional()
-  @IsDecimal()
-  deduction_amount?: string;
+  deduction_amount?: any;
 
   @IsOptional()
   @IsEnum(ViolationSeverity)

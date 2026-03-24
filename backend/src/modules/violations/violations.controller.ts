@@ -40,17 +40,17 @@ export class ViolationsController {
   @Get()
   async findAll(@Request() req: any, @Query("employeeId") employeeId?: string) {
     const user = req.user;
-    const isAdmin =
-      user.permissions?.includes("manage:employees") ||
-      user.permissions?.includes("manage:system");
 
-    // Admin/HR can filter by employeeId or see all, employees can only see their own
-    const targetEmployeeId = isAdmin
-      ? employeeId
-        ? +employeeId
-        : undefined
-      : user.employee_id;
-    return this.violationsService.findAll(targetEmployeeId);
+    // Admin/HR fetching everything
+    if (!employeeId) {
+      const isAdmin =
+        user.permissions?.includes("manage:employees") ||
+        user.permissions?.includes("manage:system");
+      return this.violationsService.findAll(isAdmin ? undefined : user.employee_id);
+    }
+
+    // Profile page specific request
+    return this.violationsService.findAll(+employeeId);
   }
 
   @Get(":id")

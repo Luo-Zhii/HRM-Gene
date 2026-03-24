@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification, NotificationType } from '../../entities/notification.entity';
@@ -58,6 +58,16 @@ export class NotificationsService {
 
   async markAsRead(notificationId: number, userId: number) {
     await this.notificationRepo.update({ id: notificationId, userId }, { isRead: true });
+    return { success: true };
+  }
+
+  async deleteNotification(notificationId: number, userId: number) {
+    const result = await this.notificationRepo.delete({ id: notificationId, userId });
+    
+    if (result.affected === 0) {
+      throw new NotFoundException('Notification not found or unauthorized');
+    }
+    
     return { success: true };
   }
 
