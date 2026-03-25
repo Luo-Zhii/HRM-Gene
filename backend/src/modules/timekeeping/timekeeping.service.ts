@@ -152,6 +152,14 @@ export class TimeKeepingService {
         // Check debounce for check-in
         await this.checkDebounce(employeeId, "check_in");
 
+        const SHIFT_START_TIME = "08:30";
+        const [shiftHour, shiftMinute] = SHIFT_START_TIME.split(":").map(Number);
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const initialStatus = (currentHour > shiftHour || (currentHour === shiftHour && currentMinute > shiftMinute))
+          ? "Late"
+          : "Present";
+
         // Create new check-in record
         const newRecord = tkRepo.create({
           employee: employee,
@@ -159,7 +167,7 @@ export class TimeKeepingService {
           work_date: today,
           check_out_time: undefined,
           hours_worked: 0,
-          status: "Present",
+          status: initialStatus,
           qr_payload: token,
         });
 
@@ -186,13 +194,13 @@ export class TimeKeepingService {
           now
         );
 
-        // Update status based on hours worked
+        // Update status based on hours worked (preserve Late status)
         if (latestRecord.hours_worked >= 8) {
-          latestRecord.status = "Present";
+          latestRecord.status = latestRecord.status === "Late" ? "Late" : "Present";
         } else if (latestRecord.hours_worked >= 4) {
           latestRecord.status = "Half-day";
         } else {
-          latestRecord.status = "Present"; // Still count as present even if short
+          latestRecord.status = latestRecord.status === "Late" ? "Late" : "Present"; // Still count as present/late even if short
         }
 
         const updated = await tkRepo.save(latestRecord);
@@ -280,6 +288,14 @@ export class TimeKeepingService {
         // Check debounce for check-in
         await this.checkDebounce(employeeId, "check_in");
 
+        const SHIFT_START_TIME = "18:30";
+        const [shiftHour, shiftMinute] = SHIFT_START_TIME.split(":").map(Number);
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const initialStatus = (currentHour > shiftHour || (currentHour === shiftHour && currentMinute > shiftMinute))
+          ? "Late"
+          : "Present";
+
         // Create new check-in record
         const newRecord = tkRepo.create({
           employee: employee,
@@ -287,7 +303,7 @@ export class TimeKeepingService {
           work_date: today,
           check_out_time: undefined,
           hours_worked: 0,
-          status: "Present",
+          status: initialStatus,
           ip_address: ip,
         });
 
@@ -313,13 +329,13 @@ export class TimeKeepingService {
           now
         );
 
-        // Update status based on hours worked
+        // Update status based on hours worked (preserve Late status)
         if (latestRecord.hours_worked >= 8) {
-          latestRecord.status = "Present";
+          latestRecord.status = latestRecord.status === "Late" ? "Late" : "Present";
         } else if (latestRecord.hours_worked >= 4) {
           latestRecord.status = "Half-day";
         } else {
-          latestRecord.status = "Present";
+          latestRecord.status = latestRecord.status === "Late" ? "Late" : "Present";
         }
 
         const updated = await tkRepo.save(latestRecord);
@@ -445,12 +461,44 @@ export class TimeKeepingService {
 
     const totalPages = Math.max(1, Math.ceil(total / limit) || 1);
 
+    // Calculate stats based on all records in the filtered range
+    const allRecordsInRange = await this.tkRepo
+      .createQueryBuilder("tk")
+      .leftJoin("tk.employee", "employee")
+      .select(["tk.status", "employee.employee_id"])
+      .where("tk.work_date BETWEEN :start AND :end", {
+        start: rangeStartStr,
+        end: rangeEndStr,
+      })
+      .getMany();
+
+    const stats = {
+      totalEmployees: new Set(allRecordsInRange.map(r => r.employee?.employee_id)).size,
+      present: allRecordsInRange.filter(r => r.status === "Present" || r.status === "Half-day").length,
+      late: allRecordsInRange.filter(r => r.status === "Late").length,
+      absent: 0, // Set to 0 as fallback or implement actual absent logic if total expected employees is known
+    };
+
+    // Format records to include id (Employee ID) and location (Fallback from IP)
+    const formattedData = items.map((item) => {
+      const locationStr = item.ip_address
+        ? (item.ip_address.includes("192.168") || item.ip_address.includes("10.") || item.ip_address === "::1" ? "Office" : `IP: ${item.ip_address}`)
+        : "Office (Default)";
+
+      return {
+        ...item,
+        id: item.employee?.employee_id,
+        location: locationStr
+      };
+    });
+
     return {
-      data: items,
+      data: formattedData,
+      stats,
       total,
       page,
       limit,
       totalPages,
-    };
+    } as any;
   }
 }

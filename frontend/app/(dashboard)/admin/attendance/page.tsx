@@ -21,6 +21,8 @@ type AttendanceRecord = {
   hours_worked: number;
   status: string;
   ip_address?: string | null;
+  id?: number;
+  location?: string;
   employee: {
     employee_id: number;
     first_name: string;
@@ -29,8 +31,16 @@ type AttendanceRecord = {
   };
 };
 
+type AttendanceStats = {
+  totalEmployees: number;
+  present: number;
+  late: number;
+  absent: number;
+};
+
 type AttendanceResponse = {
   data: AttendanceRecord[];
+  stats: AttendanceStats;
   total: number;
   page: number;
   limit: number;
@@ -41,6 +51,7 @@ export default function AttendanceHistoryPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [stats, setStats] = useState<AttendanceStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -48,6 +59,7 @@ export default function AttendanceHistoryPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [searchEmployee, setSearchEmployee] = useState("");
   const [appliedStartDate, setAppliedStartDate] = useState<string | null>(null);
   const [appliedEndDate, setAppliedEndDate] = useState<string | null>(null);
 
@@ -101,6 +113,7 @@ export default function AttendanceHistoryPage() {
 
       const json: AttendanceResponse = await res.json();
       setRecords(json.data || []);
+      setStats(json.stats || null);
       setPage(json.page || pageToLoad);
       setTotalPages(json.totalPages || 1);
       setAppliedStartDate(start || null);
@@ -166,6 +179,10 @@ export default function AttendanceHistoryPage() {
     return "Showing all records";
   };
 
+  const filteredRecords = records.filter((rec) =>
+    getEmployeeName(rec).toLowerCase().includes(searchEmployee.toLowerCase())
+  );
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -230,6 +247,16 @@ export default function AttendanceHistoryPage() {
                   className="border rounded px-3 py-2 text-sm"
                 />
               </div>
+              <div className="flex flex-col space-y-1 w-full md:w-64">
+                <label className="text-sm text-slate-600">Search by Employee</label>
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={searchEmployee}
+                  onChange={(e) => setSearchEmployee(e.target.value)}
+                  className="border rounded px-3 py-2 text-sm"
+                />
+              </div>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={applyFilter}
@@ -255,6 +282,35 @@ export default function AttendanceHistoryPage() {
           </CardContent>
         </Card>
 
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Employees</p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{stats.totalEmployees}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Present</p>
+                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{stats.present}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Late</p>
+                <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-2">{stats.late}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Absent</p>
+                <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-2">{stats.absent}</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <Card className="shadow-md border-none">
           <CardHeader>
             <CardTitle className="text-slate-800 dark:text-slate-100">
@@ -271,6 +327,7 @@ export default function AttendanceHistoryPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>ID</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Employee</TableHead>
                       <TableHead>Check In</TableHead>
@@ -279,12 +336,13 @@ export default function AttendanceHistoryPage() {
                         Working Hours
                       </TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>IP Address</TableHead>
+                      <TableHead>Location</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {records.map((rec) => (
+                    {filteredRecords.map((rec) => (
                       <TableRow key={rec.timekeeping_id}>
+                        <TableCell className="font-medium text-slate-500">#{rec.id || rec.employee.employee_id}</TableCell>
                         <TableCell>{formatDate(rec.work_date)}</TableCell>
                         <TableCell>{getEmployeeName(rec)}</TableCell>
                         <TableCell>{formatDateTime(rec.check_in_time)}</TableCell>
@@ -294,8 +352,22 @@ export default function AttendanceHistoryPage() {
                         <TableCell className="text-right">
                           {rec.hours_worked?.toFixed(2) ?? "0.00"}
                         </TableCell>
-                        <TableCell>{rec.status}</TableCell>
-                        <TableCell>{rec.ip_address || "-"}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              rec.status === "Present"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                : rec.status === "Late"
+                                ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
+                                : rec.status === "Half-day"
+                                ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            }`}
+                          >
+                            {rec.status}
+                          </span>
+                        </TableCell>
+                        <TableCell>{rec.location || rec.ip_address || "-"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
