@@ -323,13 +323,12 @@ export default function LeavePage() {
                         <>
                           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
                             <div
-                              className={`h-2 rounded-full transition-all ${
-                                percentage > 80
-                                  ? "bg-red-500"
-                                  : percentage > 50
+                              className={`h-2 rounded-full transition-all ${percentage > 80
+                                ? "bg-red-500"
+                                : percentage > 50
                                   ? "bg-yellow-500"
                                   : "bg-green-500"
-                              }`}
+                                }`}
                               style={{ width: `${Math.min(percentage, 100)}%` }}
                             ></div>
                           </div>
@@ -491,7 +490,7 @@ export default function LeavePage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-gray-900 dark:text-gray-100">
+                      <TableHead className="text-gray-900 dark:text-gray-100 w-[15%]">
                         Leave Type
                       </TableHead>
                       <TableHead className="text-gray-900 dark:text-gray-100">
@@ -500,25 +499,30 @@ export default function LeavePage() {
                       <TableHead className="text-gray-900 dark:text-gray-100">
                         End Date
                       </TableHead>
-                      <TableHead className="text-gray-900 dark:text-gray-100">
+                      <TableHead className="text-gray-900 dark:text-gray-100 text-center">
                         Total Days
                       </TableHead>
                       <TableHead className="text-gray-900 dark:text-gray-100">
                         Status
                       </TableHead>
-                      <TableHead className="text-gray-900 dark:text-gray-100">
-                        Reason
+                      {/* Đổi tên cột Reason thành My Reason cho đỡ nhầm lẫn */}
+                      <TableHead className="text-gray-900 dark:text-gray-100 w-[20%]">
+                        My Reason
+                      </TableHead>
+                      {/* THÊM CỘT HR NOTE Ở ĐÂY */}
+                      <TableHead className="text-gray-900 dark:text-gray-100 w-[20%]">
+                        HR Note
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {requests.map((req) => {
+                    {requests.map((req: any) => {
                       const start = new Date(req.start_date);
                       const end = new Date(req.end_date);
                       const days =
                         Math.floor(
                           (end.getTime() - start.getTime()) /
-                            (1000 * 60 * 60 * 24)
+                          (1000 * 60 * 60 * 24)
                         ) + 1;
 
                       return (
@@ -532,33 +536,35 @@ export default function LeavePage() {
                           <TableCell className="text-gray-600 dark:text-gray-400">
                             {new Date(req.end_date).toLocaleDateString()}
                           </TableCell>
-                          <TableCell className="text-gray-600 dark:text-gray-400">
+                          <TableCell className="text-gray-600 dark:text-gray-400 text-center font-medium">
                             {days}
                           </TableCell>
                           <TableCell>
                             <Badge
-                              variant={
-                                req.status === "Approved"
-                                  ? "default"
-                                  : req.status === "Rejected"
-                                  ? "destructive"
-                                  : "outline"
-                              }
+                              variant="outline"
                               className={
                                 req.status === "Pending"
-                                  ? "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800"
-                                  : req.status === "Approved"
-                                  ? "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
-                                  : req.status === "Rejected"
-                                  ? "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
-                                  : ""
+                                  ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                  : req.status.includes("Approved")
+                                    ? "bg-green-50 text-green-700 border-green-200"
+                                    : req.status === "Rejected"
+                                      ? "bg-red-50 text-red-700 border-red-200"
+                                      : ""
                               }
                             >
-                              {req.status}
+                              {req.status.replace(/_/g, " ")}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-gray-600 dark:text-gray-400 max-w-xs truncate">
+                          <TableCell className="text-gray-600 dark:text-gray-400 max-w-[200px] truncate" title={req.reason}>
                             {req.reason || "—"}
+                          </TableCell>
+                          {/* HIỂN THỊ DỮ LIỆU HR NOTE */}
+                          <TableCell className="text-gray-600 dark:text-gray-400 max-w-[200px] truncate" title={req.admin_note}>
+                            {req.admin_note ? (
+                              <span className="italic text-gray-800 dark:text-gray-300">"{req.admin_note}"</span>
+                            ) : (
+                              "—"
+                            )}
                           </TableCell>
                         </TableRow>
                       );

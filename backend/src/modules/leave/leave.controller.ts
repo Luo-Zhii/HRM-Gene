@@ -16,7 +16,7 @@ import { Permissions } from "../auth/permissions.decorator";
 @Controller("leave")
 @UseGuards(JwtAuthGuard)
 export class LeaveController {
-  constructor(private readonly svc: LeaveService) {}
+  constructor(private readonly svc: LeaveService) { }
 
   @Get("types")
   async getLeaveTypes() {
@@ -68,11 +68,14 @@ export class LeaveController {
     @Body() body: any
   ) {
     const managerId = req.user?.employee_id;
-    const { status } = body;
+    // Lấy cả status và reason từ body
+    const { status, reason } = body;
+
     return this.svc.approveLeaveRequest(
       parseInt(requestId, 10),
       status,
-      managerId
+      managerId,
+      reason // Truyền cái reason (adminNote) xuống cho Service xử lý
     );
   }
 }

@@ -18,7 +18,7 @@ export class LeaveService {
     @InjectRepository(LeaveType) private leaveTypeRepo: Repository<LeaveType>,
     @InjectRepository(Employee) private employeeRepo: Repository<Employee>,
     private notificationsService: NotificationsService
-  ) {}
+  ) { }
 
   // Get all leave types (for dropdown/selection)
   async getLeaveTypes() {
@@ -67,9 +67,9 @@ export class LeaveService {
       reason: r.reason,
       status: r.status,
       manager_approver: r.manager_approver?.email,
+      admin_note: r.admin_note, // <--- THÊM DÒNG NÀY ĐỂ TRẢ VỀ LỜI NHẮN CỦA HR
     }));
   }
-
   // Employee: Submit a new leave request
   async submitRequest(
     employeeId: number,
@@ -144,18 +144,40 @@ export class LeaveService {
     };
   }
 
-  // Manager/HR: Get all pending leave requests for review
+  // Manager/HR: Get all leave requests for review (formerly just pending)
   async getPendingRequests() {
     const requests = await this.leaveReqRepo.find({
-      where: [{ status: "Pending" }, { status: "Approved_By_Manager" }],
-      relations: ["leave_type", "employee", "manager_approver"],
+      relations: [
+        "leave_type",
+        "employee",
+        "employee.department",
+        "employee.position",
+        "manager_approver"
+      ],
       order: { request_id: "DESC" },
     });
 
-    return requests.map((r) => ({
+    // Calculate stats across all requests
+    const allRequests = await this.leaveReqRepo.find({ select: ["status"] });
+    let total = allRequests.length;
+    let pending = 0;
+    let approved = 0;
+    let rejected = 0;
+
+    for (const req of allRequests) {
+      if (req.status === "Pending" || req.status === "Approved_By_Manager") pending++;
+      else if (req.status === "Approved") approved++;
+      else if (req.status === "Rejected") rejected++;
+    }
+
+    const data = requests.map((r) => ({
       request_id: r.request_id,
+      employee_id: r.employee?.employee_id,
       employee_email: r.employee?.email,
       employee_name: `${r.employee?.first_name} ${r.employee?.last_name}`,
+      employee_avatar: r.employee?.avatar_url,
+      employee_department: r.employee?.department?.department_name,
+      employee_position: r.employee?.position?.position_name,
       leave_type_name: r.leave_type?.name,
       start_date: r.start_date,
       end_date: r.end_date,
@@ -163,14 +185,22 @@ export class LeaveService {
       status: r.status,
       manager_approver: r.manager_approver?.email,
     }));
+
+    return {
+      data,
+      stats: { total, pending, approved, rejected }
+    };
   }
 
+  // Manager/HR: Approve or reject a leave request
+  // CRITICAL LOGIC: If status is 'Approved', deduct days from LeaveBalance
   // Manager/HR: Approve or reject a leave request
   // CRITICAL LOGIC: If status is 'Approved', deduct days from LeaveBalance
   async approveLeaveRequest(
     requestId: number,
     newStatus: string,
-    managerId: number
+    managerId: number,
+    adminNote?: string // Thêm tham số hứng note từ Controller
   ) {
     // Validate new status
     if (!["Approved", "Rejected", "Approved_By_Manager"].includes(newStatus)) {
@@ -194,16 +224,26 @@ export class LeaveService {
       where: { employee_id: managerId },
     });
 
-    // Update leave request status
+    // Update leave request status AND save the admin note
     leaveRequest.status = newStatus;
     leaveRequest.manager_approver = manager ?? undefined;
+    if (adminNote) {
+      leaveRequest.admin_note = adminNote; // Lưu lý do vào DB
+    }
+
     await this.leaveReqRepo.save(leaveRequest);
+
+    // Xây dựng nội dung thông báo động có chứa lý do
+    let notifMessage = `Your leave request from ${leaveRequest.start_date} to ${leaveRequest.end_date} has been ${newStatus.toLowerCase()}.`;
+    if (adminNote && adminNote.trim() !== '') {
+      notifMessage += ` Note from Admin: "${adminNote}"`;
+    }
 
     // Call WebSocket Notification Service
     await this.notificationsService.createNotification(
       leaveRequest.employee.employee_id,
       "Leave Request Update",
-      `Your leave request from ${leaveRequest.start_date} to ${leaveRequest.end_date} has been ${newStatus.toLowerCase()}.`,
+      notifMessage,
       NotificationType.LEAVE
     );
 

@@ -19,6 +19,7 @@ export class LeaveRequest {
   @Column({ type: "date" })
   end_date!: string;
 
+  // Reason provided by the employee when creating the request
   @Column({ type: "text", nullable: true })
   reason?: string;
 
@@ -27,4 +28,8 @@ export class LeaveRequest {
 
   @ManyToOne(() => Employee, { nullable: true })
   manager_approver?: Employee;
+
+  // NEW COLUMN: Reason/Note provided by Admin/HR when approving/rejecting
+  @Column({ type: "text", nullable: true })
+  admin_note?: string;
 }
