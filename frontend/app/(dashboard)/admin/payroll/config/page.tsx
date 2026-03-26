@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Edit2, Save, X, Trash2, User, FileText, FilePlus } from "lucide-react";
+import { ArrowUpDown, Edit2, Save, X, Trash2, User, FileText, FilePlus, Target } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -45,6 +45,7 @@ interface SalaryConfig {
   transport_allowance: string;
   lunch_allowance: string;
   responsibility_allowance: string;
+  target_bonus?: string;
 }
 
 export default function SalaryConfigPage() {
@@ -60,6 +61,7 @@ export default function SalaryConfigPage() {
     transport_allowance: "",
     lunch_allowance: "",
     responsibility_allowance: "",
+    target_bonus: "",
   });
   const [saving, setSaving] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
@@ -151,6 +153,7 @@ export default function SalaryConfigPage() {
       transport_allowance: config.transport_allowance || "0",
       lunch_allowance: config.lunch_allowance || "0",
       responsibility_allowance: config.responsibility_allowance || "0",
+      target_bonus: config.target_bonus || "0",
     });
     setIsEditModalOpen(true);
   };
@@ -175,6 +178,7 @@ export default function SalaryConfigPage() {
           transport_allowance: String(parseFloat(editForm.transport_allowance || "0").toFixed(2)),
           lunch_allowance: String(parseFloat(editForm.lunch_allowance || "0").toFixed(2)),
           responsibility_allowance: String(parseFloat(editForm.responsibility_allowance || "0").toFixed(2)),
+          target_bonus: String(parseFloat(editForm.target_bonus || "0").toFixed(2)),
         }),
       });
       if (!res.ok) throw new Error("Failed to update salary config");
@@ -312,6 +316,18 @@ export default function SalaryConfigPage() {
                   <div className="space-y-1.5"><label className="text-sm font-bold text-gray-500">Transport Allowance</label><Input type="number" value={editForm.transport_allowance} onChange={e => setEditForm({...editForm, transport_allowance: e.target.value})} className="h-11" /></div>
                   <div className="space-y-1.5"><label className="text-sm font-bold text-gray-500">Lunch Allowance</label><Input type="number" value={editForm.lunch_allowance} onChange={e => setEditForm({...editForm, lunch_allowance: e.target.value})} className="h-11" /></div>
                   <div className="space-y-1.5"><label className="text-sm font-bold text-gray-500">Responsibility</label><Input type="number" value={editForm.responsibility_allowance} onChange={e => setEditForm({...editForm, responsibility_allowance: e.target.value})} className="h-11" /></div>
+                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 col-span-2">
+                    <label className="block text-sm font-bold text-blue-800 mb-1 flex items-center gap-2">
+                      <Target className="w-4 h-4" /> Target Bonus (KPI Based)
+                    </label>
+                    <Input 
+                      type="number" 
+                      className="bg-white border-blue-200 focus:ring-blue-500 font-bold text-blue-700"
+                      value={editForm.target_bonus} 
+                      onChange={(e) => setEditForm({ ...editForm, target_bonus: e.target.value })} 
+                    />
+                    <p className="text-[10px] text-blue-600 mt-2">This is the maximum bonus amount if KPI achievement is 100%.</p>
+                  </div>
                 </div>
               </div>
               <div className="p-6 bg-gray-50 dark:bg-gray-900/50 flex gap-3 justify-end">

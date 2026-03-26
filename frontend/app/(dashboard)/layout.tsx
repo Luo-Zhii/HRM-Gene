@@ -57,12 +57,21 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
                   <NavItem href="/admin/permissions" label="Permissions" isActive={pathname === "/admin/permissions"} onClick={onClose} />
                 </>
               )}
+              {(isAdminOrHr || hasManageSystemPermission) && (
+                <>
+                  <NavGroup title="Performance Management" />
+                  <NavItem href="/admin/performance/library" label="KPI Library" isActive={pathname === "/admin/performance/library"} onClick={onClose} />
+                  <NavItem href="/admin/performance/team" label="Team Performance" isActive={pathname === "/admin/performance/team"} onClick={onClose} />
+                </>
+              )}
               {(isAdminOrHr || hasManageSystemPermission) && <NavItem href="/admin/attendance" label="Attendance History" isActive={pathname === "/admin/attendance"} onClick={onClose} />}
               {hasManageSystemPermission && (
                 <NavItem href="/admin/qr-display" label="QR Display (Tablet)" isActive={pathname === "/admin/qr-display"} onClick={onClose} />
               )}
             </>
           )}
+          <NavGroup title="My Performance" />
+          <NavItem href="/dashboard/performance/me" label="My Goals" isActive={pathname === "/dashboard/performance/me"} onClick={onClose} />
           {hasManagePayrollPermission && (
             <>
               <NavGroup title="Payroll Management" />

@@ -9,6 +9,7 @@ import { PayrollModule } from "./modules/payroll/payroll.module";
 import { ReportsModule } from "./modules/reports/reports.module";
 import { ContractsModule } from "./modules/contracts/contracts.module";
 import { ViolationsModule } from "./modules/violations/violations.module";
+import { KpiModule } from "./modules/kpi/kpi.module";
 
 import * as path from "path";
 import { ConfigModule } from "@nestjs/config";
@@ -49,7 +50,8 @@ import { ScheduleModule } from "@nestjs/schedule";
     ContractsModule,
     ViolationsModule,
     EmployeesModule,
-    NotificationsModule
+    NotificationsModule,
+    KpiModule
   ],
 })
 export class AppModule { }

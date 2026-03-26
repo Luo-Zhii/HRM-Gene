@@ -14,6 +14,7 @@ import { Contract } from "@/entities/contract.entity";
 import { SalaryAdjustment } from "@/entities/salary-adjustment.entity";
 import { CompanySettings } from "@/entities/company-settings.entity";
 import { NotificationsModule } from "../notifications/notifications.module";
+import { KpiModule } from "../kpi/kpi.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
       CompanySettings,
     ]),
     NotificationsModule,
+    KpiModule,
   ],
   providers: [PayrollService],
   controllers: [PayrollController],

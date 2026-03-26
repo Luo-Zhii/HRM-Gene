@@ -13,6 +13,7 @@ import { SalaryAdjustment, AdjustmentType, AdjustmentStatus } from "../../entiti
 import { NotificationsService } from "../notifications/notifications.service";
 import { NotificationType } from "../../entities/notification.entity";
 import { CompanySettings } from "../../entities/company-settings.entity";
+import { KpiService } from "../kpi/kpi.service";
 
 @Injectable()
 export class PayrollService {
@@ -30,7 +31,8 @@ export class PayrollService {
     @InjectRepository(SalaryConfig) private salaryConfigRepo: Repository<SalaryConfig>,
     @InjectRepository(LeaveRequest) private leaveRequestRepo: Repository<LeaveRequest>,
     @InjectRepository(SalaryAdjustment) private adjustmentRepo: Repository<SalaryAdjustment>,
-    @InjectRepository(CompanySettings) private settingsRepo: Repository<CompanySettings>
+    @InjectRepository(CompanySettings) private settingsRepo: Repository<CompanySettings>,
+    private readonly kpiService: KpiService
   ) {}
 
   private monthRange(month: number, year: number) {
@@ -465,7 +467,21 @@ export class PayrollService {
     const bonusAdj = ctx.bonusMap[empId] || 0;
     const penaltyAdj = ctx.penaltyMap[empId] || 0;
 
-    const grossIncome = salaryPerDay * actualDays + allowances + bonusAdj;
+    // --- KPI Bonus Calculation ---
+    let kpiBonus = 0;
+    try {
+      const kpiPeriod = await this.kpiService.getPeriodByMonthAndYear(month, year);
+      if (kpiPeriod) {
+        const kpiScore = await this.kpiService.calculateFinalKpiScore(empId, kpiPeriod.id);
+        const targetBonus = parseFloat(salaryConfig.target_bonus || "0");
+        kpiBonus = (kpiScore / 100) * targetBonus;
+      }
+    } catch (error) {
+      console.error(`Failed to calculate KPI bonus for employee ${empId}:`, error);
+    }
+
+    const totalCalculatedBonus = bonusAdj + kpiBonus;
+    const grossIncome = salaryPerDay * actualDays + allowances + totalCalculatedBonus;
     const deductions = baseSalary * ctx.insuranceRate + penaltyAdj + salaryPerDay * unpaidAbsentDays;
     const netSalary = Math.max(0, grossIncome - deductions);
 
@@ -476,7 +492,7 @@ export class PayrollService {
     if (payslip) {
       Object.assign(payslip, {
         actual_work_days: actualDays,
-        bonus: bonusAdj.toFixed(2),
+        bonus: totalCalculatedBonus.toFixed(2),
         gross_salary: grossIncome.toFixed(2),
         deductions: deductions.toFixed(2),
         net_salary: netSalary.toFixed(2),
@@ -489,7 +505,7 @@ export class PayrollService {
         payroll_period: period,
         pay_period: `${String(month).padStart(2, "0")}/${year}`,
         actual_work_days: actualDays,
-        bonus: bonusAdj.toFixed(2),
+        bonus: totalCalculatedBonus.toFixed(2),
         gross_salary: grossIncome.toFixed(2),
         deductions: deductions.toFixed(2),
         net_salary: netSalary.toFixed(2),

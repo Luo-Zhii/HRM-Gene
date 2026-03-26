@@ -27,5 +27,8 @@ export class SalaryConfig {
 
   @Column({ type: "decimal", precision: 12, scale: 2, default: "0.00" })
   responsibility_allowance!: string;
+
+  @Column({ type: "decimal", precision: 12, scale: 2, default: "0.00" })
+  target_bonus!: string;
 }
 
