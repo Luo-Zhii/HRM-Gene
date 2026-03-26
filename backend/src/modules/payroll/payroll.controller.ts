@@ -29,8 +29,18 @@ export class PayrollController {
 
   @Permissions("manage:payroll")
   @Post("generate")
-  async generate(@Body() body: { month: number; year: number }) {
-    return this.svc.generatePayslips(body.month, body.year);
+  async generate(@Request() req: any, @Body() body: { month: number; year: number }) {
+    return this.svc.generatePayslips(body.month, body.year, req.user.employee_id);
+  }
+
+  @Permissions("manage:payroll")
+  @Post("generate-single")
+  async generateSingle(
+    @Request() req: any,
+    @Body() body: { employee_id: number; month: number; year: number }
+  ) {
+    if (!body.employee_id) throw new BadRequestException("Employee ID is required");
+    return this.svc.generateSinglePayslip(body.employee_id, body.month, body.year, req.user.employee_id);
   }
 
   @Permissions("manage:payroll")
@@ -56,8 +66,8 @@ export class PayrollController {
 
   @Permissions("manage:payroll")
   @Post("run")
-  async run(@Body() body: { month: number; year: number }) {
-    return this.svc.runPayroll(body.month, body.year);
+  async run(@Request() req: any, @Body() body: { month: number; year: number }) {
+    return this.svc.runPayroll(body.month, body.year, req.user.employee_id);
   }
 
   @Permissions("manage:payroll")

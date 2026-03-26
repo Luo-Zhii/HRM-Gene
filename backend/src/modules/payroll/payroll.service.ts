@@ -40,7 +40,7 @@ export class PayrollService {
   }
 
   // ============= Legacy runPayroll (kept for backward compat) =============
-  async runPayroll(month: number, year: number) {
+  async runPayroll(month: number, year: number, createdByUserId?: number) {
     const { start, end } = this.monthRange(month, year);
     const employees = await this.employeeRepo.find({ relations: ["position", "contracts"] } as any);
     const summary = { total_payroll: 0, total_salary_rate: 0, total_bonus: 0, total_deductions: 0, generated: 0 } as any;
@@ -93,6 +93,7 @@ export class PayrollService {
           salary_rate: String(baseSalary.toFixed(2)),
           bonus: String(bonus.toFixed(2)), deductions: String(deductions.toFixed(2)),
           net_salary: String(net.toFixed(2)), status: "Pending",
+          created_by_id: createdByUserId,
         } as any);
         await manager.getRepository(Payslip).save(payslip as any);
         summary.total_payroll += net; summary.total_salary_rate += baseSalary;
@@ -152,7 +153,7 @@ export class PayrollService {
   async getPayslipById(id: number) {
     const payslip = await this.payslipRepo.findOne({
       where: { payslip_id: id },
-      relations: ["employee", "employee.department", "employee.position", "payroll_period"],
+      relations: ["employee", "employee.department", "employee.position", "payroll_period", "created_by", "created_by.department"],
     });
 
     if (!payslip) throw new NotFoundException(`Payslip #${id} not found`);
@@ -251,7 +252,7 @@ export class PayrollService {
   }
 
   // ============= PHASE 2: Enhanced Payroll Generation =============
-  async generatePayslips(month: number, year: number) {
+  async generatePayslips(month: number, year: number, createdByUserId?: number) {
     const { start, end } = this.monthRange(month, year);
 
     // Find or create payroll period
@@ -332,65 +333,30 @@ export class PayrollService {
 
     await this.dataSource.transaction(async (manager) => {
       for (const employee of employees) {
-        const salaryConfig = await this.salaryConfigRepo.findOne({
-          where: { employee: { employee_id: employee.employee_id } },
-        });
-        if (!salaryConfig) continue;
+        const result = await this.calculateAndSavePayslip(
+          manager,
+          employee,
+          period!,
+          month,
+          year,
+          {
+            timekeepings,
+            workDaysMap,
+            absentDaysMap,
+            bonusMap,
+            penaltyMap,
+            insuranceRate: INSURANCE_RATE,
+          },
+          createdByUserId
+        );
 
-        const empId = employee.employee_id;
-        const baseSalary = parseFloat(salaryConfig.base_salary);
-        const salaryPerDay = baseSalary / standardDays;
-
-        // Actual days worked — default to full month if no attendance data
-        const hasAttendanceData = timekeepings.some((tk) => tk.employee.employee_id === empId);
-        const actualDays = hasAttendanceData
-          ? Math.min(workDaysMap[empId] || 0, standardDays)
-          : standardDays;
-        const unpaidAbsentDays = absentDaysMap[empId] || 0;
-
-        // Allowances from SalaryConfig
-        const allowances =
-          parseFloat(salaryConfig.transport_allowance || "0") +
-          parseFloat(salaryConfig.lunch_allowance || "0") +
-          parseFloat(salaryConfig.responsibility_allowance || "0");
-
-        // Adjustments from SalaryAdjustment table
-        const bonusAdj = bonusMap[empId] || 0;
-        const penaltyAdj = penaltyMap[empId] || 0;
-
-        // Gross = prorated base + allowances + bonuses
-        const grossIncome = salaryPerDay * actualDays + allowances + bonusAdj;
-        // Deductions = insurance + penalties + unpaid-leave cost
-        const deductions = baseSalary * INSURANCE_RATE + penaltyAdj + salaryPerDay * unpaidAbsentDays;
-        const netSalary = Math.max(0, grossIncome - deductions);
-
-        const existing = await manager.getRepository(Payslip).findOne({
-          where: { employee: { employee_id: empId }, payroll_period: { id: period!.id } },
-        });
-
-        if (existing) {
-          Object.assign(existing, {
-            actual_work_days: actualDays, ot_hours: 0,
-            bonus: bonusAdj.toFixed(2), gross_salary: grossIncome.toFixed(2),
-            deductions: deductions.toFixed(2), net_salary: netSalary.toFixed(2),
-            status: PayslipStatus.PENDING,
-          });
-          await manager.getRepository(Payslip).save(existing);
-        } else {
-          await manager.getRepository(Payslip).save(
-            manager.getRepository(Payslip).create({
-              employee, payroll_period: period!,
-              actual_work_days: actualDays, ot_hours: 0,
-              bonus: bonusAdj.toFixed(2), gross_salary: grossIncome.toFixed(2),
-              deductions: deductions.toFixed(2), net_salary: netSalary.toFixed(2),
-              status: PayslipStatus.PENDING,
-              pay_period: `${String(month).padStart(2, "0")}/${year}`,
-            })
-          );
+        if (result) {
+          totalGross += result.grossIncome;
+          totalDeductions += result.deductions;
+          totalNet += result.netSalary;
+          totalBonus += result.bonusAdj;
+          generated += 1;
         }
-
-        totalGross += grossIncome; totalDeductions += deductions;
-        totalNet += netSalary; totalBonus += bonusAdj; generated += 1;
       }
     });
 
@@ -399,6 +365,141 @@ export class PayrollService {
       total_gross: totalGross.toFixed(2), total_deductions: totalDeductions.toFixed(2),
       total_net: totalNet.toFixed(2), total_bonus: totalBonus.toFixed(2),
     };
+  }
+
+  async generateSinglePayslip(employeeId: number, month: number, year: number, createdByUserId: number) {
+    const { start, end } = this.monthRange(month, year);
+    const employee = await this.employeeRepo.findOne({ where: { employee_id: employeeId }, relations: ["position", "department"] });
+    if (!employee) throw new NotFoundException(`Employee #${employeeId} not found`);
+
+    let period = await this.payrollPeriodRepo.findOne({ where: { month, year } });
+    if (!period) {
+      period = this.payrollPeriodRepo.create({ month, year, status: "Draft" as any, standard_work_days: 26 });
+      period = await this.payrollPeriodRepo.save(period);
+    }
+
+    const timekeepings = await this.timekeepingRepo.find({
+      where: { employee: { employee_id: employeeId }, work_date: Between(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10)) },
+    });
+    const leaveRequests = await this.leaveRequestRepo.find({
+      where: { employee: { employee_id: employeeId }, status: "Approved", start_date: Between(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10)) },
+      relations: ["leave_type"],
+    });
+
+    const workDaysMap: Record<number, number> = { [employeeId]: 0 };
+    const absentDaysMap: Record<number, number> = { [employeeId]: 0 };
+    timekeepings.forEach((tk) => {
+      if (tk.status === "Present") workDaysMap[employeeId]++;
+      else if (tk.status === "Half-day") { workDaysMap[employeeId] += 0.5; absentDaysMap[employeeId] += 0.5; }
+      else if (tk.status === "Absent") absentDaysMap[employeeId]++;
+    });
+    leaveRequests.forEach((lr) => {
+      const days = Math.floor((new Date(lr.end_date).getTime() - new Date(lr.start_date).getTime()) / 86400000) + 1;
+      workDaysMap[employeeId] += days;
+    });
+
+    const appliedMonth = `${String(month).padStart(2, "0")}/${year}`;
+    const adjustments = await this.adjustmentRepo.find({ where: { employee: { employee_id: employeeId }, applied_month: appliedMonth, status: AdjustmentStatus.APPROVED } });
+    const bonusAdj = adjustments.filter(a => a.type === "Bonus").reduce((sum, a) => sum + parseFloat(a.amount), 0);
+    const penaltyAdj = adjustments.filter(a => a.type === "Penalty").reduce((sum, a) => sum + parseFloat(a.amount), 0);
+
+    let insuranceRate = 0.105;
+    const rateSetting = await this.settingsRepo.findOne({ where: { key: "social_insurance_rate" } });
+    if (rateSetting?.value) insuranceRate = parseFloat(rateSetting.value) / 100;
+
+    const result = await this.dataSource.transaction(async manager => {
+      return this.calculateAndSavePayslip(manager, employee, period!, month, year, {
+        timekeepings,
+        workDaysMap,
+        absentDaysMap,
+        bonusMap: { [employeeId]: bonusAdj },
+        penaltyMap: { [employeeId]: penaltyAdj },
+        insuranceRate,
+      }, createdByUserId);
+    });
+
+    if (!result) throw new BadRequestException("Failed to generate payslip (no salary configuration found)");
+    
+    // Return the payslip detail
+    const payslip = await this.payslipRepo.findOne({
+      where: { employee: { employee_id: employeeId }, payroll_period: { id: period.id } }
+    });
+    return this.getPayslipById(payslip!.payslip_id);
+  }
+
+  private async calculateAndSavePayslip(
+    manager: any,
+    employee: Employee,
+    period: PayrollPeriod,
+    month: number,
+    year: number,
+    ctx: {
+      timekeepings: TimeKeeping[];
+      workDaysMap: Record<number, number>;
+      absentDaysMap: Record<number, number>;
+      bonusMap: Record<number, number>;
+      penaltyMap: Record<number, number>;
+      insuranceRate: number;
+    },
+    createdByUserId?: number
+  ) {
+    const salaryConfig = await manager.getRepository(SalaryConfig).findOne({
+      where: { employee: { employee_id: employee.employee_id } },
+    });
+    if (!salaryConfig) return null;
+
+    const empId = employee.employee_id;
+    const standardDays = period.standard_work_days;
+    const baseSalary = parseFloat(salaryConfig.base_salary);
+    const salaryPerDay = baseSalary / standardDays;
+
+    const hasAttendanceData = ctx.timekeepings.some((tk) => (tk.employee?.employee_id || (tk as any).employee_id) === empId);
+    const actualDays = hasAttendanceData ? Math.min(ctx.workDaysMap[empId] || 0, standardDays) : standardDays;
+    const unpaidAbsentDays = ctx.absentDaysMap[empId] || 0;
+
+    const allowances =
+      parseFloat(salaryConfig.transport_allowance || "0") +
+      parseFloat(salaryConfig.lunch_allowance || "0") +
+      parseFloat(salaryConfig.responsibility_allowance || "0");
+
+    const bonusAdj = ctx.bonusMap[empId] || 0;
+    const penaltyAdj = ctx.penaltyMap[empId] || 0;
+
+    const grossIncome = salaryPerDay * actualDays + allowances + bonusAdj;
+    const deductions = baseSalary * ctx.insuranceRate + penaltyAdj + salaryPerDay * unpaidAbsentDays;
+    const netSalary = Math.max(0, grossIncome - deductions);
+
+    let payslip = await manager.getRepository(Payslip).findOne({
+      where: { employee: { employee_id: empId }, payroll_period: { id: period.id } },
+    });
+
+    if (payslip) {
+      Object.assign(payslip, {
+        actual_work_days: actualDays,
+        bonus: bonusAdj.toFixed(2),
+        gross_salary: grossIncome.toFixed(2),
+        deductions: deductions.toFixed(2),
+        net_salary: netSalary.toFixed(2),
+        status: PayslipStatus.PENDING,
+        created_by_id: createdByUserId || payslip.created_by_id,
+      });
+    } else {
+      payslip = manager.getRepository(Payslip).create({
+        employee,
+        payroll_period: period,
+        pay_period: `${String(month).padStart(2, "0")}/${year}`,
+        actual_work_days: actualDays,
+        bonus: bonusAdj.toFixed(2),
+        gross_salary: grossIncome.toFixed(2),
+        deductions: deductions.toFixed(2),
+        net_salary: netSalary.toFixed(2),
+        status: PayslipStatus.PENDING,
+        created_by_id: createdByUserId,
+      });
+    }
+    await manager.getRepository(Payslip).save(payslip);
+
+    return { grossIncome, deductions, netSalary, bonusAdj };
   }
 
   // ============= Payslip Approval & Payment =============

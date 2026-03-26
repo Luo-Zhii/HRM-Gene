@@ -51,4 +51,7 @@ export class Payslip {
   // ID of the HR admin who generated/approved this payslip (null = system/cron)
   @Column({ type: "int", nullable: true })
   created_by_id?: number;
+
+  @ManyToOne(() => Employee)
+  created_by?: Employee;
 }

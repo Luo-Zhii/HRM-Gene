@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown } from "lucide-react"; // Import icon
+import { ArrowUpDown, Edit2, Save, X, Trash2, User, FileText, FilePlus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -14,16 +14,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Edit2, Save, X, Trash2, User, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PayslipDetailModal from "@/components/PayslipDetailModal";
+import { ToastAction } from "@/components/ui/toast";
 
 interface Position {
   position_id: number;
@@ -69,15 +62,13 @@ export default function SalaryConfigPage() {
     responsibility_allowance: "",
   });
   const [saving, setSaving] = useState(false);
-
-  // Debug: Log modal state changes
-  useEffect(() => {
-    console.log("Modal state changed:", {
-      isEditModalOpen,
-      hasSelectedEmployee: !!selectedEmployee,
-      selectedEmployeeId: selectedEmployee?.employee.employee_id,
-    });
-  }, [isEditModalOpen, selectedEmployee]);
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generateForm, setGenerateForm] = useState({
+    month: String(new Date().getMonth() + 1),
+    year: String(new Date().getFullYear()),
+  });
+  const [viewingPayslip, setViewingPayslip] = useState<any>(null);
 
   // Check authorization
   useEffect(() => {
@@ -96,89 +87,64 @@ export default function SalaryConfigPage() {
     }
   }, [authLoading, user, router, toast]);
 
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
 
-  const handleSort = (key) => {
-    let direction = 'asc';
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
   };
 
-  // Tạo danh sách đã sắp xếp dựa trên configs gốc
   const sortedConfigs = useMemo(() => {
     let sortableItems = [...configs];
     if (sortConfig.key !== null) {
       sortableItems.sort((a, b) => {
-        // Xử lý null/undefined thành 0 để không bị lỗi
-        const aValue = a[sortConfig.key] || 0;
-        const bValue = b[sortConfig.key] || 0;
+        let aValue: any = a[sortConfig.key!];
+        let bValue: any = b[sortConfig.key!];
+        
+        // Handle nested employee properties for sorting if needed (e.g., first_name)
+        if (sortConfig.key === 'first_name') {
+           aValue = a.employee.first_name;
+           bValue = b.employee.first_name;
+        }
 
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
     }
     return sortableItems;
   }, [configs, sortConfig]);
 
-  // Load salary configs
   const loadConfigs = async () => {
     try {
       setLoading(true);
-      // Ép gửi kèm page và limit để thằng Back-End không kêu ca vụ "numeric string" nữa
       const res = await fetch("/api/payroll/config?page=1&limit=1000", {
         credentials: "include",
       });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Failed to fetch salary configs (${res.status})`
-        );
-      }
-
+      if (!res.ok) throw new Error(`Failed to fetch salary configs (${res.status})`);
       const data = await res.json();
       setConfigs(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error loading salary configs:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to load salary configurations. Please try again.",
-      });
-      setConfigs([]); // Set empty array on error
+      toast({ variant: "destructive", title: "Error", description: "Failed to load salary configurations." });
+      setConfigs([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (
-      user &&
-      (user.permissions?.includes("manage:payroll") ||
-        user.permissions?.includes("manage:system"))
-    ) {
+    if (user && (user.permissions?.includes("manage:payroll") || user.permissions?.includes("manage:system"))) {
       loadConfigs();
     }
   }, [user]);
 
-  // Handle Edit button click - Open modal with employee data
   const handleEdit = (config: SalaryConfig, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    event.nativeEvent.stopImmediatePropagation();
-    console.log("Edit button clicked for employee:", config.employee.employee_id);
-    console.log("Current modal state before update:", isEditModalOpen);
-    // Set selected employee and initialize form
     setSelectedEmployee(config);
     setEditForm({
       base_salary: config.base_salary || "0",
@@ -186,493 +152,209 @@ export default function SalaryConfigPage() {
       lunch_allowance: config.lunch_allowance || "0",
       responsibility_allowance: config.responsibility_allowance || "0",
     });
-
-    // Open modal - Radix UI Dialog handles scroll locking automatically
     setIsEditModalOpen(true);
-
-    console.log("Modal state set to true, selectedEmployee:", config.employee.employee_id);
   };
 
-  // Close modal and reset state
   const handleCloseModal = () => {
-    console.log("Closing modal, current state:", isEditModalOpen);
     setIsEditModalOpen(false);
+    setIsGenerateModalOpen(false);
     setSelectedEmployee(null);
-    // Radix UI Dialog handles scroll unlocking automatically - no manual DOM manipulation needed
   };
 
-  // Save changes
   const handleSave = async () => {
     if (!selectedEmployee) return;
-
     try {
       setSaving(true);
-
-      // Validate form data
-      const baseSalary = parseFloat(editForm.base_salary);
-      const transportAllowance = parseFloat(editForm.transport_allowance || "0");
-      const lunchAllowance = parseFloat(editForm.lunch_allowance || "0");
-      const responsibilityAllowance = parseFloat(editForm.responsibility_allowance || "0");
-
-      if (isNaN(baseSalary) || baseSalary < 0) {
-        toast({
-          variant: "destructive",
-          title: "Validation Error",
-          description: "Base salary must be a valid positive number",
-        });
-        return;
-      }
-
       const employeeId = selectedEmployee.employee.employee_id;
-      if (!employeeId || isNaN(Number(employeeId))) {
-        throw new Error("Invalid employee ID");
-      }
-
-      const res = await fetch(
-        `/api/payroll/config/${String(employeeId)}`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            base_salary: String(baseSalary.toFixed(2)),
-            transport_allowance: String(transportAllowance.toFixed(2)),
-            lunch_allowance: String(lunchAllowance.toFixed(2)),
-            responsibility_allowance: String(responsibilityAllowance.toFixed(2)),
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to update salary config");
-      }
-
-      toast({
-        variant: "default",
-        title: "Success",
-        description: "Salary configuration saved successfully",
+      const res = await fetch(`/api/payroll/config/${employeeId}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          base_salary: String(parseFloat(editForm.base_salary).toFixed(2)),
+          transport_allowance: String(parseFloat(editForm.transport_allowance || "0").toFixed(2)),
+          lunch_allowance: String(parseFloat(editForm.lunch_allowance || "0").toFixed(2)),
+          responsibility_allowance: String(parseFloat(editForm.responsibility_allowance || "0").toFixed(2)),
+        }),
       });
-
-      // Close modal and refresh data
+      if (!res.ok) throw new Error("Failed to update salary config");
+      toast({ variant: "default", title: "Success", description: "Salary configuration saved successfully" });
       handleCloseModal();
       await loadConfigs();
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to save salary configuration",
-      });
+      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Failed to save configuration" });
     } finally {
       setSaving(false);
     }
   };
 
-  // Format currency in VND - handles null/undefined values
-  const formatCurrency = (value: string | number | null | undefined) => {
-    if (value === null || value === undefined || value === "") {
-      return "₫0";
+  const handleGenerateClick = (config: SalaryConfig, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelectedEmployee(config);
+    setIsGenerateModalOpen(true);
+  };
+
+  const handleGenerateSingle = async () => {
+    if (!selectedEmployee) return;
+    try {
+      setGenerating(true);
+      const res = await fetch("/api/payroll/generate-single", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employee_id: selectedEmployee.employee.employee_id,
+          month: parseInt(generateForm.month),
+          year: parseInt(generateForm.year),
+        }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to generate payslip");
+      }
+      const data = await res.json();
+      toast({
+        title: "Payslip Generated",
+        description: `Generated payslip for ${getEmployeeName(selectedEmployee.employee)}`,
+        action: (
+          <ToastAction onClick={() => setViewingPayslip(data)} className="bg-blue-600 text-white hover:bg-blue-700">
+            View
+          </ToastAction>
+        ),
+      });
+      handleCloseModal();
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Generation failed" });
+    } finally {
+      setGenerating(false);
     }
+  };
+
+  const formatCurrency = (value: any) => {
     const num = typeof value === "string" ? parseFloat(value) : value;
     if (isNaN(num)) return "₫0";
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(num);
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", minimumFractionDigits: 0 }).format(num);
   };
 
-  // Get employee display name
-  const getEmployeeName = (employee: Employee) => {
-    return `${employee.first_name} ${employee.last_name}`.trim();
-  };
+  const getEmployeeName = (employee: Employee) => `${employee.first_name} ${employee.last_name}`.trim();
+  const getInitials = (employee: Employee) => `${employee.first_name?.[0] || ""}${employee.last_name?.[0] || ""}`.toUpperCase() || "U";
 
-  // Get employee initials for avatar
-  const getInitials = (employee: Employee) => {
-    const first = employee.first_name?.[0]?.toUpperCase() || "";
-    const last = employee.last_name?.[0]?.toUpperCase() || "";
-    return `${first}${last}` || "U";
-  };
-
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading salary configurations...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (
-    !user ||
-    (!user.permissions?.includes("manage:payroll") &&
-      !user.permissions?.includes("manage:system"))
-  ) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow p-6 max-w-md">
-          <h1 className="text-xl font-bold text-red-600 mb-2">Access Denied</h1>
-          <p className="text-gray-600">
-            You do not have permission to access this page.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
   return (
-
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 text-gray-900 dark:text-gray-100">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Salary Configuration
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Manage base salary and allowances for employees
-          </p>
+          <h1 className="text-3xl font-bold">Salary Configuration</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Manage base salary and allowances for employees</p>
         </div>
 
-        {/* Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border dark:border-gray-700">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="p-0 dark:text-gray-200"><Button
-                    variant="ghost"
-                    onClick={() => handleSort('base_salary')}
-                    className="flex w-full items-center justify-end gap-2 whitespace-nowrap px-4 py-3 font-bold hover:bg-transparent dark:text-gray-200"
-                  >Employee
-                    <ArrowUpDown className="h-4 w-4 shrink-0" /> {/* shrink-0: icon không bị méo */}
-                  </Button></TableHead>
-                  <TableHead className="dark:text-gray-200">Email</TableHead>
-                  <TableHead className="dark:text-gray-200">Department</TableHead>
-                  <TableHead className="dark:text-gray-200">Position</TableHead>
-
-                  <TableHead className="p-0 dark:text-gray-200"> {/* Bỏ padding của TableHead */}
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('base_salary')}
-                      // Thêm flex, items-center, justify-end để căn chỉnh
-                      // whitespace-nowrap: ngăn chữ bị xuống dòng
-                      // w-full: chiếm hết chiều rộng ô
-                      // px-4 h-full: thêm padding và chiều cao để dễ bấm
-                      className="flex w-full items-center justify-end gap-2 whitespace-nowrap px-4 py-3 font-bold hover:bg-transparent dark:text-gray-200"
-                    >
-                      Base Salary
-                      <ArrowUpDown className="h-4 w-4 shrink-0" /> {/* shrink-0: icon không bị méo */}
-                    </Button>
-                  </TableHead>
-
-                  {/* --- Cột Transport (Đã chỉnh lại) --- */}
-                  <TableHead className="p-0 dark:text-gray-200">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('transport_allowance')}
-                      className="flex w-full items-center justify-end gap-2 whitespace-nowrap px-4 py-3 font-bold hover:bg-transparent dark:text-gray-200"
-                    >
-                      Transport
-                      <ArrowUpDown className="h-4 w-4 shrink-0" />
-                    </Button>
-                  </TableHead>
-
-                  {/* --- Cột Lunch (Đã chỉnh lại) --- */}
-                  <TableHead className="p-0 dark:text-gray-200">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('lunch_allowance')}
-                      className="flex w-full items-center justify-end gap-2 whitespace-nowrap px-4 py-3 font-bold hover:bg-transparent dark:text-gray-200"
-                    >
-                      Lunch
-                      <ArrowUpDown className="h-4 w-4 shrink-0" />
-                    </Button>
-                  </TableHead>
-
-                  {/* --- Cột Responsibility (Đã chỉnh lại) --- */}
-                  <TableHead className="p-0 dark:text-gray-200">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('responsibility_allowance')}
-                      className="flex w-full items-center justify-end gap-2 whitespace-nowrap px-4 py-3 font-bold hover:bg-transparent dark:text-gray-200"
-                    >
-                      Responsibility
-                      <ArrowUpDown className="h-4 w-4 shrink-0" />
-                    </Button>
-                  </TableHead>
-                  <TableHead className="text-right dark:text-gray-200">
-                    Actions
-                  </TableHead>
+                <TableRow className="bg-gray-50 dark:bg-gray-700/50">
+                  <TableHead className="p-0"><Button variant="ghost" onClick={() => handleSort('first_name')} className="flex w-full justify-start gap-2 h-12 font-bold hover:bg-transparent">Employee <ArrowUpDown size={14} /></Button></TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead className="p-0"><Button variant="ghost" onClick={() => handleSort('base_salary')} className="flex w-full justify-end gap-2 h-12 font-bold hover:bg-transparent text-right">Base Salary <ArrowUpDown size={14} /></Button></TableHead>
+                  <TableHead className="text-right">Allowances</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-
               <TableBody>
-                {sortedConfigs.length === 0 ? (  // <-- Đổi configs thành sortedConfigs
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-12">
-                      <div className="flex flex-col items-center justify-center">
-                        <FileText className="w-12 h-12 text-gray-400 mb-4" />
-                        <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                          No salary configurations found
-                        </p>
-                        <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
-                          Salary configurations will appear here once they are created
-                        </p>
+                {sortedConfigs.map((config) => (
+                  <TableRow key={config.config_id || `emp-${config.employee.employee_id}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                    <TableCell>
+                      <div className="flex items-center gap-3 py-1">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold overflow-hidden border border-gray-100 dark:border-gray-700">
+                          {config.employee.avatar_url ? <img src={config.employee.avatar_url} className="w-full h-full object-cover" /> : getInitials(config.employee)}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{getEmployeeName(config.employee)}</span>
+                          {config.config_id === null && <span className="text-[10px] uppercase font-bold text-red-500">Not Configured</span>}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-gray-500 text-sm">{config.employee.email}</TableCell>
+                    <TableCell className="text-gray-500 text-sm">{config.employee.department?.department_name || "-"}</TableCell>
+                    <TableCell className="text-gray-500 text-sm">{config.employee.position?.position_name || "-"}</TableCell>
+                    <TableCell className="text-right font-bold text-blue-600 dark:text-blue-400">{formatCurrency(config.base_salary)}</TableCell>
+                    <TableCell className="text-right text-gray-500 text-sm">
+                      {formatCurrency(parseFloat(config.transport_allowance || "0") + parseFloat(config.lunch_allowance || "0") + parseFloat(config.responsibility_allowance || "0"))}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={(e) => handleEdit(config, e)} className="text-gray-600 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50"><Edit2 size={16} /></Button>
+                        <Button variant="ghost" size="sm" onClick={(e) => handleGenerateClick(config, e)} disabled={config.config_id === null} className="text-blue-600 hover:bg-blue-50"><FilePlus size={16} /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  sortedConfigs.map((config) => { // <-- Đổi configs thành sortedConfigs
-                    const rowKey = config.config_id || `emp-${config.employee.employee_id}`;
-                    const hasConfig = config.config_id !== null;
-
-                    return (
-                      <TableRow
-                        key={rowKey}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            {config.employee.avatar_url ? (
-                              <img
-                                src={config.employee.avatar_url}
-                                alt={getEmployeeName(config.employee)}
-                                className="w-10 h-10 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-                                {getInitials(config.employee)}
-                              </div>
-                            )}
-                            <div className="flex flex-col">
-                              <span className="font-medium dark:text-white">
-                                {getEmployeeName(config.employee)}
-                              </span>
-                              {!hasConfig && (
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  Not Configured
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-600 dark:text-gray-400">
-                          {config.employee.email}
-                        </TableCell>
-                        <TableCell className="text-gray-600 dark:text-gray-400">
-                          {config.employee.department?.department_name || "-"}
-                        </TableCell>
-                        <TableCell className="text-gray-600 dark:text-gray-400">
-                          {config.employee.position?.position_name || "-"}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold dark:text-white">
-                          {formatCurrency(config.base_salary)}
-                        </TableCell>
-                        <TableCell className="text-right dark:text-gray-300">
-                          {formatCurrency(config.transport_allowance)}
-                        </TableCell>
-                        <TableCell className="text-right dark:text-gray-300">
-                          {formatCurrency(config.lunch_allowance)}
-                        </TableCell>
-                        <TableCell className="text-right dark:text-gray-300">
-                          {formatCurrency(config.responsibility_allowance)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => handleEdit(config, e)}
-                              className="gap-2"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                              {hasConfig ? "Edit" : "Configure"}
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
+                ))}
               </TableBody>
             </Table>
           </div>
         </div>
-        {/* VÙNG HIỂN THỊ TEST - BẮT BUỘC PHẢI CÓ ĐOẠN NÀY MỚI HIỆN */}
-        {isEditModalOpen && (
-          <div
-            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-            onClick={(e) => {
-              // Click ra ngoài vùng đen thì đóng modal (nếu không đang lưu)
-              if (!saving) handleCloseModal();
-            }}
-          >
-            {/* Modal Container */}
-            <div
-              className="bg-white dark:bg-gray-800 w-full max-w-lg p-6 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 relative animate-in fade-in zoom-in duration-200"
-              onClick={(e) => e.stopPropagation()} // Chặn sự kiện click để không bị đóng khi bấm vào form
-            >
 
-              {/* --- HEADER --- */}
-              <div className="flex flex-col space-y-1.5 text-center sm:text-left mb-4">
-                <h2 className="text-xl font-semibold leading-none tracking-tight dark:text-white">
-                  Edit Salary Configuration
-                </h2>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {selectedEmployee && (
-                    <div className="mt-2">
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {getEmployeeName(selectedEmployee.employee)}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Employee ID: {selectedEmployee.employee.employee_id}
-                      </p>
-                    </div>
-                  )}
+        {/* --- EDIT MODAL --- */}
+        {isEditModalOpen && selectedEmployee && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={handleCloseModal}>
+            <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl border dark:border-gray-700 overflow-hidden animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+                <h2 className="text-xl font-bold">Salary Config: {getEmployeeName(selectedEmployee.employee)}</h2>
+                <Button variant="ghost" size="sm" onClick={handleCloseModal}><X size={20} /></Button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5"><label className="text-sm font-bold text-gray-500">Base Salary</label><Input type="number" value={editForm.base_salary} onChange={e => setEditForm({...editForm, base_salary: e.target.value})} className="h-11" /></div>
+                  <div className="space-y-1.5"><label className="text-sm font-bold text-gray-500">Transport Allowance</label><Input type="number" value={editForm.transport_allowance} onChange={e => setEditForm({...editForm, transport_allowance: e.target.value})} className="h-11" /></div>
+                  <div className="space-y-1.5"><label className="text-sm font-bold text-gray-500">Lunch Allowance</label><Input type="number" value={editForm.lunch_allowance} onChange={e => setEditForm({...editForm, lunch_allowance: e.target.value})} className="h-11" /></div>
+                  <div className="space-y-1.5"><label className="text-sm font-bold text-gray-500">Responsibility</label><Input type="number" value={editForm.responsibility_allowance} onChange={e => setEditForm({...editForm, responsibility_allowance: e.target.value})} className="h-11" /></div>
                 </div>
               </div>
-
-              {/* --- BODY (FORM) --- */}
-              <div className="space-y-4 py-2">
-                {/* Employee Info (Read-only) */}
-                {selectedEmployee && (
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500 dark:text-gray-400">Department:</span>
-                        <p className="font-medium text-gray-900 dark:text-white mt-1">
-                          {selectedEmployee.employee.department?.department_name || "-"}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500 dark:text-gray-400">Position:</span>
-                        <p className="font-medium text-gray-900 dark:text-white mt-1">
-                          {selectedEmployee.employee.position?.position_name || "-"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Base Salary */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                    Base Salary <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={editForm.base_salary}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, base_salary: e.target.value })
-                    }
-                    placeholder="0.00"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    disabled={saving}
-                  />
-                </div>
-
-                {/* Transport Allowance */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                    Transport Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={editForm.transport_allowance}
-                    onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        transport_allowance: e.target.value,
-                      })
-                    }
-                    placeholder="0.00"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    disabled={saving}
-                  />
-                </div>
-
-                {/* Lunch Allowance */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                    Lunch Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={editForm.lunch_allowance}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, lunch_allowance: e.target.value })
-                    }
-                    placeholder="0.00"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    disabled={saving}
-                  />
-                </div>
-
-                {/* Responsibility Allowance */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                    Responsibility Allowance
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={editForm.responsibility_allowance}
-                    onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        responsibility_allowance: e.target.value,
-                      })
-                    }
-                    placeholder="0.00"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    disabled={saving}
-                  />
-                </div>
+              <div className="p-6 bg-gray-50 dark:bg-gray-900/50 flex gap-3 justify-end">
+                <Button variant="outline" onClick={handleCloseModal} disabled={saving} className="h-11 px-6">Cancel</Button>
+                <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white h-11 px-8 font-bold shadow-lg shadow-blue-500/20">{saving ? "Saving..." : "Save Configuration"}</Button>
               </div>
-
-              {/* --- FOOTER (BUTTONS) --- */}
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={handleCloseModal}
-                  disabled={saving}
-                  className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Save className="w-4 h-4 mr-1" />
-                  {saving ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
-
             </div>
           </div>
+        )}
+
+        {/* --- GENERATE MODAL --- */}
+        {isGenerateModalOpen && selectedEmployee && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={handleCloseModal}>
+            <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-2xl border dark:border-gray-700 animate-in fade-in zoom-in duration-200 overflow-hidden" onClick={e => e.stopPropagation()}>
+               <div className="p-6 text-center space-y-4 pt-10">
+                  <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <FilePlus className="text-blue-600" size={32} />
+                  </div>
+                  <h3 className="text-xl font-bold">Generate Payslip</h3>
+                  <p className="text-gray-500 text-sm">Calculate payroll for {getEmployeeName(selectedEmployee.employee)}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4 pt-4">
+                    <select className="h-11 rounded-lg border dark:bg-gray-700 dark:border-gray-600 px-3 bg-white" value={generateForm.month} onChange={e => setGenerateForm({...generateForm, month: e.target.value})}>
+                      {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>Month {i+1}</option>)}
+                    </select>
+                    <select className="h-11 rounded-lg border dark:bg-gray-700 dark:border-gray-600 px-3 bg-white" value={generateForm.year} onChange={e => setGenerateForm({...generateForm, year: e.target.value})}>
+                      {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+               </div>
+               <div className="p-6 flex flex-col gap-2 mt-4 pb-8">
+                  <Button onClick={handleGenerateSingle} disabled={generating} className="bg-blue-600 hover:bg-blue-700 text-white h-12 font-bold shadow-lg shadow-blue-500/25">{generating ? "Processing..." : "Generate Now"}</Button>
+                  <Button variant="ghost" onClick={handleCloseModal} className="h-11">Cancel</Button>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- DETAIL MODAL --- */}
+        {viewingPayslip && (
+          <PayslipDetailModal payslip={viewingPayslip} onClose={() => setViewingPayslip(null)} userName={user?.first_name + " " + user?.last_name} />
         )}
       </div>
     </div>
   );
 }
-
