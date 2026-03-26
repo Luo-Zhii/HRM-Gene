@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { numberToVietnameseWords } from "./num-to-words.util";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, Between, DataSource } from "typeorm";
 import { Employee } from "../../entities/employee.entity";
@@ -203,6 +204,31 @@ export class PayrollService {
     if (insurance > 0) deductionItems.push({ name: `Social + Health + Unemployment (${(INSURANCE_RATE * 100).toFixed(1)}%)`, value: insurance });
     if (penalty > 0) deductionItems.push({ name: "Penalties / Fines", value: penalty });
 
+    // ── Summary & metadata fields ──
+    const grossNum = parseFloat(payslip.gross_salary || "0");
+    const deductionsNum = parseFloat(payslip.deductions || "0");
+    const netNum = parseFloat(payslip.net_salary || "0");
+    const netPayInWords = numberToVietnameseWords(netNum);
+
+    const employeeName = [
+      payslip.employee?.first_name ?? "",
+      payslip.employee?.last_name ?? "",
+    ].filter(Boolean).join(" ") || "Employee";
+
+    // prepared_by_name / prepared_by_department: resolve the HR admin who generated this payslip
+    let preparedByName: string = "System";
+    let preparedByDepartment: string = "Automated Process";
+    if (payslip.created_by_id) {
+      const creator = await this.employeeRepo.findOne({
+        where: { employee_id: payslip.created_by_id },
+        relations: ["department"],
+      });
+      if (creator) {
+        preparedByName = `${creator.first_name ?? ""} ${creator.last_name ?? ""}`.trim() || "System";
+        preparedByDepartment = (creator as any).department?.department_name || "Human Resources";
+      }
+    }
+
     return {
       ...payslip,
       // Legacy config still included for backward compat
@@ -212,6 +238,15 @@ export class PayrollService {
       deduction_items: deductionItems,
       has_nonzero_allowances: hasNonzeroAllowances,
       has_bonus: bonus > 0,
+      // Summary totals (explicit)
+      total_income: grossNum,
+      total_deductions: deductionsNum,
+      // Amount in words
+      net_pay_in_words: netPayInWords,
+      // Signature metadata
+      employee_name: employeeName,
+      prepared_by_name: preparedByName,
+      prepared_by_department: preparedByDepartment,
     };
   }
 

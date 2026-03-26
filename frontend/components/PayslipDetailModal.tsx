@@ -36,11 +36,18 @@ export interface PayslipDetail {
     lunch_allowance: string;
     responsibility_allowance: string;
   };
-  // New optimized array structure from API
+  // Optimized array structure from API
   earnings?: PayslipLineItem[];
   deduction_items?: PayslipLineItem[];
   has_nonzero_allowances?: boolean;
   has_bonus?: boolean;
+  // New fields for Net Pay card + Signatures
+  total_income?: number;
+  total_deductions?: number;
+  net_pay_in_words?: string;
+  employee_name?: string;
+  prepared_by_name?: string;
+  prepared_by_department?: string;
 }
 
 interface Props {
@@ -78,23 +85,29 @@ const STATUS_STYLES: Record<string, string> = {
   Pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
 };
 
+// Squiggly SVG signature placeholder
+function SquigglyLine() {
+  return (
+    <svg viewBox="0 0 120 24" className="w-full h-6 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <path d="M4 16 Q14 4 24 16 Q34 28 44 16 Q54 4 64 16 Q74 28 84 16 Q94 4 104 16 Q114 28 120 16" />
+    </svg>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function PayslipDetailModal({ payslip, userName, onClose }: Props) {
   const cfg = payslip.salaryConfig;
-  const gross = parseFloat(payslip.gross_salary || "0");
+  const gross = payslip.total_income ?? parseFloat(payslip.gross_salary || "0");
   const bonus = parseFloat(payslip.bonus || "0");
-  const deductions = parseFloat(payslip.deductions || "0");
+  const deductions = payslip.total_deductions ?? parseFloat(payslip.deductions || "0");
   const net = parseFloat(payslip.net_salary || "0");
 
   // ── Income Breakdown ──
-  // Support new array-based structure OR legacy fixed config
   let earningsRows: PayslipLineItem[];
   if (payslip.earnings && payslip.earnings.length > 0) {
-    // New API structure: already filtered to non-zero by backend
     earningsRows = payslip.earnings;
   } else if (cfg) {
-    // Legacy: build rows, filter zero values
     const basePart = parseFloat(cfg.base_salary || "0");
     const transport = parseFloat(cfg.transport_allowance || "0");
     const lunch = parseFloat(cfg.lunch_allowance || "0");
@@ -107,7 +120,6 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
       ...(bonus > 0 ? [{ name: "Bonus / Commission", value: bonus }] : []),
     ];
   } else {
-    // Minimal fallback
     earningsRows = [
       { name: "Base Salary", value: gross - bonus },
       ...(bonus > 0 ? [{ name: "Bonus / Commission", value: bonus }] : []),
@@ -128,16 +140,20 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
     ];
   }
 
-  const empName = payslip.employee
-    ? `${payslip.employee.first_name} ${payslip.employee.last_name}`.trim()
-    : (userName ?? "Employee");
+  const empName = payslip.employee_name
+    || (payslip.employee
+      ? `${payslip.employee.first_name} ${payslip.employee.last_name}`.trim()
+      : (userName ?? "Employee"));
   const empDept = payslip.employee?.department?.department_name ?? "—";
   const empPos = payslip.employee?.position?.position_name ?? "—";
+  const preparedBy = payslip.prepared_by_name || userName || "System Admin";
+  const preparedByDept = payslip.prepared_by_department || "Human Resources";
+  const netInWords = payslip.net_pay_in_words ?? "";
 
   const handlePrint = () => {
     const printContent = document.getElementById("payslip-print-area");
     if (!printContent) return;
-    const win = window.open("", "_blank", "width=700,height=800");
+    const win = window.open("", "_blank", "width=700,height=900");
     if (!win) return;
     win.document.write(`<html><head><title>Payslip - ${getPeriod(payslip)}</title>
       <style>
@@ -148,14 +164,18 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
         .row { display: flex; justify-content: space-between; padding: 3px 0; }
         .label { color: #6b7280; }
         .bold { font-weight: 700; }
-        .net-box { background: #eff6ff; border: 2px solid #bfdbfe; padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
-        .net-amount { font-size: 20px; font-weight: 900; color: #1d4ed8; }
+        .net-box { border: 1.5px solid #bfdbfe; padding: 12px 14px; border-radius: 8px; display: grid; grid-template-columns: 1fr auto; gap: 12px; margin-top: 12px; }
+        .net-amount { font-size: 22px; font-weight: 900; color: #1d4ed8; }
+        .words { font-size: 9px; color: #6b7280; margin-top: 4px; font-style: italic; }
         .section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin-bottom: 6px; margin-top: 10px; }
         h1 { font-size: 22px; font-weight: 900; text-transform: uppercase; text-align: center; letter-spacing: 0.05em; }
         .red { color: #dc2626; } .green { color: #059669; } .blue { color: #2563eb; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #f9fafb; padding: 8px; border-radius: 6px; margin: 8px 0; }
-        .info-label { font-size: 9px; color: #9ca3af; text-transform: uppercase; }
-        .info-val { font-size: 12px; font-weight: 600; }
+        .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 12px; }
+        .sig-box { text-align: center; }
+        .sig-title { font-size: 10px; font-weight: 700; text-transform: uppercase; }
+        .sig-sub { font-size: 9px; color: #9ca3af; }
+        .sig-name { font-size: 11px; font-weight: 700; margin-top: 4px; }
+        .sig-line { border-top: 1px dashed #d1d5db; margin: 28px 8px 6px; }
       </style></head><body>${printContent.innerHTML}</body></html>`);
     win.document.close();
     win.focus();
@@ -165,10 +185,8 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal – compact receipt style */}
       <div className="relative w-full max-w-[480px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
 
         {/* ── Header ── */}
@@ -206,7 +224,7 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
             </div>
           </div>
 
-          {/* Employee Info – 2×2 grid */}
+          {/* Employee Info */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3">
             <InfoItem icon={<User className="w-3 h-3" />} label="Employee" value={empName} />
             <InfoItem icon={<Building2 className="w-3 h-3" />} label="Department" value={empDept} />
@@ -214,7 +232,7 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
             <InfoItem icon={<Calendar className="w-3 h-3" />} label="Pay Period" value={getPeriod(payslip)} />
           </div>
 
-          {/* Attendance – single compact bar */}
+          {/* Attendance bar */}
           <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/60 rounded-xl px-3 py-2">
             <div className="flex items-center gap-1.5 flex-1">
               <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
@@ -236,9 +254,9 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
             </div>
           </div>
 
-          {/* Income */}
+          {/* I. Income */}
           <div>
-            <SectionTitle>Income</SectionTitle>
+            <SectionTitle>I. Income</SectionTitle>
             <div className="space-y-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2">
               {earningsRows.map((item, i) => {
                 const isBonus = item.name.toLowerCase().includes("bonus") || item.name.toLowerCase().includes("commission");
@@ -259,9 +277,9 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
             </div>
           </div>
 
-          {/* Deductions */}
+          {/* II. Deductions */}
           <div>
-            <SectionTitle>Deductions</SectionTitle>
+            <SectionTitle>II. Deductions</SectionTitle>
             <div className="space-y-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2">
               {deductionRows.map((item, i) => (
                 <LineItem
@@ -278,19 +296,85 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
             </div>
           </div>
 
-          {/* Net Pay – compact banner */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl px-4 py-2.5 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest">Net Take-Home Pay</p>
-              <p className="text-[9px] text-blue-300">Bank transfer</p>
+          {/* III. Net Take-Home Pay – Figma card */}
+          <div>
+            <SectionTitle>III. Net Take-Home Pay</SectionTitle>
+            <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 overflow-hidden">
+              <div className="grid grid-cols-[1fr_auto] divide-x divide-blue-100 dark:divide-blue-900">
+
+                {/* Left column – summary rows */}
+                <div className="px-3 py-2.5 space-y-1.5">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">Total Income:</span>
+                    <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 tabular-nums">{fmt(gross)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">Total Deductions:</span>
+                    <span className="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums">-{fmt(deductions)}</span>
+                  </div>
+                </div>
+
+                {/* Right column – net amount */}
+                <div className="px-3 py-2.5 flex flex-col items-end justify-center bg-blue-50/60 dark:bg-blue-950/30 min-w-0">
+                  <p className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest whitespace-nowrap mb-0.5">
+                    Net Salary Received
+                  </p>
+                  <p className="text-xl font-black text-blue-700 dark:text-blue-300 tabular-nums leading-tight">
+                    {fmt(net)}
+                  </p>
+                  {netInWords && (
+                    <p className="text-[9px] text-blue-400 dark:text-blue-500 italic mt-0.5 text-right leading-snug max-w-[170px]">
+                      ({netInWords})
+                    </p>
+                  )}
+                </div>
+
+              </div>
             </div>
-            <p className="text-xl font-black text-white tracking-tight">{fmt(net)}</p>
+          </div>
+
+          {/* IV. Signatures */}
+          <div>
+            <SectionTitle>Signatures</SectionTitle>
+            <div className="grid grid-cols-2 gap-3">
+
+              {/* Prepared By */}
+              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-3 pt-2 pb-3 flex flex-col items-center text-center">
+                <p className="text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Prepared By</p>
+                <p className="text-[9px] text-gray-400 dark:text-gray-500 mb-3">(System Generated)</p>
+                <div className="w-full px-1 mb-2">
+                  <SquigglyLine />
+                </div>
+                <p className="text-[11px] font-bold text-gray-700 dark:text-gray-200 truncate w-full">{preparedBy}</p>
+                <p className="text-[9px] text-gray-400">{preparedByDept}</p>
+              </div>
+
+              {/* Employee Confirmation */}
+              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-3 pt-2 pb-3 flex flex-col items-center text-center">
+                <p className="text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Employee Confirmation</p>
+                <p className="text-[9px] text-gray-400 dark:text-gray-500 mb-3">(System Generated)</p>
+                <div className="w-full px-1 mb-2">
+                  <SquigglyLine />
+                </div>
+                <p className="text-[11px] font-bold text-gray-700 dark:text-gray-200 truncate w-full">{empName}</p>
+                <p className="text-[9px] text-gray-400">Employee</p>
+              </div>
+
+            </div>
           </div>
 
           {/* Footer */}
-          <p className="text-center text-[9px] text-gray-400 dark:text-gray-600 pb-1">
-            System-generated payslip · DashStack HR © {new Date().getFullYear()}
-          </p>
+          <div className="text-center pb-1 space-y-0.5">
+            <p className="text-[9px] italic text-gray-400 dark:text-gray-600">
+              This is a system-generated document from the DashStack HR platform.
+            </p>
+            <p className="text-[9px] italic text-gray-400 dark:text-gray-600">
+              It does not require a physical signature or company stamp.
+            </p>
+            <p className="text-[9px] italic text-gray-400 dark:text-gray-600">
+              © {new Date().getFullYear()} DashStack Inc. All rights reserved.
+            </p>
+          </div>
         </div>
 
         {/* ── Footer Actions ── */}
@@ -358,3 +442,5 @@ function LineItem({
     </div>
   );
 }
+
+

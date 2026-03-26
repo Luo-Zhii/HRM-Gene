@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { toQueryString } from "@/src/utils/api";
 import {
   Users,
   Send,
@@ -81,7 +82,8 @@ export default function IssuePayslipsPage() {
   const loadPayslips = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/payroll/list?month=${selectedMonth}&year=${selectedYear}`, { credentials: "include" });
+      const params = { month: selectedMonth, year: selectedYear };
+      const res = await fetch(`/api/payroll/list${toQueryString(params)}`, { credentials: "include" });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setPayslips(Array.isArray(data) ? data : []);
@@ -135,10 +137,11 @@ export default function IssuePayslipsPage() {
     try {
       // Mark selected payslips as Paid via approve+mark-paid cascade
       for (const id of ids) {
+        if (!id || isNaN(Number(id))) continue;
         const p = payslips.find((x) => x.payslip_id === id);
         if (!p) continue;
-        if (p.status === "Pending") await fetch(`/api/payroll/${id}/approve`, { method: "PATCH", credentials: "include" });
-        await fetch(`/api/payroll/${id}/mark-paid`, { method: "PATCH", credentials: "include" });
+        if (p.status === "Pending") await fetch(`/api/payroll/${String(id)}/approve`, { method: "PATCH", credentials: "include" });
+        await fetch(`/api/payroll/${String(id)}/mark-paid`, { method: "PATCH", credentials: "include" });
       }
       const updated = new Set(issuedSet);
       ids.forEach((id) => updated.add(id));
@@ -350,8 +353,9 @@ export default function IssuePayslipsPage() {
                               onClick={async () => {
                                 setSending(true);
                                 try {
-                                  if (p.status === "Pending") await fetch(`/api/payroll/${p.payslip_id}/approve`, { method: "PATCH", credentials: "include" });
-                                  await fetch(`/api/payroll/${p.payslip_id}/mark-paid`, { method: "PATCH", credentials: "include" });
+                                  if (!p.payslip_id || isNaN(Number(p.payslip_id))) throw new Error("Invalid ID");
+                                  if (p.status === "Pending") await fetch(`/api/payroll/${String(p.payslip_id)}/approve`, { method: "PATCH", credentials: "include" });
+                                  await fetch(`/api/payroll/${String(p.payslip_id)}/mark-paid`, { method: "PATCH", credentials: "include" });
                                   setIssuedSet((prev) => new Set([...prev, p.payslip_id]));
                                   toast({ title: "Payslip sent" });
                                   await loadPayslips();
@@ -376,7 +380,11 @@ export default function IssuePayslipsPage() {
 
       {/* Payslip Detail Modal */}
       {viewPayslip && (
-        <PayslipDetailModal payslip={viewPayslip} onClose={() => setViewPayslip(null)} />
+        <PayslipDetailModal
+          payslip={viewPayslip}
+          userName={`${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim()}
+          onClose={() => setViewPayslip(null)}
+        />
       )}
     </div>
   );

@@ -18,11 +18,14 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Permissions } from "../auth/permissions.decorator";
 import { AdjustmentType, AdjustmentStatus } from "@/entities/salary-adjustment.entity";
+import { PayrollQueryDto } from "./dto/payroll-query.dto";
 
 @Controller("payroll")
-@UseGuards(JwtAuthGuard, RolesGuard) // Đưa Guard lên đây để bảo vệ toàn bộ API trong file
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class PayrollController {
   constructor(private readonly svc: PayrollService) { }
+
+  // ============= Static Routes (Must be at the top) =============
 
   @Permissions("manage:payroll")
   @Post("generate")
@@ -32,56 +35,29 @@ export class PayrollController {
 
   @Permissions("manage:payroll")
   @Get("list")
-  async list(@Query("month") month: string, @Query("year") year: string) {
-    const m = parseInt(month, 10) || new Date().getMonth() + 1;
-    const y = parseInt(year, 10) || new Date().getFullYear();
+  async list(@Query() query: PayrollQueryDto) {
+    const m = parseInt(query.month || "", 10) || new Date().getMonth() + 1;
+    const y = parseInt(query.year || "", 10) || new Date().getFullYear();
     return this.svc.getPayslipsByPeriod(m, y);
   }
 
   @Permissions("manage:payroll")
   @Get("period")
-  async getPeriodByMonthYear(@Query("month") month: string, @Query("year") year: string) {
-    const m = parseInt(month, 10) || new Date().getMonth() + 1;
-    const y = parseInt(year, 10) || new Date().getFullYear();
+  async getPeriodByMonthYear(@Query() query: PayrollQueryDto) {
+    const m = parseInt(query.month || "", 10) || new Date().getMonth() + 1;
+    const y = parseInt(query.year || "", 10) || new Date().getFullYear();
     return this.svc.getPeriodByMonthYear(m, y);
   }
 
-  @Permissions("manage:payroll")
-  @Get("cycle/:id")
-  async getCycleDetail(@Param("id", ParseIntPipe) id: number) {
-    return this.svc.getPayslipsByPeriodId(id);
-  }
-
-  // API này cho cá nhân xem lương nên KHÔNG cần quyền manage:payroll, chỉ cần đăng nhập
   @Get("my-payslips")
   async getMyPayslips(@Request() req: any) {
     return this.svc.getEmployeePayslips(req.user.employee_id);
   }
 
   @Permissions("manage:payroll")
-  @Get(":id")
-  async getPayslipDetail(@Param("id", ParseIntPipe) id: number) {
-    return this.svc.getPayslipById(id);
-  }
-
-  @Permissions("manage:payroll")
   @Post("run")
   async run(@Body() body: { month: number; year: number }) {
     return this.svc.runPayroll(body.month, body.year);
-  }
-
-  // ============= Payslip Approval & Payment =============
-
-  @Permissions("manage:payroll")
-  @Patch(":id/approve")
-  async approvePayslip(@Param("id", ParseIntPipe) id: number) {
-    return this.svc.approvePayslip(id);
-  }
-
-  @Permissions("manage:payroll")
-  @Patch(":id/mark-paid")
-  async markPayslipPaid(@Param("id", ParseIntPipe) id: number) {
-    return this.svc.markPayslipPaid(id);
   }
 
   @Permissions("manage:payroll")
@@ -132,8 +108,8 @@ export class PayrollController {
 
   @Permissions("manage:payroll")
   @Get("adjustments")
-  async getAllAdjustments(@Query("type") type?: string) {
-    return this.svc.getAllAdjustments(type as AdjustmentType | undefined);
+  async getAllAdjustments(@Query() query: PayrollQueryDto) {
+    return this.svc.getAllAdjustments(query.type as AdjustmentType | undefined);
   }
 
   @Permissions("manage:payroll")
@@ -155,5 +131,33 @@ export class PayrollController {
   @Delete("adjustments/:id")
   async deleteAdjustment(@Param("id", ParseIntPipe) id: number) {
     return this.svc.deleteAdjustment(id);
+  }
+
+  // ============= Specific ID Routes =============
+
+  @Permissions("manage:payroll")
+  @Get("cycle/:id")
+  async getCycleDetail(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.getPayslipsByPeriodId(id);
+  }
+
+  // ============= Catch-All Dynamic Routes (MUST BE AT THE VERY BOTTOM) =============
+
+  @Permissions("manage:payroll")
+  @Get(":id")
+  async getPayslipDetail(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.getPayslipById(id);
+  }
+
+  @Permissions("manage:payroll")
+  @Patch(":id/approve")
+  async approvePayslip(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.approvePayslip(id);
+  }
+
+  @Permissions("manage:payroll")
+  @Patch(":id/mark-paid")
+  async markPayslipPaid(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.markPayslipPaid(id);
   }
 }

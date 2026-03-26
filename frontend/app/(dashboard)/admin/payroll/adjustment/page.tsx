@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { toQueryString } from "@/src/utils/api";
 import {
   Plus,
   TrendingUp,
@@ -135,11 +136,14 @@ export default function SalaryAdjustmentPage() {
   const loadAdjustments = useCallback(async () => {
     setLoadingTable(true);
     try {
-      const url =
-        tab === "All"
-          ? "/api/payroll/adjustments"
-          : `/api/payroll/adjustments?type=${tab}`;
-      const res = await fetch(url, { credentials: "include" });
+      // Gắn mặc định page và limit vào mọi request
+      const baseParams = { page: 1, limit: 1000 };
+      const params = tab === "All" ? baseParams : { ...baseParams, type: tab };
+
+      const res = await fetch(`/api/payroll/adjustments${toQueryString(params)}`, {
+        credentials: "include"
+      });
+
       if (!res.ok) throw new Error("Failed to load");
       const data = await res.json();
       setAdjustments(Array.isArray(data) ? data : []);
@@ -149,7 +153,6 @@ export default function SalaryAdjustmentPage() {
       setLoadingTable(false);
     }
   }, [tab, toast]);
-
   useEffect(() => {
     if (user) loadAdjustments();
   }, [user, loadAdjustments]);
@@ -171,9 +174,9 @@ export default function SalaryAdjustmentPage() {
         body: JSON.stringify({
           employee_id: Number(form.employee_id),
           type: form.type,
-          amount: parseFloat(form.amount).toFixed(2),
-          applied_month: form.applied_month,
-          reason: form.reason,
+          amount: String(parseFloat(form.amount).toFixed(2)),
+          applied_month: String(form.applied_month),
+          reason: String(form.reason || ""),
         }),
       });
       if (!res.ok) {
@@ -199,7 +202,8 @@ export default function SalaryAdjustmentPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this adjustment?")) return;
     try {
-      await fetch(`/api/payroll/adjustments/${id}`, {
+      if (!id || isNaN(Number(id))) throw new Error("Invalid ID");
+      await fetch(`/api/payroll/adjustments/${String(id)}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -214,11 +218,12 @@ export default function SalaryAdjustmentPage() {
 
   const handleStatus = async (id: number, status: "Approved" | "Rejected") => {
     try {
-      await fetch(`/api/payroll/adjustments/${id}`, {
+      if (!id || isNaN(Number(id))) throw new Error("Invalid ID");
+      await fetch(`/api/payroll/adjustments/${String(id)}`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status: String(status) }),
       });
       loadAdjustments();
     } catch {

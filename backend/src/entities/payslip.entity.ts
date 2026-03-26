@@ -47,4 +47,8 @@ export class Payslip {
   // Legacy field for backward compatibility (can be removed later)
   @Column({ nullable: true })
   pay_period?: string; // MM/YYYY
+
+  // ID of the HR admin who generated/approved this payslip (null = system/cron)
+  @Column({ type: "int", nullable: true })
+  created_by_id?: number;
 }

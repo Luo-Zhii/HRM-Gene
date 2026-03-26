@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { toQueryString } from "@/src/utils/api";
 import {
   Users,
   Wallet,
@@ -98,9 +99,10 @@ export default function CreatePayrollPage() {
   const loadPayslips = useCallback(async () => {
     setLoading(true);
     try {
+      const params = { month: selectedMonth, year: selectedYear };
       const [periodRes, listRes] = await Promise.all([
-        fetch(`/api/payroll/period?month=${selectedMonth}&year=${selectedYear}`, { credentials: "include" }),
-        fetch(`/api/payroll/list?month=${selectedMonth}&year=${selectedYear}`, { credentials: "include" }),
+        fetch(`/api/payroll/period${toQueryString(params)}`, { credentials: "include" }),
+        fetch(`/api/payroll/list${toQueryString(params)}`, { credentials: "include" }),
       ]);
       if (periodRes.ok) {
         const pd = await periodRes.json();
@@ -174,14 +176,16 @@ export default function CreatePayrollPage() {
   // Approve single
   const handleApproveOne = async (id: number) => {
     try {
-      await fetch(`/api/payroll/${id}/approve`, { method: "PATCH", credentials: "include" });
+      if (!id || isNaN(Number(id))) throw new Error("Invalid ID");
+      await fetch(`/api/payroll/${String(id)}/approve`, { method: "PATCH", credentials: "include" });
       await loadPayslips();
     } catch { toast({ variant: "destructive", title: "Error" }); }
   };
   // Mark paid single
   const handleMarkPaid = async (id: number) => {
     try {
-      await fetch(`/api/payroll/${id}/mark-paid`, { method: "PATCH", credentials: "include" });
+      if (!id || isNaN(Number(id))) throw new Error("Invalid ID");
+      await fetch(`/api/payroll/${String(id)}/mark-paid`, { method: "PATCH", credentials: "include" });
       await loadPayslips();
     } catch { toast({ variant: "destructive", title: "Error" }); }
   };
@@ -190,7 +194,8 @@ export default function CreatePayrollPage() {
   const handleViewDetail = async (id: number) => {
     setFetchingDetail(true);
     try {
-      const res = await fetch(`/api/payroll/${id}`, { credentials: "include" });
+      if (!id || isNaN(Number(id))) throw new Error("Invalid ID");
+      const res = await fetch(`/api/payroll/${String(id)}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch detail");
       const data = await res.json();
       setSelectedPayslip(data);
@@ -472,6 +477,7 @@ export default function CreatePayrollPage() {
       {selectedPayslip && (
         <PayslipDetailModal
           payslip={selectedPayslip}
+          userName={`${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim()}
           onClose={() => setSelectedPayslip(null)}
         />
       )}
