@@ -48,6 +48,7 @@ function ProfileContent() {
 
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [hrData, setHrData] = useState({ contracts: [], violations: [], salary: [] });
+  const [payslips, setPayslips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -105,6 +106,15 @@ function ProfileContent() {
     };
     fetchData();
   }, [authLoading, user, employeeId]);
+
+  // Fetch payslips for salary history (own profile only)
+  useEffect(() => {
+    if (!user || !viewingOwnProfile) return;
+    fetch("/api/payroll/my-payslips", { credentials: "include" })
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setPayslips(Array.isArray(d) ? d : []))
+      .catch(() => setPayslips([]));
+  }, [user, viewingOwnProfile]);
 
   // --- LOGIC UPLOAD AVATAR ---
   const handleAvatarClick = () => fileInputRef.current?.click();
@@ -332,12 +342,51 @@ function ProfileContent() {
 
             {/* TAB LƯƠNG */}
             <AccordionItem value="salary" className="bg-white rounded-xl px-6 border-none shadow-sm">
-              <AccordionTrigger className="hover:no-underline font-bold text-slate-700">Salary History</AccordionTrigger>
-              <AccordionContent>
-                {hrData.salary.length > 0 ? (
-                  <Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead>New Salary</TableHead></TableRow></TableHeader>
-                    <TableBody>{hrData.salary.map((s: any) => (<TableRow key={s.history_id}><TableCell>{new Date(s.change_date).toLocaleDateString()}</TableCell><TableCell className="font-bold text-blue-600">{s.new_salary}</TableCell></TableRow>))}</TableBody>
-                  </Table>
+              <AccordionTrigger className="hover:no-underline font-bold text-slate-700">
+                Salary History ({payslips.length})
+              </AccordionTrigger>
+              <AccordionContent className="pt-4 pb-6">
+                {payslips.length > 0 ? (
+                  <div className="border border-slate-100 rounded-xl overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow>
+                          <TableHead className="text-xs font-semibold">Pay Period</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">Work Days</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">Gross Salary</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">Deductions</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">Net Salary</TableHead>
+                          <TableHead className="text-xs font-semibold">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {payslips.map((p: any) => {
+                          const period = p.pay_period ||
+                            (p.payroll_period ? `${String(p.payroll_period.month).padStart(2,"0")}/${p.payroll_period.year}` : "—");
+                          const fmtVND = (v: any) => new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND",minimumFractionDigits:0}).format(parseFloat(v)||0);
+                          const statusMap: Record<string,string> = {
+                            Pending: "bg-amber-100 text-amber-700",
+                            Approved: "bg-blue-100 text-blue-700",
+                            Paid: "bg-emerald-100 text-emerald-700",
+                          };
+                          return (
+                            <TableRow key={p.payslip_id} className="text-sm">
+                              <TableCell className="font-medium">{period}</TableCell>
+                              <TableCell className="text-right text-slate-500">{p.actual_work_days ?? "—"}</TableCell>
+                              <TableCell className="text-right text-slate-700">{fmtVND(p.gross_salary)}</TableCell>
+                              <TableCell className="text-right text-red-500">-{fmtVND(p.deductions)}</TableCell>
+                              <TableCell className="text-right font-bold text-slate-900">{fmtVND(p.net_salary)}</TableCell>
+                              <TableCell>
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusMap[p.status] ?? "bg-slate-100 text-slate-600"}`}>
+                                  {p.status}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 ) : (
                   <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">No salary history available.</div>
                 )}

@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, DataSource } from "typeorm"; // Thêm DataSource ở đây
 import * as bcrypt from "bcrypt";
 import { Employee } from "../../entities/employee.entity";
 import { Department } from "../../entities/department.entity";
@@ -20,8 +20,9 @@ export class EmployeesService {
     @InjectRepository(Department)
     private deptRepo: Repository<Department>,
     @InjectRepository(Position)
-    private posRepo: Repository<Position>
-  ) {}
+    private posRepo: Repository<Position>,
+    private dataSource: DataSource // Inject DataSource để lấy lương
+  ) { }
 
   async create(dto: CreateEmployeeDto) {
     const existing = await this.employeeRepo.findOne({
@@ -58,15 +59,37 @@ export class EmployeesService {
     return await this.employeeRepo.save(emp);
   }
 
-  // Hàm này phục vụ cho trang Employee Directory
-  // TypeORM mặc định sẽ lấy tất cả các cột (bao gồm phone_number, address)
-  findAll() {
-    return this.employeeRepo.find({
+  // CẬP NHẬT QUAN TRỌNG NHẤT Ở ĐÂY: Hàm này giờ sẽ "cõng" thêm lương trả về cho Frontend
+  async findAll() {
+    const employees = await this.employeeRepo.find({
       relations: ["department", "position"],
       order: {
         first_name: "ASC", // Sắp xếp mặc định cho đẹp
       },
     });
+
+    try {
+      // Dùng query thuần để móc lấy lương từ bảng salary_config 
+      // (Cách này an toàn và không cần sửa files Module rườm rà)
+      const salaries = await this.dataSource.query(
+        `SELECT employee_id, base_salary FROM salary_config`
+      );
+
+      // Trộn lương vào danh sách nhân viên
+      return employees.map((emp) => {
+        const salaryInfo = salaries.find(
+          (s: any) => s.employee_id === emp.employee_id
+        );
+        return {
+          ...emp,
+          base_salary: salaryInfo ? salaryInfo.base_salary : null, // Gắn base_salary vào cho FE đọc
+        };
+      });
+    } catch (error) {
+      // Fallback an toàn: Nếu bảng lương chưa có, danh sách nhân viên vẫn chạy bình thường
+      console.error("Error attaching salary to employees:", error);
+      return employees;
+    }
   }
 
   async findOne(id: number) {
@@ -78,14 +101,13 @@ export class EmployeesService {
     return emp;
   }
 
-  // CẬP NHẬT QUAN TRỌNG Ở ĐÂY
   async update(id: number, dto: UpdateEmployeeDto & { bank_info?: any }) {
     // 1. Load employee kèm theo bankInfo để có thể update đè lên hoặc tạo mới
     const emp = await this.employeeRepo.findOne({
       where: { employee_id: id } as any,
-      relations: ["bankInfo"], 
+      relations: ["bankInfo"],
     });
-    
+
     if (!emp) throw new NotFoundException("Employee not found");
 
     // Logic update Password
@@ -125,23 +147,20 @@ export class EmployeesService {
       emp.position = pos || undefined;
     }
 
-    // Logic update Bank Info (MỚI)
-    // Vì Employee entity có cascade: true với BankInfo, ta có thể gán trực tiếp
+    // Logic update Bank Info
     if (dto.bank_info) {
       if (emp.bankInfo) {
-        // Nếu đã có bank info -> Merge dữ liệu mới vào dữ liệu cũ (giữ lại ID)
         emp.bankInfo = {
           ...emp.bankInfo,
           ...dto.bank_info,
         };
       } else {
-        // Nếu chưa có -> Gán object mới
         emp.bankInfo = dto.bank_info;
       }
     }
 
     await this.employeeRepo.save(emp as any);
-    
+
     // Trả về data mới nhất
     return this.findOne(id);
   }

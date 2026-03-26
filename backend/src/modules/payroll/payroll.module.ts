@@ -11,6 +11,9 @@ import { LeaveRequest } from "@/entities/leave-request.entity";
 import { PositionPermission } from "@/entities/position-permission.entity";
 import { Permission } from "@/entities/permission.entity";
 import { Contract } from "@/entities/contract.entity";
+import { SalaryAdjustment } from "@/entities/salary-adjustment.entity";
+import { CompanySettings } from "@/entities/company-settings.entity";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
@@ -23,8 +26,11 @@ import { Contract } from "@/entities/contract.entity";
       LeaveRequest,
       PositionPermission,
       Permission,
-      Contract
+      Contract,
+      SalaryAdjustment,
+      CompanySettings,
     ]),
+    NotificationsModule,
   ],
   providers: [PayrollService],
   controllers: [PayrollController],

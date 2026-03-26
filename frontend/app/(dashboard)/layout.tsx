@@ -67,7 +67,9 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
             <>
               <NavGroup title="Payroll Management" />
               <NavItem href="/admin/payroll/config" label="Salary configuration" isActive={pathname === "/admin/payroll/config"} onClick={onClose} />
+              <NavItem href="/admin/payroll/adjustment" label="Salary Adjustment" isActive={pathname === "/admin/payroll/adjustment"} onClick={onClose} />
               <NavItem href="/admin/payroll/generate" label="Create payroll" isActive={pathname === "/admin/payroll/generate"} onClick={onClose} />
+              <NavItem href="/admin/payroll/issue" label="Issue Payslips" isActive={pathname === "/admin/payroll/issue"} onClick={onClose} />
             </>
           )}
           {canAccessReports && (
@@ -78,8 +80,9 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           )}
         </nav>
         {hasManageSystemPermission && (
-          <div className="p-4 border-t border-gray-100 shrink-0">
+          <div className="p-4 border-t border-gray-100 shrink-0 space-y-1">
             <NavItem href="/admin/settings" label="System Settings" isActive={pathname === "/admin/settings"} onClick={onClose} />
+            <NavItem href="/admin/settings/payroll" label="Payroll Settings" isActive={pathname === "/admin/settings/payroll"} onClick={onClose} />
           </div>
         )}
       </aside>
@@ -112,8 +115,18 @@ function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClic
         ) : (
           notifications.map((n) => (
             <div key={n.id} onClick={() => onNotificationClick(n)} className={`px-4 py-3 hover:bg-gray-50 cursor-pointer flex gap-3 border-b border-gray-50 last:border-0 ${!n.isRead ? 'bg-blue-50/30' : ''}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${(n.type === 'leave' || n.type === 'leave_request') ? 'bg-green-100 text-green-600' : n.type === 'task' ? 'bg-amber-100 text-amber-600' : (n.type === 'discipline' || n.type === 'warning') ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
-                {(n.type === 'leave' || n.type === 'leave_request') ? <FileText size={16} /> : n.type === 'task' ? <AlertCircle size={16} /> : (n.type === 'discipline' || n.type === 'warning') ? <AlertTriangle size={16} /> : <Megaphone size={16} />}
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                (n.type === 'leave' || n.type === 'leave_request') ? 'bg-green-100 text-green-600' :
+                n.type === 'task' ? 'bg-amber-100 text-amber-600' :
+                (n.type === 'discipline' || n.type === 'warning') ? 'bg-red-100 text-red-600' :
+                n.type === 'payroll' ? 'bg-emerald-100 text-emerald-700' :
+                'bg-blue-100 text-blue-600'
+              }`}>
+                {(n.type === 'leave' || n.type === 'leave_request') ? <FileText size={16} /> :
+                 n.type === 'task' ? <AlertCircle size={16} /> :
+                 (n.type === 'discipline' || n.type === 'warning') ? <AlertTriangle size={16} /> :
+                 n.type === 'payroll' ? <MessageSquare size={16} /> :
+                 <Megaphone size={16} />}
               </div>
               <div className="flex-1 min-w-0 relative pr-6">
                 <p className={`text-xs ${!n.isRead ? 'font-bold text-gray-900' : 'text-gray-600'} truncate`}>{n.title || n.type}</p>
@@ -166,6 +179,18 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
         router.push('/admin/discipline');
       } else {
         router.push('/profile');
+      }
+    } else if (notif.type === 'payroll') {
+      // Payroll managers go to the admin generate page; employees go to their salary view
+      const pos = user?.position?.position_name?.toLowerCase();
+      const hasPayrollPerm = user?.permissions?.includes("manage:payroll") || user?.permissions?.includes("manage:system");
+      if (hasPayrollPerm) {
+        // Route based on notification title for more precision
+        const t = (notif.title ?? "").toLowerCase();
+        if (t.includes("adjustment")) router.push("/admin/payroll/adjustment");
+        else router.push("/admin/payroll/generate");
+      } else {
+        router.push("/dashboard/salary");
       }
     }
   };

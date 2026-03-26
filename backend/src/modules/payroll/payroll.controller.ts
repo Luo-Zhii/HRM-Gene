@@ -6,32 +6,31 @@ import {
   Query,
   Param,
   Patch,
+  Delete,
   UseGuards,
   Request,
   ParseIntPipe,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
 } from "@nestjs/common";
 import { PayrollService } from "./payroll.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Permissions } from "../auth/permissions.decorator";
+import { AdjustmentType, AdjustmentStatus } from "@/entities/salary-adjustment.entity";
 
 @Controller("payroll")
+@UseGuards(JwtAuthGuard, RolesGuard) // Đưa Guard lên đây để bảo vệ toàn bộ API trong file
 export class PayrollController {
-  constructor(private readonly svc: PayrollService) {}
+  constructor(private readonly svc: PayrollService) { }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Permissions("manage:payroll", "manage:system")
+  @Permissions("manage:payroll")
   @Post("generate")
   async generate(@Body() body: { month: number; year: number }) {
-    const { month, year } = body;
-    return this.svc.generatePayslips(month, year);
+    return this.svc.generatePayslips(body.month, body.year);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Permissions("manage:payroll", "manage:system")
+  @Permissions("manage:payroll")
   @Get("list")
   async list(@Query("month") month: string, @Query("year") year: string) {
     const m = parseInt(month, 10) || new Date().getMonth() + 1;
@@ -39,116 +38,122 @@ export class PayrollController {
     return this.svc.getPayslipsByPeriod(m, y);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Permissions("manage:payroll", "manage:system")
+  @Permissions("manage:payroll")
   @Get("period")
-  async getPeriodByMonthYear(
-    @Query("month") month: string,
-    @Query("year") year: string
-  ) {
+  async getPeriodByMonthYear(@Query("month") month: string, @Query("year") year: string) {
     const m = parseInt(month, 10) || new Date().getMonth() + 1;
     const y = parseInt(year, 10) || new Date().getFullYear();
     return this.svc.getPeriodByMonthYear(m, y);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Permissions("manage:payroll", "manage:system")
+  @Permissions("manage:payroll")
   @Get("cycle/:id")
   async getCycleDetail(@Param("id", ParseIntPipe) id: number) {
     return this.svc.getPayslipsByPeriodId(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  // API này cho cá nhân xem lương nên KHÔNG cần quyền manage:payroll, chỉ cần đăng nhập
   @Get("my-payslips")
   async getMyPayslips(@Request() req: any) {
-    const employeeId = req.user.employee_id;
-    return this.svc.getEmployeePayslips(employeeId);
+    return this.svc.getEmployeePayslips(req.user.employee_id);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Permissions("manage:payroll", "manage:system")
+  @Permissions("manage:payroll")
+  @Get(":id")
+  async getPayslipDetail(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.getPayslipById(id);
+  }
+
+  @Permissions("manage:payroll")
   @Post("run")
   async run(@Body() body: { month: number; year: number }) {
-    const { month, year } = body;
-    return this.svc.runPayroll(month, year);
+    return this.svc.runPayroll(body.month, body.year);
+  }
+
+  // ============= Payslip Approval & Payment =============
+
+  @Permissions("manage:payroll")
+  @Patch(":id/approve")
+  async approvePayslip(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.approvePayslip(id);
+  }
+
+  @Permissions("manage:payroll")
+  @Patch(":id/mark-paid")
+  async markPayslipPaid(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.markPayslipPaid(id);
+  }
+
+  @Permissions("manage:payroll")
+  @Post("approve-all")
+  async approveAllPayslips(@Body() body: { month: number; year: number }) {
+    return this.svc.approveAllPayslips(body.month, body.year);
   }
 
   // ============= Salary Config Management =============
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Permissions("manage:payroll", "manage:system")
+
+  @Permissions("manage:payroll")
   @Get("config")
   async getSalaryConfigs() {
-    try {
-      return await this.svc.getAllSalaryConfigs();
-    } catch (error) {
-      console.error("Error fetching salary configs:", error);
-      throw error;
-    }
+    return this.svc.getAllSalaryConfigs();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Permissions("manage:payroll", "manage:system")
+  @Permissions("manage:payroll")
   @Get("config/:employeeId")
   async getSalaryConfig(@Param("employeeId", ParseIntPipe) employeeId: number) {
-    try {
-      if (!employeeId || isNaN(employeeId) || employeeId <= 0) {
-        throw new BadRequestException(`Invalid employee ID: ${employeeId}`);
-      }
-
-      const config = await this.svc.getSalaryConfigByEmployeeId(employeeId);
-      if (!config) {
-        throw new NotFoundException(
-          `Salary configuration not found for employee ID: ${employeeId}`
-        );
-      }
-      return config;
-    } catch (error) {
-      console.error(`Error fetching salary config for employee ${employeeId}:`, error);
-      // Re-throw NestJS exceptions as-is (they have proper HTTP status codes)
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException ||
-        error instanceof ForbiddenException
-      ) {
-        throw error;
-      }
-      // Wrap unexpected errors
-      throw new BadRequestException(
-        error instanceof Error ? error.message : "Failed to fetch salary configuration"
-      );
+    if (!employeeId || isNaN(employeeId) || employeeId <= 0) {
+      throw new BadRequestException(`Invalid employee ID: ${employeeId}`);
     }
+    const config = await this.svc.getSalaryConfigByEmployeeId(employeeId);
+    if (!config) throw new NotFoundException(`Salary configuration not found for employee ID: ${employeeId}`);
+    return config;
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Permissions("manage:payroll", "manage:system")
+  @Permissions("manage:payroll")
   @Patch("config/:employeeId")
   async updateSalaryConfig(
     @Param("employeeId", ParseIntPipe) employeeId: number,
-    @Body() body: {
-      base_salary: string;
-      transport_allowance: string;
-      lunch_allowance: string;
-      responsibility_allowance: string;
-    }
+    @Body() body: { base_salary: string; transport_allowance: string; lunch_allowance: string; responsibility_allowance: string }
   ) {
-    try {
-      if (!employeeId || isNaN(employeeId)) {
-        throw new BadRequestException("Invalid employee ID");
-      }
+    if (!employeeId || isNaN(employeeId)) throw new BadRequestException("Invalid employee ID");
+    return this.svc.updateSalaryConfig(employeeId, body);
+  }
 
-      return await this.svc.updateSalaryConfig(employeeId, body);
-    } catch (error) {
-      console.error(`Error updating salary config for employee ${employeeId}:`, error);
-      // Re-throw NestJS exceptions as-is, wrap others
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException
-      ) {
-        throw error;
-      }
-      throw new BadRequestException(
-        error instanceof Error ? error.message : "Failed to update salary configuration"
-      );
-    }
+  // ============= Salary Adjustment CRUD =============
+
+  @Permissions("manage:payroll")
+  @Post("adjustments")
+  async createAdjustment(
+    @Request() req: any,
+    @Body() body: { employee_id: number; type: AdjustmentType; amount: string; applied_month: string; reason?: string }
+  ) {
+    return this.svc.createAdjustment({ ...body, created_by_id: req.user.employee_id });
+  }
+
+  @Permissions("manage:payroll")
+  @Get("adjustments")
+  async getAllAdjustments(@Query("type") type?: string) {
+    return this.svc.getAllAdjustments(type as AdjustmentType | undefined);
+  }
+
+  @Permissions("manage:payroll")
+  @Get("adjustments/:id")
+  async getAdjustment(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.getAdjustmentById(id);
+  }
+
+  @Permissions("manage:payroll")
+  @Patch("adjustments/:id")
+  async updateAdjustment(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() body: Partial<{ type: AdjustmentType; amount: string; applied_month: string; reason: string; status: AdjustmentStatus }>
+  ) {
+    return this.svc.updateAdjustment(id, body);
+  }
+
+  @Permissions("manage:payroll")
+  @Delete("adjustments/:id")
+  async deleteAdjustment(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.deleteAdjustment(id);
   }
 }

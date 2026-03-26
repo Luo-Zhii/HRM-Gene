@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn } from "typeorm";
 
 @Entity({ name: "company_settings" })
 export class CompanySettings {
@@ -10,4 +10,7 @@ export class CompanySettings {
 
   @Column({ type: "text" })
   value!: string;
+
+  @UpdateDateColumn()
+  updated_at!: Date;
 }

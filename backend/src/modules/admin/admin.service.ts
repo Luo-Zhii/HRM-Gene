@@ -46,7 +46,7 @@ export class AdminService {
 
   async getSetting(key: string) {
     const setting = await this.settingsRepo.findOne({ where: { key } });
-    return setting || { key, value: "" };
+    return setting || { key, value: "", updated_at: null };
   }
 
   async updateSetting(key: string, value: string) {
