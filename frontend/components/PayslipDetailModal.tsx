@@ -19,6 +19,7 @@ export interface PayslipDetail {
   deductions: string;
   net_salary: string;
   status: "Pending" | "Approved" | "Paid";
+  kpi_bonus_amount?: number;
   payroll_period?: { month: number; year: number };
   pay_period?: string;
   employee?: {
@@ -118,11 +119,13 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
       ...(lunch > 0 ? [{ name: "Lunch Allowance", value: lunch }] : []),
       ...(responsibility > 0 ? [{ name: "Responsibility Allowance", value: responsibility }] : []),
       ...(bonus > 0 ? [{ name: "Bonus / Commission", value: bonus }] : []),
+      ...(payslip.kpi_bonus_amount ? [{ name: "Performance Bonus (KPI)", value: payslip.kpi_bonus_amount }] : []),
     ];
   } else {
     earningsRows = [
       { name: "Base Salary", value: gross - bonus },
       ...(bonus > 0 ? [{ name: "Bonus / Commission", value: bonus }] : []),
+      ...(payslip.kpi_bonus_amount ? [{ name: "Performance Bonus (KPI)", value: payslip.kpi_bonus_amount }] : []),
     ];
   }
 

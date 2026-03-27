@@ -33,12 +33,37 @@ export class PayrollService {
     @InjectRepository(SalaryAdjustment) private adjustmentRepo: Repository<SalaryAdjustment>,
     @InjectRepository(CompanySettings) private settingsRepo: Repository<CompanySettings>,
     private readonly kpiService: KpiService
-  ) {}
+  ) { }
 
   private monthRange(month: number, year: number) {
     const start = new Date(year, month - 1, 1);
     const end = new Date(year, month, 0, 23, 59, 59, 999);
     return { start, end };
+  }
+
+  // =========================================================================
+  // TÍNH THUẾ THU NHẬP CÁ NHÂN (PIT) - LŨY TIẾN 7 BẬC (Chuẩn Việt Nam)
+  // =========================================================================
+  private calculatePIT(taxableIncome: number): number {
+    if (taxableIncome <= 0) return 0;
+
+    let tax = 0;
+    if (taxableIncome <= 5_000_000) {
+      tax = taxableIncome * 0.05;
+    } else if (taxableIncome <= 10_000_000) {
+      tax = 5_000_000 * 0.05 + (taxableIncome - 5_000_000) * 0.10;
+    } else if (taxableIncome <= 18_000_000) {
+      tax = 5_000_000 * 0.05 + 5_000_000 * 0.10 + (taxableIncome - 10_000_000) * 0.15;
+    } else if (taxableIncome <= 32_000_000) {
+      tax = 5_000_000 * 0.05 + 5_000_000 * 0.10 + 8_000_000 * 0.15 + (taxableIncome - 18_000_000) * 0.20;
+    } else if (taxableIncome <= 52_000_000) {
+      tax = 5_000_000 * 0.05 + 5_000_000 * 0.10 + 8_000_000 * 0.15 + 14_000_000 * 0.20 + (taxableIncome - 32_000_000) * 0.25;
+    } else if (taxableIncome <= 80_000_000) {
+      tax = 5_000_000 * 0.05 + 5_000_000 * 0.10 + 8_000_000 * 0.15 + 14_000_000 * 0.20 + 20_000_000 * 0.25 + (taxableIncome - 52_000_000) * 0.30;
+    } else {
+      tax = 5_000_000 * 0.05 + 5_000_000 * 0.10 + 8_000_000 * 0.15 + 14_000_000 * 0.20 + 20_000_000 * 0.25 + 28_000_000 * 0.30 + (taxableIncome - 80_000_000) * 0.35;
+    }
+    return Math.round(tax);
   }
 
   // ============= Legacy runPayroll (kept for backward compat) =============
@@ -164,7 +189,7 @@ export class PayrollService {
       where: { employee: { employee_id: payslip.employee.employee_id } },
     });
 
-    // ── Build optimized earnings array (only non-zero items) ──
+    // ── Build optimized earnings array ──
     const bonus = parseFloat(payslip.bonus || "0");
     const deductions = parseFloat(payslip.deductions || "0");
 
@@ -182,19 +207,20 @@ export class PayrollService {
       if (lunch > 0) { earnings.push({ name: "Lunch Allowance", value: lunch }); hasNonzeroAllowances = true; }
       if (responsibility > 0) { earnings.push({ name: "Responsibility Allowance", value: responsibility }); hasNonzeroAllowances = true; }
     } else {
-      // Fallback: gross minus bonus = base
       const baseFallback = parseFloat(payslip.gross_salary || "0") - bonus;
       if (baseFallback > 0) earnings.push({ name: "Base Salary", value: baseFallback });
     }
-    if (bonus > 0) earnings.push({ name: "Bonus / Commission", value: bonus });
+    if (bonus > 0) earnings.push({ name: "Bonus / Commission / Adjustments", value: bonus });
+    if (payslip.kpi_bonus_amount > 0) {
+      earnings.push({ name: "Performance Bonus (KPI)", value: payslip.kpi_bonus_amount });
+    }
 
-    // ── Build optimized deductions array (only non-zero items) ──
+    // ── Build optimized deductions array (NOW INCLUDES PIT) ──
     const deductionItems: { name: string; value: number }[] = [];
     const baseSalaryForInsurance = salaryConfig
       ? parseFloat(salaryConfig.base_salary || "0")
       : parseFloat(payslip.gross_salary || "0");
 
-    // Fetch dynamic insurance rate (fallback: 10.5%)
     let INSURANCE_RATE = 0.105;
     try {
       const rateSetting = await this.settingsRepo.findOne({ where: { key: "social_insurance_rate" } });
@@ -202,10 +228,10 @@ export class PayrollService {
     } catch { /* use default */ }
 
     const insurance = baseSalaryForInsurance * INSURANCE_RATE;
-    const penalty = Math.max(0, deductions - insurance);
+    const taxesAndPenalties = Math.max(0, deductions - insurance); // Cục này giờ chứa cả Thuế TNCN và Tiền vắng mặt
 
     if (insurance > 0) deductionItems.push({ name: `Social + Health + Unemployment (${(INSURANCE_RATE * 100).toFixed(1)}%)`, value: insurance });
-    if (penalty > 0) deductionItems.push({ name: "Penalties / Fines", value: penalty });
+    if (taxesAndPenalties > 0) deductionItems.push({ name: "Personal Income Tax (PIT) & Other Deductions", value: taxesAndPenalties });
 
     // ── Summary & metadata fields ──
     const grossNum = parseFloat(payslip.gross_salary || "0");
@@ -213,14 +239,10 @@ export class PayrollService {
     const netNum = parseFloat(payslip.net_salary || "0");
     const netPayInWords = numberToVietnameseWords(netNum);
 
-    const employeeName = [
-      payslip.employee?.first_name ?? "",
-      payslip.employee?.last_name ?? "",
-    ].filter(Boolean).join(" ") || "Employee";
+    const employeeName = [payslip.employee?.first_name ?? "", payslip.employee?.last_name ?? ""].filter(Boolean).join(" ") || "Employee";
 
-    // prepared_by_name / prepared_by_department: resolve the HR admin who generated this payslip
-    let preparedByName: string = "System";
-    let preparedByDepartment: string = "Automated Process";
+    let preparedByName = "System";
+    let preparedByDepartment = "Automated Process";
     if (payslip.created_by_id) {
       const creator = await this.employeeRepo.findOne({
         where: { employee_id: payslip.created_by_id },
@@ -234,19 +256,14 @@ export class PayrollService {
 
     return {
       ...payslip,
-      // Legacy config still included for backward compat
       salaryConfig,
-      // New optimized structure
       earnings,
       deduction_items: deductionItems,
       has_nonzero_allowances: hasNonzeroAllowances,
       has_bonus: bonus > 0,
-      // Summary totals (explicit)
       total_income: grossNum,
       total_deductions: deductionsNum,
-      // Amount in words
       net_pay_in_words: netPayInWords,
-      // Signature metadata
       employee_name: employeeName,
       prepared_by_name: preparedByName,
       prepared_by_department: preparedByDepartment,
@@ -257,23 +274,19 @@ export class PayrollService {
   async generatePayslips(month: number, year: number, createdByUserId?: number) {
     const { start, end } = this.monthRange(month, year);
 
-    // Find or create payroll period
     let period = await this.payrollPeriodRepo.findOne({ where: { month, year } });
     if (!period) {
       period = this.payrollPeriodRepo.create({ month, year, status: "Draft" as any, standard_work_days: 26 });
       period = await this.payrollPeriodRepo.save(period);
     }
 
-    // All employees
     const employees = await this.employeeRepo.find({ relations: ["position", "department"] });
 
-    // Timekeeping for the month
     const timekeepings = await this.timekeepingRepo.find({
       where: { work_date: Between(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10)) },
       relations: ["employee"],
     });
 
-    // Approved leave for the month (counts as paid working days)
     const leaveRequests = await this.leaveRequestRepo.find({
       where: {
         status: "Approved",
@@ -282,7 +295,6 @@ export class PayrollService {
       relations: ["employee", "leave_type"],
     });
 
-    // Build attendance maps
     const workDaysMap: Record<number, number> = {};
     const absentDaysMap: Record<number, number> = {};
     timekeepings.forEach((tk) => {
@@ -303,7 +315,6 @@ export class PayrollService {
       workDaysMap[id] = (workDaysMap[id] || 0) + days;
     });
 
-    // Fetch SalaryAdjustments for this month (format "MM/YYYY")
     const appliedMonth = `${String(month).padStart(2, "0")}/${year}`;
     const adjustments = await this.adjustmentRepo.find({
       where: { applied_month: appliedMonth, status: AdjustmentStatus.APPROVED },
@@ -318,9 +329,6 @@ export class PayrollService {
       else penaltyMap[id] = (penaltyMap[id] || 0) + amt;
     }
 
-    const standardDays = period.standard_work_days;
-
-    // Fetch dynamic insurance rate (fallback: 10.5%)
     let INSURANCE_RATE = 0.105;
     try {
       const rateSetting = await this.settingsRepo.findOne({ where: { key: "social_insurance_rate" } });
@@ -328,36 +336,33 @@ export class PayrollService {
         INSURANCE_RATE = parseFloat(rateSetting.value) / 100;
       }
     } catch (e) {
-      console.warn("Failed to fetch insurance rate setting, using default 10.5%", e);
+      console.warn("Failed to fetch insurance rate setting", e);
     }
 
     let totalGross = 0, totalDeductions = 0, totalNet = 0, totalBonus = 0, generated = 0;
 
     await this.dataSource.transaction(async (manager) => {
       for (const employee of employees) {
-        const result = await this.calculateAndSavePayslip(
-          manager,
-          employee,
-          period!,
-          month,
-          year,
-          {
-            timekeepings,
-            workDaysMap,
-            absentDaysMap,
-            bonusMap,
-            penaltyMap,
-            insuranceRate: INSURANCE_RATE,
-          },
-          createdByUserId
-        );
+        try {
+          const result = await this.calculateAndSavePayslip(
+            manager,
+            employee,
+            period!,
+            month,
+            year,
+            { timekeepings, workDaysMap, absentDaysMap, bonusMap, penaltyMap, insuranceRate: INSURANCE_RATE },
+            createdByUserId
+          );
 
-        if (result) {
-          totalGross += result.grossIncome;
-          totalDeductions += result.deductions;
-          totalNet += result.netSalary;
-          totalBonus += result.bonusAdj;
-          generated += 1;
+          if (result) {
+            totalGross += result.grossIncome;
+            totalDeductions += result.deductions;
+            totalNet += result.netSalary;
+            totalBonus += result.bonusAdj;
+            generated += 1;
+          }
+        } catch (err) {
+          console.error(`Bỏ qua nhân viên ID ${employee.employee_id} do lỗi tính toán:`, err);
         }
       }
     });
@@ -410,25 +415,27 @@ export class PayrollService {
     if (rateSetting?.value) insuranceRate = parseFloat(rateSetting.value) / 100;
 
     const result = await this.dataSource.transaction(async manager => {
-      return this.calculateAndSavePayslip(manager, employee, period!, month, year, {
-        timekeepings,
-        workDaysMap,
-        absentDaysMap,
-        bonusMap: { [employeeId]: bonusAdj },
-        penaltyMap: { [employeeId]: penaltyAdj },
-        insuranceRate,
-      }, createdByUserId);
+      try {
+        return await this.calculateAndSavePayslip(manager, employee, period!, month, year, {
+          timekeepings, workDaysMap, absentDaysMap, bonusMap: { [employeeId]: bonusAdj }, penaltyMap: { [employeeId]: penaltyAdj }, insuranceRate,
+        }, createdByUserId);
+      } catch (err) {
+        console.error(`Lỗi khi tạo phiếu lương đơn cho nhân viên ${employeeId}:`, err);
+        return null;
+      }
     });
 
-    if (!result) throw new BadRequestException("Failed to generate payslip (no salary configuration found)");
-    
-    // Return the payslip detail
+    if (!result) throw new BadRequestException("Failed to generate payslip (no salary configuration found or internal error)");
+
     const payslip = await this.payslipRepo.findOne({
       where: { employee: { employee_id: employeeId }, payroll_period: { id: period.id } }
     });
     return this.getPayslipById(payslip!.payslip_id);
   }
 
+  // =========================================================================
+  // CORE CALCULATION: LƯƠNG + THƯỞNG + THUẾ TNCN CHUẨN VN
+  // =========================================================================
   private async calculateAndSavePayslip(
     manager: any,
     employee: Employee,
@@ -448,41 +455,89 @@ export class PayrollService {
     const salaryConfig = await manager.getRepository(SalaryConfig).findOne({
       where: { employee: { employee_id: employee.employee_id } },
     });
-    if (!salaryConfig) return null;
+
+    // Nếu chưa cấu hình lương -> Bỏ qua, tránh crash server
+    if (!salaryConfig) {
+      console.warn(`Nhân viên ${employee.employee_id} chưa có Salary Config. Bỏ qua.`);
+      return null;
+    }
 
     const empId = employee.employee_id;
     const standardDays = period.standard_work_days;
-    const baseSalary = parseFloat(salaryConfig.base_salary);
-    const salaryPerDay = baseSalary / standardDays;
+    // An toàn: Ép kiểu để không bị NaN nếu base_salary null
+    const baseSalary = parseFloat(salaryConfig.base_salary || "0");
+    // An toàn: Tránh lỗi chia cho 0
+    const salaryPerDay = standardDays > 0 ? baseSalary / standardDays : 0;
 
     const hasAttendanceData = ctx.timekeepings.some((tk) => (tk.employee?.employee_id || (tk as any).employee_id) === empId);
     const actualDays = hasAttendanceData ? Math.min(ctx.workDaysMap[empId] || 0, standardDays) : standardDays;
-    const unpaidAbsentDays = ctx.absentDaysMap[empId] || 0;
 
+    // TÍNH TIỀN TRỪ NẾU NGHỈ KHÔNG PHÉP
+    const unpaidAbsentDays = ctx.absentDaysMap[empId] || 0;
+    const unpaidAbsentDeduction = salaryPerDay * unpaidAbsentDays;
+
+    const lunchAllowance = parseFloat(salaryConfig.lunch_allowance || "0");
     const allowances =
       parseFloat(salaryConfig.transport_allowance || "0") +
-      parseFloat(salaryConfig.lunch_allowance || "0") +
+      lunchAllowance +
       parseFloat(salaryConfig.responsibility_allowance || "0");
 
     const bonusAdj = ctx.bonusMap[empId] || 0;
     const penaltyAdj = ctx.penaltyMap[empId] || 0;
 
-    // --- KPI Bonus Calculation ---
+    // ==========================================
+    // 1. TÍNH TIỀN THƯỞNG KPI (Luật % và Ngưỡng 10 củ)
+    // ==========================================
     let kpiBonus = 0;
     try {
       const kpiPeriod = await this.kpiService.getPeriodByMonthAndYear(month, year);
       if (kpiPeriod) {
         const kpiScore = await this.kpiService.calculateFinalKpiScore(empId, kpiPeriod.id);
-        const targetBonus = parseFloat(salaryConfig.target_bonus || "0");
+
+        let targetBonus = 0;
+        // Áp dụng luật: Chỉ lương >= 10tr mới có thưởng KPI
+        if (baseSalary >= 10000000) {
+          // Lấy đúng cột phần trăm
+          const percentage = (salaryConfig as any).kpi_bonus_percentage || 0;
+          targetBonus = baseSalary * (percentage / 100);
+        }
+
+        // Tiền thực nhận = Tiền mục tiêu * Hệ số điểm
         kpiBonus = (kpiScore / 100) * targetBonus;
       }
     } catch (error) {
-      console.error(`Failed to calculate KPI bonus for employee ${empId}:`, error);
+      console.error(`Failed to calculate KPI for ${empId}:`, error);
     }
 
+    // ==========================================
+    // 2. TỔNG THU NHẬP (GROSS)
+    // ==========================================
     const totalCalculatedBonus = bonusAdj + kpiBonus;
     const grossIncome = salaryPerDay * actualDays + allowances + totalCalculatedBonus;
-    const deductions = baseSalary * ctx.insuranceRate + penaltyAdj + salaryPerDay * unpaidAbsentDays;
+
+    // ==========================================
+    // 3. KHẤU TRỪ (BẢO HIỂM + THUẾ TNCN CHUẨN VN)
+    // ==========================================
+    // A. Bảo hiểm bắt buộc (10.5%)
+    const insuranceDeduction = baseSalary * ctx.insuranceRate;
+
+    // B. Thuế Thu Nhập Cá Nhân (PIT - 7 bậc)
+    const personalExemption = 11_000_000; // Giảm trừ bản thân
+    const dependentExemption = ((salaryConfig as any).dependents_count || 0) * 4_400_000; // Người phụ thuộc
+
+    // Thu nhập tính thuế = Gross - Bảo hiểm - Ăn trưa - Giảm trừ
+    let taxableIncome = grossIncome - insuranceDeduction - lunchAllowance - personalExemption - dependentExemption;
+    taxableIncome = Math.max(0, taxableIncome); // Chặn số âm
+
+    // Gọi hàm tính thuế lũy tiến
+    const pitDeduction = this.calculatePIT(taxableIncome);
+
+    // C. Chốt Tổng Khấu Trừ
+    const deductions = insuranceDeduction + pitDeduction + penaltyAdj + unpaidAbsentDeduction;
+
+    // ==========================================
+    // 4. THỰC NHẬN (NET) & LƯU DB
+    // ==========================================
     const netSalary = Math.max(0, grossIncome - deductions);
 
     let payslip = await manager.getRepository(Payslip).findOne({
@@ -493,6 +548,7 @@ export class PayrollService {
       Object.assign(payslip, {
         actual_work_days: actualDays,
         bonus: totalCalculatedBonus.toFixed(2),
+        kpi_bonus_amount: kpiBonus,
         gross_salary: grossIncome.toFixed(2),
         deductions: deductions.toFixed(2),
         net_salary: netSalary.toFixed(2),
@@ -501,11 +557,11 @@ export class PayrollService {
       });
     } else {
       payslip = manager.getRepository(Payslip).create({
-        employee,
-        payroll_period: period,
+        employee, payroll_period: period,
         pay_period: `${String(month).padStart(2, "0")}/${year}`,
         actual_work_days: actualDays,
         bonus: totalCalculatedBonus.toFixed(2),
+        kpi_bonus_amount: kpiBonus,
         gross_salary: grossIncome.toFixed(2),
         deductions: deductions.toFixed(2),
         net_salary: netSalary.toFixed(2),
@@ -529,7 +585,6 @@ export class PayrollService {
     payslip.status = PayslipStatus.APPROVED;
     const saved = await this.payslipRepo.save(payslip);
 
-    // Notify the employee
     const period = payslip.payroll_period;
     const periodLabel = period
       ? `${String(period.month).padStart(2, "0")}/${period.year}`
@@ -539,7 +594,7 @@ export class PayrollService {
       "Payroll Approved",
       `Your payroll for ${periodLabel} has been approved.`,
       NotificationType.PAYROLL
-    ).catch(() => {}); // fire-and-forget, never break the main flow
+    ).catch(() => { });
 
     return saved;
   }
@@ -553,7 +608,6 @@ export class PayrollService {
     payslip.status = PayslipStatus.PAID;
     const saved = await this.payslipRepo.save(payslip);
 
-    // Notify the employee with net salary
     const period = payslip.payroll_period;
     const periodLabel = period
       ? `${String(period.month).padStart(2, "0")}/${period.year}`
@@ -566,7 +620,7 @@ export class PayrollService {
       "Payslip Available",
       `Your payslip for ${periodLabel} is now available to view. Net Salary: ${netFormatted} VND.`,
       NotificationType.PAYROLL
-    ).catch(() => {});
+    ).catch(() => { });
 
     return saved;
   }
@@ -582,7 +636,6 @@ export class PayrollService {
     for (const p of payslips) p.status = PayslipStatus.APPROVED;
     await this.payslipRepo.save(payslips);
 
-    // Notify all affected employees
     const periodLabel = `${String(month).padStart(2, "0")}/${year}`;
     for (const p of payslips) {
       this.notificationsService.createNotification(
@@ -590,7 +643,7 @@ export class PayrollService {
         "Payroll Approved",
         `Your payroll for ${periodLabel} has been approved.`,
         NotificationType.PAYROLL
-      ).catch(() => {});
+      ).catch(() => { });
     }
 
     return { approved: payslips.length };
@@ -608,7 +661,7 @@ export class PayrollService {
           "employee.employee_id", "employee.email", "employee.first_name", "employee.last_name", "employee.avatar_url",
           "position.position_id", "position.position_name",
           "department.department_id", "department.department_name",
-          "sc.config_id", "sc.base_salary", "sc.transport_allowance", "sc.lunch_allowance", "sc.responsibility_allowance",
+          "sc.config_id", "sc.base_salary", "sc.transport_allowance", "sc.lunch_allowance", "sc.responsibility_allowance", "sc.kpi_bonus_percentage",
         ])
         .orderBy("employee.first_name", "ASC")
         .getRawMany();
@@ -628,6 +681,7 @@ export class PayrollService {
           transport_allowance: hasConfig && row.sc_transport_allowance ? String(row.sc_transport_allowance) : "0.00",
           lunch_allowance: hasConfig && row.sc_lunch_allowance ? String(row.sc_lunch_allowance) : "0.00",
           responsibility_allowance: hasConfig && row.sc_responsibility_allowance ? String(row.sc_responsibility_allowance) : "0.00",
+          kpi_bonus_percentage: hasConfig && row.sc_kpi_bonus_percentage ? Number(row.sc_kpi_bonus_percentage) : 0,
         };
       });
     } catch (error) {
@@ -653,11 +707,11 @@ export class PayrollService {
 
   async updateSalaryConfig(
     employeeId: number,
-    data: { base_salary: string; transport_allowance: string; lunch_allowance: string; responsibility_allowance: string }
+    data: { base_salary: string; transport_allowance: string; lunch_allowance: string; responsibility_allowance: string; kpi_bonus_percentage: number }
   ) {
     try {
       if (!employeeId || isNaN(employeeId)) throw new BadRequestException("Invalid employee ID");
-      if (!data.base_salary || data.transport_allowance === undefined || data.lunch_allowance === undefined || data.responsibility_allowance === undefined) {
+      if (!data.base_salary || data.transport_allowance === undefined || data.lunch_allowance === undefined || data.responsibility_allowance === undefined || data.kpi_bonus_percentage === undefined) {
         throw new BadRequestException("All salary fields are required");
       }
       let config = await this.salaryConfigRepo.findOne({ where: { employee: { employee_id: employeeId } }, relations: ["employee"] });
@@ -689,14 +743,13 @@ export class PayrollService {
     });
     const saved = await this.adjustmentRepo.save(adj);
 
-    // Notify the employee about the new adjustment
     const amtFormatted = new Intl.NumberFormat("vi-VN").format(Math.round(parseFloat(data.amount || "0")));
     this.notificationsService.createNotification(
       data.employee_id,
       `New Salary Adjustment`,
       `A new salary adjustment (${data.type}: ${amtFormatted} VND) for ${data.applied_month} has been recorded. Status: Pending review.`,
       NotificationType.PAYROLL
-    ).catch(() => {});
+    ).catch(() => { });
 
     return saved;
   }
@@ -723,7 +776,6 @@ export class PayrollService {
     Object.assign(adj, data);
     const saved = await this.adjustmentRepo.save(adj);
 
-    // Notify employee when status changes to Approved or Rejected
     const newStatus = data.status;
     if (newStatus && newStatus !== prevStatus && (newStatus === AdjustmentStatus.APPROVED || newStatus === AdjustmentStatus.REJECTED)) {
       const amtFormatted = new Intl.NumberFormat("vi-VN").format(Math.round(parseFloat(adj.amount || "0")));
@@ -732,7 +784,7 @@ export class PayrollService {
         `Salary Adjustment ${newStatus}`,
         `Your salary adjustment of ${amtFormatted} VND (${adj.applied_month}) has been ${newStatus.toLowerCase()}.`,
         NotificationType.PAYROLL
-      ).catch(() => {});
+      ).catch(() => { });
     }
 
     return saved;

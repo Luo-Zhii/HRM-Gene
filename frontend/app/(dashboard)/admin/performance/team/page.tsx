@@ -164,7 +164,32 @@ export default function TeamPerformancePage() {
       toast({ variant: "destructive", title: "Error", description: "Failed to approve score" });
     }
   };
+  const handleSubmitAll = async () => {
+    if (!assignments || assignments.length === 0) {
+      toast({ variant: "destructive", title: "Oops!", description: "Nothing!" });
+      return;
+    }
 
+    try {
+      // Bắn toàn bộ các API cập nhật điểm cùng 1 lúc (Chốt sổ tất cả)
+      const promises = assignments.map(a =>
+        fetch(`/api/kpi/assignment/${a.id}/grade`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ manager_score: a.manager_score ?? a.actual_value }),
+          credentials: "include",
+        })
+      );
+
+      await Promise.all(promises); // Đợi tất cả chạy xong
+      toast({ title: "All Submitted!", description: "Save KPI for employee" });
+
+      // Load lại bảng cho xanh mượt
+      fetchAssignments(selectedEmployee!.employee_id, selectedPeriod);
+    } catch (error) {
+      toast({ variant: "destructive", title: "Lỗi", description: "Có lỗi khi chốt sổ toàn bộ KPI!" });
+    }
+  };
   const handleAssign = async () => {
     if (!selectedEmployee || !selectedPeriod) return;
 
@@ -302,7 +327,7 @@ export default function TeamPerformancePage() {
                 >
                   <Plus className="w-4 h-4 mr-2" /> Assign KPIs
                 </Button>
-                <Button className="bg-blue-600 text-white hover:bg-blue-700 font-black uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-blue-100">
+                <Button className="bg-blue-600 text-white hover:bg-blue-700 font-black uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-blue-100" onClick={handleSubmitAll}>
                   Submit All
                 </Button>
               </div>

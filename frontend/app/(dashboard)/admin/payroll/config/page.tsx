@@ -45,7 +45,7 @@ interface SalaryConfig {
   transport_allowance: string;
   lunch_allowance: string;
   responsibility_allowance: string;
-  target_bonus?: string;
+  kpi_bonus_percentage: number;
 }
 
 export default function SalaryConfigPage() {
@@ -61,7 +61,7 @@ export default function SalaryConfigPage() {
     transport_allowance: "",
     lunch_allowance: "",
     responsibility_allowance: "",
-    target_bonus: "",
+    kpi_bonus_percentage: 0,
   });
   const [saving, setSaving] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
@@ -153,7 +153,7 @@ export default function SalaryConfigPage() {
       transport_allowance: config.transport_allowance || "0",
       lunch_allowance: config.lunch_allowance || "0",
       responsibility_allowance: config.responsibility_allowance || "0",
-      target_bonus: config.target_bonus || "0",
+      kpi_bonus_percentage: Number(config.kpi_bonus_percentage) || 0,
     });
     setIsEditModalOpen(true);
   };
@@ -178,7 +178,7 @@ export default function SalaryConfigPage() {
           transport_allowance: String(parseFloat(editForm.transport_allowance || "0").toFixed(2)),
           lunch_allowance: String(parseFloat(editForm.lunch_allowance || "0").toFixed(2)),
           responsibility_allowance: String(parseFloat(editForm.responsibility_allowance || "0").toFixed(2)),
-          target_bonus: String(parseFloat(editForm.target_bonus || "0").toFixed(2)),
+          kpi_bonus_percentage: Number(editForm.kpi_bonus_percentage),
         }),
       });
       if (!res.ok) throw new Error("Failed to update salary config");
@@ -316,18 +316,35 @@ export default function SalaryConfigPage() {
                   <div className="space-y-1.5"><label className="text-sm font-bold text-gray-500">Transport Allowance</label><Input type="number" value={editForm.transport_allowance} onChange={e => setEditForm({...editForm, transport_allowance: e.target.value})} className="h-11" /></div>
                   <div className="space-y-1.5"><label className="text-sm font-bold text-gray-500">Lunch Allowance</label><Input type="number" value={editForm.lunch_allowance} onChange={e => setEditForm({...editForm, lunch_allowance: e.target.value})} className="h-11" /></div>
                   <div className="space-y-1.5"><label className="text-sm font-bold text-gray-500">Responsibility</label><Input type="number" value={editForm.responsibility_allowance} onChange={e => setEditForm({...editForm, responsibility_allowance: e.target.value})} className="h-11" /></div>
-                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 col-span-2">
-                    <label className="block text-sm font-bold text-blue-800 mb-1 flex items-center gap-2">
-                      <Target className="w-4 h-4" /> Target Bonus (KPI Based)
-                    </label>
-                    <Input 
-                      type="number" 
-                      className="bg-white border-blue-200 focus:ring-blue-500 font-bold text-blue-700"
-                      value={editForm.target_bonus} 
-                      onChange={(e) => setEditForm({ ...editForm, target_bonus: e.target.value })} 
-                    />
-                    <p className="text-[10px] text-blue-600 mt-2">This is the maximum bonus amount if KPI achievement is 100%.</p>
-                  </div>
+                  {(() => {
+                    const isEligible = Number(editForm.base_salary) >= 10000000;
+                    const estimatedBonus = isEligible ? (Number(editForm.base_salary) * Number(editForm.kpi_bonus_percentage) / 100) : 0;
+                    return (
+                      <div className={`p-4 rounded-xl border col-span-2 ${isEligible ? 'bg-blue-50 border-blue-100' : 'bg-amber-50 border-amber-100'}`}>
+                        <label className={`block text-sm font-bold mb-1 flex items-center gap-2 ${isEligible ? 'text-blue-800' : 'text-amber-800'}`}>
+                          <Target className="w-4 h-4" /> KPI Bonus Percentage (%)
+                        </label>
+                        <Input 
+                          type="number" 
+                          min="0"
+                          max="100"
+                          disabled={!isEligible}
+                          className={`bg-white focus:ring-blue-500 font-bold ${isEligible ? 'border-blue-200 text-blue-700' : 'border-amber-200 text-gray-400'}`}
+                          value={isEligible ? editForm.kpi_bonus_percentage : 0} 
+                          onChange={(e) => setEditForm({ ...editForm, kpi_bonus_percentage: Number(e.target.value) })} 
+                        />
+                        {isEligible ? (
+                          <p className="text-[10px] text-blue-600 mt-2 font-medium">
+                            Estimated Target Bonus: <span className="underline">{formatCurrency(estimatedBonus)}</span>
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-red-500 mt-2 font-bold uppercase flex items-center gap-1">
+                            <X size={10} /> Not eligible for KPI Bonus (Base salary is under 10M VND)
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
               <div className="p-6 bg-gray-50 dark:bg-gray-900/50 flex gap-3 justify-end">

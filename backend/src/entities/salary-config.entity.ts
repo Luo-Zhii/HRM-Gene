@@ -30,5 +30,9 @@ export class SalaryConfig {
 
   @Column({ type: "decimal", precision: 12, scale: 2, default: "0.00" })
   target_bonus!: string;
+
+  @Column({ type: "float", default: 0 })
+  kpi_bonus_percentage!: number;
 }
+
 

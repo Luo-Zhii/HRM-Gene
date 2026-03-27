@@ -140,29 +140,34 @@ export class KpiService {
   }
   // --- Final Score Calculation ---
   async calculateFinalKpiScore(employeeId: number, periodId: number): Promise<number> {
+    // 1. Lấy tất cả KPI đã duyệt của nhân viên trong tháng
     const assignments = await this.kpiAssignmentRepo.find({
       where: {
         employee: { employee_id: employeeId },
         period: { id: periodId },
-        status: KpiAssignmentStatus.APPROVED,
-      },
+        status: KpiAssignmentStatus.APPROVED // Chỉ tính những cái đã duyệt
+      }
     });
 
-    if (assignments.length === 0) return 0;
+    if (!assignments || assignments.length === 0) return 0;
 
-    // Strict requirement: total weight of approved assignments must be 100
-    const totalApprovedWeight = assignments.reduce((sum, a) => sum + a.weight, 0);
-    if (totalApprovedWeight !== 100) {
-      throw new BadRequestException(`Approved assignments total weight is ${totalApprovedWeight}%, must be 100%`);
-    }
-
+    // 2. Tính điểm chuẩn y hệt như Frontend Dashboard
     let totalScore = 0;
     for (const a of assignments) {
-      // Logic: Score = manager_score * (weight / 100)
-      const scoreForThisKpi = (a.manager_score || 0) * (a.weight / 100);
-      totalScore += scoreForThisKpi;
+      // Dùng điểm Manager chấm, nếu chưa chấm thì dùng Actual
+      const actual = a.manager_score ?? a.actual_value;
+      const target = a.target_value;
+
+      let achievement = 0;
+      if (target > 0) {
+        // Tính % hoàn thành và giới hạn tối đa 120% (Max trần)
+        achievement = Math.min(120, Math.round((actual / target) * 100));
+      }
+
+      // Cộng dồn theo Trọng số (Weight)
+      totalScore += (achievement * a.weight) / 100;
     }
 
-    return parseFloat(totalScore.toFixed(2));
+    return totalScore; // Trả về chuẩn 110%
   }
 }

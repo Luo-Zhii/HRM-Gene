@@ -99,7 +99,7 @@ export class PayrollController {
   @Patch("config/:employeeId")
   async updateSalaryConfig(
     @Param("employeeId", ParseIntPipe) employeeId: number,
-    @Body() body: { base_salary: string; transport_allowance: string; lunch_allowance: string; responsibility_allowance: string }
+    @Body() body: { base_salary: string; transport_allowance: string; lunch_allowance: string; responsibility_allowance: string; kpi_bonus_percentage: number }
   ) {
     if (!employeeId || isNaN(employeeId)) throw new BadRequestException("Invalid employee ID");
     return this.svc.updateSalaryConfig(employeeId, body);

@@ -37,6 +37,9 @@ export class Payslip {
   @Column({ type: "decimal", precision: 12, scale: 2 })
   net_salary!: string;
 
+  @Column({ type: "float", default: 0 })
+  kpi_bonus_amount!: number;
+
   @Column({
     type: "enum",
     enum: PayslipStatus,
