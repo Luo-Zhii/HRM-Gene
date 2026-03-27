@@ -96,4 +96,12 @@ export class KpiController {
   getMyPerformance(@Req() req: any, @Query("period_id", ParseIntPipe) periodId: number) {
     return this.kpiService.getEmployeeAssignments(req.user.employee_id, periodId);
   }
+
+  @Get("calculate-score")
+  calculateScore(
+    @Query("employee_id", ParseIntPipe) employeeId: number,
+    @Query("period_id", ParseIntPipe) periodId: number
+  ) {
+    return this.kpiService.calculateFinalKpiScore(employeeId, periodId);
+  }
 }

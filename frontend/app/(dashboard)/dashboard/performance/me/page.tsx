@@ -47,6 +47,7 @@ export default function MyPerformancePage() {
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [updateValue, setUpdateValue] = useState<string>("");
+  const [totalAchievement, setTotalAchievement] = useState<number>(0);
 
   const fetchData = async () => {
     try {
@@ -74,6 +75,15 @@ export default function MyPerformancePage() {
       if (!res.ok) throw new Error();
       const data = await res.json();
       setAssignments(Array.isArray(data) ? data : []);
+
+      // Fetch total achievement score from backend
+      if (user?.employee_id) {
+        const scoreRes = await fetch(`/api/kpi/calculate-score?employee_id=${user.employee_id}&period_id=${perId}`, { credentials: "include" });
+        if (scoreRes.ok) {
+          const score = await scoreRes.json();
+          setTotalAchievement(score);
+        }
+      }
     } catch (error) {
       setAssignments([]);
     } finally {
@@ -114,11 +124,7 @@ export default function MyPerformancePage() {
     return Math.round((actual / target) * 100);
   };
 
-  const totalScore = assignments.reduce((sum, a) => {
-    const achieve = calculateAchievement(a.actual_value, a.target_value);
-    const capped = Math.min(120, achieve);
-    return sum + (capped * a.weight / 100);
-  }, 0);
+  const totalScore = totalAchievement;
 
   return (
     <div className="space-y-8 pb-10">

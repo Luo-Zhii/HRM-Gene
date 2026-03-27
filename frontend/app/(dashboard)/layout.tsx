@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import {
   Menu, X, User, LogOut, ChevronDown, Bell,
-  CheckCheck, MessageSquare, AlertCircle, FileText, Megaphone, AlertTriangle
+  CheckCheck, MessageSquare, AlertCircle, FileText, Megaphone, AlertTriangle, Zap
 } from "lucide-react";
 
 // --- COMPONENT SIDEBAR (Cập nhật Menu Contracts) ---
@@ -127,12 +127,14 @@ function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClic
               <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                 (n.type === 'leave' || n.type === 'leave_request') ? 'bg-green-100 text-green-600' :
                 n.type === 'task' ? 'bg-amber-100 text-amber-600' :
+                n.type === 'kpi' ? 'bg-blue-100 text-blue-600' :
                 (n.type === 'discipline' || n.type === 'warning') ? 'bg-red-100 text-red-600' :
                 n.type === 'payroll' ? 'bg-emerald-100 text-emerald-700' :
                 'bg-blue-100 text-blue-600'
               }`}>
                 {(n.type === 'leave' || n.type === 'leave_request') ? <FileText size={16} /> :
                  n.type === 'task' ? <AlertCircle size={16} /> :
+                 n.type === 'kpi' ? <Zap size={16} /> :
                  (n.type === 'discipline' || n.type === 'warning') ? <AlertTriangle size={16} /> :
                  n.type === 'payroll' ? <MessageSquare size={16} /> :
                  <Megaphone size={16} />}
@@ -201,6 +203,8 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
       } else {
         router.push("/dashboard/salary");
       }
+    } else if (notif.type === 'kpi') {
+      router.push('/dashboard/performance/me');
     }
   };
 

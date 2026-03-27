@@ -10,6 +10,9 @@ import {
   CreateKpiPeriodDto,
   AssignKpisDto,
 } from "./dto/kpi.dto";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationType } from "../../entities/notification.entity";
+import { In } from "typeorm";
 
 @Injectable()
 export class KpiService {
@@ -18,7 +21,8 @@ export class KpiService {
     @InjectRepository(KpiLibrary) private kpiLibraryRepo: Repository<KpiLibrary>,
     @InjectRepository(KpiPeriod) private kpiPeriodRepo: Repository<KpiPeriod>,
     @InjectRepository(KpiAssignment) private kpiAssignmentRepo: Repository<KpiAssignment>,
-    @InjectRepository(Employee) private employeeRepo: Repository<Employee>
+    @InjectRepository(Employee) private employeeRepo: Repository<Employee>,
+    private notificationsService: NotificationsService
   ) { }
 
   // --- Library ---
@@ -86,9 +90,13 @@ export class KpiService {
       });
 
       const assignments = [];
+      const kpiNames: string[] = [];
+
       for (const a of dto.assignments) {
         const kpiLib = await manager.findOne(KpiLibrary, { where: { id: a.kpi_library_id } });
         if (!kpiLib) throw new NotFoundException(`KPI Library #${a.kpi_library_id} not found`);
+
+        kpiNames.push(kpiLib.name);
 
         const assignment = manager.create(KpiAssignment, {
           employee,
@@ -101,7 +109,25 @@ export class KpiService {
         });
         assignments.push(assignment);
       }
-      return manager.save(assignments);
+      const savedAssignments = await manager.save(assignments);
+
+      // Trigger notification to employee
+      try {
+        const kpiNamesStr = kpiNames.length > 2
+          ? `${kpiNames[0]}, ${kpiNames[1]} and ${kpiNames.length - 2} more`
+          : kpiNames.join(", ");
+
+        await this.notificationsService.createNotification(
+          employee.employee_id,
+          "New KPI Assigned",
+          `New KPIs (${kpiNamesStr}) have been assigned for the period: ${period.name}`,
+          NotificationType.KPI
+        );
+      } catch (error) {
+        console.error("Failed to send KPI assignment notification:", error);
+      }
+
+      return savedAssignments;
     });
   }
 
@@ -140,18 +166,22 @@ export class KpiService {
   }
   // --- Final Score Calculation ---
   async calculateFinalKpiScore(employeeId: number, periodId: number): Promise<number> {
-    // 1. Lấy tất cả KPI đã duyệt của nhân viên trong tháng
+    // 1. Lấy tất cả KPI trong tháng (bao gồm cả Assigned và Submitted để hiển thị điểm tạm tính)
     const assignments = await this.kpiAssignmentRepo.find({
       where: {
         employee: { employee_id: employeeId },
         period: { id: periodId },
-        status: KpiAssignmentStatus.APPROVED // Chỉ tính những cái đã duyệt
+        status: In([
+          KpiAssignmentStatus.ASSIGNED,
+          KpiAssignmentStatus.SUBMITTED,
+          KpiAssignmentStatus.APPROVED
+        ])
       }
     });
 
     if (!assignments || assignments.length === 0) return 0;
 
-    // 2. Tính điểm chuẩn y hệt như Frontend Dashboard
+    // 2. Tính điểm chuẩn
     let totalScore = 0;
     for (const a of assignments) {
       // Dùng điểm Manager chấm, nếu chưa chấm thì dùng Actual
@@ -161,13 +191,13 @@ export class KpiService {
       let achievement = 0;
       if (target > 0) {
         // Tính % hoàn thành và giới hạn tối đa 120% (Max trần)
-        achievement = Math.min(120, Math.round((actual / target) * 100));
+        achievement = Math.min(120, (actual / target) * 100);
       }
 
       // Cộng dồn theo Trọng số (Weight)
       totalScore += (achievement * a.weight) / 100;
     }
 
-    return totalScore; // Trả về chuẩn 110%
+    return parseFloat(totalScore.toFixed(1)); // Trả về số với 1 chữ số thập phân
   }
 }
