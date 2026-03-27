@@ -25,16 +25,16 @@ export class Payslip {
   @Column({ type: "float", default: 0 })
   ot_hours!: number;
 
-  @Column({ type: "decimal", precision: 12, scale: 2, default: "0.00" })
+  @Column({ type: "decimal", precision: 15, scale: 2, default: "0.00" })
   bonus!: string;
   
-  @Column({ type: "decimal", precision: 12, scale: 2 })
+  @Column({ type: "decimal", precision: 15, scale: 2 })
   gross_salary!: string;
 
-  @Column({ type: "decimal", precision: 12, scale: 2, default: "0.00" })
+  @Column({ type: "decimal", precision: 15, scale: 2, default: "0.00" })
   deductions!: string;
 
-  @Column({ type: "decimal", precision: 12, scale: 2 })
+  @Column({ type: "decimal", precision: 15, scale: 2 })
   net_salary!: string;
 
   @Column({ type: "float", default: 0 })

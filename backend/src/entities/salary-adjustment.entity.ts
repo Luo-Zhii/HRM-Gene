@@ -35,7 +35,7 @@ export class SalaryAdjustment {
   })
   type!: AdjustmentType;
 
-  @Column({ type: "decimal", precision: 14, scale: 2 })
+  @Column({ type: "decimal", precision: 15, scale: 2 })
   amount!: string;
 
   /** Format: "MM/YYYY" e.g. "10/2023" */

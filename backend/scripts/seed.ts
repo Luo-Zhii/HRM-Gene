@@ -138,7 +138,12 @@ async function run() {
   await ppRepo.save([
     { position: posDirector, permission: p_system },
     { position: posDirector, permission: p_payroll },
-    { position: posDirector, permission: p_leave }, 
+    { position: posDirector, permission: p_leave },
+    { position: posDirector, permission: p_employee },
+    { position: posDirector, permission: p_reports },
+    { position: posDirector, permission: p_submit_leave },
+    { position: posDirector, permission: p_read_balance },
+    { position: posDirector, permission: p_check_in },
     { position: posManager, permission: p_payroll },
     { position: posManager, permission: p_leave },
     { position: posSeniorStaff, permission: p_submit_leave },
@@ -352,10 +357,10 @@ async function run() {
   console.log("🌱 Creating Violations...");
   await violationRepo.save(violationRepo.create({
     employee: employees[1],
-    date: formatDate(now),
+    violation_date: now,
     violation_type: "Late",
     description: "Late > 30 mins",
-    penalty_amount: "200000",
+    deduction_amount: "200000",
     status: ViolationStatus.RESOLVED
   }));
 

@@ -9,10 +9,10 @@ export class SalaryHistory {
   @ManyToOne(() => Employee)
   employee!: Employee;
 
-  @Column({ type: "decimal", precision: 12, scale: 2 })
+  @Column({ type: "decimal", precision: 15, scale: 2 })
   old_salary!: string;
 
-  @Column({ type: "decimal", precision: 12, scale: 2 })
+  @Column({ type: "decimal", precision: 15, scale: 2 })
   new_salary!: string;
 
   @Column({ type: "date" })

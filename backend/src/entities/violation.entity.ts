@@ -29,7 +29,7 @@ export class Violation {
   @Column({ type: "text" })
   description!: string;
 
-  @Column({ type: "decimal", precision: 12, scale: 2, default: "0.00" })
+  @Column({ type: "decimal", precision: 15, scale: 2, default: "0.00" })
   deduction_amount!: string;
 
   @Column({

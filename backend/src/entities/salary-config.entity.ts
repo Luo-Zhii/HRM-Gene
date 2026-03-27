@@ -16,19 +16,19 @@ export class SalaryConfig {
   @JoinColumn({ name: "employee_id" })
   employee!: Employee;
 
-  @Column({ type: "decimal", precision: 12, scale: 2 })
+  @Column({ type: "decimal", precision: 15, scale: 2 })
   base_salary!: string;
 
-  @Column({ type: "decimal", precision: 12, scale: 2, default: "0.00" })
+  @Column({ type: "decimal", precision: 15, scale: 2, default: "0.00" })
   transport_allowance!: string;
 
-  @Column({ type: "decimal", precision: 12, scale: 2, default: "0.00" })
+  @Column({ type: "decimal", precision: 15, scale: 2, default: "0.00" })
   lunch_allowance!: string;
 
-  @Column({ type: "decimal", precision: 12, scale: 2, default: "0.00" })
+  @Column({ type: "decimal", precision: 15, scale: 2, default: "0.00" })
   responsibility_allowance!: string;
 
-  @Column({ type: "decimal", precision: 12, scale: 2, default: "0.00" })
+  @Column({ type: "decimal", precision: 15, scale: 2, default: "0.00" })
   target_bonus!: string;
 
   @Column({ type: "float", default: 0 })

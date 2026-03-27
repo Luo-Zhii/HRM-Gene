@@ -44,7 +44,7 @@ export class Contract {
   })
   status!: ContractStatus;
 
-  @Column({ type: "decimal", precision: 12, scale: 2 })
+  @Column({ type: "decimal", precision: 15, scale: 2 })
   salary_rate!: string;
 
   @Column({ nullable: true })
