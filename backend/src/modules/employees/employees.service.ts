@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DataSource } from "typeorm"; // Thêm DataSource ở đây
 import * as bcrypt from "bcrypt";
-import { Employee } from "../../entities/employee.entity";
+import { Employee, EmploymentStatus } from "../../entities/employee.entity";
 import { Department } from "../../entities/department.entity";
 import { Position } from "../../entities/position.entity";
 import { CreateEmployeeDto } from "./dto/create-employee.dto";
@@ -121,6 +121,22 @@ export class EmployeesService {
     if (dto.avatar_url !== undefined) emp.avatar_url = dto.avatar_url;
     if (dto.phone_number !== undefined) emp.phone_number = dto.phone_number;
     if (dto.address !== undefined) emp.address = dto.address;
+    
+    // Logic update Offboarding
+    if (dto.employment_status !== undefined) {
+      emp.employment_status = dto.employment_status;
+      
+      // Sync Trigger: Automatically terminate active contract if employee is terminated
+      if (dto.employment_status === EmploymentStatus.TERMINATED) {
+        const resignationDate = dto.resignation_date || new Date().toISOString().split('T')[0];
+        await this.dataSource.query(
+          `UPDATE contract SET status = 'Terminated', end_date = $1 WHERE employee_id = $2 AND status = 'Active'`,
+          [resignationDate, id]
+        );
+      }
+    }
+    if (dto.resignation_reason !== undefined) emp.resignation_reason = dto.resignation_reason;
+    if (dto.resignation_date !== undefined) emp.resignation_date = dto.resignation_date;
 
     // Logic update Department
     if (dto.department_id !== undefined) {

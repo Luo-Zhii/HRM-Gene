@@ -39,6 +39,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           <NavItem href="/dashboard/timekeeping" label="Timekeeping" isActive={pathname === "/dashboard/timekeeping"} onClick={onClose} />
           <NavItem href="/dashboard/leave" label="Leave Management" isActive={pathname?.startsWith("/dashboard/leave")} onClick={onClose} />
           <NavItem href="/dashboard/salary" label="My Salary" isActive={pathname === "/dashboard/salary"} onClick={onClose} />
+          <NavItem href="/my-resignation" label="My Resignation" isActive={pathname === "/my-resignation"} onClick={onClose} />
           {(hasManageSystemPermission || isAdminOrHr || hasManageEmployeePermission) && (
             <>
               <NavGroup title="HR Administration" />
@@ -52,6 +53,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
               {hasManageSystemPermission && (
                 <>
                   <NavItem href="/admin/leave-approvals" label="Leave Approvals" isActive={pathname === "/admin/leave-approvals"} onClick={onClose} />
+                  <NavItem href="/admin/resignations" label="Resignation Approvals" isActive={pathname === "/admin/resignations"} onClick={onClose} />
                   <NavItem href="/admin/organization" label="Organizational management" isActive={pathname === "/admin/organization"} onClick={onClose} />
                   <NavItem href="/admin/discipline" label="Discipline" isActive={pathname === "/admin/discipline"} onClick={onClose} />
                   <NavItem href="/admin/permissions" label="Permissions" isActive={pathname === "/admin/permissions"} onClick={onClose} />
@@ -124,20 +126,19 @@ function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClic
         ) : (
           notifications.map((n) => (
             <div key={n.id} onClick={() => onNotificationClick(n)} className={`px-4 py-3 hover:bg-gray-50 cursor-pointer flex gap-3 border-b border-gray-50 last:border-0 ${!n.isRead ? 'bg-blue-50/30' : ''}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                (n.type === 'leave' || n.type === 'leave_request') ? 'bg-green-100 text-green-600' :
-                n.type === 'task' ? 'bg-amber-100 text-amber-600' :
-                n.type === 'kpi' ? 'bg-blue-100 text-blue-600' :
-                (n.type === 'discipline' || n.type === 'warning') ? 'bg-red-100 text-red-600' :
-                n.type === 'payroll' ? 'bg-emerald-100 text-emerald-700' :
-                'bg-blue-100 text-blue-600'
-              }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${(n.type === 'leave' || n.type === 'leave_request') ? 'bg-green-100 text-green-600' :
+                  n.type === 'task' ? 'bg-amber-100 text-amber-600' :
+                    n.type === 'kpi' ? 'bg-blue-100 text-blue-600' :
+                      (n.type === 'discipline' || n.type === 'warning') ? 'bg-red-100 text-red-600' :
+                        n.type === 'payroll' ? 'bg-emerald-100 text-emerald-700' :
+                          'bg-blue-100 text-blue-600'
+                }`}>
                 {(n.type === 'leave' || n.type === 'leave_request') ? <FileText size={16} /> :
-                 n.type === 'task' ? <AlertCircle size={16} /> :
-                 n.type === 'kpi' ? <Zap size={16} /> :
-                 (n.type === 'discipline' || n.type === 'warning') ? <AlertTriangle size={16} /> :
-                 n.type === 'payroll' ? <MessageSquare size={16} /> :
-                 <Megaphone size={16} />}
+                  n.type === 'task' ? <AlertCircle size={16} /> :
+                    n.type === 'kpi' ? <Zap size={16} /> :
+                      (n.type === 'discipline' || n.type === 'warning') ? <AlertTriangle size={16} /> :
+                        n.type === 'payroll' ? <MessageSquare size={16} /> :
+                          <Megaphone size={16} />}
               </div>
               <div className="flex-1 min-w-0 relative pr-6">
                 <p className={`text-xs ${!n.isRead ? 'font-bold text-gray-900' : 'text-gray-600'} truncate`}>{n.title || n.type}</p>
@@ -179,7 +180,9 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
       await markAsRead(notif.id);
     }
     setIsNotifOpen(false);
-    if (notif.type === 'leave_request') {
+    if (notif.link) {
+      router.push(notif.link);
+    } else if (notif.type === 'leave_request') {
       router.push('/admin/leave-approvals');
     } else if (notif.type === 'leave') {
       router.push('/dashboard/leave');
@@ -232,8 +235,8 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
           >
             <Bell size={22} />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-                {unreadCount}
+              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm ring-1 ring-red-500/20">
+                {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </button>

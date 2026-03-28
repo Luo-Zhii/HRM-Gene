@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { useAuth } from './useAuth';
 import { useToast } from "@/components/ui/use-toast";
 
@@ -7,16 +6,16 @@ export interface AppNotification {
   id: number;
   title: string;
   message: string;
-  type: 'leave' | 'leave_request' | 'task' | 'announcement' | 'report' | 'discipline' | 'warning';
+  type: 'leave' | 'leave_request' | 'task' | 'announcement' | 'report' | 'discipline' | 'warning' | 'payroll';
   isRead: boolean;
   createdAt: string;
+  link?: string;
 }
 
 export function useNotifications() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [socket, setSocket] = useState<Socket | null>(null);
 
   // Helper to extract access token from cookies if needed, or HTTPOnly cookie is used
   // If backend uses HTTPOnly cookie, we just connect and let it send cookies. But WebSocket handshake from a different port might need extra config or we pass the token.
@@ -36,44 +35,17 @@ export function useNotifications() {
   }, []);
 
   useEffect(() => {
-    if (!user) {
-      if (socket) {
-        socket.disconnect();
-        setSocket(null);
-      }
-      return;
-    }
+    if (!user) return;
 
     fetchNotifications();
 
-    // Determine backend WS URL: in development standard is localhost:3001
-    // In production, it might be the same origin.
-    const isDev = process.env.NODE_ENV === 'development';
-    const wsUrl = isDev ? 'http://localhost:3001' : '/';
-
-    const newSocket = io(wsUrl, {
-      withCredentials: true,
-      transports: ['websocket', 'polling']
-    });
-
-    newSocket.on('connect', () => {
-      console.log('Connected to WebSocket for notifications');
-    });
-
-    newSocket.on('newNotification', (notif: AppNotification) => {
-      setNotifications((prev) => [notif, ...prev]);
-      
-      toast({
-        title: notif.title,
-        description: notif.message,
-        variant: notif.type === 'warning' ? 'destructive' : 'default',
-      });
-    });
-
-    setSocket(newSocket);
+    // Poll every 15 seconds
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 15000);
 
     return () => {
-      newSocket.disconnect();
+      clearInterval(interval);
     };
   }, [user, fetchNotifications]);
 

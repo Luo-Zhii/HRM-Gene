@@ -41,6 +41,9 @@ export class Notification {
   @Column({ default: false })
   isRead!: boolean;
 
+  @Column({ nullable: true })
+  link?: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 

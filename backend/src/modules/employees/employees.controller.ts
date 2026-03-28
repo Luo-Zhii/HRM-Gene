@@ -11,18 +11,18 @@ import {
   ClassSerializerInterceptor,
   HttpCode,
   HttpStatus,
-  // UseGuards, // Bỏ comment nếu bạn muốn check quyền
+  UseGuards,
 } from "@nestjs/common";
 import { EmployeesService } from "./employees.service";
 import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
-// import { JwtAuthGuard } from "../../auth/jwt-auth.guard"; // Import Guard của bạn
-// import { RolesGuard } from "../../auth/roles.guard";       // Import Guard check Role/Permission
+import { JwtAuthGuard } from "../auth/jwt-auth.guard"; // Import Guard của bạn
+import { RolesGuard } from "../auth/roles.guard";       // Import Guard check Role/Permission
 // import { Roles } from "../../auth/roles.decorator";        // Decorator check quyền
 
 @Controller("employees") // Endpoint sẽ là /employees (hoặc /api/employees nếu có global prefix)
 @UseInterceptors(ClassSerializerInterceptor)
-// @UseGuards(JwtAuthGuard, RolesGuard) // Bỏ comment để bật bảo mật
+@UseGuards(JwtAuthGuard, RolesGuard) // Bật bảo mật
 export class EmployeesController {
   constructor(private readonly svc: EmployeesService) {}
 

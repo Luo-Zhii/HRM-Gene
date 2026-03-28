@@ -92,11 +92,17 @@ export default function OrganizationPage() {
 
       const deptsData = await deptsRes.json();
       const posData = await posRes.json();
-      const empsData = empsRes.ok ? await empsRes.json() : [];
+      const empsData: any = empsRes.ok ? await empsRes.json() : [];
 
       let statsData = { total_departments: 0, total_employees: 0, total_budget: 0 };
-      if (statsRes.ok) statsData = await statsRes.json();
-
+      if (statsRes.ok) {
+        const json: any = await statsRes.json();
+        statsData = {
+          total_departments: json.total_departments || 0,
+          total_employees: json.total_employees || 0,
+          total_budget: json.total_budget || 0
+        };
+      }
       setDepartments(deptsData || []);
       setPositions(posData || []);
       setBasicEmployees(empsData || []);

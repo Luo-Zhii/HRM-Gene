@@ -15,7 +15,7 @@ export class NotificationsService {
     private notificationsGateway: NotificationsGateway,
   ) {}
 
-  async createNotification(userId: number, title: string, message: string, type: NotificationType) {
+  async createNotification(userId: number, title: string, message: string, type: NotificationType, link?: string) {
     const employee = await this.employeeRepo.findOne({ where: { employee_id: userId } });
     
     if (employee) {
@@ -38,6 +38,7 @@ export class NotificationsService {
       title,
       message,
       type,
+      link,
     });
     
     const saved = await this.notificationRepo.save(notification);

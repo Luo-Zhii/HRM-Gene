@@ -13,6 +13,19 @@ import { Position } from "./position.entity";
 import { BankInfo } from "./bank-info.entity";
 import { Contract } from "./contract.entity";
 
+export enum EmploymentStatus {
+  ACTIVE = 'Active',
+  TERMINATED = 'Terminated',
+  SUSPENDED = 'Suspended',
+}
+
+export enum ResignationReason {
+  COMPENSATION = 'Compensation',
+  CULTURE = 'Culture',
+  PERSONAL = 'Personal',
+  OTHER = 'Other',
+}
+
 @Entity()
 export class Employee {
   @PrimaryGeneratedColumn()
@@ -78,4 +91,21 @@ export class Employee {
 
   @Column({ default: "en" })
   language!: string;
+
+  @Column({
+    type: "enum",
+    enum: EmploymentStatus,
+    default: EmploymentStatus.ACTIVE,
+  })
+  employment_status!: EmploymentStatus;
+
+  @Column({
+    type: "enum",
+    enum: ResignationReason,
+    nullable: true,
+  })
+  resignation_reason?: ResignationReason;
+
+  @Column({ type: "date", nullable: true })
+  resignation_date?: string;
 }

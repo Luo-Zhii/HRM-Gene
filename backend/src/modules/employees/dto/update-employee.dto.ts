@@ -1,6 +1,7 @@
 import { PartialType } from "@nestjs/mapped-types";
 import { CreateEmployeeDto } from "./create-employee.dto";
-import { IsOptional, IsObject, IsString, IsBoolean } from "class-validator";
+import { IsOptional, IsObject, IsString, IsBoolean, IsEnum } from "class-validator";
+import { EmploymentStatus, ResignationReason } from "../../../entities/employee.entity";
 
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
   // Thêm trường này để Controller nhận được cục data bank_info từ Frontend
@@ -43,4 +44,16 @@ export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
   @IsOptional()
   @IsBoolean()
   two_factor_auth?: boolean;
+
+  @IsOptional()
+  @IsEnum(EmploymentStatus)
+  employment_status?: EmploymentStatus;
+
+  @IsOptional()
+  @IsEnum(ResignationReason)
+  resignation_reason?: ResignationReason;
+
+  @IsOptional()
+  @IsString()
+  resignation_date?: string;
 }
