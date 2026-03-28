@@ -4,9 +4,13 @@ import { ResignationRequest } from '../../entities/resignation-request.entity';
 import { Employee } from '../../entities/employee.entity';
 import { ResignationsController } from './resignations.controller';
 import { ResignationsService } from './resignations.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ResignationRequest, Employee])],
+  imports: [
+    TypeOrmModule.forFeature([ResignationRequest, Employee]),
+    NotificationsModule
+  ],
   controllers: [ResignationsController],
   providers: [ResignationsService],
   exports: [ResignationsService]

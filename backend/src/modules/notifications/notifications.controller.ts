@@ -14,6 +14,12 @@ export class NotificationsController {
     return this.notificationsService.getUserNotifications(userId);
   }
 
+  @Get('my')
+  async getMyNotifications(@Request() req: any) {
+    const userId = req.user.employee_id || req.user.id;
+    return this.notificationsService.getUserNotifications(userId);
+  }
+
   @Patch(':id/read')
   async markAsRead(@Param('id') id: string, @Request() req: any) {
     const userId = req.user.employee_id || req.user.id;

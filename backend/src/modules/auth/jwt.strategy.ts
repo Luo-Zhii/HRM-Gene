@@ -50,6 +50,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException();
     }
 
+    // SECURITY LOCKOUT: Check if employee is terminated and past their resignation date
+    if (user.employment_status === 'Terminated' && user.resignation_date) {
+      const today = new Date().toISOString().split('T')[0];
+      if (today > user.resignation_date) {
+        throw new UnauthorizedException('Your account has been deactivated due to resignation/termination.');
+      }
+    }
+
     // 👇 "Làm phẳng" quyền thành mảng string: ['manage:system', 'view:leave']
     const permissions =
       user.position?.permissions

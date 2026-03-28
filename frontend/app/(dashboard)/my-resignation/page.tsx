@@ -129,6 +129,22 @@ export default function MyResignationPage() {
         <p className="text-gray-500 mt-1">Submit your formal notice and track your offboarding request.</p>
       </div>
 
+      {/* APPROVED BANNER (PURE TAILWIND) */}
+      {activeRequest?.status === "Approved" && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 p-5 rounded-2xl flex items-start gap-4 mb-8 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+             <CheckCircle2 size={24} />
+          </div>
+          <div>
+            <h4 className="font-bold text-lg leading-none mb-1">Resignation Approved</h4>
+            <p className="text-sm text-blue-700 leading-relaxed">
+              Your resignation request has been officially approved. Your official last day of work is <strong className="font-black text-blue-900">{new Date(activeRequest.requested_last_day).toLocaleDateString()}</strong>. 
+              Please ensure all handover tasks are completed and assets are returned as per HR policy. Thank you for your contributions!
+            </p>
+          </div>
+        </div>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 bg-white border border-gray-100 p-1 shadow-sm rounded-lg">
           <TabsTrigger value="submit" className="rounded-md data-[state=active]:bg-gray-50 data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">Submit Notice</TabsTrigger>
@@ -154,10 +170,12 @@ export default function MyResignationPage() {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900">You have an active resignation request</h3>
                   <p className="text-gray-500 mt-2 max-w-md mx-auto">
-                    You currently have a request in <strong className="text-gray-700">{activeRequest.status}</strong> status. 
-                    You cannot submit another notice while one is already active. Please check the tracking history.
+                    You currently have a request in <strong className="text-gray-700 uppercase tracking-wider">{activeRequest.status}</strong> status. 
+                    {activeRequest.status === 'Approved' 
+                      ? "Your resignation has been finalized. Please check the details in the tracking history."
+                      : "You cannot submit another notice while one is already active. Please check the tracking history."}
                   </p>
-                  <Button variant="outline" className="mt-6" onClick={() => setActiveTab('history')}>View Request Tracking</Button>
+                  <Button variant="outline" className="mt-6 border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => setActiveTab('history')}>View Request Tracking</Button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">

@@ -131,14 +131,18 @@ function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClic
                     n.type === 'kpi' ? 'bg-blue-100 text-blue-600' :
                       (n.type === 'discipline' || n.type === 'warning') ? 'bg-red-100 text-red-600' :
                         n.type === 'payroll' ? 'bg-emerald-100 text-emerald-700' :
-                          'bg-blue-100 text-blue-600'
+                          n.type === 'resignation_request' ? 'bg-orange-100 text-orange-600' :
+                            n.type === 'resignation_status_update' ? 'bg-blue-100 text-blue-600 font-bold' :
+                              'bg-blue-100 text-blue-600'
                 }`}>
                 {(n.type === 'leave' || n.type === 'leave_request') ? <FileText size={16} /> :
                   n.type === 'task' ? <AlertCircle size={16} /> :
                     n.type === 'kpi' ? <Zap size={16} /> :
                       (n.type === 'discipline' || n.type === 'warning') ? <AlertTriangle size={16} /> :
                         n.type === 'payroll' ? <MessageSquare size={16} /> :
-                          <Megaphone size={16} />}
+                          n.type === 'resignation_request' ? <User size={16} /> :
+                            n.type === 'resignation_status_update' ? <Bell size={16} /> :
+                              <Megaphone size={16} />}
               </div>
               <div className="flex-1 min-w-0 relative pr-6">
                 <p className={`text-xs ${!n.isRead ? 'font-bold text-gray-900' : 'text-gray-600'} truncate`}>{n.title || n.type}</p>
@@ -208,6 +212,10 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
       }
     } else if (notif.type === 'kpi') {
       router.push('/dashboard/performance/me');
+    } else if (notif.type === 'resignation_request') {
+      router.push('/admin/resignations');
+    } else if (notif.type === 'resignation_status_update') {
+      router.push('/my-resignation');
     }
   };
 

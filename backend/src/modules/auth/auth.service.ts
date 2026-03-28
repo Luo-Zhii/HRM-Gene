@@ -128,6 +128,14 @@ export class AuthService {
     const match = await bcrypt.compare(pass, user.password);
     if (!match) return null;
 
+    // SECURITY LOCKOUT: Check if employee is terminated and past their resignation date
+    if (user.employment_status === 'Terminated' && user.resignation_date) {
+      const today = new Date().toISOString().split('T')[0];
+      if (today > user.resignation_date) {
+        throw new UnauthorizedException('Your account has been deactivated due to resignation/termination.');
+      }
+    }
+
     const permissions = user.position
       ? await this.getUserPermissions(user.position.position_id)
       : [];

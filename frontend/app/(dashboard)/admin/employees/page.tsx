@@ -16,6 +16,7 @@ interface EmployeeData {
   avatar_url?: string; phone_number?: string; address?: string;
   position?: Position | null; department?: Department | null;
   is_department_head?: boolean;
+  employment_status?: string;
 }
 
 export default function EmployeeDirectoryPage() {
@@ -205,9 +206,9 @@ export default function EmployeeDirectoryPage() {
                     <th className="px-4 py-3 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredAndSortedEmployees.map((emp) => (
-                    <tr key={emp.employee_id} className="hover:bg-gray-50/80 transition-colors">
+                  <tbody className="divide-y divide-gray-100 text-gray-600 font-medium">
+                    {filteredAndSortedEmployees.map((emp) => (
+                      <tr key={emp.employee_id} className={`hover:bg-gray-50/80 transition-colors ${emp.employment_status === 'Terminated' ? 'opacity-60 bg-gray-50/30' : ''}`}>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0 overflow-hidden border border-gray-200">
@@ -218,9 +219,14 @@ export default function EmployeeDirectoryPage() {
                             )}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-semibold text-gray-900">{getEmployeeName(emp)}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-900">{getEmployeeName(emp)}</span>
+                              {emp.employment_status === 'Terminated' && (
+                                <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter border border-red-200">Terminated</span>
+                              )}
+                            </div>
                             {emp.is_department_head && (
-                              <span className="text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5 w-max mt-0.5 uppercase">Head</span>
+                              <span className="text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5 w-max mt-0.5 uppercase tracking-wider">Head</span>
                             )}
                           </div>
                         </div>
@@ -241,10 +247,10 @@ export default function EmployeeDirectoryPage() {
                           View <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
                         </button>
                         <button
-                          disabled={emp.employee_id === user?.employee_id}
+                          disabled={emp.employee_id === user?.employee_id || emp.employment_status === 'Terminated'}
                           onClick={() => setOffboardEmployeeId(emp.employee_id)}
-                          className={`inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors ${emp.employee_id === user?.employee_id ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' : 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'}`}
-                          title={emp.employee_id === user?.employee_id ? "You cannot offboard yourself" : "Offboard Employee"}
+                          className={`inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors ${emp.employee_id === user?.employee_id || emp.employment_status === 'Terminated' ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50' : 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'}`}
+                          title={emp.employee_id === user?.employee_id ? "You cannot offboard yourself" : emp.employment_status === 'Terminated' ? "Employee is already terminated" : "Offboard Employee"}
                         >
                           Offboard <UserMinus className="w-3.5 h-3.5 ml-1.5" />
                         </button>
@@ -262,7 +268,7 @@ export default function EmployeeDirectoryPage() {
           {viewMode === "grid" && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {filteredAndSortedEmployees.map((emp) => (
-                <div key={emp.employee_id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col hover:shadow-md transition-all group">
+                <div key={emp.employee_id} className={`bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col hover:shadow-md transition-all group ${emp.employment_status === 'Terminated' ? 'opacity-60 grayscale-[0.3]' : ''}`}>
                   <div className="flex items-start gap-4 mb-4">
                     <div className="w-12 h-12 rounded-full bg-blue-100 border-2 border-white shadow-sm flex items-center justify-center text-blue-600 font-bold shrink-0 overflow-hidden">
                       {emp.avatar_url ? (
@@ -272,7 +278,12 @@ export default function EmployeeDirectoryPage() {
                       )}
                     </div>
                     <div>
-                      <h3 className="text-[15px] font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">{getEmployeeName(emp)}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-[15px] font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">{getEmployeeName(emp)}</h3>
+                        {emp.employment_status === 'Terminated' && (
+                          <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter border border-red-200">Terminated</span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500 mt-1 font-medium">{emp.position?.position_name || "Employee"} • {emp.department?.department_name || "N/A"}</p>
                     </div>
                   </div>
@@ -288,10 +299,10 @@ export default function EmployeeDirectoryPage() {
                       Profile <ExternalLink className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      disabled={emp.employee_id === user?.employee_id}
+                      disabled={emp.employee_id === user?.employee_id || emp.employment_status === 'Terminated'}
                       onClick={() => setOffboardEmployeeId(emp.employee_id)}
-                      className={`py-2 px-3 border text-sm font-bold rounded-lg transition-colors flex items-center justify-center ${emp.employee_id === user?.employee_id ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' : 'bg-red-50 hover:bg-red-100 border-red-100 text-red-600'}`}
-                      title={emp.employee_id === user?.employee_id ? "You cannot offboard yourself" : "Offboard Employee"}
+                      className={`py-2 px-3 border text-sm font-bold rounded-lg transition-colors flex items-center justify-center ${emp.employee_id === user?.employee_id || emp.employment_status === 'Terminated' ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50' : 'bg-red-50 hover:bg-red-100 border-red-100 text-red-600'}`}
+                      title={emp.employee_id === user?.employee_id ? "You cannot offboard yourself" : emp.employment_status === 'Terminated' ? "Employee is already terminated" : "Offboard Employee"}
                     >
                       <UserMinus className="w-4 h-4" />
                     </button>
