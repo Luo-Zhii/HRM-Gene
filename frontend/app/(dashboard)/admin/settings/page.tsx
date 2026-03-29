@@ -125,11 +125,15 @@ export default function SystemSettingsPage() {
     uploadData.append("file", file);
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const apiBase = "/api";
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
       const res = await fetch(`${apiBase}/company-profile/logo`, {
         method: "PATCH",
         body: uploadData,
         credentials: "include",
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        }
       });
       if (res.ok) {
         const data = await res.json();
@@ -151,7 +155,8 @@ export default function SystemSettingsPage() {
     setStatusMessage(null);
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const apiBase = "/api";
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
       
       // 1. Save Company Profile
       const companyPayload = {
@@ -167,7 +172,10 @@ export default function SystemSettingsPage() {
 
       const companyRes = await fetch(`${apiBase}/company-profile`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(companyPayload),
         credentials: "include",
       });
@@ -179,7 +187,10 @@ export default function SystemSettingsPage() {
       await Promise.all(kvKeys.map(key => {
         return fetch(`${apiBase}/admin/settings`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            ...(token ? { "Authorization": `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ key, value: formData[key as keyof typeof formData] }),
           credentials: "include",
         });

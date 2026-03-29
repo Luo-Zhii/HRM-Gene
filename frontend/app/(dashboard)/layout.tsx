@@ -103,6 +103,12 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
               <NavItem href="/admin/reports" label="Analysis report" isActive={pathname === "/admin/reports"} onClick={onClose} />
             </>
           )}
+          {hasManageSystemPermission && (
+            <>
+              <NavGroup title="Communication" />
+              <NavItem href="/admin/announcements" label="Company News" isActive={pathname === "/admin/announcements"} onClick={onClose} />
+            </>
+          )}
         </nav>
         {hasManageSystemPermission && (
           <div className="p-4 border-t border-gray-100 shrink-0 space-y-1">

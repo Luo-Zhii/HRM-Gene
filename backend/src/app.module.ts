@@ -13,6 +13,7 @@ import { KpiModule } from "./modules/kpi/kpi.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { ResignationsModule } from "./modules/resignations/resignations.module";
 import { CompanyProfileModule } from "./modules/company-profile/company-profile.module";
+import { AnnouncementsModule } from "./modules/announcements/announcements.module";
 
 import * as path from "path";
 import { ConfigModule } from "@nestjs/config";
@@ -57,7 +58,8 @@ import { ScheduleModule } from "@nestjs/schedule";
     KpiModule,
     AnalyticsModule,
     ResignationsModule,
-    CompanyProfileModule
+    CompanyProfileModule,
+    AnnouncementsModule
   ],
 })
 export class AppModule { }

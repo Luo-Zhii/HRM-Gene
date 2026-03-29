@@ -52,10 +52,14 @@ export default function CompanyProfilePage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const apiBase = "/api";
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
       const res = await fetch(`${apiBase}/company-profile`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(formData),
         credentials: "include",
       });
@@ -81,11 +85,15 @@ export default function CompanyProfilePage() {
     uploadData.append("file", file);
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const apiBase = "/api";
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
       const res = await fetch(`${apiBase}/company-profile/logo`, {
         method: "PATCH",
         body: uploadData,
         credentials: "include",
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        }
       });
       if (res.ok) {
         const data = await res.json();
