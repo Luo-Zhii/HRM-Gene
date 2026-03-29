@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useNotifications } from "@/src/hooks/useNotifications";
+import { useCompany, CompanyProvider } from "@/src/context/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import {
@@ -14,6 +15,7 @@ import {
 // --- COMPONENT SIDEBAR (Cập nhật Menu Contracts) ---
 function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { user } = useAuth();
+  const { settings } = useCompany();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -25,12 +27,24 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const canViewDirectory = isAdminOrHr || hasManageSystemPermission || hasManageEmployeePermission || hasManagePayrollPermission;
   const canAccessReports = hasManageSystemPermission || hasManagePayrollPermission || positionName === "admin" || positionName === "director" || positionName === "hr manager";
 
+  const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:3001';
+  const logoUrl = settings?.logo_url 
+    ? `${backendBaseUrl}${settings.logo_url}`
+    : "/Logo.png";
+
   return (
     <>
       <div className={`fixed inset-0 bg-black/40 z-40 md:hidden transition-opacity ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`} onClick={onClose} />
       <aside className={`fixed md:sticky top-0 h-screen z-50 w-[260px] bg-white border-r border-gray-200 transform transition-transform duration-300 flex flex-col ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
         <div className={`flex items-center justify-between h-16 px-6 shrink-0 transition-all relative z-10 ${isScrolled ? "border-transparent shadow-sm" : "border-b border-gray-100"}`}>
-          <img src="/Logo.png" alt="DashStack Logo" className="h-8 w-auto object-contain" />
+          <img 
+            src={logoUrl} 
+            alt="Company Logo" 
+            className="h-8 w-auto object-contain max-w-[150px]" 
+            onError={(e) => {
+              e.currentTarget.src = "/Logo.png";
+            }}
+          />
           <button onClick={onClose} className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-md"><X size={20} /></button>
         </div>
         <style dangerouslySetInnerHTML={{ __html: `.custom-thin-scrollbar::-webkit-scrollbar { width: 5px; } .custom-thin-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-thin-scrollbar::-webkit-scrollbar-thumb { background-color: transparent; border-radius: 10px; } .custom-thin-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #cbd5e1; } .custom-thin-scrollbar { scrollbar-width: thin; scrollbar-color: transparent transparent; } .custom-thin-scrollbar:hover { scrollbar-color: #cbd5e1 transparent; }` }} />
@@ -293,15 +307,17 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-auto p-6">
-          <div className="max-w-7xl mx-auto">{children}</div>
-        </main>
-        <Toaster />
+    <CompanyProvider>
+      <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <Header onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1 overflow-auto p-6">
+            <div className="max-w-7xl mx-auto">{children}</div>
+          </main>
+          <Toaster />
+        </div>
       </div>
-    </div>
+    </CompanyProvider>
   );
 }
