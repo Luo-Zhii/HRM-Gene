@@ -81,18 +81,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Xóa sạch storage
       if (typeof window !== "undefined") {
-        localStorage.clear(); // Xóa sạch LocalStorage
-        sessionStorage.clear(); // Xóa sạch SessionStorage
+        localStorage.clear();
+        sessionStorage.clear();
+        // Clear all cookies (best effort)
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
       }
 
       setUser(null);
-
-      // --- SỬA LỖI TẠI ĐÂY ---
-      // Thay vì router.push("/login"), dùng window.location.href
-      // Để ép trình duyệt reload lại hoàn toàn, xóa sạch Router Cache của Next.js
       window.location.href = "/login";
     })();
-  }, []); // Bỏ dependency [router] vì không dùng nữa
+  }, []);
+
+  // --- GLOBAL FETCH INTERCEPTOR (FOR 401 HANDLING) ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      
+      // If 401 Unauthorized, trigger logout
+      if (response.status === 401) {
+        const url = args[0] instanceof Request ? args[0].url : args[0].toString();
+        // Don't intercept 401s from profile or login itself to avoid loops
+        if (!url.includes("/auth/profile") && !url.includes("/auth/login")) {
+          console.warn("Session expired (401). Logging out...");
+          logout();
+        }
+      }
+      return response;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [logout]);
+
+  // --- FORCED REDIRECT LOGIC ---
+  useEffect(() => {
+    if (loading) return;
+    
+    const pathname = window.location.pathname;
+    const isPublicPath = pathname === "/login" || pathname === "/admin-register" || pathname === "/";
+    
+    if (!user && !isPublicPath) {
+      console.log("Unauthenticated access to protected route. Redirecting to login...");
+      window.location.href = "/login";
+    }
+  }, [user, loading]);
 
   const value: AuthContextValue = {
     user,
