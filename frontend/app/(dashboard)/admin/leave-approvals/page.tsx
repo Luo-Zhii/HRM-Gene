@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/src/hooks/useAuth";
-import { Calendar, Clock, FileText, User as UserIcon, Building2, Briefcase, Mail, LayoutGrid, List as ListIcon, CheckCircle2, XCircle, X } from "lucide-react";
+import { Calendar, Clock, FileText, User as UserIcon, Building2, Briefcase, Mail, LayoutGrid, List as ListIcon, CheckCircle2, XCircle, X, MessageSquare } from "lucide-react";
+import ContextualChat from "@/src/components/ContextualChat";
 
 interface LeaveRequest {
   request_id: number;
@@ -551,6 +552,17 @@ export default function LeaveApprovalsPage() {
                           </div>
                         </div>
                       </div>
+                    </section>
+
+                    {/* Section 3: Contextual Discussion */}
+                    <section className="pb-6">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center">
+                        <MessageSquare className="w-4 h-4 mr-2" /> Discussion & Notes
+                      </h3>
+                      <ContextualChat 
+                        entityType="LEAVE_REQUEST" 
+                        entityId={activeRequest.request_id.toString()} 
+                      />
                     </section>
                   </div>
 

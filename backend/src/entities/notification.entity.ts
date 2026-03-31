@@ -20,6 +20,7 @@ export enum NotificationType {
   KPI = "kpi",
   RESIGNATION_REQUEST = "resignation_request",
   RESIGNATION_STATUS_UPDATE = "resignation_status_update",
+  COMMENT = "comment",
 }
 
 @Entity()

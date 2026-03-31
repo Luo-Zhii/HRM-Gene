@@ -164,7 +164,8 @@ function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClic
                         n.type === 'payroll' ? 'bg-emerald-100 text-emerald-700' :
                           n.type === 'resignation_request' ? 'bg-orange-100 text-orange-600' :
                             n.type === 'resignation_status_update' ? 'bg-blue-100 text-blue-600 font-bold' :
-                              'bg-blue-100 text-blue-600'
+                              n.type === 'comment' ? 'bg-blue-100 text-blue-600' :
+                                'bg-blue-100 text-blue-600'
                 }`}>
                 {(n.type === 'leave' || n.type === 'leave_request') ? <FileText size={16} /> :
                   n.type === 'task' ? <AlertCircle size={16} /> :
@@ -173,7 +174,8 @@ function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClic
                         n.type === 'payroll' ? <MessageSquare size={16} /> :
                           n.type === 'resignation_request' ? <User size={16} /> :
                             n.type === 'resignation_status_update' ? <Bell size={16} /> :
-                              <Megaphone size={16} />}
+                              n.type === 'comment' ? <MessageSquare size={16} /> :
+                                <Megaphone size={16} />}
               </div>
               <div className="flex-1 min-w-0 relative pr-6">
                 <p className={`text-xs ${!n.isRead ? 'font-bold text-gray-900' : 'text-gray-600'} truncate`}>{n.title || n.type}</p>
