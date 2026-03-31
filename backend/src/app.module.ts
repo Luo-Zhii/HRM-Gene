@@ -15,6 +15,7 @@ import { ResignationsModule } from "./modules/resignations/resignations.module";
 import { CompanyProfileModule } from "./modules/company-profile/company-profile.module";
 import { AnnouncementsModule } from "./modules/announcements/announcements.module";
 import { CommentsModule } from "./modules/comments/comments.module";
+import { DashboardModule } from "./modules/dashboard/dashboard.module";
 
 import * as path from "path";
 import { ConfigModule } from "@nestjs/config";
@@ -61,7 +62,8 @@ import { ScheduleModule } from "@nestjs/schedule";
     ResignationsModule,
     CompanyProfileModule,
     AnnouncementsModule,
-    CommentsModule
+    CommentsModule,
+    DashboardModule
   ],
 })
 export class AppModule { }

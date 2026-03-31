@@ -1,6 +1,17 @@
-import { redirect } from "next/navigation";
+"use client";
+import React from "react";
+import { useAuth } from "@/src/hooks/useAuth";
+import AdminDashboard from '@/components/dashboard/AdminDashboard';
+import EmployeeDashboard from '@/components/dashboard/EmployeeDashboard';
 
-export default function DashboardLanding() {
-  // Many places in the frontend redirect to /dashboard — send that to a sensible default
-  redirect("/accounting");
+export default function DashboardPage() {
+  const { user } = useAuth();
+  
+  if (!user) return null; 
+
+  if (user.role === 'Admin' || user.role === 'System Director') {
+    return <AdminDashboard />;
+  }
+  
+  return <EmployeeDashboard />;
 }

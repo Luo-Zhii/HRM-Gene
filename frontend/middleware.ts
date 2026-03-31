@@ -30,7 +30,7 @@ export function middleware(request: NextRequest) {
     // Nếu họ cố vào trang login, "đá" họ vào trang dashboard
     if (isPublicPath) {
       return NextResponse.redirect(
-        new URL("/dashboard/timekeeping", request.url)
+        new URL("/dashboard", request.url)
       );
     }
     // Nếu họ vào trang khác, cứ cho đi

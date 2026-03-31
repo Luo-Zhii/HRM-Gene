@@ -28,7 +28,7 @@ export default function LoginPage() {
       const json = await res.json();
 
       if (res.ok && json.success) {
-        window.location.href = "/dashboard/timekeeping";
+        window.location.href = "/dashboard";
       } else {
         setError(json.message || "Login failed. Please check credentials.");
       }

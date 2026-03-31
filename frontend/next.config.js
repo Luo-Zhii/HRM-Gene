@@ -146,7 +146,7 @@ const nextConfig = {
 
   // Các phần khác giữ nguyên
   async redirects() {
-    return [{ source: "/dashboard", destination: "/", permanent: false }];
+    return [];
   },
   typescript: { tsconfigPath: "./tsconfig.json" },
   eslint: { dirs: ["src", "app"] },

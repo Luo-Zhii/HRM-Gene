@@ -65,7 +65,7 @@ export default function AdminRegisterPage() {
           title: "Registration successful",
           description: "You have been signed in.",
         });
-        router.push("/dashboard/timekeeping");
+        router.push("/dashboard");
       } else {
         setError(json.message || json.error || "Registration failed");
       }
