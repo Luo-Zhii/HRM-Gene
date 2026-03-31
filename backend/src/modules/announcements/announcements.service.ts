@@ -55,4 +55,20 @@ export class AnnouncementsService {
       order: { created_at: 'DESC' },
     });
   }
+
+  async getFeed(user: any): Promise<Announcement[]> {
+    const deptId = user.department?.department_id;
+    
+    // Filter announcements where target_audience is 'all' OR matches the user's department
+    // and status is 'Active'
+    const query = this.announcementRepo.createQueryBuilder('announcement')
+      .where('announcement.status = :status', { status: 'Active' })
+      .andWhere('(announcement.target_audience = :all OR announcement.target_audience = :dept)', {
+        all: 'all',
+        dept: deptId ? `dept_${deptId}` : 'NONE_DEPT'
+      })
+      .orderBy('announcement.created_at', 'DESC');
+
+    return query.getMany();
+  }
 }

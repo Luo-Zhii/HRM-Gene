@@ -40,6 +40,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.employeeRepo.findOne({
       where: { employee_id: payload.sub } as any,
       relations: [
+        "department",
         "position",
         "position.permissions", // 👈 Tên này phải chuẩn theo Entity Position
         "position.permissions.permission", // 👈 Lấy tên permission

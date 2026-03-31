@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import {
   Menu, X, User, LogOut, ChevronDown, Bell,
-  CheckCheck, MessageSquare, AlertCircle, FileText, Megaphone, AlertTriangle, Zap
+  CheckCheck, MessageSquare, AlertCircle, FileText, Megaphone, AlertTriangle, Zap,
+  Newspaper, Radio, LayoutDashboard
 } from "lucide-react";
 
 // --- COMPONENT SIDEBAR (Cập nhật Menu Contracts) ---
@@ -49,7 +50,8 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         </div>
         <style dangerouslySetInnerHTML={{ __html: `.custom-thin-scrollbar::-webkit-scrollbar { width: 5px; } .custom-thin-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-thin-scrollbar::-webkit-scrollbar-thumb { background-color: transparent; border-radius: 10px; } .custom-thin-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #cbd5e1; } .custom-thin-scrollbar { scrollbar-width: thin; scrollbar-color: transparent transparent; } .custom-thin-scrollbar:hover { scrollbar-color: #cbd5e1 transparent; }` }} />
         <nav onScroll={(e) => setIsScrolled(e.currentTarget.scrollTop > 0)} className="flex-1 overflow-y-auto py-6 px-4 space-y-1 custom-thin-scrollbar">
-          <NavItem href="/dashboard" label="Dashboard" isActive={pathname === "/dashboard"} onClick={onClose} />
+          <NavItem href="/dashboard" label="Dashboard" icon={LayoutDashboard} isActive={pathname === "/dashboard"} onClick={onClose} />
+          <NavItem href="/company-news" label="News Feed" icon={Newspaper} isActive={pathname === "/company-news"} onClick={onClose} />
           <NavItem href="/dashboard/timekeeping" label="Timekeeping" isActive={pathname === "/dashboard/timekeeping"} onClick={onClose} />
           <NavItem href="/dashboard/leave" label="Leave Management" isActive={pathname?.startsWith("/dashboard/leave")} onClick={onClose} />
           <NavItem href="/dashboard/salary" label="My Salary" isActive={pathname === "/dashboard/salary"} onClick={onClose} />
@@ -106,7 +108,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           {hasManageSystemPermission && (
             <>
               <NavGroup title="Communication" />
-              <NavItem href="/admin/announcements" label="Company News" isActive={pathname === "/admin/announcements"} onClick={onClose} />
+              <NavItem href="/admin/announcements" label="Manage News" icon={Radio} isActive={pathname === "/admin/announcements"} onClick={onClose} />
             </>
           )}
         </nav>
@@ -122,9 +124,18 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
 }
 
 function NavGroup({ title }: { title: string }) { return <div className="mt-6 mb-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider px-3">{title}</div>; }
-function NavItem({ href, label, isActive, onClick }: { href: string; label: string; isActive?: boolean; onClick: () => void }) {
+function NavItem({ href, label, icon: Icon, isActive, onClick }: { href: string; label: string; icon?: any; isActive?: boolean; onClick: () => void }) {
   return (
-    <Link href={href} onClick={onClick} className={`flex items-center px-4 py-2.5 rounded-none md:rounded-r-full transition-colors w-full ${isActive ? "bg-blue-500 text-white font-medium" : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"}`}>
+    <Link 
+      href={href} 
+      onClick={onClick} 
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-none md:rounded-r-full transition-all group w-full ${
+        isActive 
+          ? "bg-blue-600 text-white font-semibold shadow-md shadow-blue-200" 
+          : "text-gray-600 hover:bg-blue-50 hover:text-blue-600"
+      }`}
+    >
+      {Icon && <Icon size={18} className={isActive ? "text-white" : "text-gray-400 group-hover:text-blue-600"} />}
       <span className="text-[14px]">{label}</span>
     </Link>
   );

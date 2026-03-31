@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { AnnouncementsService } from './announcements.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -19,5 +19,10 @@ export class AnnouncementsController {
   @Get()
   async findAll() {
     return this.announcementsService.findAll();
+  }
+
+  @Get('feed')
+  async getFeed(@Req() req: any) {
+    return this.announcementsService.getFeed(req.user);
   }
 }
