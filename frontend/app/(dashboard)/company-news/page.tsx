@@ -72,6 +72,28 @@ export default function CompanyNewsPage() {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    try {
+      const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: "DELETE",
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
+        credentials: "include"
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete announcement");
+      }
+
+      // Optimistic Update
+      setAnnouncements(prev => prev.filter(ann => ann.id !== id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete");
+    }
+  };
+
   useEffect(() => {
     if (!authLoading && user) {
       fetchAnnouncements();
@@ -207,7 +229,11 @@ export default function CompanyNewsPage() {
           ) : (
             <div className="grid grid-cols-1 gap-6 animate-in fade-in duration-500">
               {filteredAnnouncements.map((ann) => (
-                <AnnouncementCard key={ann.id} announcement={ann} />
+                <AnnouncementCard 
+                  key={ann.id} 
+                  announcement={ann} 
+                  onDelete={handleDelete}
+                />
               ))}
             </div>
           )}

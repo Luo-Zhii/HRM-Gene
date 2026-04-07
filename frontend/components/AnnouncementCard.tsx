@@ -1,5 +1,6 @@
 import React from 'react';
-import { Calendar, Users, Info, Bell, AlertTriangle } from 'lucide-react';
+import { Calendar, Users, Info, Bell, AlertTriangle, Trash2 } from 'lucide-react';
+import { useAuth } from '@/src/hooks/useAuth';
 
 interface Announcement {
   id: number;
@@ -14,9 +15,21 @@ interface Announcement {
 
 interface AnnouncementCardProps {
   announcement: Announcement;
+  onDelete?: (id: number) => void;
 }
 
-const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => {
+const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onDelete }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin' || user?.role === 'System Director';
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this announcement?")) {
+      onDelete?.(announcement.id);
+    }
+  };
+
   const getTypeStyles = (type: string) => {
     switch (type.toLowerCase()) {
       case 'policy':
@@ -54,30 +67,40 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
   const getTargetLabel = (target: string) => {
     if (target === 'all') return 'All Employees';
     if (target.startsWith('dept_')) {
-      // In a real app, we'd probably map the ID to a name, 
-      // but for now we'll show the raw context or a generic label.
       return 'Specific Department';
     }
     return target;
   };
 
   return (
-    <div className="group bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+    <div className="group bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 relative">
+      {isAdmin && onDelete && (
+        <button 
+          onClick={handleDelete}
+          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all z-10"
+          title="Delete Announcement"
+        >
+          <Trash2 size={18} />
+        </button>
+      )}
+      
       <div className="flex flex-col space-y-4">
         {/* Top Row: Badge and Date */}
         <div className="flex items-center justify-between">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold uppercase tracking-wider ${getTypeStyles(announcement.type)}`}>
-            {getTypeIcon(announcement.type)}
-            {announcement.type}
-          </span>
-          <span className="text-sm font-medium text-gray-500 flex items-center gap-1.5">
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold uppercase tracking-wider ${getTypeStyles(announcement.type)}`}>
+              {getTypeIcon(announcement.type)}
+              {announcement.type}
+            </span>
+          </div>
+          <span className="text-sm font-medium text-gray-500 flex items-center gap-1.5 pr-8">
             <Calendar className="w-4 h-4 text-gray-400" />
             {formatDate(announcement.created_at)}
           </span>
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+        <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors pr-10">
           {announcement.title}
         </h3>
 

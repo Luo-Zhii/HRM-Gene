@@ -71,4 +71,8 @@ export class AnnouncementsService {
 
     return query.getMany();
   }
+
+  async delete(id: number): Promise<void> {
+    await this.announcementRepo.delete(id);
+  }
 }

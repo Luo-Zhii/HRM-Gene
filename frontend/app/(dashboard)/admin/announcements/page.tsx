@@ -16,7 +16,8 @@ import {
   MoreVertical,
   Calendar,
   Filter,
-  Users
+  Users,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -173,6 +174,30 @@ export default function AnnouncementsPage() {
       setStatusMessage({ type: "error", text: msg });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAnnouncement = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this announcement?")) return;
+
+    try {
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: "DELETE",
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
+        credentials: "include"
+      });
+
+      if (!res.ok) throw new Error("Failed to delete announcement");
+
+      // Optimistic Update
+      setAnnouncements(prev => prev.filter(ann => ann.id !== id));
+      setStatusMessage({ type: "success", text: "Announcement deleted successfully" });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error deleting announcement";
+      setStatusMessage({ type: "error", text: msg });
     }
   };
 
@@ -408,11 +433,23 @@ export default function AnnouncementsPage() {
                           }`}>
                             {ann.type}
                           </span>
-                          <span className={`text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full ${
-                            ann.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {ann.status}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full ${
+                              ann.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {ann.status}
+                            </span>
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDeleteAnnouncement(ann.id);
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
                         <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 mb-1">{ann.title}</h3>
                         <div className="flex items-center gap-3 text-xs text-gray-500 font-medium">

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Req, Delete, Param } from '@nestjs/common';
 import { AnnouncementsService } from './announcements.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -24,5 +24,11 @@ export class AnnouncementsController {
   @Get('feed')
   async getFeed(@Req() req: any) {
     return this.announcementsService.getFeed(req.user);
+  }
+
+  @Delete(':id')
+  @Permissions('manage:system')
+  async delete(@Param('id') id: string) {
+    return this.announcementsService.delete(parseInt(id, 10));
   }
 }
