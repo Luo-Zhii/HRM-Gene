@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted   # Chạy trên máy ảo EC2 của bạn
+    runs-on: self-hosted 
 
     strategy:
       matrix:
