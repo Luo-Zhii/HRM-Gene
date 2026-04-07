@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Chạy trên máy ảo EC2 của bạn
+    runs-on: self-hosted   # Chạy trên máy ảo EC2 của bạn
 
     strategy:
       matrix:
