@@ -148,7 +148,6 @@ function NavItem({ href, label, icon: Icon, isActive, onClick }: { href: string;
   );
 }
 
-// --- NEW COMPONENT: NOTIFICATION DROPDOWN ---
 function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClick, onRemoveNotification }: { notifications: any[], onMarkAllRead: () => void, onNotificationClick: (n: any) => void, onRemoveNotification: (id: number) => void }) {
   return (
     <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-4 z-50 animate-in fade-in zoom-in-95 duration-200">
