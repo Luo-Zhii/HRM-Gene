@@ -23,6 +23,16 @@ import { SalaryHistory } from "../src/entities/salary-history.entity";
 import { SalaryConfig } from "../src/entities/salary-config.entity";
 import { PayrollPeriod, PayrollPeriodStatus } from "../src/entities/payroll-period.entity";
 
+// New entities for Phase 2
+import { Announcement } from "../src/entities/announcement.entity";
+import { KpiLibrary, KpiUnit } from "../src/entities/kpi-library.entity";
+import { KpiPeriod, KpiPeriodStatus } from "../src/entities/kpi-period.entity";
+import { KpiAssignment, KpiAssignmentStatus } from "../src/entities/kpi-assignment.entity";
+import { ResignationRequest, ResignationStatus } from "../src/entities/resignation-request.entity";
+import { CompanyProfile } from "../src/entities/company-profile.entity";
+import { SalaryAdjustment, AdjustmentType, AdjustmentStatus } from "../src/entities/salary-adjustment.entity";
+import { Notification, NotificationType } from "../src/entities/notification.entity";
+
 // Helper functions
 function randomElement<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -55,9 +65,10 @@ async function run() {
       BankInfo, Contract, TimeKeeping, Payslip, LeaveRequest,
       LeaveType, LeaveBalance, AuditLog, CompanySettings, Violation,
       SalaryHistory, SalaryConfig, PayrollPeriod,
+      Announcement, KpiLibrary, KpiPeriod, KpiAssignment,
+      ResignationRequest, CompanyProfile, SalaryAdjustment, Notification,
     ],
     // 🔥 QUAN TRỌNG: dropSchema: true sẽ xóa sạch DB cũ và tạo lại từ đầu.
-    // Giúp tránh mọi lỗi về cột cũ, cột mới, null value.
     dropSchema: true,
     synchronize: true, 
   } as any);
@@ -85,14 +96,30 @@ async function run() {
   const salaryConfigRepo = ds.getRepository(SalaryConfig);
   const payrollPeriodRepo = ds.getRepository(PayrollPeriod);
 
-  // (Không cần code xóa dữ liệu thủ công nữa vì dropSchema đã làm rồi)
+  // Phase 2 repos
+  const announcementRepo = ds.getRepository(Announcement);
+  const kpiLibraryRepo = ds.getRepository(KpiLibrary);
+  const kpiPeriodRepo = ds.getRepository(KpiPeriod);
+  const kpiAssignmentRepo = ds.getRepository(KpiAssignment);
+  const resignationRepo = ds.getRepository(ResignationRequest);
+  const companyProfileRepo = ds.getRepository(CompanyProfile);
+  const salaryAdjRepo = ds.getRepository(SalaryAdjustment);
+  const notificationRepo = ds.getRepository(Notification);
 
   // --- 3. CREATE MASTER DATA ---
-  console.log("🌱 Creating Company Settings...");
+  console.log("🌱 Creating Company Settings & Profile...");
   await settingsRepo.save([
     { key: "COMPANY_IP_WHITELIST", value: "127.0.0.1,::1" },
     { key: "COMPANY_NAME", value: "HRM AI Inc." },
   ]);
+
+  await companyProfileRepo.save(companyProfileRepo.create({
+    company_name: "HRM AI Inc.",
+    tax_id: "123456789",
+    city: "San Francisco",
+    country: "USA",
+    base_currency: "USD",
+  }));
 
   console.log("🌱 Creating Permissions...");
   const p_system = await permRepo.save({ permission_name: "manage:system" });
@@ -191,13 +218,33 @@ async function run() {
   }
   console.log(`✅ Created ${employees.length} employees`);
 
-  // --- 8. CREATE CONTRACTS (Fixing Schema Issue) ---
-  console.log("🌱 Creating Contracts...");
+  // --- 7.5. BANK INFO & LEAVE BALANCES ---
+  console.log("🌱 Creating Bank Info & Leave Balances...");
+  for (const employee of employees) {
+    const banks = ["Vietcombank", "Techcombank", "MB Bank", "ACB", "VPBank", "BIDV", "Sacombank"];
+    const acct_num = Math.floor(1000000000 + Math.random() * 9000000000).toString(); // 10 digits
+    await bankRepo.save(bankRepo.create({
+      employee,
+      bank_name: randomElement(banks),
+      account_number: acct_num,
+      account_holder_name: `${employee.first_name} ${employee.last_name}`,
+    }));
+
+    await leaveBalanceRepo.save([
+      leaveBalanceRepo.create({ employee, leave_type: annualLeave, remaining_days: randomBetween(2, 12) }),
+      leaveBalanceRepo.create({ employee, leave_type: sickLeave, remaining_days: randomBetween(0, 5) }),
+      leaveBalanceRepo.create({ employee, leave_type: unpaidLeave, remaining_days: 0 }),
+    ]);
+  }
+
+  // --- 8. CREATE CONTRACTS & SALARY HISTORY ---
+  console.log("🌱 Creating Contracts & Salary History...");
   const contracts: Contract[] = [];
   
   for (const employee of employees) {
     const joinDate = randomDate(twoYearsAgo, now);
     const contractType = randomElement([ContractType.OFFICIAL, ContractType.PROBATION, ContractType.PART_TIME]);
+    
     // Salary variance by position to create a wide spread (5M - 100M)
     let baseSalary = 0;
     switch (employee.position?.position_name) {
@@ -226,18 +273,39 @@ async function run() {
       contract_number: `CNT-${employee.employee_id}-${Math.floor(Math.random()*10000)}`,
       contract_type: contractType,
       start_date: formatDate(joinDate),
-      // Fix null issue: use undefined if null
       end_date: undefined, 
       status: ContractStatus.ACTIVE,
-      salary_rate: String(baseSalary), // Use salary_rate property
+      salary_rate: String(baseSalary),
     }));
     contracts.push(contract);
+
+    // --- 8.5 MEASURES: SALARY HISTORY & ADJUSTMENTS ---
+    await salaryHistoryRepo.save(salaryHistoryRepo.create({
+      employee: employee,
+      old_salary: "0",
+      new_salary: String(baseSalary),
+      change_date: formatDate(joinDate),
+      reason: "Initial Contract Starting Salary",
+    }));
+
+    if (Math.random() < 0.15) {
+      const type = Math.random() < 0.66 ? AdjustmentType.BONUS : AdjustmentType.PENALTY;
+      await salaryAdjRepo.save(salaryAdjRepo.create({
+        employee: employee,
+        type: type,
+        amount: String(randomBetween(500000, 3000000)),
+        applied_month: "04/2026",
+        reason: type === AdjustmentType.BONUS ? "Excellent Performance" : "Policy Violation",
+        status: AdjustmentStatus.APPROVED,
+        created_by_id: adminUser.employee_id,
+      }));
+    }
   }
   console.log(`✅ Created ${contracts.length} contracts`);
 
   // --- 9. SALARY CONFIGS ---
   console.log("🌱 Creating Salary Configs...");
-  const activeEmployees = employees; // All for now
+  const activeEmployees = employees;
 
   for (const employee of activeEmployees) {
     const contract = contracts.find(c => c.employee.employee_id === employee.employee_id);
@@ -250,13 +318,12 @@ async function run() {
       base_salary: String(base),
       transport_allowance: String(base * 0.1),
       lunch_allowance: "730000",
-      responsibility_allowance: employee.position?.position_name=== "Manager" ? String(base * 0.15) : "0",
+      responsibility_allowance: employee.position?.position_name === "Manager" ? String(base * 0.15) : "0",
     }));
   }
 
   // --- 10. PAYROLL & PAYSLIPS ---
   console.log("🌱 Generating Payslips...");
-  // Create Periods
   const periods: PayrollPeriod[] = [];
   for (let i = 0; i < 12; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -269,7 +336,6 @@ async function run() {
     periods.push(p);
   }
 
-  // Create Payslips with Chaos Logic (high volatility)
   const HOURS_PER_DAY = 8;
   for (const period of periods) {
     const month = period.month;
@@ -280,12 +346,11 @@ async function run() {
       const baseSalary = parseFloat((contract as any).salary_rate);
       const standardDays = period.standard_work_days;
 
-      // Seasonal base days
       let actualDays = randomBetween(24, 26);
       if (month === 2) {
-        actualDays = randomBetween(15, 18); // Post-Tet dip
+        actualDays = randomBetween(15, 18);
       }
-      // Unpaid leave (5% employees): reduce days further and add deduction
+      
       let unpaidLeaveDays = 0;
       if (Math.random() < 0.05) {
         unpaidLeaveDays = randomBetween(1, 3);
@@ -293,45 +358,30 @@ async function run() {
       }
       actualDays = Math.min(actualDays, standardDays);
 
-      // OT hours
       let otHours = randomBetween(0, 10);
       if (month === 6 && emp.department?.department_name === "Engineering") {
-        otHours = randomBetween(30, 50); // Crunch
+        otHours = randomBetween(30, 50);
       } else if (month === 9) {
-        otHours = 0; // Low season
+        otHours = 0;
       }
 
-      // Bonuses
-      const thirteenthBonus =
-        month === 1 || month === 12 ? baseSalary : 0;
-      const tetBonus =
-        month === 1 || month === 12 ? randomBetween(2_000_000, 8_000_000) : 0;
-      const performanceBonus =
-        Math.random() < 0.10 ? randomBetween(2_000_000, 10_000_000) : 0;
+      const thirteenthBonus = month === 1 || month === 12 ? baseSalary : 0;
+      const tetBonus = month === 1 || month === 12 ? randomBetween(2_000_000, 8_000_000) : 0;
+      const performanceBonus = Math.random() < 0.10 ? randomBetween(2_000_000, 10_000_000) : 0;
 
-      // Core pay
       const salaryPerDay = baseSalary / standardDays;
       const workSalary = salaryPerDay * actualDays;
       const hourlyRate = baseSalary / (standardDays * HOURS_PER_DAY);
       const overtimePay = otHours * hourlyRate * 1.5;
 
-      // Allowances from salary config ratios
       const transportAllowance = baseSalary * 0.1;
       const lunchAllowance = 730_000;
-      const responsibilityAllowance =
-        emp.position?.position_name === "Manager"
-          ? baseSalary * 0.15
-          : 0;
+      const responsibilityAllowance = emp.position?.position_name === "Manager" ? baseSalary * 0.15 : 0;
 
-      const totalAllowance =
-        transportAllowance + lunchAllowance + responsibilityAllowance;
-
-      const totalBonus =
-        overtimePay + thirteenthBonus + tetBonus + performanceBonus;
-
+      const totalAllowance = transportAllowance + lunchAllowance + responsibilityAllowance;
+      const totalBonus = overtimePay + thirteenthBonus + tetBonus + performanceBonus;
       const grossIncome = workSalary + totalAllowance + totalBonus;
 
-      // Deductions: insurance + unpaid leave
       const insurance = baseSalary * 0.105;
       const unpaidDeduction = salaryPerDay * unpaidLeaveDays;
       const deductions = insurance + unpaidDeduction;
@@ -370,22 +420,219 @@ async function run() {
     const workDate = new Date(now.getFullYear(), now.getMonth(), d);
     if (workDate.getDay() === 0 || workDate.getDay() === 6) continue;
 
-    for (let k = 0; k < 10; k++) {
+    for (const emp of activeEmployees) {
+      const rand = Math.random();
+      let status = "Present";
+      let hours = 8;
+      let checkIn = new Date(workDate);
+      checkIn.setHours(8, randomBetween(0, 5), 0);
+      let checkOut: Date | undefined = new Date(workDate);
+      checkOut.setHours(17, randomBetween(0, 15), 0);
+
+      if (rand < 0.025) {
+        status = "Absent";
+        hours = 0;
+        checkIn.setHours(0, 0, 0); // fallback for non-nullable DB schema
+        checkOut = undefined;
+      } else if (rand < 0.05) {
+        status = "Late";
+        const lateMinutes = randomBetween(15, 60);
+        checkIn.setHours(8, lateMinutes, 0);
+        hours = 8 - (lateMinutes / 60);
+      }
+
       await timeRepo.save(timeRepo.create({
-        employee: employees[k],
+        employee: emp,
         work_date: formatDate(workDate),
-        check_in_time: new Date(workDate.setHours(8, 0, 0)),
-        check_out_time: new Date(workDate.setHours(17, 0, 0)),
-        hours_worked: 8,
-        status: "Present",
-        ip_address: "127.0.0.1"
+        check_in_time: checkIn,
+        check_out_time: checkOut,
+        hours_worked: parseFloat(hours.toFixed(2)),
+        status: status,
+        ip_address: checkOut ? "127.0.0.1" : undefined
       }));
     }
   }
 
-  // --- 13. AUDIT LOG ---
+  // --- 12.5. LEAVE REQUESTS & RESIGNATIONS ---
+  console.log("🌱 Creating Leave Requests & Resignations...");
+  for (let i = 0; i < 15; i++) {
+    const emp = randomElement(activeEmployees);
+    const mng = randomElement(activeEmployees.filter(e => 
+      e.position?.position_name === "Manager" || e.position?.position_name === "Director"
+    ));
+    const leaveType = randomElement([annualLeave, sickLeave, unpaidLeave]);
+    const start = randomDate(twoYearsAgo, now);
+    const end = new Date(start);
+    end.setDate(start.getDate() + randomBetween(0, 4));
+
+    const statusOpt = randomElement(['Approved', 'Pending', 'Rejected']);
+    
+    await leaveRepo.save(leaveRepo.create({
+      employee: emp,
+      leave_type: leaveType,
+      start_date: formatDate(start),
+      end_date: formatDate(end),
+      reason: "Need some time off",
+      status: statusOpt,
+      manager_approver: statusOpt === 'Approved' ? mng : undefined,
+      admin_note: statusOpt !== 'Pending' ? "Reviewed by management" : undefined
+    }));
+  }
+
+  for (let i = 0; i < 4; i++) {
+    const emp = randomElement(activeEmployees);
+    await resignationRepo.save(resignationRepo.create({
+      employee: emp,
+      employee_id: emp.employee_id,
+      reason_text: "Seeking better opportunities elsewhere and relocating to a new city.",
+      requested_last_day: formatDate(addMonths(now, 1)),
+      status: randomElement([ResignationStatus.PENDING, ResignationStatus.APPROVED, ResignationStatus.REJECTED]),
+    }));
+  }
+
+  // --- 13. PERFORMANCE KPIs (Library, Periods, Assignments) ---
+  console.log("🌱 Creating KPIs...");
+  const kpiLib1 = await kpiLibraryRepo.save(kpiLibraryRepo.create({
+    name: "Customer Satisfaction",
+    description: "Maintain a CSAT score above 90%",
+    unit: KpiUnit.PERCENT,
+    created_by: adminUser
+  }));
+  const kpiLib2 = await kpiLibraryRepo.save(kpiLibraryRepo.create({
+    name: "Sales Conversion Rate",
+    description: "Convert at least 15% of inbound leads",
+    unit: KpiUnit.PERCENT,
+    created_by: adminUser
+  }));
+  const kpiLib3 = await kpiLibraryRepo.save(kpiLibraryRepo.create({
+    name: "New Feature Delivery",
+    description: "Deliver scheduled features per quarter",
+    unit: KpiUnit.NUMBER,
+    created_by: adminUser
+  }));
+
+  const activeKpiPeriod = await kpiPeriodRepo.save(kpiPeriodRepo.create({
+    name: "Q2 2026",
+    start_date: formatDate(new Date(2026, 3, 1)), // April 1st
+    end_date: formatDate(new Date(2026, 5, 30)), // June 30th
+    status: KpiPeriodStatus.ACTIVE
+  }));
+
+  const pastKpiPeriod = await kpiPeriodRepo.save(kpiPeriodRepo.create({
+    name: "Q1 2026",
+    start_date: formatDate(new Date(2026, 0, 1)),
+    end_date: formatDate(new Date(2026, 2, 31)),
+    status: KpiPeriodStatus.LOCKED
+  }));
+
+  // Assign KPIs to teams
+  for (const emp of activeEmployees) {
+    const isSales = emp.department?.department_name === "Sales";
+    const isEng = emp.department?.department_name === "Engineering";
+    
+    const relevantLibrary = isSales ? kpiLib2 : (isEng ? kpiLib3 : kpiLib1);
+
+    // Passed period
+    await kpiAssignmentRepo.save(kpiAssignmentRepo.create({
+      employee: emp,
+      period: pastKpiPeriod,
+      kpi_library: relevantLibrary,
+      target_value: 100,
+      actual_value: randomBetween(70, 110),
+      weight: 100,
+      manager_score: randomBetween(3, 5),
+      status: KpiAssignmentStatus.APPROVED
+    }));
+
+    // Current period
+    await kpiAssignmentRepo.save(kpiAssignmentRepo.create({
+      employee: emp,
+      period: activeKpiPeriod,
+      kpi_library: relevantLibrary,
+      target_value: 100,
+      actual_value: randomBetween(10, 60), // In progress
+      weight: 100,
+      manager_score: undefined,
+      status: KpiAssignmentStatus.ASSIGNED
+    }));
+
+    // Generic KPI for all
+    await kpiAssignmentRepo.save(kpiAssignmentRepo.create({
+      employee: emp,
+      period: activeKpiPeriod,
+      kpi_library: kpiLib1,
+      target_value: 100,
+      actual_value: randomBetween(50, 95),
+      weight: 50,
+      status: KpiAssignmentStatus.SUBMITTED
+    }));
+  }
+
+  // --- 14. ANNOUNCEMENTS & NOTIFICATIONS ---
+  console.log("🌱 Creating Announcements & Notifications...");
+  await announcementRepo.save([
+    announcementRepo.create({
+      title: "Welcome to HRM AI Inc.",
+      content: "We are thrilled to launch our new internal platform! Enjoy the smooth experience and detailed dashboards.",
+      type: "General",
+      target_audience: "all",
+      priority: "Normal",
+      status: "Active",
+      delivery_methods: ["in_app", "email"]
+    }),
+    announcementRepo.create({
+      title: "Quarterly Townhall Scheduled",
+      content: "Please join us next Friday at 3:00 PM for the Q2 Company Townhall. A virtual link is provided in the calendar.",
+      type: "Event",
+      target_audience: "all",
+      priority: "High",
+      status: "Active",
+      delivery_methods: ["in_app"]
+    }),
+    announcementRepo.create({
+      title: "Annual Leave Policy Changes",
+      content: "Please review the updated employee handbook. You can now carry over up to 3 days of unused annual leave into the next calendar year.",
+      type: "Policy",
+      target_audience: "all",
+      priority: "High",
+      status: "Active",
+      delivery_methods: ["in_app", "email"]
+    })
+  ]);
+
+  // Read / Unread Notifications
+  await notificationRepo.save(notificationRepo.create({
+    user: adminUser,
+    userId: adminUser.employee_id,
+    title: "New Policy Announcement",
+    message: "A new company policy regarding Annual Leave has been published.",
+    type: NotificationType.ANNOUNCEMENT,
+    isRead: false
+  }));
+
+  // Create notifications for the first standard user
+  if (employees.length > 1) {
+    await notificationRepo.save(notificationRepo.create({
+      user: employees[1],
+      userId: employees[1].employee_id,
+      title: "KPI Assignment",
+      message: "You have been assigned 2 new KPIs for Q2 2026.",
+      type: NotificationType.KPI,
+      isRead: false
+    }));
+    await notificationRepo.save(notificationRepo.create({
+      user: employees[1],
+      userId: employees[1].employee_id,
+      title: "Payslip ready",
+      message: "Your April 2026 payslip has been generated.",
+      type: NotificationType.PAYROLL,
+      isRead: true
+    }));
+  }
+
+  // --- 15. AUDIT LOG ---
   await auditRepo.save(auditRepo.create({
-    user: adminUser, action: "SEED_FULL_RESET", target_entity: "System"
+    user: adminUser, action: "SEED_FULL_RESET_WITH_PHASE_2", target_entity: "System"
   }));
 
   console.log("\n--- ✅✅✅ SEED COMPLETE ---");
