@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Delete,
+  Query,
   ParseIntPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
@@ -38,6 +39,22 @@ export class EmployeesController {
   findAll() {
     // Service đã được update để lấy cả department, position, phone, address
     return this.svc.findAll();
+  }
+
+  /**
+   * PUBLIC DIRECTORY ENDPOINT — available to all authenticated users.
+   * Returns only safe, work-related fields (no phone, no address).
+   * Sensitive filtering is performed at the SERVICE layer, not here.
+   */
+  @Get("directory")
+  findAllPublic() {
+    return this.svc.findAllPublic();
+  }
+
+  @Get("search")
+  search(@Query("q") q: string) {
+    if (!q || q.trim().length < 2) return [];
+    return this.svc.search(q.trim());
   }
 
   @Get(":id")

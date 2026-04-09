@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/src/hooks/useAuth";
@@ -8,7 +8,7 @@ import { useCompany, CompanyProvider } from "@/src/context/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import {
-  Menu, X, User, LogOut, ChevronDown, Bell,
+  Menu, X, User, Users, LogOut, ChevronDown, Bell, Search,
   CheckCheck, MessageSquare, AlertCircle, FileText, Megaphone, AlertTriangle, Zap,
   Newspaper, Radio, LayoutDashboard
 } from "lucide-react";
@@ -55,6 +55,8 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
 
           <NavItem href="/dashboard" label="Dashboard" icon={LayoutDashboard} isActive={pathname === "/dashboard"} onClick={onClose} />
           <NavItem href="/company-news" label="News Feed" icon={Newspaper} isActive={pathname === "/company-news"} onClick={onClose} />
+          {/* Staff Directory: visible to all authenticated employees */}
+          <NavItem href="/directory" label="Staff Directory" icon={Users} isActive={pathname?.startsWith("/directory")} onClick={onClose} />
 
           <NavItem href="/dashboard/timekeeping" label="Timekeeping" isActive={pathname === "/dashboard/timekeeping"} onClick={onClose} />
           {(hasManageSystemPermission || isAdminOrHr || hasManageEmployeePermission) && (
@@ -206,13 +208,52 @@ function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClic
   );
 }
 
+// --- SPOTLIGHT SEARCH ROUTES ---
+const SEARCH_ROUTES = [
+  { title: "Dashboard", path: "/dashboard", description: "Home overview" },
+  { title: "News Feed", path: "/company-news", description: "Company announcements" },
+  { title: "Staff Directory", path: "/directory", description: "Browse colleagues publicly" },
+  { title: "Timekeeping", path: "/dashboard/timekeeping", description: "Clock in/out, attendance" },
+  { title: "Leave Management", path: "/dashboard/leave", description: "Apply and view leaves" },
+  { title: "My Goals", path: "/dashboard/performance/me", description: "Personal KPI" },
+  { title: "My Salary", path: "/dashboard/salary", description: "Payslips and salary" },
+  { title: "My Resignation", path: "/my-resignation", description: "Resignation status" },
+  { title: "Profile", path: "/profile", description: "Your personal profile" },
+  { title: "Employee Directory", path: "/admin/employees", description: "All employees" },
+  { title: "Employment Contract", path: "/admin/contracts", description: "Staff contracts" },
+  { title: "Organizational Management", path: "/admin/organization", description: "Departments and structure" },
+  { title: "Attendance History", path: "/admin/attendance", description: "Admin attendance logs" },
+  { title: "QR Display", path: "/admin/qr-display", description: "Tablet QR check-in" },
+  { title: "Leave Approvals", path: "/admin/leave-approvals", description: "Review leave requests" },
+  { title: "Resignation Approvals", path: "/admin/resignations", description: "Manage resignations" },
+  { title: "Discipline", path: "/admin/discipline", description: "Violations and warnings" },
+  { title: "Permissions", path: "/admin/permissions", description: "User access rights" },
+  { title: "Salary Configuration", path: "/admin/payroll/config", description: "Base salary setup" },
+  { title: "Salary Adjustment", path: "/admin/payroll/adjustment", description: "Bonus and deductions" },
+  { title: "Create Payroll", path: "/admin/payroll/generate", description: "Generate payroll cycles" },
+  { title: "Issue Payslips", path: "/admin/payroll/issue", description: "Send payslips to staff" },
+  { title: "Analysis Report", path: "/admin/reports", description: "HR analytics" },
+  { title: "Manage News", path: "/admin/announcements", description: "Publish company news" },
+  { title: "KPI Library", path: "/admin/performance/library", description: "KPI templates" },
+  { title: "Team Performance", path: "/admin/performance/team", description: "Team KPI overview" },
+  { title: "System Settings", path: "/admin/settings", description: "App configuration" },
+  { title: "Payroll Settings", path: "/admin/settings/payroll", description: "Payroll rules" },
+];
+
+// Route-only result — employee search removed from command palette
+type SearchResult = { title: string; path: string; description?: string };
+
+
 // --- HEADER ---
 function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, loading, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   // --- LOGIC THÔNG BÁO ---
@@ -238,11 +279,8 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
         router.push('/profile');
       }
     } else if (notif.type === 'payroll') {
-      // Payroll managers go to the admin generate page; employees go to their salary view
-      const pos = user?.position?.position_name?.toLowerCase();
       const hasPayrollPerm = user?.permissions?.includes("manage:payroll") || user?.permissions?.includes("manage:system");
       if (hasPayrollPerm) {
-        // Route based on notification title for more precision
         const t = (notif.title ?? "").toLowerCase();
         if (t.includes("adjustment")) router.push("/admin/payroll/adjustment");
         else router.push("/admin/payroll/generate");
@@ -258,14 +296,49 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
     }
   };
 
+  // ── COMMAND PALETTE LOGIC ─────────────────────────────────────────────────
+  // Pure local filtering — NO API calls, NO employee data.
+  // Employee search is handled exclusively by the local search inside EmployeeTable.
+  const commandResults: SearchResult[] = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return []; // empty → show Quick Links instead
+    return SEARCH_ROUTES
+      .filter(
+        (r) =>
+          r.title.toLowerCase().includes(q) ||
+          (r.description ?? "").toLowerCase().includes(q)
+      )
+      .slice(0, 8);
+  }, [searchQuery]);
+
+  // Quick Links: shown when the palette is open but the query is empty
+  const QUICK_LINKS: SearchResult[] = [
+    { title: "Dashboard",      path: "/dashboard",           description: "Home overview" },
+    { title: "Staff Directory", path: "/directory",           description: "Browse colleagues" },
+    { title: "Timekeeping",    path: "/dashboard/timekeeping",description: "Clock in/out" },
+    { title: "Leave Management",path: "/dashboard/leave",     description: "Apply for leave" },
+    { title: "Profile",        path: "/profile",              description: "Your profile" },
+  ];
+
+  const handleSearchSelect = useCallback((result: SearchResult) => {
+    router.push(result.path);
+    setSearchQuery("");
+    setIsSearchOpen(false);
+  }, [router]);
+
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsDropdownOpen(false);
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) setIsNotifOpen(false);
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
 
   return (
     <header className="flex items-center justify-between px-6 h-16 bg-white border-b border-gray-100 sticky top-0 z-30">
@@ -273,7 +346,93 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
         <button onClick={onMenuClick} className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Menu size={24} /></button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        {/* SPOTLIGHT SEARCH */}
+        <div className="relative" ref={searchRef}>
+          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-56 md:w-72 transition-all focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 focus-within:bg-white">
+            <Search size={15} className="text-gray-400 shrink-0" />
+          <input
+              type="text"
+              placeholder="Search pages & features…"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setIsSearchOpen(true); }}
+              onFocus={() => setIsSearchOpen(true)}
+              className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none min-w-0"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchQuery(""); setIsSearchOpen(false); }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* COMMAND PALETTE DROPDOWN */}
+          {isSearchOpen && (
+            <div className="absolute left-0 top-full mt-2 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-[200] animate-in fade-in zoom-in-95 duration-150">
+              {/* ── Empty query: show Quick Links ───────────────────────── */}
+              {!searchQuery.trim() && (
+                <>
+                  <p className="px-4 pb-1.5 pt-0.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Quick Links
+                  </p>
+                  {QUICK_LINKS.map((r) => (
+                    <button
+                      key={r.path}
+                      onClick={() => handleSearchSelect(r)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition-colors group text-left"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gray-50 group-hover:bg-blue-100 flex items-center justify-center shrink-0 transition-colors">
+                        <LayoutDashboard size={14} className="text-blue-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{r.title}</p>
+                        {r.description && <p className="text-xs text-gray-400 truncate">{r.description}</p>}
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {/* ── Query typed: show filtered page/feature results ──────── */}
+              {searchQuery.trim() && commandResults.length > 0 && (
+                <>
+                  <p className="px-4 pb-1.5 pt-0.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Pages &amp; Features
+                  </p>
+                  {commandResults.map((r) => (
+                    <button
+                      key={r.path}
+                      onClick={() => handleSearchSelect(r)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition-colors group text-left"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center shrink-0 transition-colors">
+                        <LayoutDashboard size={14} className="text-blue-500" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{r.title}</p>
+                        {r.description && <p className="text-xs text-gray-400 truncate">{r.description}</p>}
+                      </div>
+                      <span className="ml-auto text-[10px] text-gray-300 font-mono truncate hidden md:block">{r.path}</span>
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {/* ── No match ─────────────────────────────────────────────── */}
+              {searchQuery.trim() && commandResults.length === 0 && (
+                <div className="px-5 py-8 text-center">
+                  <Search size={24} className="mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm text-gray-500 font-medium">No pages found</p>
+                  <p className="text-xs text-gray-400 mt-1">Try &ldquo;leave&rdquo;, &ldquo;payroll&rdquo;, &ldquo;settings&rdquo;…</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* BELL NOTIFICATION */}
         <div className="relative" ref={notifRef}>
           <button

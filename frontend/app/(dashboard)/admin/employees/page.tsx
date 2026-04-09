@@ -1,65 +1,73 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+/**
+ * Admin Employee Directory — /admin/employees
+ *
+ * RBAC: Only accessible to users with manage:employee / manage:system /
+ *       manage:payroll permissions, or Admin/HR/Director positions.
+ *
+ * Re-uses the shared <EmployeeTable> component with:
+ *   showSensitive={true}  → Phone column visible
+ *   showActions={true}    → View + Offboard buttons visible
+ */
+
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
-import {
-  Search, LayoutGrid, List, Mail, Phone,
-  ArrowUpDown, ExternalLink, MapPin, UserMinus, X
-} from "lucide-react";
-// ĐÃ XÓA TOÀN BỘ IMPORT TỪ @/components/ui/dialog, select, datepicker...
+import { UserMinus, X, ShieldOff } from "lucide-react";
+import EmployeeTable, { EmployeeRow } from "@/components/EmployeeTable";
 
-interface Position { position_id: number; position_name: string; }
-interface Department { department_id: number; department_name: string; }
-interface EmployeeData {
-  employee_id: number; email: string; first_name: string; last_name: string;
-  avatar_url?: string; phone_number?: string; address?: string;
-  position?: Position | null; department?: Department | null;
-  is_department_head?: boolean;
-  employment_status?: string;
+// ─── Permission helper (same logic as isPrivilegedUser in the old page) ────────
+function isPrivilegedUser(user: any): boolean {
+  if (!user) return false;
+  const perms: string[] = user.permissions ?? [];
+  const pos = (user.position?.position_name ?? user.role ?? "").toLowerCase();
+  return (
+    perms.includes("manage:employee") ||
+    perms.includes("manage:system") ||
+    perms.includes("manage:payroll") ||
+    pos === "admin" ||
+    pos === "hr" ||
+    pos === "hr manager" ||
+    pos === "director"
+  );
 }
 
-export default function EmployeeDirectoryPage() {
+export default function AdminEmployeeDirectoryPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  const [employees, setEmployees] = useState<EmployeeData[]>([]);
+  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
-  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [toastMsg, setToastMsg] = useState<{
+    title: string;
+    desc: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  // --- STATE CHO MODAL OFFBOARD (CODE TAY) ---
-  const [offboardEmployeeId, setOffboardEmployeeId] = useState<number | null>(null);
-  const [resignationDate, setResignationDate] = useState<string>(""); // Dùng string cho input type="date"
-  const [resignationReason, setResignationReason] = useState<string>("");
-  const [isSubmittingOffboard, setIsSubmittingOffboard] = useState(false);
-  const [toastMsg, setToastMsg] = useState<{ title: string, desc: string, type: 'success' | 'error' } | null>(null);
+  // Offboard modal state
+  const [offboardId, setOffboardId] = useState<number | null>(null);
+  const [resignationDate, setResignationDate] = useState("");
+  const [resignationReason, setResignationReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Hiển thị Toast code tay
-  const showToast = (title: string, desc: string, type: 'success' | 'error') => {
+  const showToast = (title: string, desc: string, type: "success" | "error") => {
     setToastMsg({ title, desc, type });
     setTimeout(() => setToastMsg(null), 3000);
   };
 
-  useEffect(() => {
-    if (!authLoading && user) {
-      const hasPermission = user.permissions?.includes("manage:employee") || user.permissions?.includes("manage:system") || user.permissions?.includes("manage:payroll");
-      if (!hasPermission) {
-        showToast("Access Denied", "You do not have permission to view employee contact info.", "error");
-        setTimeout(() => router.push("/dashboard"), 2000);
-      }
-    }
-  }, [authLoading, user, router]);
+  // ── RBAC render gate ────────────────────────────────────────────────────────
+  // Computed synchronously after auth resolves — no data is fetched until this is true.
+  const canAccess = !authLoading && isPrivilegedUser(user);
 
   const loadEmployees = async () => {
     try {
       setLoading(true);
+      // Admin endpoint returns full data including phone_number and address
       const res = await fetch("/api/employees", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch employee list");
-      const data = await res.json();
-      setEmployees(data || []);
-    } catch (error) {
+      if (!res.ok) throw new Error();
+      setEmployees((await res.json()) || []);
+    } catch {
       setEmployees([]);
     } finally {
       setLoading(false);
@@ -67,321 +75,187 @@ export default function EmployeeDirectoryPage() {
   };
 
   useEffect(() => {
-    if (user && (user.permissions?.includes("manage:employee") || user.permissions?.includes("manage:system") || user.permissions?.includes("manage:payroll"))) {
+    if (canAccess) {
       loadEmployees();
+    } else if (!authLoading) {
+      setLoading(false); // stop spinner for unauthorized users
     }
-  }, [user]);
+  }, [canAccess, authLoading]);
 
   const handleOffboard = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!offboardEmployeeId || !resignationDate || !resignationReason) {
+    if (!offboardId || !resignationDate || !resignationReason) {
       showToast("Error", "All fields are required", "error");
       return;
     }
-    setIsSubmittingOffboard(true);
+    setIsSubmitting(true);
     try {
-      const payload = {
-        employment_status: "Terminated",
-        resignation_date: resignationDate, // Gửi thẳng string định dạng YYYY-MM-DD
-        resignation_reason: resignationReason
-      };
-      const res = await fetch(`/api/employees/${offboardEmployeeId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      const res = await fetch(`/api/employees/${offboardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employment_status: "Terminated",
+          resignation_date: resignationDate,
+          resignation_reason: resignationReason,
+        }),
       });
       if (res.ok) {
         showToast("Success", "Employee formally offboarded.", "success");
-        setOffboardEmployeeId(null);
+        setOffboardId(null);
         setResignationDate("");
         setResignationReason("");
-        await loadEmployees(); // Load lại data ngay
+        await loadEmployees();
       } else {
         showToast("Error", "Failed to offboard employee", "error");
       }
-    } catch (err) {
+    } catch {
       showToast("Error", "Server error", "error");
     } finally {
-      setIsSubmittingOffboard(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
-    setSortConfig({ key, direction });
-  };
+  // ── Stage 1: Auth loading ─────────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500 font-medium">
+        Loading…
+      </div>
+    );
+  }
 
-  const filteredAndSortedEmployees = useMemo(() => {
-    let processed = employees.filter(emp => {
-      const searchLower = searchTerm.toLowerCase();
-      const fullName = `${emp.first_name} ${emp.last_name}`.toLowerCase();
-      return fullName.includes(searchLower) || emp.email.toLowerCase().includes(searchLower) || (emp.phone_number && emp.phone_number.includes(searchLower));
-    });
+  // ── Stage 2: Not privileged — block completely, link to public directory ──
+  if (!canAccess) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto">
+            <ShieldOff size={28} className="text-red-400" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">Access Denied</h2>
+          <p className="text-sm text-gray-500">
+            You do not have permission to access the Admin Employee Directory.
+            Looking for a colleague?{" "}
+            <a href="/directory" className="text-blue-600 font-semibold hover:underline">
+              Use the Staff Directory
+            </a>.
+          </p>
+          <a
+            href="/dashboard"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
+          >
+            Back to Dashboard
+          </a>
+        </div>
+      </div>
+    );
+  }
 
-    if (sortConfig.key) {
-      processed.sort((a: any, b: any) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
-        if (sortConfig.key === 'department') { aValue = a.department?.department_name || ""; bValue = b.department?.department_name || ""; }
-        else if (sortConfig.key === 'position') { aValue = a.position?.position_name || ""; bValue = b.position?.position_name || ""; }
-        else { aValue = aValue || ""; bValue = bValue || ""; }
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-    return processed;
-  }, [employees, sortConfig, searchTerm]);
-
-  const handleViewProfile = (employeeId: number) => {
-    window.location.href = `/profile?id=${employeeId}`;
-  };
-
-  const getEmployeeName = (employee: EmployeeData) => `${employee.first_name} ${employee.last_name}`.trim();
-
-  const getInitials = (employee: EmployeeData) => {
-    const first = employee.first_name?.[0]?.toUpperCase() || "";
-    const last = employee.last_name?.[0]?.toUpperCase() || "";
-    return `${first}${last}` || "U";
-  };
-
-  if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center text-gray-500 font-medium">Loading employee data...</div>;
-
+  // ── Stage 3: Privileged user — full admin UI ──────────────────────────────
   return (
     <div className="relative">
-      {/* --- TOAST THÔNG BÁO TỰ CODE --- */}
+      {/* Toast */}
       {toastMsg && (
-        <div className={`fixed top-4 right-4 z-[9999] px-4 py-3 rounded-lg shadow-lg border ${toastMsg.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'} transition-all duration-300`}>
+        <div
+          className={`fixed top-4 right-4 z-[9999] px-4 py-3 rounded-lg shadow-lg border transition-all duration-300 ${
+            toastMsg.type === "success"
+              ? "bg-green-50 border-green-200 text-green-800"
+              : "bg-red-50 border-red-200 text-red-800"
+          }`}
+        >
           <h4 className="font-bold text-sm">{toastMsg.title}</h4>
           <p className="text-sm mt-0.5">{toastMsg.desc}</p>
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b pb-4">
-        <div><h1 className="text-2xl font-bold text-gray-900">Employee Directory</h1></div>
-        <div className="flex items-center gap-3">
-          <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="pl-9 h-10 w-full bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
-            <button onClick={() => setViewMode("table")} className={`p-1.5 rounded-md ${viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}><List size={18} /></button>
-            <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded-md ${viewMode === "grid" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}><LayoutGrid size={18} /></button>
-          </div>
+      {/* Page title */}
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Employee Directory</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Admin view — all fields visible</p>
         </div>
       </div>
 
-      {filteredAndSortedEmployees.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border text-gray-500 font-medium">No employees found</div>
-      ) : (
-        <>
-          {/* =========================================
-              CHẾ ĐỘ TABLE VIEW (HTML/TAILWIND THUẦN)
-             ========================================= */}
-          {viewMode === "table" && (
-            <div className="bg-white rounded-xl shadow-sm border overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-50/50 text-gray-700 font-semibold border-b">
-                  <tr>
-                    <th className="px-4 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('first_name')}>
-                      <div className="flex items-center gap-2">Employee <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" /></div>
-                    </th>
-                    <th className="px-4 py-3">Email</th>
-                    <th className="px-4 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('department')}>
-                      <div className="flex items-center gap-2">Department <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" /></div>
-                    </th>
-                    <th className="px-4 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('position')}>
-                      <div className="flex items-center gap-2">Position <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" /></div>
-                    </th>
-                    <th className="px-4 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('phone_number')}>
-                      <div className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-gray-400" /> Phone <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" /></div>
-                    </th>
-                    <th className="px-4 py-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                  <tbody className="divide-y divide-gray-100 text-gray-600 font-medium">
-                    {filteredAndSortedEmployees.map((emp) => (
-                      <tr key={emp.employee_id} className={`hover:bg-gray-50/80 transition-colors ${emp.employment_status === 'Terminated' ? 'opacity-60 bg-gray-50/30' : ''}`}>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0 overflow-hidden border border-gray-200">
-                            {emp.avatar_url ? (
-                              <img src={emp.avatar_url} alt={emp.first_name} className="w-full h-full object-cover" />
-                            ) : (
-                              getInitials(emp)
-                            )}
-                          </div>
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-900">{getEmployeeName(emp)}</span>
-                              {emp.employment_status === 'Terminated' && (
-                                <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter border border-red-200">Terminated</span>
-                              )}
-                            </div>
-                            {emp.is_department_head && (
-                              <span className="text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5 w-max mt-0.5 uppercase tracking-wider">Head</span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="text-gray-600 px-4 py-3">{emp.email}</td>
-                      <td className="text-gray-600 px-4 py-3 font-medium">{emp.department?.department_name || "-"}</td>
-                      <td className="text-gray-600 px-4 py-3">{emp.position?.position_name || "-"}</td>
-                      <td className="px-4 py-3">
-                        {emp.phone_number ? (
-                          <span className="bg-blue-50 text-blue-700 font-semibold px-2.5 py-1 rounded-md text-xs border border-blue-100">{emp.phone_number}</span>
-                        ) : "-"}
-                      </td>
-                      <td className="text-right px-4 py-3 whitespace-nowrap">
-                        <button
-                          onClick={() => handleViewProfile(emp.employee_id)}
-                          className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-transparent hover:bg-blue-50 rounded-md transition-colors mr-2"
-                        >
-                          View <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
-                        </button>
-                        <button
-                          disabled={emp.employee_id === user?.employee_id || emp.employment_status === 'Terminated'}
-                          onClick={() => setOffboardEmployeeId(emp.employee_id)}
-                          className={`inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors ${emp.employee_id === user?.employee_id || emp.employment_status === 'Terminated' ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50' : 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'}`}
-                          title={emp.employee_id === user?.employee_id ? "You cannot offboard yourself" : emp.employment_status === 'Terminated' ? "Employee is already terminated" : "Offboard Employee"}
-                        >
-                          Offboard <UserMinus className="w-3.5 h-3.5 ml-1.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+      {/*
+        EmployeeTable with full privileges:
+          showSensitive={true}  → Phone column rendered
+          showActions={true}    → View/Offboard buttons rendered
+      */}
+      <EmployeeTable
+        employees={employees}
+        loading={loading}
+        showSensitive={true}
+        showActions={true}
+        currentUserId={user?.employee_id}
+        onOffboard={(id) => setOffboardId(id)}
+      />
 
-          {/* =========================================
-              CHẾ ĐỘ GRID VIEW
-             ========================================= */}
-          {viewMode === "grid" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {filteredAndSortedEmployees.map((emp) => (
-                <div key={emp.employee_id} className={`bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col hover:shadow-md transition-all group ${emp.employment_status === 'Terminated' ? 'opacity-60 grayscale-[0.3]' : ''}`}>
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 border-2 border-white shadow-sm flex items-center justify-center text-blue-600 font-bold shrink-0 overflow-hidden">
-                      {emp.avatar_url ? (
-                        <img src={emp.avatar_url} alt={emp.first_name} className="w-full h-full object-cover" />
-                      ) : (
-                        getInitials(emp)
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-[15px] font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">{getEmployeeName(emp)}</h3>
-                        {emp.employment_status === 'Terminated' && (
-                          <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter border border-red-200">Terminated</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1 font-medium">{emp.position?.position_name || "Employee"} • {emp.department?.department_name || "N/A"}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2.5 mb-5 border-t border-gray-50 pt-4">
-                    <div className="flex items-center gap-2.5 text-gray-600"><Mail className="w-4 h-4 text-gray-400" /> <span className="text-sm font-medium truncate">{emp.email}</span></div>
-                    <div className="flex items-center gap-2.5 text-gray-600"><Phone className="w-4 h-4 text-gray-400" /> <span className="text-sm font-medium">{emp.phone_number || "Not updated"}</span></div>
-                  </div>
-                  <div className="mt-auto flex gap-2 pt-2">
-                    <button
-                      onClick={() => handleViewProfile(emp.employee_id)}
-                      className="flex-1 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      Profile <ExternalLink className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      disabled={emp.employee_id === user?.employee_id || emp.employment_status === 'Terminated'}
-                      onClick={() => setOffboardEmployeeId(emp.employee_id)}
-                      className={`py-2 px-3 border text-sm font-bold rounded-lg transition-colors flex items-center justify-center ${emp.employee_id === user?.employee_id || emp.employment_status === 'Terminated' ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50' : 'bg-red-50 hover:bg-red-100 border-red-100 text-red-600'}`}
-                      title={emp.employee_id === user?.employee_id ? "You cannot offboard yourself" : emp.employment_status === 'Terminated' ? "Employee is already terminated" : "Offboard Employee"}
-                    >
-                      <UserMinus className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* =========================================
-          MODAL OFFBOARD (TỰ CODE HOÀN TOÀN BẰNG TAILWIND)
-          ========================================= */}
-      {offboardEmployeeId !== null && (
+      {/* ── Offboard modal ─────────────────────────────────────────────────── */}
+      {offboardId !== null && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-200">
-            {/* Nút X đóng */}
             <button
-              onClick={() => setOffboardEmployeeId(null)}
+              onClick={() => setOffboardId(null)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded-md transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            {/* Header Modal */}
             <div className="p-6 pb-4 border-b border-gray-100">
               <h2 className="text-xl font-black text-red-600 flex items-center gap-2">
                 <UserMinus className="w-6 h-6" /> Process Resignation
               </h2>
               <p className="text-sm text-gray-500 mt-2 font-medium">
-                This action will officially terminate the employee's active contract and update analytics globally.
+                This will terminate the employee's active contract and update all analytics.
               </p>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleOffboard} className="p-6 space-y-5">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5">Resignation Date <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                  Resignation Date <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="date"
                   required
                   value={resignationDate}
                   onChange={(e) => setResignationDate(e.target.value)}
-                  className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5">Reason for Resignation <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                  Reason <span className="text-red-500">*</span>
+                </label>
                 <select
                   required
                   value={resignationReason}
                   onChange={(e) => setResignationReason(e.target.value)}
-                  className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
+                  className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
                 >
                   <option value="" disabled>-- Select Reason --</option>
-                  <option value="Compensation">Compensation & Benefits</option>
+                  <option value="Compensation">Compensation &amp; Benefits</option>
                   <option value="Culture">Company Culture</option>
                   <option value="Personal">Personal Issues</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
 
-              {/* Footer Actions */}
-              <div className="pt-4 flex gap-3 mt-8">
+              <div className="pt-4 flex gap-3 mt-2">
                 <button
                   type="button"
-                  onClick={() => setOffboardEmployeeId(null)}
+                  onClick={() => setOffboardId(null)}
                   className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmittingOffboard}
+                  disabled={isSubmitting}
                   className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
                 >
-                  {isSubmittingOffboard ? "Processing..." : "Confirm Offboard"}
+                  {isSubmitting ? "Processing…" : "Confirm Offboard"}
                 </button>
               </div>
             </form>

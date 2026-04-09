@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DataSource } from "typeorm"; // Thêm DataSource ở đây
+import { Repository, DataSource, ILike, Or } from "typeorm"; // Thêm DataSource ở đây
 import * as bcrypt from "bcrypt";
 import { Employee, EmploymentStatus } from "../../entities/employee.entity";
 import { Department } from "../../entities/department.entity";
@@ -198,5 +198,53 @@ export class EmployeesService {
 
     await this.employeeRepo.remove(emp);
     return { deleted: true };
+  }
+
+  async search(keyword: string) {
+    const term = `%${keyword}%`;
+    const results = await this.employeeRepo.find({
+      where: [
+        { first_name: ILike(term) } as any,
+        { last_name: ILike(term) } as any,
+        { email: ILike(term) } as any,
+      ],
+      take: 5,
+      order: { first_name: "ASC" },
+    });
+
+    return results.map((emp) => ({
+      type: "employee" as const,
+      id: emp.employee_id,
+      name: `${emp.first_name} ${emp.last_name}`.trim(),
+      email: emp.email,
+    }));
+  }
+
+  /**
+   * PUBLIC DIRECTORY — safe for all authenticated employees.
+   * Intentionally strips: phone_number, address, bankInfo, contracts,
+   * password, and any other sensitive HR fields.
+   */
+  async findAllPublic() {
+    const employees = await this.employeeRepo.find({
+      relations: ["department", "position"],
+      order: { first_name: "ASC" },
+      where: { employment_status: "Active" } as any, // Only show active staff
+    });
+
+    return employees.map((emp) => ({
+      employee_id: emp.employee_id,
+      first_name: emp.first_name,
+      last_name: emp.last_name,
+      email: emp.email,
+      avatar_url: emp.avatar_url ?? null,
+      department: emp.department
+        ? { department_id: emp.department.department_id, department_name: emp.department.department_name }
+        : null,
+      position: emp.position
+        ? { position_id: emp.position.position_id, position_name: emp.position.position_name }
+        : null,
+      // phone_number and address are deliberately EXCLUDED
+    }));
   }
 }

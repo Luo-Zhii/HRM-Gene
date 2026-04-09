@@ -43,10 +43,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       //    ""
       // `http://10.78.101.32:3001
       // `http://localhost:3001
-      //   )}/api/auth/profile?t=${new Date().getTime()}`,
+      //    )}/api/auth/profile?t=${new Date().getTime()}`,
       // `http://10.78.101.32:3001/api/auth/profile`,
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
-      const res = await fetch(`${apiBase}/auth/profile?t=${new Date().getTime()}`, {
+      //const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      //const res = await fetch(`${apiBase}/auth/profile?t=${new Date().getTime()}`, {
+      //  credentials: "include",
+      const res = await fetch(`/api/auth/profile?t=${new Date().getTime()}`, {
         credentials: "include",
       });
 
@@ -103,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
       const response = await originalFetch(...args);
-      
+
       // If 401 Unauthorized, trigger logout
       if (response.status === 401) {
         const url = args[0] instanceof Request ? args[0].url : args[0].toString();
@@ -124,10 +126,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // --- FORCED REDIRECT LOGIC ---
   useEffect(() => {
     if (loading) return;
-    
+
     const pathname = window.location.pathname;
     const isPublicPath = pathname === "/login" || pathname === "/admin-register" || pathname === "/";
-    
+
     if (!user && !isPublicPath) {
       console.log("Unauthenticated access to protected route. Redirecting to login...");
       window.location.href = "/login";
