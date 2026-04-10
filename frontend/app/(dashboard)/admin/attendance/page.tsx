@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import {
   Table,
   TableBody,
@@ -50,6 +51,7 @@ type AttendanceResponse = {
 export default function AttendanceHistoryPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [stats, setStats] = useState<AttendanceStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -166,17 +168,15 @@ export default function AttendanceHistoryPage() {
 
   const currentRangeLabel = () => {
     if (!appliedStartDate && !appliedEndDate) {
-      return "Showing last 30 days (default)";
+      return t("attendance.lblRangeDefault");
     }
     if (appliedStartDate && appliedEndDate) {
-      return `Showing ${formatDate(appliedStartDate)} - ${formatDate(
-        appliedEndDate
-      )}`;
+      return t("attendance.lblRangeBoth", { start: formatDate(appliedStartDate), end: formatDate(appliedEndDate) });
     }
     if (appliedStartDate) {
-      return `Showing ${formatDate(appliedStartDate)}`;
+      return t("attendance.lblRangeStart", { start: formatDate(appliedStartDate) });
     }
-    return "Showing all records";
+    return t("attendance.lblRangeAll");
   };
 
   const filteredRecords = records.filter((rec) =>
@@ -187,7 +187,7 @@ export default function AttendanceHistoryPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <p className="text-gray-600 dark:text-gray-300">
-          Loading attendance records...
+          {t("attendance.loadingRecords")}
         </p>
       </div>
     );
@@ -198,10 +198,10 @@ export default function AttendanceHistoryPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 max-w-md">
           <h1 className="text-xl font-bold text-red-600 mb-2">
-            Access Denied
+            {t("attendance.accessDenied")}
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            You do not have permission to view attendance history.
+            {t("attendance.noPermission")}
           </p>
         </div>
       </div>
@@ -213,10 +213,10 @@ export default function AttendanceHistoryPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="mb-2">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            Attendance History
+            {t("attendance.title")}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            View detailed attendance records for all employees
+            {t("attendance.subtitle")}
           </p>
         </div>
 
@@ -230,7 +230,7 @@ export default function AttendanceHistoryPage() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row md:items-end md:space-x-4 space-y-3 md:space-y-0">
               <div className="flex flex-col space-y-1">
-                <label className="text-sm text-slate-600">Start Date</label>
+                <label className="text-sm text-slate-600">{t("attendance.lblStartDate")}</label>
                 <input
                   type="date"
                   value={startDate}
@@ -239,7 +239,7 @@ export default function AttendanceHistoryPage() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label className="text-sm text-slate-600">End Date</label>
+                <label className="text-sm text-slate-600">{t("attendance.lblEndDate")}</label>
                 <input
                   type="date"
                   value={endDate}
@@ -248,10 +248,10 @@ export default function AttendanceHistoryPage() {
                 />
               </div>
               <div className="flex flex-col space-y-1 w-full md:w-64">
-                <label className="text-sm text-slate-600">Search by Employee</label>
+                <label className="text-sm text-slate-600">{t("attendance.lblSearchEmp")}</label>
                 <input
                   type="text"
-                  placeholder="e.g. John Doe"
+                  placeholder={t("attendance.placeholderSearchEmp")}
                   value={searchEmployee}
                   onChange={(e) => setSearchEmployee(e.target.value)}
                   className="border rounded px-3 py-2 text-sm"
@@ -262,7 +262,7 @@ export default function AttendanceHistoryPage() {
                   onClick={applyFilter}
                   className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
                 >
-                  Filter
+                  {t("attendance.btnFilter")}
                 </button>
                 <button
                   onClick={() => {
@@ -272,7 +272,7 @@ export default function AttendanceHistoryPage() {
                   }}
                   className="text-sm px-3 py-2 rounded border"
                 >
-                  Reset
+                  {t("attendance.btnReset")}
                 </button>
               </div>
               <div className="flex-1 text-sm text-slate-600 md:text-right">
@@ -286,25 +286,25 @@ export default function AttendanceHistoryPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
               <CardContent className="p-6">
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Employees</p>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t("attendance.statsTotalEmp")}</p>
                 <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{stats.totalEmployees}</p>
               </CardContent>
             </Card>
             <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
               <CardContent className="p-6">
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Present</p>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t("attendance.statsPresent")}</p>
                 <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{stats.present}</p>
               </CardContent>
             </Card>
             <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
               <CardContent className="p-6">
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Late</p>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t("attendance.statsLate")}</p>
                 <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-2">{stats.late}</p>
               </CardContent>
             </Card>
             <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
               <CardContent className="p-6">
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Absent</p>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t("attendance.statsAbsent")}</p>
                 <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-2">{stats.absent}</p>
               </CardContent>
             </Card>
@@ -314,29 +314,29 @@ export default function AttendanceHistoryPage() {
         <Card className="shadow-md border-none">
           <CardHeader>
             <CardTitle className="text-slate-800 dark:text-slate-100">
-              Attendance Records
+              {t("attendance.targetTitle")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {records.length === 0 ? (
               <div className="py-10 text-center text-slate-500 dark:text-slate-400">
-                No attendance records found.
+                {t("attendance.noRecords")}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Check In</TableHead>
-                      <TableHead>Check Out</TableHead>
+                      <TableHead>{t("attendance.colId")}</TableHead>
+                      <TableHead>{t("attendance.colDate")}</TableHead>
+                      <TableHead>{t("attendance.colEmployee")}</TableHead>
+                      <TableHead>{t("attendance.colCheckIn")}</TableHead>
+                      <TableHead>{t("attendance.colCheckOut")}</TableHead>
                       <TableHead className="text-right">
-                        Working Hours
+                        {t("attendance.colHours")}
                       </TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Location</TableHead>
+                      <TableHead>{t("attendance.colStatus")}</TableHead>
+                      <TableHead>{t("attendance.colLocation")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -364,7 +364,10 @@ export default function AttendanceHistoryPage() {
                                 : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                             }`}
                           >
-                            {rec.status}
+                            {rec.status === "Present" ? t("attendance.statusPresent") :
+                             rec.status === "Late" ? t("attendance.statusLate") :
+                             rec.status === "Half-day" ? t("attendance.statusHalfDay") :
+                             t("attendance.statusAbsent")}
                           </span>
                         </TableCell>
                         <TableCell>{rec.location || rec.ip_address || "-"}</TableCell>
@@ -378,7 +381,7 @@ export default function AttendanceHistoryPage() {
             {/* Simple pagination controls */}
             <div className="flex items-center justify-between mt-4 text-sm text-slate-600 dark:text-slate-300">
               <span>
-                Page {page} of {totalPages}
+                {t("attendance.lblPage", { page, total: totalPages })}
               </span>
               <div className="space-x-2">
                 <button
@@ -389,7 +392,7 @@ export default function AttendanceHistoryPage() {
                     loadAttendance(page - 1, appliedStartDate, appliedEndDate)
                   }
                 >
-                  Previous
+                  {t("attendance.btnPrev")}
                 </button>
                 <button
                   className="px-3 py-1 rounded border bg-white dark:bg-slate-800 disabled:opacity-50"
@@ -399,7 +402,7 @@ export default function AttendanceHistoryPage() {
                     loadAttendance(page + 1, appliedStartDate, appliedEndDate)
                   }
                 >
-                  Next
+                  {t("attendance.btnNext")}
                 </button>
               </div>
             </div>
@@ -409,5 +412,3 @@ export default function AttendanceHistoryPage() {
     </div>
   );
 }
-
-

@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode.react";
 import { useAuthContext } from "@/src/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { RefreshCcw } from "lucide-react"; // Thêm cái icon cho ngầu
+import { RefreshCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function QrDisplayPage() {
   const { user, loading } = useAuthContext();
   const router = useRouter();
+  const { t } = useTranslation();
   const [qrToken, setQrToken] = useState<string>("");
   const [countdown, setCountdown] = useState<number>(30); // State lưu số giây
 
@@ -68,7 +70,7 @@ export default function QrDisplayPage() {
   }, [user]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center font-medium text-gray-600">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center font-medium text-gray-600">{t("qrDisplay.loading")}</div>;
   }
 
   if (!user) return null;
@@ -77,13 +79,13 @@ export default function QrDisplayPage() {
     user.permissions?.includes("manage:system") ||
     user.permissions?.includes("manage:timekeeping");
   if (!hasPermission) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold">Access denied</div>;
+    return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold">{t("qrDisplay.accessDenied")}</div>;
   }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8FAFC]">
-      <h1 className="text-3xl font-bold mb-2 text-slate-800">Dynamic Check-In</h1>
-      <p className="mb-8 text-slate-500">Scan this QR code using the employee app</p>
+      <h1 className="text-3xl font-bold mb-2 text-slate-800">{t("qrDisplay.title")}</h1>
+      <p className="mb-8 text-slate-500">{t("qrDisplay.subtitle")}</p>
 
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
         {qrToken ? (
@@ -92,14 +94,14 @@ export default function QrDisplayPage() {
           </div>
         ) : (
           <div className="w-[312px] h-[312px] flex items-center justify-center border-2 border-dashed border-gray-200 rounded-xl bg-slate-50">
-            <span className="text-slate-400 font-medium animate-pulse">Generating QR...</span>
+            <span className="text-slate-400 font-medium animate-pulse">{t("qrDisplay.generating")}</span>
           </div>
         )}
 
         {/* --- KHU VỰC BỘ ĐẾM GIÂY --- */}
         <div className={`mt-8 flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-colors ${countdown <= 5 ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
           <RefreshCcw size={16} className={`${countdown <= 5 ? 'animate-spin' : ''}`} />
-          <span>Refreshes in {countdown}s</span>
+          <span>{t("qrDisplay.refreshesIn", { seconds: countdown })}</span>
         </div>
       </div>
     </div>

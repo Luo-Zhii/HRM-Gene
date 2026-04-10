@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 
 interface PermissionData {
   position_id: number;
@@ -21,6 +22,7 @@ interface StatusMessage {
 export default function PermissionMatrixPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
 
   // 1. Cập nhật quyền chỉnh sửa (canEdit)
   const canEdit =
@@ -49,12 +51,12 @@ export default function PermissionMatrixPage() {
       if (!canView) {
         setStatusMessage({
           type: "error",
-          text: "You do not have permission to access this page.",
+          text: t("permissions.noPermission"),
         });
         setTimeout(() => router.push("/dashboard"), 2000);
       }
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, router, t]);
 
   // Load permission matrix
   const loadMatrix = async () => {
@@ -66,7 +68,7 @@ export default function PermissionMatrixPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch permission matrix");
+        throw new Error(t("permissions.errLoading"));
       }
 
       const data = await response.json();
@@ -89,7 +91,7 @@ export default function PermissionMatrixPage() {
       );
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Error loading matrix";
+        error instanceof Error ? error.message : t("permissions.errLoading");
       setStatusMessage({ type: "error", text: message });
     } finally {
       setLoading(false);
@@ -138,7 +140,7 @@ export default function PermissionMatrixPage() {
     if (!canEdit) {
       setStatusMessage({
         type: "error",
-        text: "You do not have permission to make changes.",
+        text: t("permissions.noChangePermission"),
       });
       setProcessingCell(null);
       return;
@@ -161,20 +163,20 @@ export default function PermissionMatrixPage() {
 
       if (!response.ok) {
         throw new Error(
-          `Failed to ${checked ? "assign" : "revoke"} permission`
+          checked ? t("permissions.errAssign") : t("permissions.errRevoke")
         );
       }
 
       setStatusMessage({
         type: "success",
-        text: `Permission ${checked ? "assigned" : "revoked"} successfully!`,
+        text: checked ? t("permissions.msgAssignSuccess") : t("permissions.msgRevokeSuccess"),
       });
 
       // Reload matrix
       await loadMatrix();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Error updating permission";
+        error instanceof Error ? error.message : t("permissions.errUpdate");
       setStatusMessage({ type: "error", text: message });
     } finally {
       setProcessingCell(null);
@@ -185,7 +187,7 @@ export default function PermissionMatrixPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading...</p>
+        <p className="text-gray-600">{t("common.loadingWorkspace", "Loading...")}</p>
       </div>
     );
   }
@@ -202,9 +204,9 @@ export default function PermissionMatrixPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow p-6 max-w-md">
-          <h1 className="text-xl font-bold text-red-600 mb-2">Access Denied</h1>
+          <h1 className="text-xl font-bold text-red-600 mb-2">{t("permissions.accessDenied")}</h1>
           <p className="text-gray-600">
-            You do not have permission to access this page.
+            {t("permissions.noPermission")}
           </p>
         </div>
       </div>
@@ -217,9 +219,9 @@ export default function PermissionMatrixPage() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">
-            Permission Matrix
+            {t("permissions.title")}
           </h1>
-          <p className="text-gray-600 mt-2">Assign permissions to positions</p>
+          <p className="text-gray-600 mt-2">{t("permissions.subtitle")}</p>
         </div>
 
         {/* Status Message */}
@@ -239,16 +241,16 @@ export default function PermissionMatrixPage() {
         {/* Loading State */}
         {loading ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-600">Loading permission matrix...</p>
+            <p className="text-gray-600">{t("permissions.loadingMatrix")}</p>
           </div>
         ) : matrix.length === 0 || allPermissions.length === 0 ? (
           // Empty State
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <p className="text-gray-600 font-medium">
-              No positions or permissions found
+              {t("permissions.noData")}
             </p>
             <p className="text-gray-500 mt-2">
-              Create positions and permissions first.
+              {t("permissions.noDataSub")}
             </p>
           </div>
         ) : (
@@ -259,7 +261,7 @@ export default function PermissionMatrixPage() {
                 <thead>
                   <tr className="bg-gray-100 border-b-2 border-gray-300">
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 bg-gray-100 sticky left-0 z-10 min-w-[200px]">
-                      Position
+                      {t("permissions.colPosition")}
                     </th>
                     {allPermissions.map((perm) => (
                       <th
@@ -308,7 +310,7 @@ export default function PermissionMatrixPage() {
                               disabled={isProcessing || !canEdit}
                               title={
                                 !canEdit
-                                  ? "Read-only: you cannot modify permissions"
+                                  ? t("permissions.tooltipReadOnly")
                                   : undefined
                               }
                               aria-disabled={!canEdit}
@@ -327,15 +329,10 @@ export default function PermissionMatrixPage() {
             {/* Legend */}
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
               <p className="text-sm text-gray-600">
-                <strong>Legend:</strong> Check a box to assign a permission to a
-                position. Uncheck to revoke. Users without edit privileges
-                (read-only) can view the current assignments but cannot make
-                changes.
+                <strong>{t("permissions.legendTitle")}</strong> {t("permissions.legendDesc")}
               </p>
               <p className="text-xs text-gray-500 mt-2">
-                Showing {matrix.length} position{matrix.length !== 1 ? "s" : ""}{" "}
-                and {allPermissions.length} permission
-                {allPermissions.length !== 1 ? "s" : ""}
+                {t("permissions.legendStats", { posCount: matrix.length, permCount: allPermissions.length })}
               </p>
             </div>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { X, Printer, Building2, User, Calendar, Clock, TrendingUp, TrendingDown, DollarSign, CheckCircle } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -98,6 +99,7 @@ function SquigglyLine() {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function PayslipDetailModal({ payslip, userName, onClose }: Props) {
+  const { t } = useTranslation();
   const cfg = payslip.salaryConfig;
   const gross = payslip.total_income ?? parseFloat(payslip.gross_salary || "0");
   const bonus = parseFloat(payslip.bonus || "0");
@@ -114,18 +116,17 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
     const lunch = parseFloat(cfg.lunch_allowance || "0");
     const responsibility = parseFloat(cfg.responsibility_allowance || "0");
     earningsRows = [
-      { name: "Base Salary", value: basePart },
-      ...(transport > 0 ? [{ name: "Transport Allowance", value: transport }] : []),
-      ...(lunch > 0 ? [{ name: "Lunch Allowance", value: lunch }] : []),
-      ...(responsibility > 0 ? [{ name: "Responsibility Allowance", value: responsibility }] : []),
-      ...(bonus > 0 ? [{ name: "Bonus / Commission", value: bonus }] : []),
-      ...(payslip.kpi_bonus_amount ? [{ name: "Performance Bonus (KPI)", value: payslip.kpi_bonus_amount }] : []),
+      ...(transport > 0 ? [{ name: t("payslip.transportAllowance"), value: transport }] : []),
+      ...(lunch > 0 ? [{ name: t("payslip.lunchAllowance"), value: lunch }] : []),
+      ...(responsibility > 0 ? [{ name: t("payslip.responsibilityAllowance"), value: responsibility }] : []),
+      ...(bonus > 0 ? [{ name: t("payslip.bonusCommission"), value: bonus }] : []),
+      ...(payslip.kpi_bonus_amount ? [{ name: t("payslip.performanceBonus"), value: payslip.kpi_bonus_amount }] : []),
     ];
   } else {
     earningsRows = [
-      { name: "Base Salary", value: gross - bonus },
-      ...(bonus > 0 ? [{ name: "Bonus / Commission", value: bonus }] : []),
-      ...(payslip.kpi_bonus_amount ? [{ name: "Performance Bonus (KPI)", value: payslip.kpi_bonus_amount }] : []),
+      { name: t("payslip.baseSalary"), value: gross - bonus },
+      ...(bonus > 0 ? [{ name: t("payslip.bonusCommission"), value: bonus }] : []),
+      ...(payslip.kpi_bonus_amount ? [{ name: t("payslip.performanceBonus"), value: payslip.kpi_bonus_amount }] : []),
     ];
   }
 
@@ -138,15 +139,15 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
     const insurance = baseSalary * 0.105;
     const penalty = Math.max(0, deductions - insurance);
     deductionRows = [
-      { name: "Social + Health + Unemployment (10.5%)", value: insurance },
-      ...(penalty > 0 ? [{ name: "Penalties / Fines", value: penalty }] : []),
+      { name: t("payslip.insurance"), value: insurance },
+      ...(penalty > 0 ? [{ name: t("payslip.penalties"), value: penalty }] : []),
     ];
   }
 
   const empName = payslip.employee_name
     || (payslip.employee
       ? `${payslip.employee.first_name} ${payslip.employee.last_name}`.trim()
-      : (userName ?? "Employee"));
+      : (userName ?? t("payslip.employee")));
   const empDept = payslip.employee?.department?.department_name ?? "—";
   const empPos = payslip.employee?.position?.position_name ?? "—";
   const preparedBy = payslip.prepared_by_name || userName || "System Admin";
@@ -199,7 +200,7 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
               <DollarSign className="w-3.5 h-3.5 text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-gray-900 dark:text-white text-sm leading-tight">Payslip</h2>
+              <h2 className="font-bold text-gray-900 dark:text-white text-sm leading-tight">{t("payslip.title")}</h2>
               <p className="text-[11px] text-gray-400 leading-tight">{getPeriodLabel(payslip)}</p>
             </div>
           </div>
@@ -218,9 +219,9 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
           <div className="text-center pb-3 border-b-2 border-dashed border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-center gap-1.5 mb-0.5">
               <Building2 className="w-3.5 h-3.5 text-blue-600" />
-              <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">DashStack HR System</span>
+              <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{t("payslip.companyName")}</span>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">PAYSLIP</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">{t("payslip.title")}</h3>
             <div className="mt-1.5 inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-0.5 rounded-full">
               <Calendar className="w-3 h-3 text-blue-600" />
               <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400">{getPeriodLabel(payslip)}</span>
@@ -229,23 +230,23 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
 
           {/* Employee Info */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3">
-            <InfoItem icon={<User className="w-3 h-3" />} label="Employee" value={empName} />
-            <InfoItem icon={<Building2 className="w-3 h-3" />} label="Department" value={empDept} />
-            <InfoItem icon={<DollarSign className="w-3 h-3" />} label="Position" value={empPos} />
-            <InfoItem icon={<Calendar className="w-3 h-3" />} label="Pay Period" value={getPeriod(payslip)} />
+            <InfoItem icon={<User className="w-3 h-3" />} label={t("payslip.employee")} value={empName} />
+            <InfoItem icon={<Building2 className="w-3 h-3" />} label={t("payslip.department")} value={empDept} />
+            <InfoItem icon={<DollarSign className="w-3 h-3" />} label={t("payslip.position")} value={empPos} />
+            <InfoItem icon={<Calendar className="w-3 h-3" />} label={t("payslip.payPeriod")} value={getPeriod(payslip)} />
           </div>
 
           {/* Attendance bar */}
           <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/60 rounded-xl px-3 py-2">
             <div className="flex items-center gap-1.5 flex-1">
               <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span className="text-[11px] text-gray-500 dark:text-gray-400">Days Worked</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400">{t("payslip.daysWorked")}</span>
               <span className="text-xs font-bold text-gray-900 dark:text-white ml-0.5">{payslip.actual_work_days}</span>
             </div>
             <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
             <div className="flex items-center gap-1.5 flex-1">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-              <span className="text-[11px] text-gray-500 dark:text-gray-400">OT</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400">{t("payslip.ot")}</span>
               <span className="text-xs font-bold text-gray-900 dark:text-white ml-0.5">{payslip.ot_hours ?? 0}h</span>
             </div>
             <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
@@ -259,7 +260,7 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
 
           {/* I. Income */}
           <div>
-            <SectionTitle>I. Income</SectionTitle>
+            <SectionTitle>{t("payslip.income")}</SectionTitle>
             <div className="space-y-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2">
               {earningsRows.map((item, i) => {
                 const isBonus = item.name.toLowerCase().includes("bonus") || item.name.toLowerCase().includes("commission");
@@ -275,14 +276,14 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
                 );
               })}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
-                <LineItem label="Total Gross" value={fmt(gross)} bold />
+                <LineItem label={t("payslip.totalGross")} value={fmt(gross)} bold />
               </div>
             </div>
           </div>
 
           {/* II. Deductions */}
           <div>
-            <SectionTitle>II. Deductions</SectionTitle>
+            <SectionTitle>{t("payslip.deductions")}</SectionTitle>
             <div className="space-y-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2">
               {deductionRows.map((item, i) => (
                 <LineItem
@@ -294,25 +295,25 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
                 />
               ))}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
-                <LineItem label="Total Deductions" value={`-${fmt(deductions)}`} bold highlight="red" />
+                <LineItem label={t("payslip.totalDeductions")} value={`-${fmt(deductions)}`} bold highlight="red" />
               </div>
             </div>
           </div>
 
           {/* III. Net Take-Home Pay – Figma card */}
           <div>
-            <SectionTitle>III. Net Take-Home Pay</SectionTitle>
+            <SectionTitle>{t("payslip.netTakeHomePay")}</SectionTitle>
             <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 overflow-hidden">
               <div className="grid grid-cols-[1fr_auto] divide-x divide-blue-100 dark:divide-blue-900">
 
                 {/* Left column – summary rows */}
                 <div className="px-3 py-2.5 space-y-1.5">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">Total Income:</span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">{t("payslip.totalIncome")}</span>
                     <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 tabular-nums">{fmt(gross)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">Total Deductions:</span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">{t("payslip.totalDeductions")}:</span>
                     <span className="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums">-{fmt(deductions)}</span>
                   </div>
                 </div>
@@ -320,7 +321,7 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
                 {/* Right column – net amount */}
                 <div className="px-3 py-2.5 flex flex-col items-end justify-center bg-blue-50/60 dark:bg-blue-950/30 min-w-0">
                   <p className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest whitespace-nowrap mb-0.5">
-                    Net Salary Received
+                    {t("payslip.netSalaryReceived")}
                   </p>
                   <p className="text-xl font-black text-blue-700 dark:text-blue-300 tabular-nums leading-tight">
                     {fmt(net)}
@@ -338,13 +339,13 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
 
           {/* IV. Signatures */}
           <div>
-            <SectionTitle>Signatures</SectionTitle>
+            <SectionTitle>{t("payslip.signatures")}</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
 
               {/* Prepared By */}
               <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-3 pt-2 pb-3 flex flex-col items-center text-center">
-                <p className="text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Prepared By</p>
-                <p className="text-[9px] text-gray-400 dark:text-gray-500 mb-3">(System Generated)</p>
+                <p className="text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t("payslip.preparedBy")}</p>
+                <p className="text-[9px] text-gray-400 dark:text-gray-500 mb-3">{t("payslip.systemGenerated")}</p>
                 <div className="w-full px-1 mb-2">
                   <SquigglyLine />
                 </div>
@@ -354,13 +355,13 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
 
               {/* Employee Confirmation */}
               <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-3 pt-2 pb-3 flex flex-col items-center text-center">
-                <p className="text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Employee Confirmation</p>
-                <p className="text-[9px] text-gray-400 dark:text-gray-500 mb-3">(System Generated)</p>
+                <p className="text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t("payslip.employeeConfirmation")}</p>
+                <p className="text-[9px] text-gray-400 dark:text-gray-500 mb-3">{t("payslip.systemGenerated")}</p>
                 <div className="w-full px-1 mb-2">
                   <SquigglyLine />
                 </div>
                 <p className="text-[11px] font-bold text-gray-700 dark:text-gray-200 truncate w-full">{empName}</p>
-                <p className="text-[9px] text-gray-400">Employee</p>
+                <p className="text-[9px] text-gray-400">{t("payslip.employee")}</p>
               </div>
 
             </div>
@@ -369,10 +370,10 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
           {/* Footer */}
           <div className="text-center pb-1 space-y-0.5">
             <p className="text-[9px] italic text-gray-400 dark:text-gray-600">
-              This is a system-generated document from the DashStack HR platform.
+              {t("payslip.footerText1")}
             </p>
             <p className="text-[9px] italic text-gray-400 dark:text-gray-600">
-              It does not require a physical signature or company stamp.
+              {t("payslip.footerText2")}
             </p>
             <p className="text-[9px] italic text-gray-400 dark:text-gray-600">
               © {new Date().getFullYear()} DashStack Inc. All rights reserved.
@@ -386,14 +387,14 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
             onClick={onClose}
             className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
           >
-            Close
+            {t("common.close")}
           </button>
           <button
             onClick={handlePrint}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
           >
             <Printer className="w-3.5 h-3.5" />
-            Print / PDF
+            {t("payslip.print")}
           </button>
         </div>
       </div>

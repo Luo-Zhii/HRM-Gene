@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../../../src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,7 +40,7 @@ type LeaveBalance = {
   balance_id: number;
   leave_type_name: string;
   remaining_days: number;
-  total_days?: number; // We'll calculate this from leave types
+  total_days?: number;
 };
 
 type LeaveRequest = {
@@ -84,11 +85,12 @@ const calculateDays = (
   if (endDate < startDate) return 0;
   const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays + 1; // +1 to include both start and end date
+  return diffDays + 1;
 };
 
 // Calendar View Component
 const CalendarView = ({ requests }: { requests: LeaveRequest[] }) => {
+  const { t } = useTranslation();
   const today = new Date();
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
@@ -98,7 +100,6 @@ const CalendarView = ({ requests }: { requests: LeaveRequest[] }) => {
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
 
-  // Get all dates that have leave requests
   const leaveDates = useMemo(() => {
     const dates = new Set<string>();
     requests.forEach((req) => {
@@ -143,18 +144,8 @@ const CalendarView = ({ requests }: { requests: LeaveRequest[] }) => {
   };
 
   const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
   ];
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -224,15 +215,15 @@ const CalendarView = ({ requests }: { requests: LeaveRequest[] }) => {
       <div className="mt-4 flex gap-4 text-sm">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-          <span>Approved</span>
+          <span>{t("leave.statusApproved")}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded"></div>
-          <span>Pending</span>
+          <span>{t("leave.statusPending")}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
-          <span>Rejected</span>
+          <span>{t("leave.statusRejected")}</span>
         </div>
       </div>
     </div>
@@ -241,12 +232,11 @@ const CalendarView = ({ requests }: { requests: LeaveRequest[] }) => {
 
 export default function LeavePage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
-  // State for balance section
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [balancesLoading, setBalancesLoading] = useState(false);
 
-  // State for form section
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [selectedLeaveType, setSelectedLeaveType] = useState<number | "">("");
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -255,14 +245,12 @@ export default function LeavePage() {
   const [submitting, setSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // State for request history section
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
   const { toast } = useToast();
 
-  // Calculate total days
   const totalDays = useMemo(
     () => calculateDays(startDate, endDate),
     [startDate, endDate]
@@ -270,25 +258,14 @@ export default function LeavePage() {
 
   const showStatus = (type: "success" | "error" | "info", text: string) => {
     if (type === "success") {
-      toast({
-        title: "Success",
-        description: text,
-      });
+      toast({ title: t("common.success"), description: text });
     } else if (type === "error") {
-      toast({
-        title: "Error",
-        description: text,
-        variant: "destructive",
-      });
+      toast({ title: t("common.error"), description: text, variant: "destructive" });
     } else {
-      toast({
-        title: "Info",
-        description: text,
-      });
+      toast({ title: t("common.info"), description: text });
     }
   };
 
-  // Load data on mount
   useEffect(() => {
     loadBalance();
     loadLeaveTypes();
@@ -328,9 +305,7 @@ export default function LeavePage() {
   const loadRequests = async () => {
     setRequestsLoading(true);
     try {
-      const res = await fetch("/api/leave/my-requests", {
-        credentials: "include",
-      });
+      const res = await fetch("/api/leave/my-requests", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setRequests(data);
@@ -348,15 +323,15 @@ export default function LeavePage() {
     e.preventDefault();
 
     if (!selectedLeaveType) {
-      showStatus("error", "Please select a leave type");
+      showStatus("error", t("leave.errorSelectType"));
       return;
     }
     if (!startDate || !endDate) {
-      showStatus("error", "Please select start and end dates");
+      showStatus("error", t("leave.errorSelectDates"));
       return;
     }
     if (endDate < startDate) {
-      showStatus("error", "End date must be after start date");
+      showStatus("error", t("leave.errorEndBeforeStart"));
       return;
     }
 
@@ -376,17 +351,12 @@ export default function LeavePage() {
 
       const json = await res.json();
       if (res.ok) {
-        showStatus(
-          "success",
-          json?.message || "Leave request submitted successfully!"
-        );
-        // Reset form
+        showStatus("success", json?.message || "Leave request submitted successfully!");
         setSelectedLeaveType("");
         setStartDate(null);
         setEndDate(null);
         setReason("");
         setIsModalOpen(false);
-        // Reload requests and balance
         await loadRequests();
         await loadBalance();
       } else {
@@ -399,7 +369,6 @@ export default function LeavePage() {
     }
   };
 
-  // Get total days for a leave type
   const getTotalDaysForType = (leaveTypeName: string): number => {
     const type = leaveTypes.find((lt) => lt.name === leaveTypeName);
     return type?.default_days_allocated || 0;
@@ -407,35 +376,31 @@ export default function LeavePage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900">Leave Management</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-900">{t("leave.title")}</h1>
 
       <Tabs defaultValue="balance" className="w-full">
         <TabsList className="mb-8 bg-gray-100/80 p-1 rounded-xl">
-          <TabsTrigger value="balance" className="rounded-lg font-medium px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all text-gray-600">My Leave Balance</TabsTrigger>
-          <TabsTrigger value="request" className="rounded-lg font-medium px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all text-gray-600">Create Request</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-lg font-medium px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all text-gray-600">Request History</TabsTrigger>
+          <TabsTrigger value="balance" className="rounded-lg font-medium px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all text-gray-600">{t("leave.tabBalance")}</TabsTrigger>
+          <TabsTrigger value="request" className="rounded-lg font-medium px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all text-gray-600">{t("leave.tabRequest")}</TabsTrigger>
+          <TabsTrigger value="history" className="rounded-lg font-medium px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all text-gray-600">{t("leave.tabHistory")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="balance" className="mt-0">
           <Card className="border-gray-100 shadow-sm rounded-2xl overflow-hidden">
             <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-              <CardTitle className="text-lg text-gray-800">My Leave Balance</CardTitle>
+              <CardTitle className="text-lg text-gray-800">{t("leave.balanceTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               {balancesLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[1, 2, 3].map((i) => (
-                    <SkeletonCard key={i} />
-                  ))}
+                  {[1, 2, 3].map((i) => (<SkeletonCard key={i} />))}
                 </div>
               ) : balances.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {balances.map((balance) => {
                     const totalDays = getTotalDaysForType(balance.leave_type_name);
                     const usedDays = totalDays - balance.remaining_days;
-                    const percentage =
-                      totalDays > 0 ? (usedDays / totalDays) * 100 : 0;
-
+                    const percentage = totalDays > 0 ? (usedDays / totalDays) * 100 : 0;
                     return (
                       <div
                         key={balance.balance_id}
@@ -450,25 +415,20 @@ export default function LeavePage() {
                             {balance.remaining_days}
                           </div>
                           <div className="text-sm font-medium text-gray-400">
-                            days left
+                            {t("leave.daysLeft")}
                           </div>
                         </div>
                         {totalDays > 0 && (
                           <div className="w-full mt-auto">
                             <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2 overflow-hidden">
                               <div
-                                className={`h-full transition-all duration-500 ease-out ${percentage > 80
-                                  ? "bg-red-500"
-                                  : percentage > 50
-                                    ? "bg-yellow-500"
-                                    : "bg-green-500"
-                                  }`}
+                                className={`h-full transition-all duration-500 ease-out ${percentage > 80 ? "bg-red-500" : percentage > 50 ? "bg-yellow-500" : "bg-green-500"}`}
                                 style={{ width: `${Math.min(percentage, 100)}%` }}
                               ></div>
                             </div>
                             <div className="text-[11px] font-semibold text-gray-500 flex justify-between px-1">
-                              <span>{usedDays} used</span>
-                              <span>{totalDays} total</span>
+                              <span>{usedDays} {t("leave.used")}</span>
+                              <span>{totalDays} {t("leave.total")}</span>
                             </div>
                           </div>
                         )}
@@ -477,7 +437,7 @@ export default function LeavePage() {
                   })}
                 </div>
               ) : (
-                <div className="text-gray-500 text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">No leave balance data available</div>
+                <div className="text-gray-500 text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">{t("leave.noBalanceData")}</div>
               )}
             </CardContent>
           </Card>
@@ -486,28 +446,23 @@ export default function LeavePage() {
         <TabsContent value="request" className="mt-0">
           <Card className="border-gray-100 shadow-sm rounded-2xl overflow-hidden max-w-2xl">
             <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-              <CardTitle className="text-lg text-gray-800">Submit New Leave Request</CardTitle>
+              <CardTitle className="text-lg text-gray-800">{t("leave.submitTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleSubmitRequest} className="space-y-6">
                 <div>
-                  <Label htmlFor="leave-type" className="font-semibold text-gray-700">Leave Type *</Label>
+                  <Label htmlFor="leave-type" className="font-semibold text-gray-700">{t("leave.leaveType")} *</Label>
                   <Select
                     value={selectedLeaveType.toString()}
-                    onValueChange={(value) =>
-                      setSelectedLeaveType(value ? parseInt(value, 10) : "")
-                    }
+                    onValueChange={(value) => setSelectedLeaveType(value ? parseInt(value, 10) : "")}
                   >
                     <SelectTrigger className="mt-1.5 h-11">
-                      <SelectValue placeholder="-- Select Leave Type --" />
+                      <SelectValue placeholder={t("leave.leaveTypePlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       {leaveTypes.map((lt) => (
-                        <SelectItem
-                          key={lt.leave_type_id}
-                          value={lt.leave_type_id.toString()}
-                        >
-                          {lt.name} ({lt.default_days_allocated} days allocated)
+                        <SelectItem key={lt.leave_type_id} value={lt.leave_type_id.toString()}>
+                          {lt.name} ({lt.default_days_allocated} {t("leave.daysAllocated")})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -516,50 +471,38 @@ export default function LeavePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label className="font-semibold text-gray-700">Start Date *</Label>
+                    <Label className="font-semibold text-gray-700">{t("leave.startDate")} *</Label>
                     <div className="mt-1.5">
-                      <DatePicker
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        placeholderText="Select start date"
-                      />
+                      <DatePicker selected={startDate} onSelect={setStartDate} placeholderText={t("leave.startDatePlaceholder")} />
                     </div>
                   </div>
-
                   <div>
-                    <Label className="font-semibold text-gray-700">End Date *</Label>
+                    <Label className="font-semibold text-gray-700">{t("leave.endDate")} *</Label>
                     <div className="mt-1.5">
-                      <DatePicker
-                        selected={endDate}
-                        onSelect={setEndDate}
-                        placeholderText="Select end date"
-                        minDate={startDate || undefined}
-                      />
+                      <DatePicker selected={endDate} onSelect={setEndDate} placeholderText={t("leave.endDatePlaceholder")} minDate={startDate || undefined} />
                     </div>
                   </div>
                 </div>
 
                 {startDate && endDate && totalDays > 0 && (
                   <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-blue-900">Total requested duration:</span>
-                    <span className="text-lg font-bold text-blue-700">{totalDays} {totalDays === 1 ? "day" : "days"}</span>
+                    <span className="text-sm font-semibold text-blue-900">{t("leave.totalRequested")}</span>
+                    <span className="text-lg font-bold text-blue-700">{totalDays} {totalDays === 1 ? t("leave.day") : t("leave.days")}</span>
                     {endDate < startDate && (
-                      <div className="text-xs text-red-600 mt-1 absolute">
-                        End date must be after start date
-                      </div>
+                      <div className="text-xs text-red-600 mt-1 absolute">{t("leave.endBeforeStart")}</div>
                     )}
                   </div>
                 )}
 
                 <div>
-                  <Label htmlFor="reason" className="font-semibold text-gray-700">Reason (optional)</Label>
+                  <Label htmlFor="reason" className="font-semibold text-gray-700">{t("leave.reason")}</Label>
                   <Textarea
                     id="reason"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     rows={4}
                     className="mt-1.5 resize-none"
-                    placeholder="Provide additional details or context for your request..."
+                    placeholder={t("leave.reasonPlaceholder")}
                   />
                 </div>
 
@@ -575,10 +518,10 @@ export default function LeavePage() {
                       setReason("");
                     }}
                   >
-                    Clear Form
+                    {t("leave.clearForm")}
                   </Button>
                   <Button type="submit" className="h-11 px-8 bg-blue-600 hover:bg-blue-700 text-white font-bold" disabled={submitting}>
-                    {submitting ? "Submitting..." : "Submit Request"}
+                    {submitting ? t("leave.submitting") : t("leave.submitRequest")}
                   </Button>
                 </div>
               </form>
@@ -590,21 +533,21 @@ export default function LeavePage() {
           <Card className="border-gray-100 shadow-sm rounded-2xl overflow-hidden">
             <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-gray-800">My Request History</CardTitle>
+                <CardTitle className="text-lg text-gray-800">{t("leave.historyTitle")}</CardTitle>
                 <div className="flex gap-2 bg-white p-1 rounded-lg border border-gray-200">
                   <button
                     className={`px-3 py-1.5 rounded-md text-sm font-semibold flex items-center transition-colors ${viewMode === "list" ? "bg-blue-50 text-blue-600" : "text-gray-500 hover:text-gray-900"}`}
                     onClick={() => setViewMode("list")}
                   >
                     <List className="mr-1.5 h-4 w-4" />
-                    List
+                    {t("leave.listView")}
                   </button>
                   <button
                     className={`px-3 py-1.5 rounded-md text-sm font-semibold flex items-center transition-colors ${viewMode === "calendar" ? "bg-blue-50 text-blue-600" : "text-gray-500 hover:text-gray-900"}`}
                     onClick={() => setViewMode("calendar")}
                   >
                     <Calendar className="mr-1.5 h-4 w-4" />
-                    Calendar
+                    {t("leave.calendarView")}
                   </button>
                 </div>
               </div>
@@ -618,48 +561,35 @@ export default function LeavePage() {
                     <Table>
                       <TableHeader className="bg-gray-50/50">
                         <TableRow className="hover:bg-transparent">
-                          <TableHead className="font-semibold text-gray-700">Leave Type</TableHead>
-                          <TableHead className="font-semibold text-gray-700">Start Date</TableHead>
-                          <TableHead className="font-semibold text-gray-700">End Date</TableHead>
-                          <TableHead className="font-semibold text-gray-700">Days</TableHead>
-                          <TableHead className="font-semibold text-gray-700">Reason</TableHead>
-                          <TableHead className="font-semibold text-gray-700 text-right pr-4">Status</TableHead>
+                          <TableHead className="font-semibold text-gray-700">{t("leave.colLeaveType")}</TableHead>
+                          <TableHead className="font-semibold text-gray-700">{t("leave.colStartDate")}</TableHead>
+                          <TableHead className="font-semibold text-gray-700">{t("leave.colEndDate")}</TableHead>
+                          <TableHead className="font-semibold text-gray-700">{t("leave.colDays")}</TableHead>
+                          <TableHead className="font-semibold text-gray-700">{t("leave.colReason")}</TableHead>
+                          <TableHead className="font-semibold text-gray-700 text-right pr-4">{t("leave.colStatus")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {requests.map((req) => {
                           const start = new Date(req.start_date);
                           const end = new Date(req.end_date);
-                          const days =
-                            Math.floor(
-                              (end.getTime() - start.getTime()) /
-                              (1000 * 60 * 60 * 24)
-                            ) + 1;
-
+                          const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                           return (
                             <TableRow key={req.request_id} className="hover:bg-gray-50/50">
-                              <TableCell className="font-semibold text-gray-900 py-4">
-                                {req.leave_type_name}
-                              </TableCell>
-                              <TableCell className="text-gray-600">
-                                {new Date(req.start_date).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell className="text-gray-600">
-                                {new Date(req.end_date).toLocaleDateString()}
-                              </TableCell>
+                              <TableCell className="font-semibold text-gray-900 py-4">{req.leave_type_name}</TableCell>
+                              <TableCell className="text-gray-600">{new Date(req.start_date).toLocaleDateString()}</TableCell>
+                              <TableCell className="text-gray-600">{new Date(req.end_date).toLocaleDateString()}</TableCell>
                               <TableCell className="font-medium text-gray-900">{days}</TableCell>
-                              <TableCell className="text-gray-500 max-w-xs truncate" title={req.reason}>
-                                {req.reason || "—"}
-                              </TableCell>
+                              <TableCell className="text-gray-500 max-w-xs truncate" title={req.reason}>{req.reason || "—"}</TableCell>
                               <TableCell className="text-right pr-4">
                                 <Badge
                                   className={`rounded-md px-2.5 py-1 text-xs font-bold border ${req.status === "Pending"
-                                      ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                      : req.status === "Approved"
-                                        ? "bg-green-50 text-green-700 border-green-200"
-                                        : req.status === "Rejected"
-                                          ? "bg-red-50 text-red-700 border-red-200"
-                                          : "bg-gray-50 text-gray-700 border-gray-200"
+                                    ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                    : req.status === "Approved"
+                                      ? "bg-green-50 text-green-700 border-green-200"
+                                      : req.status === "Rejected"
+                                        ? "bg-red-50 text-red-700 border-red-200"
+                                        : "bg-gray-50 text-gray-700 border-gray-200"
                                     }`}
                                 >
                                   {req.status}
@@ -679,7 +609,7 @@ export default function LeavePage() {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                     <CalendarDays size={24} />
                   </div>
-                  No leave requests submitted yet
+                  {t("leave.noRequests")}
                 </div>
               )}
             </CardContent>

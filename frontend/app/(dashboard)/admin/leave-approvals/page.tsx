@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/src/hooks/useAuth";
 import { Calendar, Clock, FileText, User as UserIcon, Building2, Briefcase, Mail, LayoutGrid, List as ListIcon, CheckCircle2, XCircle, X, MessageSquare } from "lucide-react";
 import ContextualChat from "@/src/components/ContextualChat";
+import { useTranslation } from "react-i18next";
 
 interface LeaveRequest {
   request_id: number;
@@ -40,6 +41,7 @@ const getInitials = (name?: string) => {
 export default function LeaveApprovalsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
 
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,12 +69,12 @@ export default function LeaveApprovalsPage() {
       if (!hasPermission) {
         setStatusMessage({
           type: "error",
-          text: "You do not have permission to access this page.",
+          text: t("leaveApprovals.noPermission"),
         });
         setTimeout(() => router.push("/dashboard"), 2000);
       }
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, router, t]);
 
   const loadRequests = async () => {
     try {
@@ -83,7 +85,7 @@ export default function LeaveApprovalsPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch pending requests");
+        throw new Error(t("leaveApprovals.errLoad"));
       }
 
       const data = await response.json();
@@ -112,7 +114,7 @@ export default function LeaveApprovalsPage() {
         }
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Error loading requests";
+      const message = error instanceof Error ? error.message : t("leaveApprovals.errLoad");
       setStatusMessage({ type: "error", text: message });
     } finally {
       setLoading(false);
@@ -150,15 +152,16 @@ export default function LeaveApprovalsPage() {
 
       if (!response.ok) {
         const json = await response.json();
-        throw new Error(json?.message || `Failed to ${action.toLowerCase()} request`);
+        throw new Error(json?.message || t("leaveApprovals.errProcess"));
       }
 
-      setStatusMessage({ type: "success", text: `Request ${backendStatus.toLowerCase()} successfully!` });
+      const statusLocal = isApproving ? t("leaveApprovals.tabApproved").toLowerCase() : t("leaveApprovals.tabRejected").toLowerCase();
+      setStatusMessage({ type: "success", text: t("leaveApprovals.msgSuccess", { status: statusLocal }) });
       setConfirmModal({ isOpen: false, action: null, requestId: null });
       setActionReason("");
       await loadRequests();
     } catch (error) {
-      const message = error instanceof Error ? error.message : `Error processing request`;
+      const message = error instanceof Error ? error.message : t("leaveApprovals.errProcess");
       setStatusMessage({ type: "error", text: message });
     } finally {
       setProcessingIds((prev) => {
@@ -169,12 +172,19 @@ export default function LeaveApprovalsPage() {
     }
   };
 
+  const getTranslatedTab = (status: string) => {
+    if (status === "Pending") return t("leaveApprovals.tabPending");
+    if (status === "Approved") return t("leaveApprovals.tabApproved");
+    if (status === "Rejected") return t("leaveApprovals.tabRejected");
+    return status;
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">{t("leaveApprovals.loading")}</p>
         </div>
       </div>
     );
@@ -184,8 +194,8 @@ export default function LeaveApprovalsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow p-6 max-w-md">
-          <h1 className="text-xl font-bold text-red-600 mb-2">Access Denied</h1>
-          <p className="text-gray-600">You do not have permission to access this page.</p>
+          <h1 className="text-xl font-bold text-red-600 mb-2">{t("leaveApprovals.accessDenied")}</h1>
+          <p className="text-gray-600">{t("leaveApprovals.noPermission")}</p>
         </div>
       </div>
     );
@@ -205,8 +215,8 @@ export default function LeaveApprovalsPage() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Leave Approvals</h1>
-            <p className="text-gray-600 mt-2">Review and manage employee leave requests</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t("leaveApprovals.title")}</h1>
+            <p className="text-gray-600 mt-2">{t("leaveApprovals.subtitle")}</p>
           </div>
           {statusMessage && (
             <div className={`px-4 py-2 rounded-lg font-medium text-sm animate-fade-in ${statusMessage.type === "success" ? "bg-green-100 text-green-800" :
@@ -222,28 +232,28 @@ export default function LeaveApprovalsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium mb-1">Total Requests</p>
+              <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsTotal")}</p>
               <h3 className="text-2xl font-bold text-gray-900">{stats.total}</h3>
             </div>
             <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center"><FileText className="w-6 h-6 text-blue-600" /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium mb-1">Pending Approval</p>
+              <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsPending")}</p>
               <h3 className="text-2xl font-bold text-yellow-600">{stats.pending}</h3>
             </div>
             <div className="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium mb-1">Approved</p>
+              <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsApproved")}</p>
               <h3 className="text-2xl font-bold text-green-600">{stats.approved}</h3>
             </div>
             <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center"><CheckCircle2 className="w-6 h-6 text-green-600" /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium mb-1">Rejected</p>
+              <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsRejected")}</p>
               <h3 className="text-2xl font-bold text-red-600">{stats.rejected}</h3>
             </div>
             <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center"><XCircle className="w-6 h-6 text-red-600" /></div>
@@ -260,7 +270,7 @@ export default function LeaveApprovalsPage() {
                 : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                 }`}
             >
-              <LayoutGrid className="w-4 h-4 mr-2" /> Split View
+              <LayoutGrid className="w-4 h-4 mr-2" /> {t("leaveApprovals.btnSplit")}
             </button>
             <button
               onClick={() => setViewMode('list')}
@@ -269,7 +279,7 @@ export default function LeaveApprovalsPage() {
                 : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                 }`}
             >
-              <ListIcon className="w-4 h-4 mr-2" /> List View
+              <ListIcon className="w-4 h-4 mr-2" /> {t("leaveApprovals.btnList")}
             </button>
           </div>
         </div>
@@ -281,24 +291,24 @@ export default function LeaveApprovalsPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Employee</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Leave Type</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Start Date</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">End Date</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Days</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Reason</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colEmp")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colType")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colStart")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colEnd")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colDays")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colReason")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colStatus")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colActions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {loading && filteredRequests.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">Loading requests...</td>
+                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">{t("leaveApprovals.loadingReqs")}</td>
                     </tr>
                   ) : filteredRequests.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">No {statusFilter.toLowerCase()} leave requests</td>
+                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">{t("leaveApprovals.noReqsStat", { status: getTranslatedTab(statusFilter).toLowerCase() })}</td>
                     </tr>
                   ) : (
                     filteredRequests.map((request) => {
@@ -335,7 +345,7 @@ export default function LeaveApprovalsPage() {
                               request.status === "Approved_By_Manager" ? "bg-blue-50 text-blue-700 border-blue-200" :
                                 "bg-gray-50 text-gray-700"
                               }`}>
-                              {request.status.replace(/_/g, " ")}
+                              {getTranslatedTab(request.status)}
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
@@ -346,7 +356,7 @@ export default function LeaveApprovalsPage() {
                                   disabled={isProcessing}
                                   className="bg-green-600 hover:bg-green-700 text-white h-8 px-3 text-xs rounded-md font-medium transition-colors disabled:opacity-50"
                                 >
-                                  {isProcessing ? "..." : "Approve"}
+                                  {isProcessing ? "..." : t("leaveApprovals.btnApprove")}
                                 </button>
                               )}
                               {(request.status === "Pending" || request.status === "Approved_By_Manager" || request.status === "Approved") && (
@@ -355,7 +365,7 @@ export default function LeaveApprovalsPage() {
                                   disabled={isProcessing}
                                   className="border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 h-8 px-3 text-xs rounded-md font-medium transition-colors disabled:opacity-50"
                                 >
-                                  {isProcessing ? "..." : (request.status === "Approved" ? "Revoke" : "Reject")}
+                                  {isProcessing ? "..." : (request.status === "Approved" ? t("leaveApprovals.btnRevoke") : t("leaveApprovals.btnReject"))}
                                 </button>
                               )}
                             </div>
@@ -376,7 +386,7 @@ export default function LeaveApprovalsPage() {
             <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden">
               <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col gap-3 shrink-0">
                 <div className="flex justify-between items-center">
-                  <h2 className="font-semibold text-gray-800">{statusFilter === 'Pending' ? 'Pending' : statusFilter} Requests</h2>
+                  <h2 className="font-semibold text-gray-800">{getTranslatedTab(statusFilter)}</h2>
                   <Badge variant="secondary" className="bg-white text-gray-700 font-bold">{filteredRequests.length}</Badge>
                 </div>
                 <div className="flex bg-gray-200/50 p-1 rounded-lg">
@@ -386,7 +396,7 @@ export default function LeaveApprovalsPage() {
                       onClick={() => { setStatusFilter(status); setActiveRequest(null); }}
                       className={`flex-1 text-xs py-1.5 font-medium rounded-md transition-all ${statusFilter === status ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
                     >
-                      {status}
+                      {getTranslatedTab(status)}
                     </button>
                   ))}
                 </div>
@@ -407,8 +417,8 @@ export default function LeaveApprovalsPage() {
                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                       <Calendar className="w-8 h-8 text-gray-300" />
                     </div>
-                    <p className="text-gray-500 font-medium">No {statusFilter.toLowerCase()} requests</p>
-                    <p className="text-sm text-gray-400 mt-1">All caught up!</p>
+                    <p className="text-gray-500 font-medium">{t("leaveApprovals.noRequests", { status: getTranslatedTab(statusFilter).toLowerCase() })}</p>
+                    <p className="text-sm text-gray-400 mt-1">{t("leaveApprovals.allCaughtUp")}</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
@@ -444,7 +454,7 @@ export default function LeaveApprovalsPage() {
                               request.status === "Approved_By_Manager" ? "bg-blue-50 text-blue-700 border-blue-200" :
                                 "bg-gray-50 text-gray-700"
                               }`}>
-                              {request.status.replace(/_/g, " ")}
+                              {getTranslatedTab(request.status)}
                             </Badge>
                           </div>
                         </div>
@@ -462,22 +472,22 @@ export default function LeaveApprovalsPage() {
                   <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
                     <FileText className="w-10 h-10 text-gray-300" />
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-700">Select a Request</h2>
+                  <h2 className="text-xl font-semibold text-gray-700">{t("leaveApprovals.selectReq")}</h2>
                   <p className="text-gray-500 mt-2 max-w-sm">
-                    Click on any leave request from the list to view its complete details and take action.
+                    {t("leaveApprovals.selectReqSub")}
                   </p>
                 </div>
               ) : (
                 <>
                   <div className="p-6 border-b border-gray-100 flex-none bg-white z-10">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-bold text-gray-900">Request Details</h2>
+                      <h2 className="text-xl font-bold text-gray-900">{t("leaveApprovals.reqDetails")}</h2>
                       <Badge className={
                         activeRequest.status === "Pending" ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" :
                           activeRequest.status === "Approved_By_Manager" ? "bg-blue-100 text-blue-800 hover:bg-blue-100" :
                             "bg-gray-100 text-gray-800 hover:bg-gray-100"
                       }>
-                        {activeRequest.status.replace(/_/g, " ")}
+                        {getTranslatedTab(activeRequest.status)}
                       </Badge>
                     </div>
                   </div>
@@ -486,7 +496,7 @@ export default function LeaveApprovalsPage() {
                     {/* Section 1: Employee Information */}
                     <section>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center">
-                        <UserIcon className="w-4 h-4 mr-2" /> Employee Information
+                        <UserIcon className="w-4 h-4 mr-2" /> {t("leaveApprovals.empInfo")}
                       </h3>
                       <div className="bg-gray-50/50 rounded-xl border border-gray-100 p-5 flex flex-col md:flex-row gap-6 items-start md:items-center">
                         <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl shrink-0 overflow-hidden shadow-sm border border-white">
@@ -498,20 +508,20 @@ export default function LeaveApprovalsPage() {
                         </div>
                         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
                           <div>
-                            <p className="text-sm text-gray-500 mb-1">Full Name</p>
+                            <p className="text-sm text-gray-500 mb-1">{t("leaveApprovals.lblFullName")}</p>
                             <p className="font-semibold text-gray-900">{activeRequest.employee_name || "-"}</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500 mb-1 flex items-center"><Mail className="w-3.5 h-3.5 mr-1" /> Email</p>
+                            <p className="text-sm text-gray-500 mb-1 flex items-center"><Mail className="w-3.5 h-3.5 mr-1" /> {t("leaveApprovals.lblEmail")}</p>
                             <p className="font-medium text-gray-800">{activeRequest.employee_email || "-"}</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500 mb-1 flex items-center"><Building2 className="w-3.5 h-3.5 mr-1" /> Department</p>
-                            <p className="font-medium text-gray-800">{activeRequest.employee_department || "Not assigned"}</p>
+                            <p className="text-sm text-gray-500 mb-1 flex items-center"><Building2 className="w-3.5 h-3.5 mr-1" /> {t("leaveApprovals.lblDept")}</p>
+                            <p className="font-medium text-gray-800">{activeRequest.employee_department || t("leaveApprovals.notAssigned")}</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500 mb-1 flex items-center"><Briefcase className="w-3.5 h-3.5 mr-1" /> Position</p>
-                            <p className="font-medium text-gray-800">{activeRequest.employee_position || "Not assigned"}</p>
+                            <p className="text-sm text-gray-500 mb-1 flex items-center"><Briefcase className="w-3.5 h-3.5 mr-1" /> {t("leaveApprovals.lblPos")}</p>
+                            <p className="font-medium text-gray-800">{activeRequest.employee_position || t("leaveApprovals.notAssigned")}</p>
                           </div>
                         </div>
                       </div>
@@ -520,34 +530,34 @@ export default function LeaveApprovalsPage() {
                     {/* Section 2: Leave Information */}
                     <section>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center">
-                        <FileText className="w-4 h-4 mr-2" /> Leave Information
+                        <FileText className="w-4 h-4 mr-2" /> {t("leaveApprovals.leaveInfo")}
                       </h3>
                       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                         <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100 border-b border-gray-100">
                           <div className="p-4 bg-gray-50/30">
-                            <p className="text-xs text-gray-500 mb-1 font-medium">Leave Type</p>
+                            <p className="text-xs text-gray-500 mb-1 font-medium">{t("leaveApprovals.colType")}</p>
                             <p className="font-semibold text-gray-900">{activeRequest.leave_type_name}</p>
                           </div>
                           <div className="p-4 bg-gray-50/30">
-                            <p className="text-xs text-gray-500 mb-1 font-medium flex items-center"><Calendar className="w-3 h-3 mr-1" /> From Date</p>
+                            <p className="text-xs text-gray-500 mb-1 font-medium flex items-center"><Calendar className="w-3 h-3 mr-1" /> {t("leaveApprovals.lblFrom")}</p>
                             <p className="font-semibold text-gray-900">{new Date(activeRequest.start_date).toLocaleDateString()}</p>
                           </div>
                           <div className="p-4 bg-gray-50/30">
-                            <p className="text-xs text-gray-500 mb-1 font-medium flex items-center"><Calendar className="w-3 h-3 mr-1" /> To Date</p>
+                            <p className="text-xs text-gray-500 mb-1 font-medium flex items-center"><Calendar className="w-3 h-3 mr-1" /> {t("leaveApprovals.lblTo")}</p>
                             <p className="font-semibold text-gray-900">{new Date(activeRequest.end_date).toLocaleDateString()}</p>
                           </div>
                           <div className="p-4 bg-gray-50/30">
-                            <p className="text-xs text-gray-500 mb-1 font-medium flex items-center"><Clock className="w-3 h-3 mr-1" /> Duration</p>
-                            <p className="font-semibold text-blue-700">{totalDays} day{totalDays !== 1 ? 's' : ''}</p>
+                            <p className="text-xs text-gray-500 mb-1 font-medium flex items-center"><Clock className="w-3 h-3 mr-1" /> {t("leaveApprovals.lblDuration")}</p>
+                            <p className="font-semibold text-blue-700">{totalDays} {totalDays !== 1 ? t("leaveApprovals.lblDays") : t("leaveApprovals.lblDay")}</p>
                           </div>
                         </div>
                         <div className="p-5">
-                          <p className="text-sm font-medium text-gray-500 mb-2">Reason for Leave</p>
+                          <p className="text-sm font-medium text-gray-500 mb-2">{t("leaveApprovals.lblReasonLeave")}</p>
                           <div className="bg-gray-50 p-4 rounded-lg text-gray-700 text-sm leading-relaxed border border-gray-100 min-h-[80px]">
                             {activeRequest.reason ? (
                               <span className="whitespace-pre-wrap">{activeRequest.reason}</span>
                             ) : (
-                              <span className="italic text-gray-400">No reason provided.</span>
+                              <span className="italic text-gray-400">{t("leaveApprovals.noReason")}</span>
                             )}
                           </div>
                         </div>
@@ -557,7 +567,7 @@ export default function LeaveApprovalsPage() {
                     {/* Section 3: Contextual Discussion */}
                     <section className="pb-6">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center">
-                        <MessageSquare className="w-4 h-4 mr-2" /> Discussion & Notes
+                        <MessageSquare className="w-4 h-4 mr-2" /> {t("leaveApprovals.discNotes")}
                       </h3>
                       <ContextualChat 
                         entityType="LEAVE_REQUEST" 
@@ -569,7 +579,7 @@ export default function LeaveApprovalsPage() {
                   {/* Actions Footer */}
                   <div className="p-6 border-t border-gray-100 bg-gray-50/80 mt-auto shrink-0 flex items-center justify-between">
                     <div className="text-sm text-gray-500">
-                      <span className="font-medium inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> Request ID:</span> #{activeRequest.request_id}
+                      <span className="font-medium inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> {t("leaveApprovals.lblReqId")}</span> #{activeRequest.request_id}
                     </div>
                     <div className="flex gap-3">
                       {(activeRequest.status === "Pending" || activeRequest.status === "Approved_By_Manager" || activeRequest.status === "Approved") && (
@@ -578,7 +588,7 @@ export default function LeaveApprovalsPage() {
                           disabled={processingIds.has(activeRequest.request_id)}
                           className="border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-semibold px-6 py-2 rounded-md transition-colors disabled:opacity-50"
                         >
-                          {processingIds.has(activeRequest.request_id) ? "..." : (activeRequest.status === "Approved" ? "Revoke / Reject" : "Reject")}
+                          {processingIds.has(activeRequest.request_id) ? "..." : (activeRequest.status === "Approved" ? t("leaveApprovals.btnRevokeReject") : t("leaveApprovals.btnReject"))}
                         </button>
                       )}
                       {(activeRequest.status === "Pending" || activeRequest.status === "Approved_By_Manager" || activeRequest.status === "Rejected") && (
@@ -587,7 +597,7 @@ export default function LeaveApprovalsPage() {
                           disabled={processingIds.has(activeRequest.request_id)}
                           className="bg-green-600 hover:bg-green-700 text-white font-semibold shadow-sm px-6 py-2 rounded-md transition-colors disabled:opacity-50"
                         >
-                          {processingIds.has(activeRequest.request_id) ? "Processing..." : "Approve Leave"}
+                          {processingIds.has(activeRequest.request_id) ? t("leaveApprovals.btnProcessing") : t("leaveApprovals.btnApproveLeave")}
                         </button>
                       )}
                     </div>
@@ -599,15 +609,15 @@ export default function LeaveApprovalsPage() {
         )}
       </div>
 
-
-
       {/* Hand-coded Confirmation Modal */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-4">
-              <h3 className={`text-lg font-bold ${confirmModal.action === 'Approve' ? 'text-green-600' : 'text-red-600'}`}>Confirm {confirmModal.action}</h3>
+              <h3 className={`text-lg font-bold ${confirmModal.action === 'Approve' ? 'text-green-600' : 'text-red-600'}`}>
+                {t("leaveApprovals.confirmTitle", { action: confirmModal.action })}
+              </h3>
               <button onClick={() => setConfirmModal({ isOpen: false, action: null, requestId: null })} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
               </button>
@@ -616,15 +626,15 @@ export default function LeaveApprovalsPage() {
             {/* Modal Body */}
             <div className="mb-6">
               <p className="text-gray-600 mb-4">
-                Are you sure you want to {confirmModal.action?.toLowerCase()} this request?
+                {t("leaveApprovals.confirmDesc", { action: confirmModal.action?.toLowerCase() })}
               </p>
 
-              <Label htmlFor="action-reason" className="mb-2 block text-gray-700 font-medium">Reason / Note (Optional)</Label>
+              <Label htmlFor="action-reason" className="mb-2 block text-gray-700 font-medium">{t("leaveApprovals.lblNote")}</Label>
               <Textarea
                 id="action-reason"
                 value={actionReason}
                 onChange={(e) => setActionReason(e.target.value)}
-                placeholder={`Provide context for why this leave was ${confirmModal.action === 'Approve' ? 'approved' : 'denied'}...`}
+                placeholder={t("leaveApprovals.placeholderNote", { action: confirmModal.action === 'Approve' ? 'approved' : 'denied' })}
                 className="resize-none"
                 rows={4}
               />
@@ -632,14 +642,16 @@ export default function LeaveApprovalsPage() {
 
             {/* Modal Footer */}
             <div className="flex justify-end gap-3">
-              <button onClick={() => setConfirmModal({ isOpen: false, action: null, requestId: null })} className="px-4 py-2 text-gray-600 font-medium bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+              <button onClick={() => setConfirmModal({ isOpen: false, action: null, requestId: null })} className="px-4 py-2 text-gray-600 font-medium bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                {t("leaveApprovals.btnCancel")}
+              </button>
               <button
                 onClick={executeAction}
                 disabled={processingIds.has(confirmModal.requestId!)}
                 className={`px-4 py-2 text-white font-medium rounded-lg transition-colors disabled:opacity-50 ${confirmModal.action === 'Approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
                   }`}
               >
-                {processingIds.has(confirmModal.requestId!) ? "Processing..." : `Confirm ${confirmModal.action}`}
+                {processingIds.has(confirmModal.requestId!) ? t("leaveApprovals.btnProcessing") : t("leaveApprovals.btnConfirm", { action: confirmModal.action })}
               </button>
             </div>
           </div>

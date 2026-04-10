@@ -21,6 +21,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import AnnouncementCard from "@/components/AnnouncementCard";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 
 interface Announcement {
   id: number;
@@ -35,6 +36,7 @@ interface Announcement {
 
 export default function CompanyNewsPage() {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,13 +61,13 @@ export default function CompanyNewsPage() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to fetch announcements");
+        throw new Error(t("news.errorFetch"));
       }
 
       const data = await res.json();
       setAnnouncements(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      setError(err instanceof Error ? err.message : t("news.errorUnexpected"));
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -84,13 +86,13 @@ export default function CompanyNewsPage() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to delete announcement");
+        throw new Error(t("news.errorDelete"));
       }
 
       // Optimistic Update
       setAnnouncements(prev => prev.filter(ann => ann.id !== id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete");
+      alert(err instanceof Error ? err.message : t("news.errorDelete"));
     }
   };
 
@@ -143,11 +145,11 @@ export default function CompanyNewsPage() {
                 <Megaphone className="w-6 h-6 text-white" />
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-gray-900 font-inter">
-                Company News & Announcements
+                {t("news.pageTitle")}
               </h1>
             </div>
             <p className="text-gray-500 font-medium text-lg ml-1">
-              Stay updated with the latest policies, events, and company-wide updates.
+              {t("news.pageDesc")}
             </p>
           </div>
           
@@ -157,7 +159,7 @@ export default function CompanyNewsPage() {
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh Feed
+            {t("news.refreshFeed")}
           </button>
         </div>
 
@@ -166,7 +168,7 @@ export default function CompanyNewsPage() {
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input 
-              placeholder="Search announcements..." 
+              placeholder={t("news.searchPlaceholder")} 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 hover:bg-gray-50 focus:bg-white transition-all"
@@ -178,15 +180,15 @@ export default function CompanyNewsPage() {
               <SelectTrigger className="h-12 rounded-xl border-gray-100 bg-gray-50/50">
                 <div className="flex items-center gap-2">
                   <Filter className="w-4 h-4 text-gray-400" />
-                  <SelectValue placeholder="All Categories" />
+                  <SelectValue placeholder={t("news.allCategories")} />
                 </div>
               </SelectTrigger>
               <SelectContent className="rounded-xl border-gray-100">
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="general">General</SelectItem>
-                <SelectItem value="policy">Policy</SelectItem>
-                <SelectItem value="event">Events</SelectItem>
-                <SelectItem value="alert">Alerts</SelectItem>
+                <SelectItem value="all">{t("news.allCategories")}</SelectItem>
+                <SelectItem value="general">{t("news.catGeneral")}</SelectItem>
+                <SelectItem value="policy">{t("news.catPolicy")}</SelectItem>
+                <SelectItem value="event">{t("news.catEvents")}</SelectItem>
+                <SelectItem value="alert">{t("news.catAlerts")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -196,9 +198,9 @@ export default function CompanyNewsPage() {
         <div className="space-y-6">
           {error && (
             <div className="p-6 bg-red-50 border border-red-100 rounded-2xl text-red-700 flex flex-col items-center justify-center text-center space-y-2">
-              <h3 className="font-bold">Unable to load feed</h3>
+              <h3 className="font-bold">{t("news.errorLoadFeed")}</h3>
               <p className="text-sm opacity-90">{error}</p>
-              <button onClick={() => fetchAnnouncements()} className="text-sm font-bold underline mt-2 hover:no-underline">Try again</button>
+              <button onClick={() => fetchAnnouncements()} className="text-sm font-bold underline mt-2 hover:no-underline">{t("news.tryAgain")}</button>
             </div>
           )}
 
@@ -209,12 +211,12 @@ export default function CompanyNewsPage() {
               </div>
               <div className="space-y-1">
                 <h3 className="text-xl font-bold text-gray-900">
-                  {searchQuery || categoryFilter !== 'all' ? "No matching announcements" : "No new announcements"}
+                  {searchQuery || categoryFilter !== 'all' ? t("news.noMatching") : t("news.noNew")}
                 </h3>
                 <p className="text-gray-500 max-w-sm mx-auto">
                   {searchQuery || categoryFilter !== 'all' 
-                    ? "Try adjusting your filters or search term to find what you're looking for." 
-                    : "You're all caught up! When new announcements are posted, they'll appear here."}
+                    ? t("news.tryAdjusting") 
+                    : t("news.allCaughtUp")}
                 </p>
               </div>
               {(searchQuery || categoryFilter !== 'all') && (
@@ -222,7 +224,7 @@ export default function CompanyNewsPage() {
                   onClick={() => { setSearchQuery(""); setCategoryFilter("all"); }}
                   className="text-blue-600 font-bold text-sm hover:underline"
                 >
-                  Clear all filters
+                  {t("news.clearFilters")}
                 </button>
               )}
             </div>
@@ -242,7 +244,7 @@ export default function CompanyNewsPage() {
         {/* Footer info */}
         {!loading && filteredAnnouncements.length > 0 && (
           <div className="pt-8 text-center text-sm text-gray-400 font-medium">
-            Showing {filteredAnnouncements.length} announcement{filteredAnnouncements.length !== 1 ? 's' : ''}
+            {t("news.showingCount", { count: filteredAnnouncements.length })}
           </div>
         )}
       </div>

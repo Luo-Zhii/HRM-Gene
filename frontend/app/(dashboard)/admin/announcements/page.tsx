@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useTranslation } from "react-i18next";
 
 interface Department {
   department_id: number;
@@ -43,6 +44,7 @@ interface Announcement {
 export default function AnnouncementsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -80,18 +82,16 @@ export default function AnnouncementsPage() {
       const apiBase = "/api";
       const token = localStorage.getItem('access_token') || localStorage.getItem('token');
       
-      // Attempt to load departments
       const depsRes = await fetch(`${apiBase}/employees`, { 
         credentials: "include",
         headers: {
           ...(token ? { "Authorization": `Bearer ${token}` } : {})
         }
-      }); // Fallback to employees list if departments endpoint missing
+      });
       if (depsRes.ok) {
         setDepartments(await depsRes.json());
       }
       
-      // Attempt to load announcements
       const annRes = await fetch(`${apiBase}/announcements`, { 
         credentials: "include",
         headers: {
@@ -151,9 +151,9 @@ export default function AnnouncementsPage() {
         credentials: "include",
       });
 
-      if (!res.ok) throw new Error("Failed to broadcast announcement");
+      if (!res.ok) throw new Error(t("adminNews.broadcastError"));
 
-      setStatusMessage({ type: "success", text: "Announcement broadcasted successfully!" });
+      setStatusMessage({ type: "success", text: t("adminNews.broadcastSuccess") });
       
       // Reset form
       setFormData({
@@ -170,7 +170,7 @@ export default function AnnouncementsPage() {
       
       fetchInitialData();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error sending announcement";
+      const msg = err instanceof Error ? err.message : t("adminNews.broadcastError");
       setStatusMessage({ type: "error", text: msg });
     } finally {
       setSaving(false);
@@ -178,7 +178,7 @@ export default function AnnouncementsPage() {
   };
 
   const handleDeleteAnnouncement = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this announcement?")) return;
+    if (!window.confirm(t("adminNews.deleteConfirm"))) return;
 
     try {
       const token = localStorage.getItem('access_token') || localStorage.getItem('token');
@@ -190,13 +190,12 @@ export default function AnnouncementsPage() {
         credentials: "include"
       });
 
-      if (!res.ok) throw new Error("Failed to delete announcement");
+      if (!res.ok) throw new Error(t("adminNews.deleteError"));
 
-      // Optimistic Update
       setAnnouncements(prev => prev.filter(ann => ann.id !== id));
-      setStatusMessage({ type: "success", text: "Announcement deleted successfully" });
+      setStatusMessage({ type: "success", text: t("adminNews.deleteSuccess") });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error deleting announcement";
+      const msg = err instanceof Error ? err.message : t("adminNews.deleteError");
       setStatusMessage({ type: "error", text: msg });
     }
   };
@@ -206,7 +205,7 @@ export default function AnnouncementsPage() {
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-500 font-medium">Loading workspace...</p>
+          <p className="text-gray-500 font-medium">{t("common.loadingWorkspace")}</p>
         </div>
       </div>
     );
@@ -223,10 +222,10 @@ export default function AnnouncementsPage() {
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Megaphone className="w-5 h-5 text-blue-600" />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-gray-900 font-inter">Manage Announcements</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900 font-inter">{t("adminNews.title")}</h1>
             </div>
             <p className="text-sm text-gray-500 max-w-2xl">
-              Broadcast updates and manage automated system alerts across the entire organization or specific departments.
+              {t("adminNews.subtitle")}
             </p>
           </div>
         </div>
@@ -242,12 +241,11 @@ export default function AnnouncementsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Form Section */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white border rounded-2xl shadow-sm overflow-hidden">
               <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
                 <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  Compose New Announcement
+                  {t("adminNews.composeNew")}
                 </h2>
               </div>
               
@@ -256,38 +254,37 @@ export default function AnnouncementsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Type */}
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Announcement Type</Label>
+                    <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{t("adminNews.typeLabel")}</Label>
                     <select 
                       name="type" 
                       value={formData.type} 
                       onChange={handleChange}
                       className="w-full h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
                     >
-                      <option value="General">General Update</option>
-                      <option value="Policy">Company Policy</option>
-                      <option value="Event">Internal Event</option>
-                      <option value="Alert">System Alert</option>
+                      <option value="General">{t("news.catGeneral")}</option>
+                      <option value="Policy">{t("news.catPolicy")}</option>
+                      <option value="Event">{t("news.catEvents")}</option>
+                      <option value="Alert">{t("news.catAlerts")}</option>
                     </select>
                   </div>
 
                   {/* Target Audience */}
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Target Audience</Label>
+                    <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{t("adminNews.audienceLabel")}</Label>
                     <select 
                       name="target_audience" 
                       value={formData.target_audience} 
                       onChange={handleChange}
                       className="w-full h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
                     >
-                      <option value="all">All Employees</option>
-                      <option value="department">Specific Department</option>
+                      <option value="all">{t("adminNews.audienceAll")}</option>
+                      <option value="department">{t("adminNews.audienceDept")}</option>
                     </select>
                   </div>
 
-                  {/* Dynamic Department Selector */}
                   {formData.target_audience === "department" && (
                     <div className="space-y-2 md:col-span-2">
-                      <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Select Department</Label>
+                      <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{t("adminNews.selectDeptLabel")}</Label>
                       <select 
                         name="department_id" 
                         value={formData.department_id} 
@@ -295,7 +292,7 @@ export default function AnnouncementsPage() {
                         required
                         className="w-full h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
                       >
-                        <option value="" disabled>Choose a department...</option>
+                        <option value="" disabled>{t("adminNews.deptPlaceholder")}</option>
                         {departments.map(d => (
                           <option key={d.department_id} value={d.department_id}>{d.department_name}</option>
                         ))}
@@ -303,27 +300,25 @@ export default function AnnouncementsPage() {
                     </div>
                   )}
 
-                  {/* Title */}
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Title</Label>
+                    <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{t("adminNews.titleLabel")}</Label>
                     <Input 
                       name="title" 
                       value={formData.title} 
                       onChange={handleChange} 
-                      placeholder="e.g. Q3 Townhall Meeting" 
+                      placeholder={t("adminNews.titlePlaceholder")} 
                       required
                       className="h-11 rounded-xl border-gray-200 bg-white" 
                     />
                   </div>
 
-                  {/* Content */}
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Content</Label>
+                    <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{t("adminNews.contentLabel")}</Label>
                     <Textarea 
                       name="content" 
                       value={formData.content} 
                       onChange={handleChange} 
-                      placeholder="Write your announcement message here..." 
+                      placeholder={t("adminNews.contentPlaceholder")} 
                       rows={6}
                       required
                       className="rounded-xl border-gray-200 bg-white resize-none" 
@@ -332,44 +327,41 @@ export default function AnnouncementsPage() {
                 </div>
 
                 <div className="border-t border-gray-100 pt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                  
-                  {/* Delivery Methods */}
                   <div className="space-y-4">
-                    <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Delivery Method</Label>
+                    <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{t("adminNews.deliveryLabel")}</Label>
                     <div className="space-y-3">
                       <label className="flex items-center gap-3 p-3 border rounded-xl bg-gray-50/50 cursor-pointer hover:bg-gray-50 transition-colors">
                         <input type="checkbox" name="in_app_notification" checked={formData.in_app_notification} onChange={handleChange} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
                         <div className="flex items-center gap-2">
                           <Bell className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm font-medium text-gray-900">In-App Notification</span>
+                          <span className="text-sm font-medium text-gray-900">{t("adminNews.deliveryInApp")}</span>
                         </div>
                       </label>
                       <label className="flex items-center gap-3 p-3 border rounded-xl bg-gray-50/50 cursor-pointer hover:bg-gray-50 transition-colors">
                         <input type="checkbox" name="email_notification" checked={formData.email_notification} onChange={handleChange} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm font-medium text-gray-900">Email Delivery</span>
+                          <span className="text-sm font-medium text-gray-900">{t("adminNews.deliveryEmail")}</span>
                         </div>
                       </label>
                     </div>
                   </div>
 
-                  {/* Priority & Schedule */}
                   <div className="space-y-6">
                     <div className="space-y-3">
-                      <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Priority Level</Label>
+                      <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{t("adminNews.priorityLabel")}</Label>
                       <div className="flex gap-4">
                         {["Low", "Normal", "High"].map(level => (
                           <label key={level} className="flex items-center gap-2 cursor-pointer">
                             <input type="radio" name="priority" value={level} checked={formData.priority === level} onChange={handleChange} className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
-                            <span className="text-sm font-medium text-gray-700">{level}</span>
+                            <span className="text-sm font-medium text-gray-700">{t(`adminNews.priority${level}`)}</span>
                           </label>
                         ))}
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Send Schedule (Optional)</Label>
+                      <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{t("adminNews.scheduleLabel")}</Label>
                       <Input 
                         type="datetime-local" 
                         name="scheduled_at" 
@@ -377,19 +369,17 @@ export default function AnnouncementsPage() {
                         onChange={handleChange} 
                         className="h-11 rounded-xl border-gray-200 bg-white" 
                       />
-                      <p className="text-[11px] text-gray-500">Leave blank to broadcast immediately.</p>
+                      <p className="text-[11px] text-gray-500">{t("adminNews.scheduleHint")}</p>
                     </div>
                   </div>
-
                 </div>
 
-                {/* Actions */}
                 <div className="border-t border-gray-100 pt-6 flex items-center justify-end gap-3">
                   <Button type="button" variant="outline" className="h-11 px-6 rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold shadow-sm">
-                    <Eye className="w-4 h-4 mr-2" /> Preview
+                    <Eye className="w-4 h-4 mr-2" /> {t("adminNews.btnPreview")}
                   </Button>
                   <Button type="submit" disabled={saving} className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition-all">
-                    {saving ? "Broadcasting..." : "Send Announcement"}
+                    {saving ? t("adminNews.btnBroadcasting") : t("adminNews.btnSend")}
                     <Send className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -397,12 +387,11 @@ export default function AnnouncementsPage() {
             </div>
           </div>
 
-          {/* Sidebar: History Table / Mini Dashboard */}
           <div className="space-y-6">
             <div className="bg-white border rounded-2xl shadow-sm overflow-hidden flex flex-col h-full min-h-[500px]">
               <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                 <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gray-500" /> Recent Announcements
+                  <Clock className="w-4 h-4 text-gray-500" /> {t("adminNews.recentTitle")}
                 </h2>
                 <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg text-gray-500">
                   <Filter className="w-4 h-4" />
@@ -416,8 +405,8 @@ export default function AnnouncementsPage() {
                       <InboxIcon className="w-5 h-5 text-gray-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">No recent broadcasts</p>
-                      <p className="text-xs text-gray-500 mt-1">Sent announcements will appear here.</p>
+                      <p className="text-sm font-semibold text-gray-900">{t("adminNews.noRecentTitle")}</p>
+                      <p className="text-xs text-gray-500 mt-1">{t("adminNews.noRecentDesc")}</p>
                     </div>
                   </div>
                 ) : (
@@ -431,7 +420,7 @@ export default function AnnouncementsPage() {
                             ann.type === 'Alert' ? 'bg-red-100 text-red-700' :
                             'bg-blue-100 text-blue-700'
                           }`}>
-                            {ann.type}
+                            {t(`news.cat${ann.type}`) || ann.type}
                           </span>
                           <div className="flex items-center gap-2">
                             <span className={`text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full ${
@@ -453,7 +442,7 @@ export default function AnnouncementsPage() {
                         </div>
                         <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 mb-1">{ann.title}</h3>
                         <div className="flex items-center gap-3 text-xs text-gray-500 font-medium">
-                          <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {ann.target_audience === 'all' ? 'All' : 'Depts'}</span>
+                          <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {ann.target_audience === 'all' ? t("adminNews.audienceAllShort") : t("adminNews.audienceDeptShort")}</span>
                           <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(ann.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>

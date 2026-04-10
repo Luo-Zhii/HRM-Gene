@@ -1,18 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../../src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/datepicker";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -29,12 +25,12 @@ type ResignationRequest = {
 
 export default function MyResignationPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [requests, setRequests] = useState<ResignationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("submit");
 
-  // Form State
   const [requestedLastDay, setRequestedLastDay] = useState<Date | undefined>();
   const [reasonText, setReasonText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -54,7 +50,7 @@ export default function MyResignationPage() {
       setRequests(data);
     } catch (error) {
       console.error(error);
-      toast({ title: "Error", description: "Could not load resignation requests", variant: "destructive" });
+      toast({ title: t("common.error"), description: "Could not load resignation requests", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -63,17 +59,16 @@ export default function MyResignationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!requestedLastDay) {
-      toast({ title: "Validation Error", description: "Please select your requested last day of work", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("resignation.errorNoLastDay"), variant: "destructive" });
       return;
     }
     if (!reasonText.trim()) {
-      toast({ title: "Validation Error", description: "Please provide a reason or handover notes", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("resignation.errorNoReason"), variant: "destructive" });
       return;
     }
 
     setSubmitting(true);
     try {
-      // Create date format YYYY-MM-DD avoiding timezone offsets shifting the day
       const year = requestedLastDay.getFullYear();
       const month = String(requestedLastDay.getMonth() + 1).padStart(2, '0');
       const day = String(requestedLastDay.getDate()).padStart(2, '0');
@@ -81,30 +76,21 @@ export default function MyResignationPage() {
 
       const res = await fetch("/api/resignations", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          requested_last_day: formattedDate,
-          reason_text: reasonText
-        })
+        body: JSON.stringify({ requested_last_day: formattedDate, reason_text: reasonText })
       });
 
       const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to submit resignation");
-      }
+      if (!res.ok) throw new Error(data.message || "Failed to submit resignation");
 
-      toast({ title: "Success", description: "Your resignation request has been successfully submitted." });
+      toast({ title: t("common.success"), description: "Your resignation request has been successfully submitted." });
       setRequestedLastDay(undefined);
       setReasonText("");
       await fetchMyRequests();
-      setActiveTab("history"); // Switch to history tab automatically
-
+      setActiveTab("history");
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -112,34 +98,33 @@ export default function MyResignationPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Approved": return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-0"><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</Badge>;
-      case "Rejected": return <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-0"><XCircle className="w-3 h-3 mr-1" /> Rejected</Badge>;
-      case "Withdrawn": return <Badge variant="outline" className="text-gray-500">Withdrawn</Badge>;
-      default: return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-0"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+      case "Approved": return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-0"><CheckCircle2 className="w-3 h-3 mr-1" /> {t("resignation.statusApproved")}</Badge>;
+      case "Rejected": return <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-0"><XCircle className="w-3 h-3 mr-1" /> {t("resignation.statusRejected")}</Badge>;
+      case "Withdrawn": return <Badge variant="outline" className="text-gray-500">{t("resignation.statusWithdrawn")}</Badge>;
+      default: return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-0"><Clock className="w-3 h-3 mr-1" /> {t("resignation.statusPending")}</Badge>;
     }
   };
 
-  // Check if they already have a pending/approved resignation
   const activeRequest = requests.find(r => r.status === 'Pending' || r.status === 'Approved');
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">My Resignation</h1>
-        <p className="text-gray-500 mt-1">Submit your formal notice and track your offboarding request.</p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t("resignation.title")}</h1>
+        <p className="text-gray-500 mt-1">{t("resignation.subtitle")}</p>
       </div>
 
-      {/* APPROVED BANNER (PURE TAILWIND) */}
+      {/* APPROVED BANNER */}
       {activeRequest?.status === "Approved" && (
         <div className="bg-blue-50 border border-blue-200 text-blue-800 p-5 rounded-2xl flex items-start gap-4 mb-8 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
-             <CheckCircle2 size={24} />
+            <CheckCircle2 size={24} />
           </div>
           <div>
-            <h4 className="font-bold text-lg leading-none mb-1">Resignation Approved</h4>
+            <h4 className="font-bold text-lg leading-none mb-1">{t("resignation.approvedBannerTitle")}</h4>
             <p className="text-sm text-blue-700 leading-relaxed">
-              Your resignation request has been officially approved. Your official last day of work is <strong className="font-black text-blue-900">{new Date(activeRequest.requested_last_day).toLocaleDateString()}</strong>. 
-              Please ensure all handover tasks are completed and assets are returned as per HR policy. Thank you for your contributions!
+              {t("resignation.approvedBannerDesc")} <strong className="font-black text-blue-900">{new Date(activeRequest.requested_last_day).toLocaleDateString()}</strong>.{" "}
+              {t("resignation.approvedBannerNote")}
             </p>
           </div>
         </div>
@@ -147,8 +132,8 @@ export default function MyResignationPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 bg-white border border-gray-100 p-1 shadow-sm rounded-lg">
-          <TabsTrigger value="submit" className="rounded-md data-[state=active]:bg-gray-50 data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">Submit Notice</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-md data-[state=active]:bg-gray-50 data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">Tracking & History</TabsTrigger>
+          <TabsTrigger value="submit" className="rounded-md data-[state=active]:bg-gray-50 data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">{t("resignation.tabSubmit")}</TabsTrigger>
+          <TabsTrigger value="history" className="rounded-md data-[state=active]:bg-gray-50 data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">{t("resignation.tabHistory")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="submit" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -156,11 +141,9 @@ export default function MyResignationPage() {
             <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
                 <LogOut className="w-5 h-5 text-gray-500" />
-                Formal Resignation Notice
+                {t("resignation.formalNoticeTitle")}
               </CardTitle>
-              <CardDescription>
-                Once submitted securely, your request will be reviewed by HR. Please ensure your requested last day provides sufficient handover time according to your contract.
-              </CardDescription>
+              <CardDescription>{t("resignation.formalNoticeDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               {activeRequest ? (
@@ -168,33 +151,33 @@ export default function MyResignationPage() {
                   <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Clock size={24} />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">You have an active resignation request</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{t("resignation.activeRequestTitle")}</h3>
                   <p className="text-gray-500 mt-2 max-w-md mx-auto">
-                    You currently have a request in <strong className="text-gray-700 uppercase tracking-wider">{activeRequest.status}</strong> status. 
-                    {activeRequest.status === 'Approved' 
-                      ? "Your resignation has been finalized. Please check the details in the tracking history."
-                      : "You cannot submit another notice while one is already active. Please check the tracking history."}
+                    {t("resignation.activeRequestStatus")} <strong className="text-gray-700 uppercase tracking-wider">{activeRequest.status}</strong>.{" "}
+                    {activeRequest.status === 'Approved'
+                      ? t("resignation.activeRequestApproved")
+                      : t("resignation.activeRequestPending")}
                   </p>
-                  <Button variant="outline" className="mt-6 border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => setActiveTab('history')}>View Request Tracking</Button>
+                  <Button variant="outline" className="mt-6 border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => setActiveTab('history')}>{t("resignation.viewTracking")}</Button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
                   <div className="space-y-2">
-                    <Label className="text-gray-700 font-medium text-sm">Requested Last Day of Work <span className="text-red-500">*</span></Label>
+                    <Label className="text-gray-700 font-medium text-sm">{t("resignation.lastDay")} <span className="text-red-500">*</span></Label>
                     <div className="w-full sm:w-[280px]">
                       <DatePicker
                         selected={requestedLastDay}
                         onSelect={setRequestedLastDay}
-                        placeholderText="Select last day"
+                        placeholderText={t("resignation.lastDayPlaceholder")}
                       />
                     </div>
-                    <p className="text-[13px] text-gray-500">Pick the final date you intend to be employed.</p>
+                    <p className="text-[13px] text-gray-500">{t("resignation.lastDayHint")}</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-700 font-medium text-sm">Reason / Handover Notes <span className="text-red-500">*</span></Label>
-                    <Textarea 
-                      placeholder="Please provide details regarding your resignation, expected handover plan, and any other notes for HR and your Manager."
+                    <Label className="text-gray-700 font-medium text-sm">{t("resignation.reasonNotes")} <span className="text-red-500">*</span></Label>
+                    <Textarea
+                      placeholder={t("resignation.reasonPlaceholder")}
                       className="min-h-[150px] resize-none focus:ring-blue-500"
                       value={reasonText}
                       onChange={(e) => setReasonText(e.target.value)}
@@ -202,14 +185,14 @@ export default function MyResignationPage() {
                   </div>
 
                   <div className="pt-4 flex items-center gap-4">
-                    <Button 
-                      type="submit" 
-                      disabled={submitting} 
+                    <Button
+                      type="submit"
+                      disabled={submitting}
                       className="bg-red-600 hover:bg-red-700 text-white min-w-[140px] shadow-sm"
                     >
-                      {submitting ? "Submitting..." : "Submit Notice"}
+                      {submitting ? t("resignation.submitting") : t("resignation.submitNotice")}
                     </Button>
-                    <p className="text-xs text-gray-400">By submitting, you formally request to terminate your employment.</p>
+                    <p className="text-xs text-gray-400">{t("resignation.submitDisclaimer")}</p>
                   </div>
                 </form>
               )}
@@ -220,7 +203,7 @@ export default function MyResignationPage() {
         <TabsContent value="history" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <Card className="border border-gray-100 shadow-sm rounded-2xl overflow-hidden">
             <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-              <CardTitle className="text-lg">Request Tracking & History</CardTitle>
+              <CardTitle className="text-lg">{t("resignation.trackingTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {loading ? (
@@ -230,17 +213,17 @@ export default function MyResignationPage() {
                   <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                     <LogOut className="w-8 h-8 text-gray-300" />
                   </div>
-                  <h3 className="text-gray-900 font-medium">No resignation history</h3>
-                  <p className="text-sm text-gray-500 mt-1">You have not submitted any resignation requests.</p>
+                  <h3 className="text-gray-900 font-medium">{t("resignation.noHistory")}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{t("resignation.noHistoryDesc")}</p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader className="bg-gray-50">
                     <TableRow>
-                      <TableHead className="font-semibold px-6 py-4">Submitted On</TableHead>
-                      <TableHead className="font-semibold py-4">Requested Last Day</TableHead>
-                      <TableHead className="font-semibold py-4">Reason Details</TableHead>
-                      <TableHead className="font-semibold px-6 py-4 text-right">Status</TableHead>
+                      <TableHead className="font-semibold px-6 py-4">{t("resignation.colSubmittedOn")}</TableHead>
+                      <TableHead className="font-semibold py-4">{t("resignation.colLastDay")}</TableHead>
+                      <TableHead className="font-semibold py-4">{t("resignation.colReasonDetails")}</TableHead>
+                      <TableHead className="font-semibold px-6 py-4 text-right">{t("resignation.colStatus")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

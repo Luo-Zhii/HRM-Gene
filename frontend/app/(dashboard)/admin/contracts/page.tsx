@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Search, Plus, Edit2, FileText, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 // Interface Definitions
 interface Contract {
@@ -31,6 +32,7 @@ interface Contract {
 
 export default function AdminContractsPage() {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -107,11 +109,11 @@ export default function AdminContractsPage() {
           setTotal(data.length);
         }
       } else {
-        toast({ variant: "destructive", title: "Error", description: "Failed to fetch contracts.", duration: 3000 });
+        toast({ variant: "destructive", title: t("contracts.errorTitle"), description: t("contracts.errorFetch"), duration: 3000 });
       }
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Error", description: "Failed to load data.", duration: 3000 });
+      toast({ variant: "destructive", title: t("contracts.errorTitle"), description: t("contracts.errorLoadData"), duration: 3000 });
     } finally {
       setLoading(false);
     }
@@ -154,15 +156,15 @@ export default function AdminContractsPage() {
       });
 
       if (res.ok) {
-        toast({ title: "Success", description: `Contract ${editingContract ? 'updated' : 'created'} successfully.`, duration: 3000 });
+        toast({ title: t("contracts.successTitle"), description: editingContract ? t("contracts.msgUpdated") : t("contracts.msgCreated"), duration: 3000 });
         setIsModalOpen(false);
         fetchContracts();
       } else {
         const errorData = await res.json();
-        toast({ variant: "destructive", title: "Error", description: errorData.message || "Failed to save contract.", duration: 4000 });
+        toast({ variant: "destructive", title: t("contracts.errorTitle"), description: errorData.message || t("contracts.errorSave"), duration: 4000 });
       }
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "An unexpected error occurred.", duration: 4000 });
+      toast({ variant: "destructive", title: t("contracts.errorTitle"), description: t("contracts.errorUnexpected"), duration: 4000 });
     } finally {
       setIsSaving(false);
     }
@@ -174,14 +176,14 @@ export default function AdminContractsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Active": return <Badge className="bg-green-500 hover:bg-green-600 border-transparent text-white">Active</Badge>;
-      case "Expired": return <Badge className="bg-slate-500 hover:bg-slate-600 border-transparent text-white">Expired</Badge>;
-      case "Terminated": return <Badge className="bg-red-500 hover:bg-red-600 border-transparent text-white">Terminated</Badge>;
+      case "Active": return <Badge className="bg-green-500 hover:bg-green-600 border-transparent text-white">{t("contracts.statusActive")}</Badge>;
+      case "Expired": return <Badge className="bg-slate-500 hover:bg-slate-600 border-transparent text-white">{t("contracts.statusExpired")}</Badge>;
+      case "Terminated": return <Badge className="bg-red-500 hover:bg-red-600 border-transparent text-white">{t("contracts.statusTerminated")}</Badge>;
       default: return <Badge>{status}</Badge>;
     }
   };
 
-  if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (authLoading) return <div className="min-h-screen flex items-center justify-center">{t("common.loadingWorkspace", "Loading...")}</div>;
 
   return (
     <div className="p-8 font-inter bg-slate-50 min-h-screen">
@@ -190,11 +192,11 @@ export default function AdminContractsPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Contract Management</h1>
-            <p className="text-slate-500 text-sm mt-1">Manage employee labor contracts and agreements</p>
+            <h1 className="text-2xl font-bold text-slate-900">{t("contracts.title")}</h1>
+            <p className="text-slate-500 text-sm mt-1">{t("contracts.subtitle")}</p>
           </div>
           <Button onClick={() => handleOpenModal()} className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 text-white shadow-sm">
-            <Plus size={18} /> Create Contract
+            <Plus size={18} /> {t("contracts.btnCreate")}
           </Button>
         </div>
 
@@ -205,7 +207,7 @@ export default function AdminContractsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <Input
-                  placeholder="Search contract number..."
+                  placeholder={t("contracts.searchPlaceholder")}
                   className="pl-10 h-11 bg-slate-50 border-slate-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -217,10 +219,10 @@ export default function AdminContractsPage() {
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
-                  <option value="ALL">All Statuses</option>
-                  <option value="Active">Active</option>
-                  <option value="Expired">Expired</option>
-                  <option value="Terminated">Terminated</option>
+                  <option value="ALL">{t("contracts.filterAllStatuses")}</option>
+                  <option value="Active">{t("contracts.statusActive")}</option>
+                  <option value="Expired">{t("contracts.statusExpired")}</option>
+                  <option value="Terminated">{t("contracts.statusTerminated")}</option>
                 </select>
               </div>
               <div>
@@ -229,10 +231,10 @@ export default function AdminContractsPage() {
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
                 >
-                  <option value="ALL">All Types</option>
-                  <option value="Probation">Probation</option>
-                  <option value="Official">Official</option>
-                  <option value="Part-time">Part-time</option>
+                  <option value="ALL">{t("contracts.filterAllTypes")}</option>
+                  <option value="Probation">{t("contracts.typeProbation")}</option>
+                  <option value="Official">{t("contracts.typeOfficial")}</option>
+                  <option value="Part-time">{t("contracts.typePartTime")}</option>
                 </select>
               </div>
             </div>
@@ -245,23 +247,23 @@ export default function AdminContractsPage() {
             <Table>
               <TableHeader className="bg-slate-50/80">
                 <TableRow>
-                  <TableHead className="font-semibold text-slate-600">Employee</TableHead>
-                  <TableHead className="font-semibold text-slate-600">Contract No.</TableHead>
-                  <TableHead className="font-semibold text-slate-600">Type</TableHead>
-                  <TableHead className="font-semibold text-slate-600">Duration</TableHead>
-                  <TableHead className="font-semibold text-slate-600">Salary Rate</TableHead>
-                  <TableHead className="font-semibold text-slate-600">Status</TableHead>
-                  <TableHead className="font-semibold text-right text-slate-600">Actions</TableHead>
+                  <TableHead className="font-semibold text-slate-600">{t("contracts.colEmployee")}</TableHead>
+                  <TableHead className="font-semibold text-slate-600">{t("contracts.colContractNo")}</TableHead>
+                  <TableHead className="font-semibold text-slate-600">{t("contracts.colType")}</TableHead>
+                  <TableHead className="font-semibold text-slate-600">{t("contracts.colDuration")}</TableHead>
+                  <TableHead className="font-semibold text-slate-600">{t("contracts.colSalaryRate")}</TableHead>
+                  <TableHead className="font-semibold text-slate-600">{t("contracts.colStatus")}</TableHead>
+                  <TableHead className="font-semibold text-right text-slate-600">{t("contracts.colActions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-slate-500">Loading contracts...</TableCell>
+                    <TableCell colSpan={7} className="text-center py-12 text-slate-500">{t("contracts.loadingContracts")}</TableCell>
                   </TableRow>
                 ) : contracts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-slate-500">No contracts found.</TableCell>
+                    <TableCell colSpan={7} className="text-center py-12 text-slate-500">{t("contracts.noContracts")}</TableCell>
                   </TableRow>
                 ) : (
                   contracts.map((contract) => (
@@ -271,10 +273,10 @@ export default function AdminContractsPage() {
                         <div className="text-xs text-slate-400 font-normal mt-0.5">ID: {contract.employee?.employee_id}</div>
                       </TableCell>
                       <TableCell className="border-b border-slate-50 font-mono text-sm">{contract.contract_number}</TableCell>
-                      <TableCell className="border-b border-slate-50 py-4 font-medium text-slate-700">{contract.contract_type}</TableCell>
+                      <TableCell className="border-b border-slate-50 py-4 font-medium text-slate-700">{t(`contracts.type${contract.contract_type.replace('-', '')}`) || contract.contract_type}</TableCell>
                       <TableCell className="text-sm text-slate-600 border-b border-slate-50 py-4">
                         <div className="font-medium">{new Date(contract.start_date).toLocaleDateString()}</div>
-                        <div className="text-xs text-slate-400">to {contract.end_date ? new Date(contract.end_date).toLocaleDateString() : "Indefinite"}</div>
+                        <div className="text-xs text-slate-400">{t("contracts.durationTo")} {contract.end_date ? new Date(contract.end_date).toLocaleDateString() : t("contracts.durationIndefinite")}</div>
                       </TableCell>
                       <TableCell className="font-bold text-slate-700 border-b border-slate-50 py-4">{formatCurrency(contract.salary_rate)}</TableCell>
                       <TableCell className="border-b border-slate-50 py-4">{getStatusBadge(contract.status)}</TableCell>
@@ -301,7 +303,7 @@ export default function AdminContractsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
             <div className="bg-white justify-between rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
               <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-                <h2 className="text-xl font-bold text-slate-900">{editingContract ? 'Edit Contract' : 'Create New Contract'}</h2>
+                <h2 className="text-xl font-bold text-slate-900">{editingContract ? t("contracts.modalEditTitle") : t("contracts.modalCreateTitle")}</h2>
                 <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-red-500 transition-colors bg-slate-100 hover:bg-red-50 rounded-full p-2">
                   <X size={18} />
                 </button>
@@ -309,18 +311,16 @@ export default function AdminContractsPage() {
               <form onSubmit={handleSave} className="p-6 space-y-6 flex-1">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                  {/* === CHỖ NÀY ĐÃ FIX DROPDOWN: THÊM BACKGROUND TRẮNG, THANH CUỘN === */}
                   <div className="space-y-2 relative">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Employee</Label>
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblEmployee")}</Label>
                     <Select
                       disabled={!!editingContract}
                       value={formData.employee_id}
                       onValueChange={(val) => setFormData({ ...formData, employee_id: val })}
                     >
                       <SelectTrigger className="h-11 bg-slate-50 border-slate-200">
-                        <SelectValue placeholder="Select an employee" />
+                        <SelectValue placeholder={t("contracts.placeholderSelectEmp")} />
                       </SelectTrigger>
-                      {/* BÍ KÍP LÀ ĐÂY: bg-white z-50 max-h-64 overflow-y-auto */}
                       <SelectContent className="bg-white z-50 shadow-xl border border-slate-100 rounded-lg max-h-64 overflow-y-auto custom-thin-scrollbar">
                         {employees.map((emp) => (
                           <SelectItem key={emp.employee_id} value={emp.employee_id.toString()} className="cursor-pointer font-medium hover:bg-slate-50">
@@ -332,48 +332,48 @@ export default function AdminContractsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Contract Number</Label>
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblContractNo")}</Label>
                     <Input required className="h-11 bg-slate-50 border-slate-200" placeholder="HD-2023-001" value={formData.contract_number} onChange={(e) => setFormData({ ...formData, contract_number: e.target.value })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Type</Label>
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblType")}</Label>
                     <select className="w-full h-11 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.contract_type} onChange={(e) => setFormData({ ...formData, contract_type: e.target.value })}>
-                      <option value="Probation">Probation</option>
-                      <option value="Official">Official</option>
-                      <option value="Part-time">Part-time</option>
+                      <option value="Probation">{t("contracts.typeProbation")}</option>
+                      <option value="Official">{t("contracts.typeOfficial")}</option>
+                      <option value="Part-time">{t("contracts.typePartTime")}</option>
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status</Label>
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblStatus")}</Label>
                     <select className="w-full h-11 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
-                      <option value="Active">Active</option>
-                      <option value="Expired">Expired</option>
-                      <option value="Terminated">Terminated</option>
+                      <option value="Active">{t("contracts.statusActive")}</option>
+                      <option value="Expired">{t("contracts.statusExpired")}</option>
+                      <option value="Terminated">{t("contracts.statusTerminated")}</option>
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Start Date</Label>
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblStartDate")}</Label>
                     <Input type="date" required className="h-11 bg-slate-50 border-slate-200" value={formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : ''} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">End Date</Label>
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblEndDate")}</Label>
                     <Input type="date" className="h-11 bg-slate-50 border-slate-200" value={formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : ''} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Salary Rate</Label>
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblSalaryRate")}</Label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">$</span>
                       <Input type="number" step="0.01" required className="pl-8 h-11 bg-slate-50 border-slate-200 font-bold text-slate-700" placeholder="5000.00" value={formData.salary_rate} onChange={(e) => setFormData({ ...formData, salary_rate: e.target.value })} />
                     </div>
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">File URL (Optional)</Label>
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblFileUrl")}</Label>
                     <Input className="h-11 bg-slate-50 border-slate-200" placeholder="https://..." value={formData.file_url} onChange={(e) => setFormData({ ...formData, file_url: e.target.value })} />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
-                  <Button type="button" variant="ghost" className="hover:bg-slate-100" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                  <Button type="submit" disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]">{isSaving ? 'Saving...' : 'Save Contract'}</Button>
+                  <Button type="button" variant="ghost" className="hover:bg-slate-100" onClick={() => setIsModalOpen(false)}>{t("contracts.btnCancel")}</Button>
+                  <Button type="submit" disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]">{isSaving ? t("contracts.btnSaving") : t("contracts.btnSave")}</Button>
                 </div>
               </form>
             </div>

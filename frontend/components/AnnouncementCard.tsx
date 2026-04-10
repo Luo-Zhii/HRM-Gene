@@ -1,6 +1,7 @@
 import React from 'react';
 import { Calendar, Users, Info, Bell, AlertTriangle, Trash2 } from 'lucide-react';
 import { useAuth } from '@/src/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 interface Announcement {
   id: number;
@@ -20,12 +21,13 @@ interface AnnouncementCardProps {
 
 const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onDelete }) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isAdmin = user?.role === 'Admin' || user?.role === 'System Director';
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this announcement?")) {
+    if (window.confirm(t('announcement.deleteConfirm'))) {
       onDelete?.(announcement.id);
     }
   };
@@ -65,9 +67,9 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onDel
   };
 
   const getTargetLabel = (target: string) => {
-    if (target === 'all') return 'All Employees';
+    if (target === 'all') return t('announcement.allEmployees');
     if (target.startsWith('dept_')) {
-      return 'Specific Department';
+      return t('announcement.specificDepartment');
     }
     return target;
   };
@@ -78,7 +80,7 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onDel
         <button 
           onClick={handleDelete}
           className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all z-10"
-          title="Delete Announcement"
+          title={t('announcement.deleteTooltip')}
         >
           <Trash2 size={18} />
         </button>
@@ -113,7 +115,7 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onDel
         <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full">
             <Users className="w-3.5 h-3.5" />
-            <span>Target: {getTargetLabel(announcement.target_audience)}</span>
+            <span>{t('announcement.targetLabel')}{getTargetLabel(announcement.target_audience)}</span>
           </div>
           
           {announcement.priority === 'High' && (
@@ -122,7 +124,7 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onDel
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
               </span>
-              Urgent Attention
+              {t('announcement.urgentAttention')}
             </span>
           )}
         </div>

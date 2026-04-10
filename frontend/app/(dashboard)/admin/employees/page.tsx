@@ -14,6 +14,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { UserMinus, X, ShieldOff } from "lucide-react";
 import EmployeeTable, { EmployeeRow } from "@/components/EmployeeTable";
 
@@ -36,6 +37,7 @@ function isPrivilegedUser(user: any): boolean {
 export default function AdminEmployeeDirectoryPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
 
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +121,7 @@ export default function AdminEmployeeDirectoryPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500 font-medium">
-        Loading…
+        {t("common.loading")}
       </div>
     );
   }
@@ -132,19 +134,20 @@ export default function AdminEmployeeDirectoryPage() {
           <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto">
             <ShieldOff size={28} className="text-red-400" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900">Access Denied</h2>
+          <h2 className="text-xl font-bold text-gray-900">{t("access.denied")}</h2>
           <p className="text-sm text-gray-500">
-            You do not have permission to access the Admin Employee Directory.
-            Looking for a colleague?{" "}
+            {t("access.noPermission")}
+            <br className="mb-2" />
+            {t("access.tryDirectory")}{" "}
             <a href="/directory" className="text-blue-600 font-semibold hover:underline">
-              Use the Staff Directory
+              {t("access.staffDirectory")}
             </a>.
           </p>
           <a
             href="/dashboard"
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
           >
-            Back to Dashboard
+            {t("access.backToDashboard")}
           </a>
         </div>
       </div>
@@ -171,8 +174,8 @@ export default function AdminEmployeeDirectoryPage() {
       {/* Page title */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Employee Directory</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Admin view — all fields visible</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("sidebar.employeeDirectory")}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{t("directory.adminSubtitle")}</p>
         </div>
       </div>
 
@@ -203,17 +206,17 @@ export default function AdminEmployeeDirectoryPage() {
 
             <div className="p-6 pb-4 border-b border-gray-100">
               <h2 className="text-xl font-black text-red-600 flex items-center gap-2">
-                <UserMinus className="w-6 h-6" /> Process Resignation
+                <UserMinus className="w-6 h-6" /> {t("offboard.title")}
               </h2>
               <p className="text-sm text-gray-500 mt-2 font-medium">
-                This will terminate the employee's active contract and update all analytics.
+                {t("offboard.description")}
               </p>
             </div>
 
             <form onSubmit={handleOffboard} className="p-6 space-y-5">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                  Resignation Date <span className="text-red-500">*</span>
+                  {t("offboard.resignationDate")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
@@ -226,7 +229,7 @@ export default function AdminEmployeeDirectoryPage() {
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                  Reason <span className="text-red-500">*</span>
+                  {t("offboard.reason")} <span className="text-red-500">*</span>
                 </label>
                 <select
                   required
@@ -234,11 +237,11 @@ export default function AdminEmployeeDirectoryPage() {
                   onChange={(e) => setResignationReason(e.target.value)}
                   className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
                 >
-                  <option value="" disabled>-- Select Reason --</option>
-                  <option value="Compensation">Compensation &amp; Benefits</option>
-                  <option value="Culture">Company Culture</option>
-                  <option value="Personal">Personal Issues</option>
-                  <option value="Other">Other</option>
+                  <option value="" disabled>{t("offboard.selectReason")}</option>
+                  <option value="Compensation">{t("offboard.compensation")}</option>
+                  <option value="Culture">{t("offboard.culture")}</option>
+                  <option value="Personal">{t("offboard.personal")}</option>
+                  <option value="Other">{t("offboard.other")}</option>
                 </select>
               </div>
 
@@ -248,14 +251,14 @@ export default function AdminEmployeeDirectoryPage() {
                   onClick={() => setOffboardId(null)}
                   className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition-colors"
                 >
-                  Cancel
+                  {t("offboard.cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
                 >
-                  {isSubmitting ? "Processing…" : "Confirm Offboard"}
+                  {isSubmitting ? t("offboard.processing") : t("offboard.confirm")}
                 </button>
               </div>
             </form>

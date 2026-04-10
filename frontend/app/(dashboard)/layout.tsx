@@ -7,6 +7,8 @@ import { useNotifications } from "@/src/hooks/useNotifications";
 import { useCompany, CompanyProvider } from "@/src/context/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 import {
   Menu, X, User, Users, LogOut, ChevronDown, Bell, Search,
   CheckCheck, MessageSquare, AlertCircle, FileText, Megaphone, AlertTriangle, Zap,
@@ -19,6 +21,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const { settings } = useCompany();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
+  const { t } = useTranslation();
 
   const positionName = user?.position?.position_name?.toLowerCase();
   const isAdminOrHr = positionName === "admin" || positionName === "hr" || positionName === "hr manager";
@@ -53,79 +56,79 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         <style dangerouslySetInnerHTML={{ __html: `.custom-thin-scrollbar::-webkit-scrollbar { width: 5px; } .custom-thin-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-thin-scrollbar::-webkit-scrollbar-thumb { background-color: transparent; border-radius: 10px; } .custom-thin-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #cbd5e1; } .custom-thin-scrollbar { scrollbar-width: thin; scrollbar-color: transparent transparent; } .custom-thin-scrollbar:hover { scrollbar-color: #cbd5e1 transparent; }` }} />
         <nav onScroll={(e) => setIsScrolled(e.currentTarget.scrollTop > 0)} className="flex-1 overflow-y-auto py-6 px-4 space-y-1 custom-thin-scrollbar">
 
-          <NavItem href="/dashboard" label="Dashboard" icon={LayoutDashboard} isActive={pathname === "/dashboard"} onClick={onClose} />
-          <NavItem href="/company-news" label="News Feed" icon={Newspaper} isActive={pathname === "/company-news"} onClick={onClose} />
+          <NavItem href="/dashboard" label={t("sidebar.dashboard")} icon={LayoutDashboard} isActive={pathname === "/dashboard"} onClick={onClose} />
+          <NavItem href="/company-news" label={t("sidebar.newsFeed")} icon={Newspaper} isActive={pathname === "/company-news"} onClick={onClose} />
           {/* Staff Directory: visible to all authenticated employees */}
-          <NavItem href="/directory" label="Staff Directory" icon={Users} isActive={pathname?.startsWith("/directory")} onClick={onClose} />
+          <NavItem href="/directory" label={t("sidebar.staffDirectory")} icon={Users} isActive={pathname?.startsWith("/directory")} onClick={onClose} />
 
-          <NavItem href="/dashboard/timekeeping" label="Timekeeping" isActive={pathname === "/dashboard/timekeeping"} onClick={onClose} />
+          <NavItem href="/dashboard/timekeeping" label={t("sidebar.timekeeping")} isActive={pathname === "/dashboard/timekeeping"} onClick={onClose} />
           {(hasManageSystemPermission || isAdminOrHr || hasManageEmployeePermission) && (
             <>
-              <NavGroup title="HR Administration" />
+              <NavGroup title={t("sidebar.hrAdministration")} />
               {canViewDirectory && (
                 <>
-                  <NavItem href="/admin/employees" label="Employee Directory" isActive={pathname === "/admin/employees"} onClick={onClose} />
+                  <NavItem href="/admin/employees" label={t("sidebar.employeeDirectory")} isActive={pathname === "/admin/employees"} onClick={onClose} />
                   {/* 👇 NÚT QUẢN LÝ HỢP ĐỒNG ĐÃ ĐƯỢC CHÈN VÀO ĐÂY 👇 */}
-                  <NavItem href="/admin/contracts" label="Employment contract" isActive={pathname === "/admin/contracts"} onClick={onClose} />
+                  <NavItem href="/admin/contracts" label={t("sidebar.employmentContract")} isActive={pathname === "/admin/contracts"} onClick={onClose} />
                 </>
               )}
               {hasManageSystemPermission && (
                 <>
-                  <NavItem href="/admin/organization" label="Organizational management" isActive={pathname === "/admin/organization"} onClick={onClose} />
-                  <NavItem href="/admin/discipline" label="Discipline" isActive={pathname === "/admin/discipline"} onClick={onClose} />
-                  <NavItem href="/admin/permissions" label="Permissions" isActive={pathname === "/admin/permissions"} onClick={onClose} />
+                  <NavItem href="/admin/organization" label={t("sidebar.organizationalManagement")} isActive={pathname === "/admin/organization"} onClick={onClose} />
+                  <NavItem href="/admin/discipline" label={t("sidebar.discipline")} isActive={pathname === "/admin/discipline"} onClick={onClose} />
+                  <NavItem href="/admin/permissions" label={t("sidebar.permissions")} isActive={pathname === "/admin/permissions"} onClick={onClose} />
                 </>
               )}
 
-              <NavGroup title="Attendance & Leave" />
-              {(isAdminOrHr || hasManageSystemPermission) && <NavItem href="/admin/attendance" label="Attendance History" isActive={pathname === "/admin/attendance"} onClick={onClose} />}
+              <NavGroup title={t("sidebar.attendanceAndLeave")} />
+              {(isAdminOrHr || hasManageSystemPermission) && <NavItem href="/admin/attendance" label={t("sidebar.attendanceHistory")} isActive={pathname === "/admin/attendance"} onClick={onClose} />}
               {hasManageSystemPermission && (
-                <NavItem href="/admin/qr-display" label="QR Display (Tablet)" isActive={pathname === "/admin/qr-display"} onClick={onClose} />
+                <NavItem href="/admin/qr-display" label={t("sidebar.qrDisplay")} isActive={pathname === "/admin/qr-display"} onClick={onClose} />
               )}
-              <NavItem href="/admin/leave-approvals" label="Leave Approvals" isActive={pathname === "/admin/leave-approvals"} onClick={onClose} />
+              <NavItem href="/admin/leave-approvals" label={t("sidebar.leaveApprovals")} isActive={pathname === "/admin/leave-approvals"} onClick={onClose} />
             </>
           )}
-          <NavItem href="/admin/resignations" label="Resignation Approvals" isActive={pathname === "/admin/resignations"} onClick={onClose} />
-          <NavItem href="/dashboard/leave" label="Leave Management" isActive={pathname?.startsWith("/dashboard/leave")} onClick={onClose} />
+          <NavItem href="/admin/resignations" label={t("sidebar.resignationApprovals")} isActive={pathname === "/admin/resignations"} onClick={onClose} />
+          <NavItem href="/dashboard/leave" label={t("sidebar.leaveManagement")} isActive={pathname?.startsWith("/dashboard/leave")} onClick={onClose} />
 
-          <NavGroup title="My Performance" />
-          <NavItem href="/dashboard/performance/me" label="My Goals" isActive={pathname === "/dashboard/performance/me"} onClick={onClose} />
+          <NavGroup title={t("sidebar.myPerformance")} />
+          <NavItem href="/dashboard/performance/me" label={t("sidebar.myGoals")} isActive={pathname === "/dashboard/performance/me"} onClick={onClose} />
 
-          <NavGroup title="Payroll Management" />
-          <NavItem href="/dashboard/salary" label="My Salary" isActive={pathname === "/dashboard/salary"} onClick={onClose} />
-          <NavItem href="/my-resignation" label="My Resignation" isActive={pathname === "/my-resignation"} onClick={onClose} />
+          <NavGroup title={t("sidebar.payrollManagement")} />
+          <NavItem href="/dashboard/salary" label={t("sidebar.mySalary")} isActive={pathname === "/dashboard/salary"} onClick={onClose} />
+          <NavItem href="/my-resignation" label={t("sidebar.myResignation")} isActive={pathname === "/my-resignation"} onClick={onClose} />
           {hasManagePayrollPermission && (
             <>
-              <NavItem href="/admin/payroll/config" label="Salary configuration" isActive={pathname === "/admin/payroll/config"} onClick={onClose} />
-              <NavItem href="/admin/payroll/adjustment" label="Salary Adjustment" isActive={pathname === "/admin/payroll/adjustment"} onClick={onClose} />
-              <NavItem href="/admin/payroll/generate" label="Create payroll" isActive={pathname === "/admin/payroll/generate"} onClick={onClose} />
-              <NavItem href="/admin/payroll/issue" label="Issue Payslips" isActive={pathname === "/admin/payroll/issue"} onClick={onClose} />
+              <NavItem href="/admin/payroll/config" label={t("sidebar.salaryConfiguration")} isActive={pathname === "/admin/payroll/config"} onClick={onClose} />
+              <NavItem href="/admin/payroll/adjustment" label={t("sidebar.salaryAdjustment")} isActive={pathname === "/admin/payroll/adjustment"} onClick={onClose} />
+              <NavItem href="/admin/payroll/generate" label={t("sidebar.createPayroll")} isActive={pathname === "/admin/payroll/generate"} onClick={onClose} />
+              <NavItem href="/admin/payroll/issue" label={t("sidebar.issuePayslips")} isActive={pathname === "/admin/payroll/issue"} onClick={onClose} />
             </>
           )}
           {canAccessReports && (
             <>
-              <NavGroup title="System & Analytics" />
-              <NavItem href="/admin/reports" label="Analysis report" isActive={pathname === "/admin/reports"} onClick={onClose} />
+              <NavGroup title={t("sidebar.systemAnalytics")} />
+              <NavItem href="/admin/reports" label={t("sidebar.analysisReport")} isActive={pathname === "/admin/reports"} onClick={onClose} />
             </>
           )}
           {hasManageSystemPermission && (
             <>
-              <NavGroup title="Communication" />
-              <NavItem href="/admin/announcements" label="Manage News" icon={Radio} isActive={pathname === "/admin/announcements"} onClick={onClose} />
+              <NavGroup title={t("sidebar.communication")} />
+              <NavItem href="/admin/announcements" label={t("sidebar.manageNews")} icon={Radio} isActive={pathname === "/admin/announcements"} onClick={onClose} />
             </>
           )}
           {(isAdminOrHr || hasManageSystemPermission) && (
             <>
-              <NavGroup title="Performance Management" />
-              <NavItem href="/admin/performance/library" label="KPI Library" isActive={pathname === "/admin/performance/library"} onClick={onClose} />
-              <NavItem href="/admin/performance/team" label="Team Performance" isActive={pathname === "/admin/performance/team"} onClick={onClose} />
+              <NavGroup title={t("sidebar.performanceManagement")} />
+              <NavItem href="/admin/performance/library" label={t("sidebar.kpiLibrary")} isActive={pathname === "/admin/performance/library"} onClick={onClose} />
+              <NavItem href="/admin/performance/team" label={t("sidebar.teamPerformance")} isActive={pathname === "/admin/performance/team"} onClick={onClose} />
             </>
           )}
         </nav>
         {hasManageSystemPermission && (
           <div className="p-4 border-t border-gray-100 shrink-0 space-y-1">
-            <NavItem href="/admin/settings" label="System Settings" isActive={pathname === "/admin/settings"} onClick={onClose} />
-            <NavItem href="/admin/settings/payroll" label="Payroll Settings" isActive={pathname === "/admin/settings/payroll"} onClick={onClose} />
+            <NavItem href="/admin/settings" label={t("sidebar.systemSettings")} isActive={pathname === "/admin/settings"} onClick={onClose} />
+            <NavItem href="/admin/settings/payroll" label={t("sidebar.payrollSettings")} isActive={pathname === "/admin/settings/payroll"} onClick={onClose} />
           </div>
         )}
       </aside>
@@ -151,17 +154,18 @@ function NavItem({ href, label, icon: Icon, isActive, onClick }: { href: string;
 }
 
 function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClick, onRemoveNotification }: { notifications: any[], onMarkAllRead: () => void, onNotificationClick: (n: any) => void, onRemoveNotification: (id: number) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-4 z-50 animate-in fade-in zoom-in-95 duration-200">
       <div className="px-4 pb-3 border-b border-gray-50 flex items-center justify-between">
-        <h3 className="font-bold text-gray-900">Notifications</h3>
+        <h3 className="font-bold text-gray-900">{t("header.notifications")}</h3>
         <button onClick={onMarkAllRead} className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-          <CheckCheck size={14} /> Mark all read
+          <CheckCheck size={14} /> {t("header.markAllRead")}
         </button>
       </div>
       <div className="max-h-96 overflow-y-auto custom-thin-scrollbar">
         {notifications.length === 0 ? (
-          <div className="py-10 text-center text-gray-400 text-sm">No new notifications</div>
+          <div className="py-10 text-center text-gray-400 text-sm">{t("header.noNewNotifications")}</div>
         ) : (
           notifications.map((n) => (
             <div key={n.id} onClick={() => onNotificationClick(n)} className={`px-4 py-3 hover:bg-gray-50 cursor-pointer flex gap-3 border-b border-gray-50 last:border-0 ${!n.isRead ? 'bg-blue-50/30' : ''}`}>
@@ -202,7 +206,7 @@ function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClic
         )}
       </div>
       <div className="px-4 pt-3 border-t border-gray-50">
-        <button className="w-full text-center text-xs font-bold text-gray-500 hover:text-blue-600">View All</button>
+        <button className="w-full text-center text-xs font-bold text-gray-500 hover:text-blue-600">{t("header.viewAll")}</button>
       </div>
     </div>
   );
@@ -247,6 +251,7 @@ type SearchResult = { title: string; path: string; description?: string };
 // --- HEADER ---
 function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, loading, logout } = useAuth();
+  const { t } = useTranslation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -353,7 +358,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
             <Search size={15} className="text-gray-400 shrink-0" />
           <input
               type="text"
-              placeholder="Search pages & features…"
+              placeholder={t("header.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setIsSearchOpen(true); }}
               onFocus={() => setIsSearchOpen(true)}
@@ -376,7 +381,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
               {!searchQuery.trim() && (
                 <>
                   <p className="px-4 pb-1.5 pt-0.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Quick Links
+                    {t("header.quickLinks")}
                   </p>
                   {QUICK_LINKS.map((r) => (
                     <button
@@ -400,7 +405,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
               {searchQuery.trim() && commandResults.length > 0 && (
                 <>
                   <p className="px-4 pb-1.5 pt-0.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Pages &amp; Features
+                    {t("header.pagesAndFeatures")}
                   </p>
                   {commandResults.map((r) => (
                     <button
@@ -425,13 +430,16 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
               {searchQuery.trim() && commandResults.length === 0 && (
                 <div className="px-5 py-8 text-center">
                   <Search size={24} className="mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm text-gray-500 font-medium">No pages found</p>
+                  <p className="text-sm text-gray-500 font-medium">{t("header.noResults")}</p>
                   <p className="text-xs text-gray-400 mt-1">Try &ldquo;leave&rdquo;, &ldquo;payroll&rdquo;, &ldquo;settings&rdquo;…</p>
                 </div>
               )}
             </div>
           )}
         </div>
+
+        {/* LANGUAGE SWITCHER — pill variant */}
+        <LanguageSwitcher variant="pill" />
 
         {/* BELL NOTIFICATION */}
         <div className="relative" ref={notifRef}>
@@ -474,14 +482,22 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
               <ChevronDown size={16} className="text-gray-400" />
             </button>
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
-                <Link href="/profile" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><User size={16} /> Profile</Link>
-                <button onClick={() => logout()} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left"><LogOut size={16} /> Logout</button>
+              <div className="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
+                <Link href="/profile" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                  <User size={16} /> {t("userMenu.myProfile")}
+                </Link>
+                {/* Language toggle — menu variant: syncs with the pill in the header */}
+                <div className="border-t border-gray-50 my-1" />
+                <LanguageSwitcher variant="menu" />
+                <div className="border-t border-gray-50 my-1" />
+                <button onClick={() => logout()} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left">
+                  <LogOut size={16} /> {t("userMenu.logout")}
+                </button>
               </div>
             )}
           </div>
         ) : (
-          <Link href="/login"><Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">Sign in</Button></Link>
+          <Link href="/login"><Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">{t("common.signIn")}</Button></Link>
         )}
       </div>
     </header>

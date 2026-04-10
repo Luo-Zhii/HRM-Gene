@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { MapPin, QrCode, FileText, Sun, Moon, CheckCircle2 } from "lucide-react";
 import type { TimekeepingResponse } from "@/src/types/timekeeping";
 
@@ -69,7 +70,7 @@ const TimekeepingSuccessModal = ({
   onClose: () => void;
   data: TimekeepingResponse | null;
 }) => {
-  // Nếu không có dữ liệu hoặc modal đang đóng thì ẩn luôn
+  const { t } = useTranslation();
   if (!data || !open) return null;
 
   const isCheckIn = data.status === "CHECK_IN";
@@ -79,12 +80,9 @@ const TimekeepingSuccessModal = ({
     second: "2-digit",
   });
 
-  // CODE TAY 100%: Dùng fixed inset-0 để phủ đen toàn màn hình, z-[99999] để đè lên mọi thứ
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
-
-        {/* NỘI DUNG MODAL */}
         <div className="flex flex-col items-center text-center space-y-4 py-4">
           <div className={`p-6 rounded-full ${isCheckIn ? "bg-green-100" : "bg-orange-100"}`}>
             {isCheckIn ? (
@@ -95,29 +93,27 @@ const TimekeepingSuccessModal = ({
           </div>
 
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {isCheckIn ? "Checked In!" : "Checked Out!"}
+            {isCheckIn ? t("timekeeping.checkedIn") : t("timekeeping.checkedOut")}
           </h2>
 
           <p className="text-base text-gray-600 dark:text-gray-300">
             {data.message}
           </p>
 
-          {/* HIỂN THỊ THỜI GIAN */}
           <div className="w-full space-y-3 pt-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                {isCheckIn ? "Check-in Time" : "Check-out Time"}
+                {isCheckIn ? t("timekeeping.checkInTime") : t("timekeeping.checkOutTime")}
               </span>
               <span className="text-xl font-bold text-gray-900 dark:text-white">
                 {timeStr}
               </span>
             </div>
 
-            {/* Nếu là Check-out thì hiện tổng giờ làm */}
             {!isCheckIn && data.duration !== undefined && (
               <div className="flex items-center justify-between p-4 bg-orange-50 rounded-xl border border-orange-100">
                 <span className="text-sm font-bold text-orange-700">
-                  Total Work Duration
+                  {t("timekeeping.totalWorkDuration")}
                 </span>
                 <span className="text-xl font-black text-orange-600">
                   {data.duration.toFixed(2)} hrs
@@ -127,20 +123,20 @@ const TimekeepingSuccessModal = ({
           </div>
         </div>
 
-        {/* NÚT ĐÓNG */}
         <div className="mt-6 flex justify-center">
           <button
             onClick={onClose}
             className="flex items-center justify-center w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-12 text-md font-bold transition-colors shadow-md"
           >
             <CheckCircle2 className="w-5 h-5 mr-2" />
-            Awesome, Close!
+            {t("timekeeping.awesomeClose")}
           </button>
         </div>
       </div>
     </div>
   );
 };
+
 // --- Main Page ---
 export default function TimekeepingPage() {
   const [loadingIp, setLoadingIp] = useState(false);
@@ -149,40 +145,38 @@ export default function TimekeepingPage() {
   const [qrPayload, setQrPayload] = useState("");
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [successData, setSuccessData] = useState<TimekeepingResponse | null>(
-    null
-  );
+  const [successData, setSuccessData] = useState<TimekeepingResponse | null>(null);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const { toast } = useToast();
   const { refresh: refreshAuth } = useAuth();
+  const { t } = useTranslation();
 
-  // --- UPDATED: Status Helper with English Titles & Variants ---
   const showStatus = (
     type: "success" | "error" | "info" | "warning",
     text: string
   ) => {
     if (type === "success") {
       toast({
-        variant: "success", // Green color + Check icon
-        title: "Success",
+        variant: "success",
+        title: t("common.success"),
         description: text,
       });
     } else if (type === "error") {
       toast({
-        variant: "destructive", // Red color + Alert icon
-        title: "Error",
+        variant: "destructive",
+        title: t("common.error"),
         description: text,
       });
     } else if (type === "warning") {
       toast({
-        variant: "warning", // Yellow color + Triangle icon
-        title: "Warning",
+        variant: "warning",
+        title: t("common.warning"),
         description: text,
       });
     } else {
       toast({
-        variant: "info", // Blue color + Info icon
-        title: "Info",
+        variant: "info",
+        title: t("common.info"),
         description: text,
       });
     }
@@ -197,10 +191,8 @@ export default function TimekeepingPage() {
       });
       const json: TimekeepingResponse = await res.json();
       if (res.ok) {
-        // Show success modal
         setSuccessData(json);
         setSuccessModalOpen(true);
-        // Refresh auth context to update dashboard status
         await refreshAuth();
       } else {
         showStatus("error", json?.message || "IP check-in failed");
@@ -211,8 +203,8 @@ export default function TimekeepingPage() {
       setLoadingIp(false);
     }
   };
+
   const submitQr = async (payload?: string) => {
-    // CHỐT CHẶN: Nếu đang xử lý hoặc đã mở modal thì CẤM gọi API
     if (isProcessing || successModalOpen) return;
 
     const p = payload ?? qrPayload;
@@ -221,7 +213,6 @@ export default function TimekeepingPage() {
       return;
     }
 
-    // ĐÓNG VAN LẠI NGAY LẬP TỨC
     setIsProcessing(true);
     setLoadingQr(true);
 
@@ -247,7 +238,6 @@ export default function TimekeepingPage() {
     } catch (err) {
       showStatus("error", "QR check-in connection failed");
     } finally {
-      // MỞ VAN LẠI SAU 1.5 GIÂY ĐỂ TRÁNH BỊ GỌI ĐÚP
       setTimeout(() => {
         setLoadingQr(false);
         setIsProcessing(false);
@@ -256,16 +246,13 @@ export default function TimekeepingPage() {
   };
 
   const onScanSuccess = (decodedText: string, decodedResult: any) => {
-    // CHỐT CHẶN Ở MÁY QUÉT: Ngăn máy quét quét lại liên tục
     if (isProcessing || successModalOpen) return;
-
     console.log(`Scan result: ${decodedText}`);
     setIsScanning(false);
     submitQr(decodedText);
   };
 
   const onScanFailure = (error: string) => {
-    // Only log warning, don't spam toasts
     console.warn(`QR Scan Error: ${error}`);
   };
 
@@ -284,13 +271,13 @@ export default function TimekeepingPage() {
       />
 
       <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
-        Timekeeping
+        {t("timekeeping.title")}
       </h1>
 
       {!isScanning ? (
         <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
-            Check-in Options
+            {t("timekeeping.checkInOptions")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* --- CARD 1: IP Check-in --- */}
@@ -302,9 +289,9 @@ export default function TimekeepingPage() {
                 <div className="p-4 bg-blue-50 rounded-full mb-4 group-hover:scale-110 transition-transform">
                   <MapPin className="w-10 h-10 text-blue-600" />
                 </div>
-                <h3 className="font-bold text-lg mb-2">IP Check-in</h3>
+                <h3 className="font-bold text-lg mb-2">{t("timekeeping.ipCheckIn")}</h3>
                 <p className="text-sm text-gray-500 mb-6">
-                  Check-in using your current IP address
+                  {t("timekeeping.ipCheckInDesc")}
                 </p>
                 <Button
                   className="w-full"
@@ -312,7 +299,7 @@ export default function TimekeepingPage() {
                   disabled={loadingIp}
                   size="lg"
                 >
-                  {loadingIp ? "Checking in..." : "Check-in"}
+                  {loadingIp ? t("timekeeping.checkingIn") : t("timekeeping.checkIn")}
                 </Button>
               </CardContent>
             </Card>
@@ -326,12 +313,12 @@ export default function TimekeepingPage() {
                 <div className="p-4 bg-green-50 rounded-full mb-4 group-hover:scale-110 transition-transform">
                   <QrCode className="w-10 h-10 text-green-600" />
                 </div>
-                <h3 className="font-bold text-lg mb-2">QR Check-in</h3>
+                <h3 className="font-bold text-lg mb-2">{t("timekeeping.qrCheckIn")}</h3>
                 <p className="text-sm text-gray-500 mb-6">
-                  Scan QR code to check-in
+                  {t("timekeeping.qrCheckInDesc")}
                 </p>
                 <Button className="w-full" variant="outline" size="lg">
-                  Scan QR
+                  {t("timekeeping.scanQr")}
                 </Button>
               </CardContent>
             </Card>
@@ -340,7 +327,6 @@ export default function TimekeepingPage() {
             <Card
               className="cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-400 group"
               onClick={() => {
-                // Clipboard logic
                 navigator.clipboard
                   .readText()
                   .then((text) => {
@@ -354,12 +340,12 @@ export default function TimekeepingPage() {
                 <div className="p-4 bg-purple-50 rounded-full mb-4 group-hover:scale-110 transition-transform">
                   <FileText className="w-10 h-10 text-purple-600" />
                 </div>
-                <h3 className="font-bold text-lg mb-2">Paste QR</h3>
+                <h3 className="font-bold text-lg mb-2">{t("timekeeping.pasteQr")}</h3>
                 <p className="text-sm text-gray-500 mb-6">
-                  Paste QR code text as fallback
+                  {t("timekeeping.pasteQrDesc")}
                 </p>
                 <Button className="w-full" variant="outline" size="lg">
-                  Paste from Clipboard
+                  {t("timekeeping.pasteFromClipboard")}
                 </Button>
               </CardContent>
             </Card>
@@ -370,7 +356,7 @@ export default function TimekeepingPage() {
         <div className="mt-8 max-w-lg mx-auto animate-in zoom-in-95 duration-300">
           <div className="bg-white p-4 rounded-xl shadow-lg border">
             <h3 className="text-center font-semibold mb-4 text-lg">
-              Scanning QR Code...
+              {t("timekeeping.scanningQr")}
             </h3>
 
             <div className="overflow-hidden rounded-lg border-2 border-dashed border-gray-300">
@@ -386,7 +372,7 @@ export default function TimekeepingPage() {
                 variant="destructive"
                 className="w-full"
               >
-                Cancel Scan
+                {t("timekeeping.cancelScan")}
               </Button>
             </div>
           </div>

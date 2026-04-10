@@ -16,9 +16,11 @@
 
 import React, { useEffect, useState } from "react";
 import { Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import EmployeeTable, { EmployeeRow } from "@/components/EmployeeTable";
 
 export default function StaffDirectoryPage() {
+  const { t } = useTranslation();
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,10 +45,10 @@ export default function StaffDirectoryPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Users size={22} className="text-blue-500" />
-          Staff Directory
+          {t("directory.title")}
         </h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Find colleagues and send them a quick message.
+          {t("directory.subtitle")}
         </p>
       </div>
 

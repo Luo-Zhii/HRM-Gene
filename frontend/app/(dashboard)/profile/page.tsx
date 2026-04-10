@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ import { Edit2, Save, X, Mail, Phone, Briefcase, DollarSign, FileText, AlertTria
 import { useToast } from "@/hooks/use-toast";
 
 // ==========================================
-// ĐỊNH NGHĨA INTERFACES
+// INTERFACES
 // ==========================================
 interface BankInfo { bank_info_id?: number; bank_name: string; account_number: string; account_holder_name: string; }
 interface ProfileData {
@@ -26,7 +27,7 @@ interface ProfileData {
 }
 
 // ==========================================
-// CUSTOM TOGGLE COMPONENT
+// CUSTOM TOGGLE
 // ==========================================
 function CustomToggle({ checked, onChange, disabled }: { checked: boolean, onChange: (c: boolean) => void, disabled?: boolean }) {
   return (
@@ -41,6 +42,7 @@ function CustomToggle({ checked, onChange, disabled }: { checked: boolean, onCha
 
 function ProfileContent() {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const employeeId = searchParams.get("id");
   const { toast } = useToast();
@@ -53,7 +55,6 @@ function ProfileContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Form States
   const [formData, setFormData] = useState({ first_name: "", last_name: "", email: "", phone_number: "", address: "", description: "" });
   const [bankFormData, setBankFormData] = useState({ bank_name: "", account_number: "", account_holder_name: "" });
   const [settings, setSettings] = useState({ email_notifications: true, task_reminders: true, announcements: true, daily_reports: false, dark_mode: false, two_factor_auth: false, push_notifications: true });
@@ -89,8 +90,6 @@ function ProfileContent() {
         }
 
         const [c, v, s] = await Promise.all([contRes.json(), violRes.json(), salRes.json()]);
-
-        // BẢO KÊ DỮ LIỆU: Ép kiểu mảng để chống lỗi .find() và .map()
         setHrData({
           contracts: Array.isArray(c) ? c : (c.data && Array.isArray(c.data)) ? c.data : [],
           violations: Array.isArray(v) ? v : (v.records || []),
@@ -98,7 +97,6 @@ function ProfileContent() {
         });
       } catch (e) {
         console.error(e);
-        // BẢO KÊ LÚC CATCH LỖI NETWORK
         setHrData({ contracts: [], violations: [], salary: [] });
       } finally {
         setLoading(false);
@@ -107,7 +105,6 @@ function ProfileContent() {
     fetchData();
   }, [authLoading, user, employeeId]);
 
-  // Fetch payslips for salary history (own profile only)
   useEffect(() => {
     if (!user || !viewingOwnProfile) return;
     fetch("/api/payroll/my-payslips", { credentials: "include" })
@@ -116,7 +113,6 @@ function ProfileContent() {
       .catch(() => setPayslips([]));
   }, [user, viewingOwnProfile]);
 
-  // --- LOGIC UPLOAD AVATAR ---
   const handleAvatarClick = () => fileInputRef.current?.click();
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -129,13 +125,12 @@ function ProfileContent() {
       if (res.ok) {
         const data = await res.json();
         setProfileData(prev => prev ? ({ ...prev, avatar_url: data.avatar_url }) : null);
-        toast({ title: "Success", description: "Avatar updated! Syncing with header..." });
+        toast({ title: t("common.success"), description: "Avatar updated! Syncing with header..." });
         setTimeout(() => window.location.reload(), 800);
       } else { throw new Error(); }
-    } catch (e) { toast({ variant: "destructive", title: "Error", description: "Upload failed. Check backend Multer config." }); } finally { setIsSaving(false); }
+    } catch (e) { toast({ variant: "destructive", title: t("common.error"), description: "Upload failed. Check backend Multer config." }); } finally { setIsSaving(false); }
   };
 
-  // --- LOGIC SAVE ALL ---
   const handleSaveAll = async () => {
     setIsSaving(true);
     try {
@@ -147,26 +142,26 @@ function ProfileContent() {
         const updated = await response.json();
         setProfileData(updated);
         syncState(updated);
-        toast({ title: "Success", description: "All settings saved successfully!" });
+        toast({ title: t("common.success"), description: "All settings saved successfully!" });
         setIsEditing(false);
       } else { throw new Error(); }
-    } catch (error) { toast({ variant: "destructive", title: "Error", description: "Failed to save. Ensure database columns exist!" }); } finally { setIsSaving(false); }
+    } catch (error) { toast({ variant: "destructive", title: t("common.error"), description: "Failed to save. Ensure database columns exist!" }); } finally { setIsSaving(false); }
   };
 
-  if (loading || authLoading) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-medium">Loading profile...</div>;
-  if (!profileData) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">User not found</div>;
+  if (loading || authLoading) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-medium">{t("profile.loadingProfile")}</div>;
+  if (!profileData) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">{t("profile.userNotFound")}</div>;
 
   const initials = `${profileData.first_name?.[0]?.toUpperCase() || ""}${profileData.last_name?.[0]?.toUpperCase() || ""}`;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-10 font-inter">
       <div className="max-w-[1100px] mx-auto space-y-8">
-        <h1 className="text-2xl font-bold text-slate-900">General Settings</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t("profile.title")}</h1>
 
-        {/* THẺ PERSONAL INFO */}
+        {/* PERSONAL INFO CARD */}
         <Card className="rounded-2xl border-none shadow-sm overflow-hidden bg-white">
           <div className="grid grid-cols-1 md:grid-cols-12">
-            {/* Cột trái: Avatar */}
+            {/* Avatar column */}
             <div className="md:col-span-4 p-10 flex flex-col items-center justify-center border-r border-slate-50">
               <div className="relative group">
                 <div className="w-32 h-32 rounded-full bg-slate-100 flex items-center justify-center border-4 border-white shadow-md overflow-hidden text-slate-400 text-4xl font-bold">
@@ -181,28 +176,28 @@ function ProfileContent() {
                 disabled={isSaving || !viewingOwnProfile}
                 className="mt-4 text-blue-600 font-semibold text-sm hover:underline disabled:opacity-50"
               >
-                {isSaving ? "Uploading..." : "Upload Avatar"}
+                {isSaving ? t("profile.uploading") : t("profile.uploadAvatar")}
               </button>
             </div>
 
-            {/* Cột phải: Form nhập liệu */}
+            {/* Form column */}
             <div className="md:col-span-8 p-10 relative">
               {!isEditing && viewingOwnProfile && (
                 <Button onClick={() => setIsEditing(true)} variant="ghost" className="absolute top-6 right-6 text-slate-400 hover:text-blue-600">
                   <Edit2 size={18} />
                 </Button>
               )}
-              <h2 className="text-lg font-bold mb-8">Personal Information</h2>
+              <h2 className="text-lg font-bold mb-8">{t("profile.personalInfo")}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                <FormInput label="First Name" name="first_name" value={formData.first_name} onChange={(e: any) => setFormData({ ...formData, first_name: e.target.value })} disabled={!isEditing} />
-                <FormInput label="Last Name" name="last_name" value={formData.last_name} onChange={(e: any) => setFormData({ ...formData, last_name: e.target.value })} disabled={!isEditing} />
-                <FormInput label="Email" name="email" value={formData.email} onChange={(e: any) => setFormData({ ...formData, email: e.target.value })} disabled={!isEditing} />
-                <FormInput label="Phone" name="phone_number" value={formData.phone_number} onChange={(e: any) => setFormData({ ...formData, phone_number: e.target.value })} disabled={!isEditing} />
-                <FormInput label="Address" name="address" value={formData.address} onChange={(e: any) => setFormData({ ...formData, address: e.target.value })} disabled={!isEditing} />
-                <FormInput label="Job Title" value={profileData.position?.position_name} disabled={true} />
+                <FormInput label={t("profile.firstName")} name="first_name" value={formData.first_name} onChange={(e: any) => setFormData({ ...formData, first_name: e.target.value })} disabled={!isEditing} />
+                <FormInput label={t("profile.lastName")} name="last_name" value={formData.last_name} onChange={(e: any) => setFormData({ ...formData, last_name: e.target.value })} disabled={!isEditing} />
+                <FormInput label={t("profile.email")} name="email" value={formData.email} onChange={(e: any) => setFormData({ ...formData, email: e.target.value })} disabled={!isEditing} />
+                <FormInput label={t("profile.phone")} name="phone_number" value={formData.phone_number} onChange={(e: any) => setFormData({ ...formData, phone_number: e.target.value })} disabled={!isEditing} />
+                <FormInput label={t("profile.address")} name="address" value={formData.address} onChange={(e: any) => setFormData({ ...formData, address: e.target.value })} disabled={!isEditing} />
+                <FormInput label={t("profile.jobTitle")} value={profileData.position?.position_name} disabled={true} />
                 <div className="md:col-span-2">
-                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Description / Bio</Label>
-                  <Textarea name="description" value={formData.description} onChange={(e: any) => setFormData({ ...formData, description: e.target.value })} disabled={!isEditing} className="bg-slate-50 border-none resize-none h-24 mt-1.5 focus-visible:ring-blue-500" placeholder="Tell us about yourself..." />
+                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("profile.descriptionBio")}</Label>
+                  <Textarea name="description" value={formData.description} onChange={(e: any) => setFormData({ ...formData, description: e.target.value })} disabled={!isEditing} className="bg-slate-50 border-none resize-none h-24 mt-1.5 focus-visible:ring-blue-500" placeholder={t("profile.descriptionPlaceholder")} />
                 </div>
               </div>
             </div>
@@ -212,108 +207,102 @@ function ProfileContent() {
         {/* SETTINGS AREA */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-6">
-            <h3 className="font-bold border-b pb-2">Notifications</h3>
-            <ToggleRow title="Email messages" checked={settings.email_notifications} onChange={(v: any) => setSettings({ ...settings, email_notifications: v })} disabled={!isEditing} />
-            <h3 className="font-bold border-b pb-2 mt-4">Appearance</h3>
-            <ToggleRow title="Dark Mode" checked={settings.dark_mode} onChange={(v: any) => setSettings({ ...settings, dark_mode: v })} disabled={!isEditing} />
+            <h3 className="font-bold border-b pb-2">{t("profile.notifications")}</h3>
+            <ToggleRow title={t("profile.emailMessages")} checked={settings.email_notifications} onChange={(v: any) => setSettings({ ...settings, email_notifications: v })} disabled={!isEditing} />
+            <h3 className="font-bold border-b pb-2 mt-4">{t("profile.appearance")}</h3>
+            <ToggleRow title={t("profile.darkMode")} checked={settings.dark_mode} onChange={(v: any) => setSettings({ ...settings, dark_mode: v })} disabled={!isEditing} />
           </div>
           <div className="space-y-4">
-            <h3 className="font-bold border-b pb-2">Security</h3>
+            <h3 className="font-bold border-b pb-2">{t("profile.security")}</h3>
             <div className="bg-slate-50 p-4 rounded-xl flex items-center justify-between">
-              <div className="flex items-center gap-3"><ShieldCheck className="text-blue-600 w-5 h-5" /><span className="text-sm font-bold">Enable 2FA</span></div>
+              <div className="flex items-center gap-3"><ShieldCheck className="text-blue-600 w-5 h-5" /><span className="text-sm font-bold">{t("profile.enable2fa")}</span></div>
               <CustomToggle checked={settings.two_factor_auth} onChange={(v) => setSettings({ ...settings, two_factor_auth: v })} disabled={!isEditing} />
             </div>
           </div>
           <div className="space-y-6">
-            <div className="flex items-center justify-between border-b pb-2"><h3 className="font-bold">Push Notifications</h3><CustomToggle checked={settings.push_notifications} onChange={(v) => setSettings({ ...settings, push_notifications: v })} disabled={!isEditing} /></div>
+            <div className="flex items-center justify-between border-b pb-2"><h3 className="font-bold">{t("profile.pushNotifications")}</h3><CustomToggle checked={settings.push_notifications} onChange={(v) => setSettings({ ...settings, push_notifications: v })} disabled={!isEditing} /></div>
             <div className={`space-y-4 ${!settings.push_notifications && 'opacity-30 pointer-events-none'}`}>
-              <ToggleRow title="Task reminders" checked={settings.task_reminders} onChange={(v: any) => setSettings({ ...settings, task_reminders: v })} disabled={!isEditing} />
-              <ToggleRow title="Announcements" checked={settings.announcements} onChange={(v: any) => setSettings({ ...settings, announcements: v })} disabled={!isEditing} />
-              <ToggleRow title="Daily reports" checked={settings.daily_reports} onChange={(v: any) => setSettings({ ...settings, daily_reports: v })} disabled={!isEditing} />
+              <ToggleRow title={t("profile.taskReminders")} checked={settings.task_reminders} onChange={(v: any) => setSettings({ ...settings, task_reminders: v })} disabled={!isEditing} />
+              <ToggleRow title={t("profile.announcements")} checked={settings.announcements} onChange={(v: any) => setSettings({ ...settings, announcements: v })} disabled={!isEditing} />
+              <ToggleRow title={t("profile.dailyReports")} checked={settings.daily_reports} onChange={(v: any) => setSettings({ ...settings, daily_reports: v })} disabled={!isEditing} />
             </div>
           </div>
         </div>
 
-        {/* BANK ACCOUNT AREA */}
+        {/* BANK ACCOUNT */}
         <Card className="rounded-2xl border-none shadow-sm bg-white p-8">
-          <h2 className="text-lg font-bold flex items-center gap-3 mb-6"><CreditCard className="text-blue-500" /> Bank Account Information</h2>
+          <h2 className="text-lg font-bold flex items-center gap-3 mb-6"><CreditCard className="text-blue-500" /> {t("profile.bankInfo")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <BankField label="Bank Name" value={bankFormData.bank_name} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, bank_name: v })} />
-            <BankField label="Account Number" value={bankFormData.account_number} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, account_number: v })} mono />
-            <BankField label="Account Holder" value={bankFormData.account_holder_name} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, account_holder_name: v })} uppercase />
+            <BankField label={t("profile.bankName")} value={bankFormData.bank_name} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, bank_name: v })} />
+            <BankField label={t("profile.accountNumber")} value={bankFormData.account_number} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, account_number: v })} mono />
+            <BankField label={t("profile.accountHolder")} value={bankFormData.account_holder_name} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, account_holder_name: v })} uppercase />
           </div>
         </Card>
 
-        {/* NÚT SAVE / DISCARD */}
+        {/* SAVE / DISCARD BUTTONS */}
         {isEditing && (
           <div className="flex justify-end gap-4 pt-6 border-t">
-            <Button onClick={() => setIsEditing(false)} variant="outline" className="bg-red-50 text-red-500 border-none hover:bg-red-100 px-10">Discard</Button>
-            <Button onClick={handleSaveAll} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 px-10">{isSaving ? "Saving..." : "Save Changes"}</Button>
+            <Button onClick={() => setIsEditing(false)} variant="outline" className="bg-red-50 text-red-500 border-none hover:bg-red-100 px-10">{t("profile.discard")}</Button>
+            <Button onClick={handleSaveAll} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 px-10">{isSaving ? t("profile.saving") : t("profile.saveChanges")}</Button>
           </div>
         )}
 
-        {/* HR RECORDS ACCORDION */}
+        {/* HR RECORDS */}
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-slate-800">HR Administration Records</h2>
+          <h2 className="text-xl font-bold text-slate-800">{t("profile.hrRecords")}</h2>
           <Accordion type="single" collapsible className="w-full space-y-3">
-
-            {/* TAB HỢP ĐỒNG */}
+            {/* CONTRACTS */}
             <AccordionItem value="contracts" className="bg-white rounded-xl px-6 border-none shadow-sm">
-              <AccordionTrigger className="hover:no-underline font-bold text-slate-700">Labor Contracts ({hrData.contracts.length})</AccordionTrigger>
+              <AccordionTrigger className="hover:no-underline font-bold text-slate-700">{t("profile.laborContracts")} ({hrData.contracts.length})</AccordionTrigger>
               <AccordionContent className="pt-4 pb-6 space-y-6">
                 {(() => {
-                  // Đảm bảo hrData.contracts là mảng (an toàn tuyệt đối nhờ đã check ở trên)
                   const activeContract = hrData.contracts.find((c: any) => c.status === 'Active');
                   const historyContracts = hrData.contracts.filter((c: any) => c.status !== 'Active');
-
                   return (
                     <div className="space-y-6">
                       {activeContract ? (
                         <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 relative overflow-hidden">
-                          <div className="absolute top-0 right-0 bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Active Contract</div>
+                          <div className="absolute top-0 right-0 bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">{t("profile.activeContract")}</div>
                           <div className="flex flex-col md:flex-row justify-between gap-4">
                             <div className="space-y-3">
                               <div>
-                                <h4 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                                  {activeContract.contract_number}
-                                </h4>
-                                <p className="text-sm text-slate-500">{activeContract.contract_type}</p>
+                                <h4 className="font-bold text-slate-900 text-lg flex items-center gap-2">{(activeContract as any).contract_number}</h4>
+                                <p className="text-sm text-slate-500">{(activeContract as any).contract_type}</p>
                               </div>
                               <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
                                 <div>
-                                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Duration</span>
-                                  <span className="font-medium text-slate-700">{new Date(activeContract.start_date).toLocaleDateString()} - {activeContract.end_date ? new Date(activeContract.end_date).toLocaleDateString() : 'Indefinite'}</span>
+                                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">{t("profile.duration")}</span>
+                                  <span className="font-medium text-slate-700">{new Date((activeContract as any).start_date).toLocaleDateString()} - {(activeContract as any).end_date ? new Date((activeContract as any).end_date).toLocaleDateString() : t("profile.indefinite")}</span>
                                 </div>
                                 <div>
-                                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Salary Rate</span>
-                                  <span className="font-bold text-slate-900">${parseFloat(activeContract.salary_rate).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">{t("profile.salaryRate")}</span>
+                                  <span className="font-bold text-slate-900">${parseFloat((activeContract as any).salary_rate).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                                 </div>
                               </div>
                             </div>
                             <div className="flex items-end">
-                              {activeContract.file_url && (
-                                <Button onClick={() => window.open(activeContract.file_url, "_blank")} className="bg-white hover:bg-slate-50 text-blue-600 border border-blue-200 shadow-sm w-full md:w-auto">
-                                  <FileText className="w-4 h-4 mr-2" /> View Document
+                              {(activeContract as any).file_url && (
+                                <Button onClick={() => window.open((activeContract as any).file_url, "_blank")} className="bg-white hover:bg-slate-50 text-blue-600 border border-blue-200 shadow-sm w-full md:w-auto">
+                                  <FileText className="w-4 h-4 mr-2" /> {t("profile.viewDocument")}
                                 </Button>
                               )}
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">No active contract found.</div>
+                        <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">{t("profile.noActiveContract")}</div>
                       )}
-
                       {historyContracts.length > 0 && (
                         <div>
-                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Contract History</h4>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{t("profile.contractHistory")}</h4>
                           <div className="border border-slate-100 rounded-xl overflow-hidden">
                             <Table>
                               <TableHeader className="bg-slate-50">
                                 <TableRow>
-                                  <TableHead className="text-xs font-semibold">Contract No.</TableHead>
-                                  <TableHead className="text-xs font-semibold">Type</TableHead>
-                                  <TableHead className="text-xs font-semibold">Dates</TableHead>
-                                  <TableHead className="text-xs font-semibold">Status</TableHead>
+                                  <TableHead className="text-xs font-semibold">{t("profile.colContractNo")}</TableHead>
+                                  <TableHead className="text-xs font-semibold">{t("profile.colType")}</TableHead>
+                                  <TableHead className="text-xs font-semibold">{t("profile.colDates")}</TableHead>
+                                  <TableHead className="text-xs font-semibold">{t("profile.colStatus")}</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -321,11 +310,9 @@ function ProfileContent() {
                                   <TableRow key={c.contract_id} className="text-sm">
                                     <TableCell className="font-medium">{c.contract_number}</TableCell>
                                     <TableCell>{c.contract_type}</TableCell>
-                                    <TableCell className="text-slate-500">{new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : 'N/A'}</TableCell>
+                                    <TableCell className="text-slate-500">{new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : t("profile.na")}</TableCell>
                                     <TableCell>
-                                      <Badge variant="outline" className={c.status === 'Expired' ? 'text-slate-500 border-slate-200 bg-slate-50' : 'text-red-500 border-red-200 bg-red-50'}>
-                                        {c.status}
-                                      </Badge>
+                                      <Badge variant="outline" className={c.status === 'Expired' ? 'text-slate-500 border-slate-200 bg-slate-50' : 'text-red-500 border-red-200 bg-red-50'}>{c.status}</Badge>
                                     </TableCell>
                                   </TableRow>
                                 ))}
@@ -340,10 +327,10 @@ function ProfileContent() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* TAB LƯƠNG */}
+            {/* SALARY */}
             <AccordionItem value="salary" className="bg-white rounded-xl px-6 border-none shadow-sm">
               <AccordionTrigger className="hover:no-underline font-bold text-slate-700">
-                Salary History ({payslips.length})
+                {t("profile.salaryHistory")} ({payslips.length})
               </AccordionTrigger>
               <AccordionContent className="pt-4 pb-6">
                 {payslips.length > 0 ? (
@@ -351,24 +338,19 @@ function ProfileContent() {
                     <Table>
                       <TableHeader className="bg-slate-50">
                         <TableRow>
-                          <TableHead className="text-xs font-semibold">Pay Period</TableHead>
-                          <TableHead className="text-xs font-semibold text-right">Work Days</TableHead>
-                          <TableHead className="text-xs font-semibold text-right">Gross Salary</TableHead>
-                          <TableHead className="text-xs font-semibold text-right">Deductions</TableHead>
-                          <TableHead className="text-xs font-semibold text-right">Net Salary</TableHead>
-                          <TableHead className="text-xs font-semibold">Status</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colPayPeriod")}</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">{t("profile.colWorkDays")}</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">{t("profile.colGrossSalary")}</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">{t("profile.colDeductions")}</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">{t("profile.colNetSalary")}</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colStatus")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {payslips.map((p: any) => {
-                          const period = p.pay_period ||
-                            (p.payroll_period ? `${String(p.payroll_period.month).padStart(2,"0")}/${p.payroll_period.year}` : "—");
+                          const period = p.pay_period || (p.payroll_period ? `${String(p.payroll_period.month).padStart(2,"0")}/${p.payroll_period.year}` : "—");
                           const fmtVND = (v: any) => new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND",minimumFractionDigits:0}).format(parseFloat(v)||0);
-                          const statusMap: Record<string,string> = {
-                            Pending: "bg-amber-100 text-amber-700",
-                            Approved: "bg-blue-100 text-blue-700",
-                            Paid: "bg-emerald-100 text-emerald-700",
-                          };
+                          const statusMap: Record<string,string> = { Pending: "bg-amber-100 text-amber-700", Approved: "bg-blue-100 text-blue-700", Paid: "bg-emerald-100 text-emerald-700" };
                           return (
                             <TableRow key={p.payslip_id} className="text-sm">
                               <TableCell className="font-medium">{period}</TableCell>
@@ -377,9 +359,7 @@ function ProfileContent() {
                               <TableCell className="text-right text-red-500">-{fmtVND(p.deductions)}</TableCell>
                               <TableCell className="text-right font-bold text-slate-900">{fmtVND(p.net_salary)}</TableCell>
                               <TableCell>
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusMap[p.status] ?? "bg-slate-100 text-slate-600"}`}>
-                                  {p.status}
-                                </span>
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusMap[p.status] ?? "bg-slate-100 text-slate-600"}`}>{p.status}</span>
                               </TableCell>
                             </TableRow>
                           );
@@ -388,25 +368,25 @@ function ProfileContent() {
                     </Table>
                   </div>
                 ) : (
-                  <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">No salary history available.</div>
+                  <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">{t("profile.noSalaryHistory")}</div>
                 )}
               </AccordionContent>
             </AccordionItem>
 
-            {/* TAB DISCIPLINE */}
+            {/* DISCIPLINE */}
             <AccordionItem value="discipline" className="bg-white rounded-xl px-6 border-none shadow-sm">
-              <AccordionTrigger className="hover:no-underline font-bold text-slate-700">Discipline Records ({hrData.violations?.length || 0})</AccordionTrigger>
+              <AccordionTrigger className="hover:no-underline font-bold text-slate-700">{t("profile.disciplineRecords")} ({hrData.violations?.length || 0})</AccordionTrigger>
               <AccordionContent className="pt-4 pb-6">
                 {hrData.violations && hrData.violations.length > 0 ? (
                   <div className="border border-slate-100 rounded-xl overflow-hidden">
                     <Table>
                       <TableHeader className="bg-slate-50">
                         <TableRow>
-                          <TableHead className="text-xs font-semibold">Date</TableHead>
-                          <TableHead className="text-xs font-semibold">Violation Type</TableHead>
-                          <TableHead className="text-xs font-semibold">Severity</TableHead>
-                          <TableHead className="text-xs font-semibold">Deduction</TableHead>
-                          <TableHead className="text-xs font-semibold">Status</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colDate")}</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colViolationType")}</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colSeverity")}</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colDeduction")}</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colStatus")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -415,15 +395,11 @@ function ProfileContent() {
                             <TableCell className="text-slate-500">{new Date(v.violation_date).toLocaleDateString()}</TableCell>
                             <TableCell className="font-medium text-slate-800">{v.violation_type}</TableCell>
                             <TableCell>
-                              <Badge variant="outline" className={v.severity === 'High' ? 'text-red-500 border-red-200 bg-red-50' : v.severity === 'Normal' ? 'text-blue-500 border-blue-200 bg-blue-50' : 'text-slate-500 border-slate-200 bg-slate-50'}>
-                                {v.severity}
-                              </Badge>
+                              <Badge variant="outline" className={v.severity === 'High' ? 'text-red-500 border-red-200 bg-red-50' : v.severity === 'Normal' ? 'text-blue-500 border-blue-200 bg-blue-50' : 'text-slate-500 border-slate-200 bg-slate-50'}>{v.severity}</Badge>
                             </TableCell>
                             <TableCell className="font-bold text-red-600">${parseFloat(v.deduction_amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
                             <TableCell>
-                              <Badge variant="outline" className={v.status === 'Resolved' ? 'text-green-500 border-green-200 bg-green-50' : 'text-orange-500 border-orange-200 bg-orange-50'}>
-                                {v.status}
-                              </Badge>
+                              <Badge variant="outline" className={v.status === 'Resolved' ? 'text-green-500 border-green-200 bg-green-50' : 'text-orange-500 border-orange-200 bg-orange-50'}>{v.status}</Badge>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -431,7 +407,7 @@ function ProfileContent() {
                     </Table>
                   </div>
                 ) : (
-                  <div className="bg-slate-50 rounded-xl p-5 mt-2 text-center text-slate-500 text-sm">No disciplinary records found.</div>
+                  <div className="bg-slate-50 rounded-xl p-5 mt-2 text-center text-slate-500 text-sm">{t("profile.noDisciplineRecords")}</div>
                 )}
               </AccordionContent>
             </AccordionItem>
@@ -443,9 +419,8 @@ function ProfileContent() {
   );
 }
 
-// Sub-components hỗ trợ giao diện gọn đẹp
-function FormInput({ label, value, onChange, disabled }: any) {
-  return (<div className="space-y-1.5"><Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</Label><Input value={value || ""} onChange={onChange} disabled={disabled} className="bg-slate-50 border-none h-11 focus-visible:ring-blue-500 disabled:opacity-100 disabled:text-slate-500" /></div>);
+function FormInput({ label, value, onChange, disabled, name }: any) {
+  return (<div className="space-y-1.5"><Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</Label><Input name={name} value={value || ""} onChange={onChange} disabled={disabled} className="bg-slate-50 border-none h-11 focus-visible:ring-blue-500 disabled:opacity-100 disabled:text-slate-500" /></div>);
 }
 function ToggleRow({ title, checked, onChange, disabled }: any) {
   return (<div className="flex items-center justify-between py-1"><span className="text-sm text-slate-600">{title}</span><CustomToggle checked={checked} onChange={onChange} disabled={disabled} /></div>);

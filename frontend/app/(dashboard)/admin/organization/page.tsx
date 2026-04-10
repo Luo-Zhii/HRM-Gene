@@ -6,6 +6,7 @@ import { useAuth } from "@/src/hooks/useAuth";
 import { Trash2, Building2, Users, Receipt, Briefcase, Edit2, X, Plus, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 interface Department {
   department_id: number;
@@ -39,6 +40,7 @@ export default function OrganizationPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // State
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -71,11 +73,11 @@ export default function OrganizationPage() {
     if (!authLoading && user) {
       const hasPermission = user.permissions?.includes("manage:system");
       if (!hasPermission) {
-        setStatusMessage({ type: "error", text: "You do not have permission to access this page." });
+        setStatusMessage({ type: "error", text: t("org.noPermission") });
         setTimeout(() => router.push("/dashboard"), 2000);
       }
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, router, t]);
 
   // Load Data
   const loadData = async () => {
@@ -132,36 +134,36 @@ export default function OrganizationPage() {
 
   // API Handlers
   const handleCreateDepartment = async () => {
-    if (!departmentInput.trim()) return setStatusMessage({ type: "error", text: "Department name is required" });
+    if (!departmentInput.trim()) return setStatusMessage({ type: "error", text: t("org.errReqDeptName") });
     try {
       setCreatingDept(true);
       const response = await fetch("/api/admin/departments", {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ department_name: departmentInput }),
       });
-      if (!response.ok) throw new Error("Failed to create department");
-      toast({ variant: "success", title: "Success", description: "Department created successfully!" });
+      if (!response.ok) throw new Error(t("org.errCreateDept"));
+      toast({ variant: "success", title: "Success", description: t("org.msgDeptCreated") });
       setDepartmentInput("");
       await loadData();
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Error creating department" });
+      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : t("org.errCreateDept") });
     } finally { setCreatingDept(false); }
   };
 
   const handleCreatePosition = async () => {
-    if (!positionInput.trim()) return setStatusMessage({ type: "error", text: "Position name is required" });
+    if (!positionInput.trim()) return setStatusMessage({ type: "error", text: t("org.errReqPosName") });
     try {
       setCreatingPos(true);
       const response = await fetch("/api/admin/positions", {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ position_name: positionInput }),
       });
-      if (!response.ok) throw new Error("Failed to create position");
-      toast({ variant: "success", title: "Success", description: "Position created successfully!" });
+      if (!response.ok) throw new Error(t("org.errCreatePos"));
+      toast({ variant: "success", title: "Success", description: t("org.msgPosCreated") });
       setPositionInput("");
       await loadData();
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Error creating position" });
+      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : t("org.errCreatePos") });
     } finally { setCreatingPos(false); }
   };
 
@@ -178,13 +180,13 @@ export default function OrganizationPage() {
         body: JSON.stringify({ department_name: editDeptName, manager_id }),
       });
 
-      if (!response.ok) throw new Error("Failed to update department");
+      if (!response.ok) throw new Error(t("org.errUpdateDept"));
 
-      toast({ variant: "success", title: "Success", description: "Department updated successfully" });
+      toast({ variant: "success", title: "Success", description: t("org.msgDeptUpdated") });
       setEditingDept(null);
       await loadData();
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Error updating department" });
+      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : t("org.errUpdateDept") });
     } finally {
       setSavingEdit(false);
     }
@@ -204,51 +206,51 @@ export default function OrganizationPage() {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to assign staff");
+      if (!response.ok) throw new Error(t("org.errAssignStaff"));
 
-      toast({ variant: "success", title: "Success", description: "Staff assigned successfully!" });
+      toast({ variant: "success", title: "Success", description: t("org.msgStaffAssigned") });
       setAssigningDept(null);
       setAssignEmpId("");
       setAssignPosId("");
       await loadData();
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Error assigning staff" });
+      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : t("org.errAssignStaff") });
     } finally {
       setSavingAssign(false);
     }
   };
 
   const handleDeleteDepartment = async (department: Department) => {
-    if (!confirm(`Are you sure you want to delete ${department.department_name}?`)) return;
+    if (!confirm(t("org.confirmDelDept", { name: department.department_name }))) return;
     try {
       const response = await fetch(`/api/departments/${department.department_id}`, { method: "DELETE", credentials: "include" });
-      if (!response.ok) throw new Error("Failed to delete department");
-      toast({ variant: "success", title: "Success", description: "Department deleted successfully" });
+      if (!response.ok) throw new Error(t("org.errDelDept"));
+      toast({ variant: "success", title: "Success", description: t("org.msgDeptDeleted") });
       setDepartments((prev) => prev.filter((d) => d.department_id !== department.department_id));
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Error deleting department" });
+      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : t("org.errDelDept") });
     }
   };
 
   const handleDeletePosition = async (position: Position) => {
-    if (!confirm(`Are you sure you want to delete ${position.position_name}?`)) return;
+    if (!confirm(t("org.confirmDelPos", { name: position.position_name }))) return;
     try {
       const response = await fetch(`/api/positions/${position.position_id}`, { method: "DELETE", credentials: "include" });
-      if (!response.ok) throw new Error("Failed to delete position");
-      toast({ variant: "success", title: "Success", description: "Position deleted successfully" });
+      if (!response.ok) throw new Error(t("org.errDelPos"));
+      toast({ variant: "success", title: "Success", description: t("org.msgPosDeleted") });
       setPositions((prev) => prev.filter((p) => p.position_id !== position.position_id));
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Error deleting position" });
+      toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : t("org.errDelPos") });
     }
   };
 
-  if (authLoading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-gray-600 font-medium">Loading...</p></div>;
+  if (authLoading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-gray-600 font-medium">{t("common.loadingWorkspace", "Loading...")}</p></div>;
   if (!user || !user.permissions?.includes("manage:system")) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-sm p-8 max-w-md text-center border border-gray-100">
-          <h1 className="text-xl font-bold text-red-600 mb-2">Access Denied</h1>
-          <p className="text-gray-600">You do not have permission to access this page.</p>
+          <h1 className="text-xl font-bold text-red-600 mb-2">{t("org.accessDenied")}</h1>
+          <p className="text-gray-600">{t("org.noPermission")}</p>
         </div>
       </div>
     );
@@ -260,7 +262,7 @@ export default function OrganizationPage() {
 
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Organizational Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t("org.title")}</h1>
         </div>
 
         {statusMessage && (
@@ -270,50 +272,43 @@ export default function OrganizationPage() {
         )}
 
         {loading ? (
-          <div className="bg-white rounded-2xl shadow-sm p-12 text-center text-gray-500 font-medium border border-gray-100">Loading organization data...</div>
+          <div className="bg-white rounded-2xl shadow-sm p-12 text-center text-gray-500 font-medium border border-gray-100">{t("org.loadingData")}</div>
         ) : (
           <>
-            {/* ==================================================== */}
             {/* 1. TOP STATS */}
-            {/* ==================================================== */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center bg-white p-6 transition-all hover:shadow-md">
                 <div className="p-3 bg-blue-50 rounded-xl w-fit mb-4"><Building2 className="w-6 h-6 text-blue-600" /></div>
                 <div className="text-4xl font-black text-gray-900">{stats.total_departments}</div>
-                <div className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-wider">Total Departments</div>
+                <div className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-wider">{t("org.statTotalDepts")}</div>
               </Card>
               <Card className="rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center bg-white p-6 transition-all hover:shadow-md">
                 <div className="p-3 bg-green-50 rounded-xl w-fit mb-4"><Users className="w-6 h-6 text-green-600" /></div>
                 <div className="text-4xl font-black text-gray-900">{stats.total_employees}</div>
-                <div className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-wider">Total Employments</div>
+                <div className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-wider">{t("org.statTotalEmps")}</div>
               </Card>
               <Card className="rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center bg-white p-6 transition-all hover:shadow-md">
                 <div className="p-3 bg-purple-50 rounded-xl w-fit mb-4"><Receipt className="w-6 h-6 text-purple-600" /></div>
                 <div className="text-4xl font-black text-gray-900 truncate" title={`${stats.total_budget} VND`}>
                   {new Intl.NumberFormat('vi-VN').format(stats.total_budget)} <span className="text-xl">VND</span>
                 </div>
-                <div className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-wider">Total Budgets</div>
+                <div className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-wider">{t("org.statTotalBudget")}</div>
               </Card>
             </div>
 
-            {/* ==================================================== */}
-            {/* 2. NHÓM PHÒNG BAN (DEPARTMENTS AREA) */}
-            {/* ==================================================== */}
+            {/* 2. DEPARTMENTS AREA */}
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-              {/* Header & Create Form */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Departments</h2>
-                  <p className="text-sm text-gray-500 mt-1 font-medium">Manage corporate structure and budgets</p>
+                  <h2 className="text-2xl font-bold text-gray-900">{t("org.deptsTitle")}</h2>
+                  <p className="text-sm text-gray-500 mt-1 font-medium">{t("org.deptsSubtitle")}</p>
                 </div>
-
-                {/* Form tạo mới nằm gọn ở đây */}
                 <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-2xl border border-gray-100">
                   <input
                     type="text"
                     value={departmentInput}
                     onChange={(e) => setDepartmentInput(e.target.value)}
-                    placeholder="New department name..."
+                    placeholder={t("org.newDeptPlaceholder")}
                     className="w-full lg:w-64 px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm"
                   />
                   <button
@@ -321,26 +316,24 @@ export default function OrganizationPage() {
                     disabled={creatingDept}
                     className="px-5 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 disabled:opacity-50 transition-colors flex items-center gap-2 text-sm"
                   >
-                    <Plus size={16} /> {creatingDept ? "..." : "Add"}
+                    <Plus size={16} /> {creatingDept ? "..." : t("org.btnAdd")}
                   </button>
                 </div>
               </div>
 
-              {/* Grid Danh sách Phòng ban */}
               {departments.length === 0 ? (
                 <div className="py-12 text-center text-gray-400 font-bold bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                  No departments found. Create one above.
+                  {t("org.noDepts")}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {departments.map(dept => (
                     <Card key={dept.department_id} className="relative rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all bg-white p-6 group">
-
                       <div className="absolute top-4 right-4 flex opacity-0 group-hover:opacity-100 transition-opacity z-10 space-x-1">
                         <button
                           onClick={() => setAssigningDept(dept)}
                           className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-full transition-colors"
-                          title="Assign Staff"
+                          title={t("org.tooltipAssign")}
                         >
                           <UserPlus size={16} />
                         </button>
@@ -351,14 +344,14 @@ export default function OrganizationPage() {
                             setEditManagerId(dept.manager_id ? dept.manager_id.toString() : "none");
                           }}
                           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                          title="Edit department"
+                          title={t("org.tooltipEdit")}
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteDepartment(dept)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                          title="Delete department"
+                          title={t("org.tooltipDelete")}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -371,15 +364,15 @@ export default function OrganizationPage() {
 
                       <div className="space-y-3 text-sm font-medium">
                         <div className="flex justify-between items-center border-b border-gray-50 pb-2">
-                          <span className="text-gray-400 text-xs uppercase tracking-wider font-bold">Head</span>
-                          <span className="text-gray-900 font-bold">{dept.manager_name || "Not assigned"}</span>
+                          <span className="text-gray-400 text-xs uppercase tracking-wider font-bold">{t("org.lblHead")}</span>
+                          <span className="text-gray-900 font-bold">{dept.manager_name || t("org.valNotAssigned")}</span>
                         </div>
                         <div className="flex justify-between items-center border-b border-gray-50 pb-2">
-                          <span className="text-gray-400 text-xs uppercase tracking-wider font-bold">Employees</span>
+                          <span className="text-gray-400 text-xs uppercase tracking-wider font-bold">{t("org.lblEmployees")}</span>
                           <span className="text-gray-900">{dept.employee_count || 0}</span>
                         </div>
                         <div className="flex justify-between items-center pt-1">
-                          <span className="text-gray-400 text-xs uppercase tracking-wider font-bold">Budget</span>
+                          <span className="text-gray-400 text-xs uppercase tracking-wider font-bold">{t("org.lblBudget")}</span>
                           <span className="text-gray-900">{new Intl.NumberFormat('vi-VN').format(dept.total_budget || 0)} VND</span>
                         </div>
                       </div>
@@ -389,24 +382,19 @@ export default function OrganizationPage() {
               )}
             </div>
 
-            {/* ==================================================== */}
-            {/* 3. NHÓM CHỨC VỤ (POSITIONS AREA) */}
-            {/* ==================================================== */}
+            {/* 3. POSITIONS AREA */}
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-              {/* Header & Create Form */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Positions</h2>
-                  <p className="text-sm text-gray-500 mt-1 font-medium">Manage job titles across the company</p>
+                  <h2 className="text-2xl font-bold text-gray-900">{t("org.posTitle")}</h2>
+                  <p className="text-sm text-gray-500 mt-1 font-medium">{t("org.posSubtitle")}</p>
                 </div>
-
-                {/* Form tạo mới nằm gọn ở đây */}
                 <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-2xl border border-gray-100">
                   <input
                     type="text"
                     value={positionInput}
                     onChange={(e) => setPositionInput(e.target.value)}
-                    placeholder="New position name..."
+                    placeholder={t("org.newPosPlaceholder")}
                     className="w-full lg:w-64 px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm"
                   />
                   <button
@@ -414,15 +402,14 @@ export default function OrganizationPage() {
                     disabled={creatingPos}
                     className="px-5 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 disabled:opacity-50 transition-colors flex items-center gap-2 text-sm"
                   >
-                    <Plus size={16} /> {creatingPos ? "..." : "Add"}
+                    <Plus size={16} /> {creatingPos ? "..." : t("org.btnAdd")}
                   </button>
                 </div>
               </div>
 
-              {/* Grid Mini-Cards Danh sách Chức vụ */}
               {positions.length === 0 ? (
                 <div className="py-12 text-center text-gray-400 font-bold bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                  No positions found. Create one above.
+                  {t("org.noPos")}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -432,7 +419,7 @@ export default function OrganizationPage() {
                       className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center font-black text-[10px] border border-gray-200">
+                         <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center font-black text-[10px] border border-gray-200">
                           #{pos.position_id}
                         </div>
                         <span className="font-extrabold text-gray-800 text-sm">{pos.position_name}</span>
@@ -440,7 +427,7 @@ export default function OrganizationPage() {
                       <button
                         onClick={() => handleDeletePosition(pos)}
                         className="p-2 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
-                        title="Delete position"
+                        title={t("org.tooltipDelPos")}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -451,7 +438,7 @@ export default function OrganizationPage() {
 
               <div className="mt-6 pt-4 border-t border-gray-50">
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
-                  Total Active Positions: {positions.length}
+                  {t("org.totalActivePos")}: {positions.length}
                 </p>
               </div>
             </div>
@@ -460,15 +447,12 @@ export default function OrganizationPage() {
         )}
       </div>
 
-      {/* ==================================================== */}
-      {/* CUSTOM MODAL EDIT (CODE TAY) */}
-      {/* ==================================================== */}
+      {/* EDIT MODAL */}
       {editingDept && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200 border border-gray-100">
-
             <div className="flex items-center justify-between px-8 py-6 border-b border-gray-50">
-              <h2 className="text-2xl font-extrabold text-gray-900">Edit Department</h2>
+              <h2 className="text-2xl font-extrabold text-gray-900">{t("org.editDeptTitle")}</h2>
               <button onClick={() => setEditingDept(null)} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors">
                 <X size={20} />
               </button>
@@ -476,7 +460,7 @@ export default function OrganizationPage() {
 
             <div className="p-8 space-y-6">
               <div className="space-y-2">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider">Department Name</label>
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider">{t("org.lblDeptName")}</label>
                 <input
                   type="text"
                   value={editDeptName}
@@ -486,13 +470,13 @@ export default function OrganizationPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider">Assign Department Head</label>
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider">{t("org.lblAssignHead")}</label>
                 
                 {(() => {
                   const departmentEmployees = basicEmployees.filter(emp => emp.department_id === editingDept.department_id);
                   return departmentEmployees.length === 0 ? (
                     <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold border border-red-100">
-                      No employees in this department. Please assign staff first.
+                      {t("org.noEmpsInDept")}
                     </div>
                   ) : (
                     <div className="relative">
@@ -501,7 +485,7 @@ export default function OrganizationPage() {
                         onChange={(e) => setEditManagerId(e.target.value)}
                         className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-bold text-gray-900 appearance-none cursor-pointer transition-all"
                       >
-                        <option value="none">-- None / Not assigned --</option>
+                        <option value="none">{t("org.lblNone")}</option>
                         {departmentEmployees.map((emp) => (
                           <option key={emp.employee_id} value={emp.employee_id.toString()}>
                             {emp.first_name} {emp.last_name} ({emp.email})
@@ -524,7 +508,7 @@ export default function OrganizationPage() {
                 onClick={() => setEditingDept(null)}
                 className="px-6 py-3 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors shadow-sm"
               >
-                Cancel
+                {t("org.btnCancel")}
               </button>
               <button
                 type="button"
@@ -532,23 +516,19 @@ export default function OrganizationPage() {
                 disabled={savingEdit || !editDeptName.trim()}
                 className="px-6 py-3 text-sm font-bold text-white bg-blue-600 border border-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
               >
-                {savingEdit ? "Saving..." : "Save Changes"}
+                {savingEdit ? t("org.btnSaving") : t("org.btnSave")}
               </button>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* ==================================================== */}
-      {/* ASSIGN STAFF MODAL */}
-      {/* ==================================================== */}
+      {/* ASSIGN MODAL */}
       {assigningDept && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200 border border-gray-100">
-
             <div className="flex items-center justify-between px-8 py-6 border-b border-gray-50">
-              <h2 className="text-2xl font-extrabold text-gray-900">Assign Staff</h2>
+              <h2 className="text-2xl font-extrabold text-gray-900">{t("org.assignStaffTitle")}</h2>
               <button onClick={() => { setAssigningDept(null); setAssignEmpId(""); setAssignPosId(""); }} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors">
                 <X size={20} />
               </button>
@@ -557,19 +537,19 @@ export default function OrganizationPage() {
             <div className="p-8 space-y-6">
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
                 <p className="text-sm text-blue-800 font-medium tracking-tight">
-                  Moving employee to <span className="font-extrabold text-blue-900">{assigningDept.department_name}</span>
+                  {t("org.movingEmpTo")} <span className="font-extrabold text-blue-900">{assigningDept.department_name}</span>
                 </p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider">Select Employee</label>
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider">{t("org.lblSelectEmp")}</label>
                 <div className="relative">
                   <select
                     value={assignEmpId}
                     onChange={(e) => setAssignEmpId(e.target.value)}
                     className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-bold text-gray-900 appearance-none cursor-pointer transition-all"
                   >
-                    <option value="" disabled>-- Select an Employee --</option>
+                    <option value="" disabled>{t("org.placeholderEmp")}</option>
                     {basicEmployees.map((emp) => (
                       <option key={emp.employee_id} value={emp.employee_id.toString()}>
                         {emp.first_name} {emp.last_name} ({emp.email})
@@ -583,14 +563,14 @@ export default function OrganizationPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider">Assign Position</label>
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider">{t("org.lblAssignPos")}</label>
                 <div className="relative">
                   <select
                     value={assignPosId}
                     onChange={(e) => setAssignPosId(e.target.value)}
                     className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-bold text-gray-900 appearance-none cursor-pointer transition-all"
                   >
-                    <option value="" disabled>-- Select a Position --</option>
+                    <option value="" disabled>{t("org.placeholderPos")}</option>
                     {positions.map((pos) => (
                       <option key={pos.position_id} value={pos.position_id.toString()}>
                         {pos.position_name}
@@ -610,7 +590,7 @@ export default function OrganizationPage() {
                 onClick={() => { setAssigningDept(null); setAssignEmpId(""); setAssignPosId(""); }}
                 className="px-6 py-3 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors shadow-sm"
               >
-                Cancel
+                {t("org.btnCancel")}
               </button>
               <button
                 type="button"
@@ -618,7 +598,7 @@ export default function OrganizationPage() {
                 disabled={savingAssign || !assignEmpId || !assignPosId}
                 className="px-6 py-3 text-sm font-bold text-white bg-blue-600 border border-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
               >
-                {savingAssign ? "Assigning..." : "Assign Staff"}
+                {savingAssign ? t("org.btnAssigning") : t("org.btnAssignStaff")}
               </button>
             </div>
 

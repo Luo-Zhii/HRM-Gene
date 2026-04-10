@@ -11,6 +11,7 @@
 
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import {
   Search, LayoutGrid, List, Mail, Phone,
   ArrowUpDown, ExternalLink, UserMinus,
@@ -79,6 +80,7 @@ export default function EmployeeTable({
   currentUserId,
   onOffboard,
 }: EmployeeTableProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
@@ -144,7 +146,7 @@ export default function EmployeeTable({
     return (
       <div className="flex items-center justify-center py-20 text-gray-400">
         <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mr-3" />
-        Loading employees…
+        {t("common.loading")}
       </div>
     );
   }
@@ -158,7 +160,7 @@ export default function EmployeeTable({
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder={showSensitive ? "Search name, email, phone…" : "Search name, email, dept…"}
+            placeholder={showSensitive ? t("employeeTable.searchPlaceholder") : t("employeeTable.searchPublicPlaceholder")}
             className="pl-9 h-10 w-full bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -188,9 +190,9 @@ export default function EmployeeTable({
       {processed.length === 0 && (
         <div className="text-center py-16 bg-white rounded-xl border text-gray-500">
           <Users size={32} className="mx-auto mb-2 text-gray-300" />
-          <p className="font-medium">No employees found</p>
+          <p className="font-medium">{t("employeeTable.noEmployees")}</p>
           {searchTerm && (
-            <p className="text-sm mt-1 text-gray-400">Try a different search term</p>
+            <p className="text-sm mt-1 text-gray-400">{t("directory.tryDifferent")}</p>
           )}
         </div>
       )}
@@ -205,14 +207,14 @@ export default function EmployeeTable({
               <tr>
                 {/* Always visible columns */}
                 <th className="px-4 py-3 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("first_name")}>
-                  <div className="flex items-center gap-2">Employee <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" /></div>
+                  <div className="flex items-center gap-2">{t("employeeTable.employee")} <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" /></div>
                 </th>
-                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">{t("employeeTable.email")}</th>
                 <th className="px-4 py-3 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("department")}>
-                  <div className="flex items-center gap-2">Department <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" /></div>
+                  <div className="flex items-center gap-2">{t("employeeTable.department")} <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" /></div>
                 </th>
                 <th className="px-4 py-3 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("position")}>
-                  <div className="flex items-center gap-2">Position <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" /></div>
+                  <div className="flex items-center gap-2">{t("employeeTable.position")} <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" /></div>
                 </th>
 
                 {/*
@@ -222,7 +224,7 @@ export default function EmployeeTable({
                 {showSensitive && (
                   <th className="px-4 py-3 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("phone_number")}>
                     <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-gray-400" /> Phone <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
+                      <Phone className="w-3.5 h-3.5 text-gray-400" /> {t("employeeTable.phone")} <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
                     </div>
                   </th>
                 )}
@@ -232,7 +234,7 @@ export default function EmployeeTable({
                   for Admin/HR users. Regular employees have no action column at all.
                 */}
                 {showActions && (
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th className="px-4 py-3 text-right">{t("employeeTable.actions")}</th>
                 )}
               </tr>
             </thead>
@@ -255,13 +257,13 @@ export default function EmployeeTable({
                           <span className="font-semibold text-gray-900">{fullName(emp)}</span>
                           {emp.employment_status === "Terminated" && (
                             <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter border border-red-200">
-                              Terminated
+                              {t("employeeTable.terminated")}
                             </span>
                           )}
                         </div>
                         {emp.is_department_head && (
                           <span className="text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5 w-max mt-0.5 uppercase tracking-wider">
-                            Head
+                            {t("employeeTable.head")}
                           </span>
                         )}
                       </div>
@@ -294,7 +296,7 @@ export default function EmployeeTable({
                         onClick={() => navigateToProfile(emp)}
                         className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors mr-2"
                       >
-                        View <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+                        {t("employeeTable.viewProfile")} <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
                       </button>
                       <button
                         disabled={emp.employee_id === currentUserId || emp.employment_status === "Terminated"}
@@ -306,13 +308,13 @@ export default function EmployeeTable({
                         }`}
                         title={
                           emp.employee_id === currentUserId
-                            ? "You cannot offboard yourself"
+                            ? t("offboard.selfError")
                             : emp.employment_status === "Terminated"
-                            ? "Already terminated"
-                            : "Offboard employee"
+                            ? t("offboard.alreadyTerminated")
+                            : t("employeeTable.offboard")
                         }
                       >
-                        Offboard <UserMinus className="w-3.5 h-3.5 ml-1.5" />
+                        {t("employeeTable.offboard")} <UserMinus className="w-3.5 h-3.5 ml-1.5" />
                       </button>
                     </td>
                   )}
@@ -349,12 +351,12 @@ export default function EmployeeTable({
                     </h3>
                     {emp.employment_status === "Terminated" && (
                       <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter border border-red-200">
-                        Terminated
+                        {t("employeeTable.terminated")}
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5 truncate">
-                    {emp.position?.position_name || "Employee"} · {emp.department?.department_name || "N/A"}
+                    {emp.position?.position_name || t("employeeTable.employee")} · {emp.department?.department_name || "N/A"}
                   </p>
                 </div>
               </div>
@@ -379,7 +381,7 @@ export default function EmployeeTable({
                 {showSensitive && (
                   <div className="flex items-center gap-2 text-gray-600">
                     <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    <span>{emp.phone_number || "Not provided"}</span>
+                    <span>{emp.phone_number || t("employeeTable.noPhone")}</span>
                   </div>
                 )}
               </div>
@@ -395,7 +397,7 @@ export default function EmployeeTable({
                       onClick={() => navigateToProfile(emp)}
                       className="flex-1 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
                     >
-                      Profile <ExternalLink className="w-3.5 h-3.5" />
+                      {t("employeeTable.viewProfile")} <ExternalLink className="w-3.5 h-3.5" />
                     </button>
                     <button
                       disabled={emp.employee_id === currentUserId || emp.employment_status === "Terminated"}
@@ -415,7 +417,7 @@ export default function EmployeeTable({
                     href={`/directory/${emp.employee_id}`}
                     className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-100 text-blue-600 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
                   >
-                    View Profile <ExternalLink className="w-3.5 h-3.5" />
+                    {t("employeeTable.viewProfile")} <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
                 )}
               </div>
@@ -427,7 +429,7 @@ export default function EmployeeTable({
       {/* Record count */}
       {processed.length > 0 && (
         <p className="text-xs text-gray-400 text-right mt-4">
-          {processed.length} employee{processed.length !== 1 ? "s" : ""}
+          {processed.length} {t("employeeTable.employee").toLowerCase()}{processed.length !== 1 ? "s" : ""}
         </p>
       )}
     </div>
