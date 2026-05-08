@@ -1,0 +1,57 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { AnnouncementsController } from './announcements.controller';
+import { AnnouncementsService } from './announcements.service';
+
+describe('AnnouncementsController', () => {
+  let controller: AnnouncementsController;
+
+  const mockService = {
+    create: jest.fn(),
+    findAll: jest.fn(),
+    getFeed: jest.fn(),
+    delete: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [AnnouncementsController],
+      providers: [
+        { provide: AnnouncementsService, useValue: mockService },
+      ],
+    }).compile();
+
+    controller = module.get<AnnouncementsController>(AnnouncementsController);
+    jest.clearAllMocks();
+  });
+
+  describe('create', () => {
+    it('should create an announcement', async () => {
+      mockService.create.mockResolvedValue({ id: 1 });
+      expect(await controller.create({ title: 'T', content: 'C', target_audience: 'all', delivery_methods: [] } as any)).toEqual({ id: 1 });
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return all announcements', async () => {
+      mockService.findAll.mockResolvedValue([]);
+      expect(await controller.findAll()).toEqual([]);
+    });
+  });
+
+  describe('getFeed', () => {
+    it('should return user feed', async () => {
+      mockService.getFeed.mockResolvedValue([]);
+      const req = { user: { id: 1 } };
+      expect(await controller.getFeed(req)).toEqual([]);
+      expect(mockService.getFeed).toHaveBeenCalledWith({ id: 1 });
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete an announcement', async () => {
+      mockService.delete.mockResolvedValue(undefined);
+      expect(await controller.delete('1')).toBeUndefined();
+      expect(mockService.delete).toHaveBeenCalledWith(1);
+    });
+  });
+});
