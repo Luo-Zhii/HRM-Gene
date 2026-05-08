@@ -20,7 +20,7 @@ export default function SystemSettingsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { settings, refreshSettings, updateLogo } = useCompany();
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -35,7 +35,7 @@ export default function SystemSettingsPage() {
     state: "",
     zip: "",
     country: "",
-    base_currency: "USD",
+    base_currency: "VND",
     TIMEZONE: "",
     PAYROLL_ROUNDING_RULE: "",
     PASSWORD_POLICIES: "",
@@ -64,7 +64,7 @@ export default function SystemSettingsPage() {
         const data = await response.json();
         const kvData: Record<string, string> = {};
         data.forEach((s: any) => { kvData[s.key] = s.value; });
-        
+
         setFormData(prev => ({
           ...prev,
           TIMEZONE: kvData["TIMEZONE"] || "",
@@ -99,7 +99,7 @@ export default function SystemSettingsPage() {
         state: settings.state || "",
         zip: settings.zip || "",
         country: settings.country || "",
-        base_currency: settings.base_currency || "USD",
+        base_currency: settings.base_currency || "VND",
       }));
     }
   }, [settings]);
@@ -157,7 +157,7 @@ export default function SystemSettingsPage() {
     try {
       const apiBase = "/api";
       const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-      
+
       // 1. Save Company Profile
       const companyPayload = {
         company_name: formData.company_name,
@@ -172,7 +172,7 @@ export default function SystemSettingsPage() {
 
       const companyRes = await fetch(`${apiBase}/company-profile`, {
         method: "PATCH",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           ...(token ? { "Authorization": `Bearer ${token}` } : {})
         },
@@ -187,7 +187,7 @@ export default function SystemSettingsPage() {
       await Promise.all(kvKeys.map(key => {
         return fetch(`${apiBase}/admin/settings`, {
           method: "PATCH",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
             ...(token ? { "Authorization": `Bearer ${token}` } : {})
           },
@@ -242,18 +242,17 @@ export default function SystemSettingsPage() {
         </div>
 
         {statusMessage && (
-          <div className={`p-4 rounded-xl flex items-center gap-3 border shadow-sm ${
-            statusMessage.type === "success" ? "bg-green-50 text-green-800 border-green-200" :
+          <div className={`p-4 rounded-xl flex items-center gap-3 border shadow-sm ${statusMessage.type === "success" ? "bg-green-50 text-green-800 border-green-200" :
             statusMessage.type === "error" ? "bg-red-50 text-red-800 border-red-200" :
-            "bg-blue-50 text-blue-800 border-blue-200"
-          }`}>
+              "bg-blue-50 text-blue-800 border-blue-200"
+            }`}>
             {statusMessage.type === "success" ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <AlertCircle className="w-5 h-5 text-red-600" />}
             <span className="font-medium text-sm">{statusMessage.text}</span>
           </div>
         )}
 
         <form onSubmit={handleSave} className="space-y-6">
-          
+
           {/* Card 1: Company Information */}
           <Card className="border-none shadow-sm bg-white rounded-2xl overflow-hidden ring-1 ring-gray-100">
             <CardHeader className="bg-white border-b border-gray-50 pb-4">
@@ -273,19 +272,19 @@ export default function SystemSettingsPage() {
                         <div className="w-8 h-8 bg-blue-200 rounded-full mb-2"></div>
                       </div>
                     ) : currentLogoUrl ? (
-                      <img 
-                        src={currentLogoUrl} 
-                        alt="Logo Preview" 
-                        className="w-full h-full object-contain p-2 bg-white" 
-                        onError={(e) => { 
-                          e.currentTarget.style.display = 'none'; 
+                      <img
+                        src={currentLogoUrl}
+                        alt="Logo Preview"
+                        className="w-full h-full object-contain p-2 bg-white"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
                           // When broken, we allow the container background and layout to stand in gracefully
-                        }} 
+                        }}
                       />
                     ) : (
                       <div className="text-center flex flex-col items-center justify-center w-full h-full text-gray-400">
                         <div className="text-2xl font-bold tracking-widest text-gray-300 mb-1">{companyInitials}</div>
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400/80 flex items-center gap-1 mt-1"><Upload className="w-3 h-3"/> Upload</span>
+                        <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400/80 flex items-center gap-1 mt-1"><Upload className="w-3 h-3" /> Upload</span>
                       </div>
                     )}
                   </div>
@@ -361,41 +360,16 @@ export default function SystemSettingsPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Card 3: Security & System */}
-            <Card className="border-none shadow-sm bg-white rounded-2xl ring-1 ring-gray-100 flex flex-col">
-              <CardHeader className="bg-white border-b border-gray-50 pb-4 shrink-0">
-                <CardTitle className="text-lg font-bold flex items-center gap-2 text-gray-900">
-                  <ShieldAlert className="w-5 h-5 text-red-500" /> Security & System
-                </CardTitle>
-                <CardDescription className="text-gray-500">System access policies and protections.</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-5 flex-1">
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Password Policies</Label>
-                  <Input name="PASSWORD_POLICIES" value={formData.PASSWORD_POLICIES} onChange={handleChange} placeholder="e.g. Min 8 chars, 1 Special Char" className="h-11 rounded-xl border-gray-200" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Auto-logout Time</Label>
-                  <Input name="AUTO_LOGOUT_TIME" value={formData.AUTO_LOGOUT_TIME} onChange={handleChange} placeholder="e.g. 30 minutes, 1 hour" className="h-11 rounded-xl border-gray-200" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Company IP Whitelist</Label>
-                  <Input name="COMPANY_IP_WHITELIST" value={formData.COMPANY_IP_WHITELIST} onChange={handleChange} placeholder="e.g. 192.168.1.1, 10.0.0.5" className="h-11 rounded-xl border-gray-200 font-mono text-sm" />
-                  <p className="text-[11px] text-gray-500 font-medium">Restrict admin dashboard access to designated IPs (comma-separated).</p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           <div className="flex items-center justify-end pt-4 pb-10">
-             <Button type="button" onClick={() => router.back()} variant="ghost" className="mr-3 font-semibold text-gray-600 hover:bg-gray-100 h-11 px-6 rounded-xl">
-               Discard
-             </Button>
-             <Button type="submit" disabled={saving || uploading} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md h-11 px-8 rounded-xl transition-all">
-                {saving ? "Saving..." : "Save Settings"}
-                <Save className="ml-2 w-4 h-4" />
-             </Button>
+            <Button type="button" onClick={() => router.back()} variant="ghost" className="mr-3 font-semibold text-gray-600 hover:bg-gray-100 h-11 px-6 rounded-xl">
+              Discard
+            </Button>
+            <Button type="submit" disabled={saving || uploading} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md h-11 px-8 rounded-xl transition-all">
+              {saving ? "Saving..." : "Save Settings"}
+              <Save className="ml-2 w-4 h-4" />
+            </Button>
           </div>
         </form>
       </div>

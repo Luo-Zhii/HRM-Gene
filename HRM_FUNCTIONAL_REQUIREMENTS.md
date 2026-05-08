@@ -13,6 +13,11 @@
 10. [HR Analytics & Reporting](#9-hr-analytics--reporting)
 11. [Leave Management](#10-leave-management)
 12. [Asset Management](#11-asset-management)
+13. [Discipline Management](#12-discipline-management)
+14. [Resignation Management](#13-resignation-management)
+15. [Internal Communications](#14-internal-communications)
+16. [Internationalization (i18n)](#15-internationalization-i18n)
+17. [System Administration & Governance](#16-system-administration--governance)
 
 ---
 
@@ -100,6 +105,19 @@
 - Image optimization and thumbnail generation
 - PII (Personally Identifiable Information) encryption
 - GDPR compliance features (data export, right to deletion)
+
+### 1.5 Labor Contract Management
+**Features:**
+- Contract lifecycle management (Probation, Official, Part-time)
+- Contract status tracking (Active, Expired, Terminated)
+- PDF contract upload and digital storage
+- Automatic salary rate reflection based on active contracts
+- Contract expiry notifications
+
+**Technical Logic:**
+- `Contract` entity linked `ManyToOne` to Employee
+- Expiration date tracking via CRON jobs
+- Status logic to automatically mark contracts as EXPIRED or TERMINATED
 
 ---
 
@@ -365,10 +383,11 @@
 - KPI benchmarking
 
 **Technical Logic:**
-- KPI entity with measurement type (percentage, count, currency)
-- Data aggregation from various sources
-- Real-time KPI calculation
-- Historical KPI trends
+**Technical Logic:**
+- Modular KPI design using `KpiLibrary` (standard library), `KpiAssignment` (employee mapping), and `KpiPeriod` (evaluation cycle) entities
+- Measurement units support: Percentage, Number, and diverse Currencies (VND, USD)
+- Calculation formulas stored alongside metrics
+- Real-time KPI aggregation and historical trends per employee
 - Alert system for KPI thresholds
 
 ### 5.3 360-Degree Feedback
@@ -862,6 +881,156 @@
 
 ---
 
+## 12. Discipline Management
+
+### 12.1 Violation Tracking
+**Features:**
+- Recording employee violations (Lateness, Absence, Policy Violation, Damage, etc.)
+- Severity levels: Low, Normal, High
+- Evidence attachments and detailed descriptions
+- Automated sync with attendance data (lateness detection)
+
+**Technical Logic:**
+- `Violation` entity linked to `Employee`
+- Violation status workflow: Pending → Resolved
+- Integration with Attendance module for automated lateness reporting
+
+### 12.2 Disciplinary Actions & Penalties
+**Features:**
+- Financial deductions/penalties management
+- Deduction amount tracking and approval
+- Disciplinary history for performance reviews
+- Integration with Payroll for automatic deductions
+
+**Technical Logic:**
+- Deduction calculation: `violation_amount` applied to `payslip`
+- Audit trail for penalty overrides
+- Reporting on violation trends by department
+
+---
+
+## 13. Resignation Management
+
+### 13.1 Resignation Workflow
+**Features:**
+- Formal resignation notice submission (Employee Self-Service)
+- Notice period calculation and last working day proposal
+- Resignation reason tracking (Compensation, Culture, Personal, Career, etc.)
+- Multi-stage approval (Manager → HR)
+
+**Technical Logic:**
+- `ResignationRequest` entity with status tracking
+- Last working day validation against contract terms
+- Automated notification to IT and Finance departments
+
+### 13.2 Final Settlement & Exit
+**Features:**
+- Handover notes and task tracking
+- Asset return checklist integration
+- Final compensation calculation (inclusive of pending leave)
+- Exit interview scheduling
+
+**Technical Logic:**
+- Status transitions: Pending → Approved → Withdrawn/Processed
+- Integration with Leave Management for payout calculations
+- Integration with Asset Management for equipment recovery
+
+---
+
+## 14. Internal Communications
+
+### 14.1 Announcements & News Feed
+**Features:**
+- Company-wide announcements and news publishing
+- Target audience filtering (All, Specific Department, Specific Position)
+- Priority weighting (Normal, Urgent, Policy Update)
+- Rich text content with media support
+
+**Technical Logic:**
+- `Announcement` entity with metadata for targeting
+- Visibility filtering logic in the frontend feed
+- Push notification triggers for urgent updates
+
+### 14.2 Notification System
+**Features:**
+- Real-time in-app notifications
+- Email notification for critical events (Leave approval, Resignation status)
+- Notification center with "Mark all as read" functionality
+- Actionable notifications (links directly to relevant modulo)
+
+**Technical Logic:**
+**Technical Logic:**
+- `Notification` entity with unique IDs and type-based payloads
+- WebSocket integration for real-time delivery
+- Scheduled jobs for email batching
+
+### 14.3 System-Wide Comments & Collaboration
+**Features:**
+- Contextual commenting on Leave Requests, Resignations, Payroll, etc.
+- Mentioning users to send automated notifications
+- Author timestamp tracking and comment history
+
+**Technical Logic:**
+- Universal polymorphic `Comment` entity (`entityType`, `entityId`)
+- Linked to `authorId` for user identification
+- Resolves via API endpoints dynamically based on entity context
+
+---
+
+## 15. Internationalization (i18n)
+
+### 15.1 Multi-Language Support
+**Features:**
+- Dual language support: English and Vietnamese
+- Seamless language switching in the header/user menu
+- Corporate-level professional Vietnamese translation
+- Locale-specific formatting (currency, date, numbers)
+
+**Technical Logic:**
+- Frontend: `next-intl` or similar React-based i18n system
+- JSON-based translation dictionaries (`en.json`, `vi.json`)
+- Middleware for locale detection and persistence
+
+---
+
+## 16. System Administration & Governance
+
+### 16.1 Audit Logs
+**Features:**
+- System-wide tracking of all sensitive CRUD operations
+- Timestamp, User, Operation, and Resource tracking
+- Admin interface for log viewing and searching
+
+**Technical Logic:**
+- `AuditLog` entity capturing entity changes
+- Global interceptor/middleware for automated logging
+
+### 16.2 Permission Matrix (RBAC)
+**Features:**
+- Fine-grained permission assignment to Positions
+- Matrix view for managing access across the system
+- Role hierarchy enforcement
+
+**Technical Logic:**
+**Technical Logic:**
+- `Permission` and `PositionPermission` entities
+- Backend AuthGuard enforcing RBAC on API endpoints
+- Frontend route/component protection based on permission strings
+
+### 16.3 Company Settings & Financial Baselines
+**Features:**
+- Company profile management (Name, Tax ID, Address)
+- Corporate logo and branding management
+- System-wide base currency configuration (e.g., USD, VND)
+- Multi-currency operational support
+
+**Technical Logic:**
+- `CompanyProfile` singleton styling entity
+- Base currency configuration retrieved by Payroll and Reporting modules
+- Cached at runtime and exposed via settings API
+
+---
+
 ## Technical Architecture Considerations
 
 ### Data Security
@@ -872,14 +1041,11 @@
 - GDPR/CCPA compliance features
 
 ### Integration Points
-- Single Sign-On (SSO) - SAML, OAuth 2.0
-- Active Directory / LDAP integration
-- Email service (SMTP, SendGrid, AWS SES)
-- SMS service (Twilio, AWS SNS)
-- Payment gateway integration
-- Accounting software integration (QuickBooks, SAP)
-- Biometric device APIs
-- Job board APIs (LinkedIn, Indeed)
+- Single Sign-On (SSO) - (Future Enhancement)
+- JWT-based Authentication
+- Email service (SMTP)
+- Biometric device APIs (Basic Support)
+- QR Code dynamic generation and validation
 
 ### Scalability
 - Microservices architecture (optional)
@@ -899,31 +1065,33 @@
 
 ## Implementation Priority (Phased Approach)
 
-### Phase 1 (MVP - 3-6 months)
-1. Core HR & Employee Information Management
-2. Time & Attendance (Basic)
-3. Leave Management
-4. Employee Self-Service Portal (Basic)
-5. User Roles & Permissions
+### Phase 1 (Completed / In Progress)
+1. Core HR & Employee Information Management [COMPLETED]
+2. Time & Attendance [COMPLETED]
+3. Leave Management [COMPLETED]
+4. Employee Self-Service Portal [COMPLETED]
+5. User Roles & Permissions [COMPLETED]
+6. Discipline Management [COMPLETED]
+7. Resignation Management [COMPLETED]
+8. Internationalization (i18n) [COMPLETED]
 
-### Phase 2 (6-12 months)
-6. Payroll & Benefits
-7. Performance Management (Basic)
-8. HR Analytics & Reporting (Basic)
-9. Onboarding Automation
+### Phase 2 (Current Focus - 6-12 months)
+9. Payroll & Benefits (Advanced Calculations)
+10. Performance Management (KPIs/OKRs)
+11. Internal Communications (Advanced)
+12. HR Analytics & Reporting (Advanced)
 
-### Phase 3 (12-18 months)
-10. Recruitment (ATS)
-11. Training & Development (LMS)
-12. Advanced Analytics
-13. Offboarding Automation
-14. Asset Management
+### Phase 3 (Planned - 12-18 months)
+13. Onboarding Automation
+14. Offboarding Automation
+15. Recruitment (ATS)
+16. Training & Development (LMS)
+17. Asset Management
 
-### Phase 4 (18+ months)
-15. Advanced Performance Management (OKRs, 360 Feedback)
-16. Predictive Analytics
-17. Mobile Applications
-18. AI/ML Features (Resume Parsing, Chatbot)
+### Phase 4 (Long-term)
+18. Predictive Analytics
+19. Mobile Applications (Native)
+20. AI Features (Chatbot, Auto-Scanning)
 
 ---
 
