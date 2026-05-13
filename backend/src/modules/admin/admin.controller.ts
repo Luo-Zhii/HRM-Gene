@@ -12,12 +12,10 @@ import {
 } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
-import { Permissions } from "../auth/permissions.decorator";
+import { EndpointPermissionsGuard } from "../auth/endpoint-permissions.guard";
 
 @Controller("admin")
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Permissions("manage:system")
+@UseGuards(JwtAuthGuard, EndpointPermissionsGuard)
 export class AdminController {
   constructor(private readonly svc: AdminService) {}
 
@@ -97,6 +95,19 @@ export class AdminController {
       body.position_id,
       body.permission_id
     );
+  }
+
+  @Get("permissions/grouped")
+  async getGroupedPermissions() {
+    return this.svc.getGroupedPermissions();
+  }
+
+  @Put("roles/:id/permissions")
+  async updateRolePermissions(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() body: { permission_ids: number[] }
+  ) {
+    return this.svc.updateRolePermissions(id, body.permission_ids);
   }
 
   // ============= Employee Management =============

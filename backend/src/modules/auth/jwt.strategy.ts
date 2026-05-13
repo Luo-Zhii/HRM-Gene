@@ -59,10 +59,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
     }
 
-    // 👇 "Làm phẳng" quyền thành mảng string: ['manage:system', 'view:leave']
     const permissions =
       user.position?.permissions
-        ?.map((pp) => pp.permission?.permission_name)
+        ?.map((pp) => {
+          if (pp.permission?.method && pp.permission?.apiPath) {
+            return `${pp.permission.method}:${pp.permission.apiPath}`;
+          }
+          return pp.permission?.permission_name;
+        })
         .filter((p) => p) || [];
 
     // 👇 Trả về User kèm Permissions để Guard sử dụng

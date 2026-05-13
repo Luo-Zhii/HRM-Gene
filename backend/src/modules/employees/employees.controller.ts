@@ -17,13 +17,12 @@ import {
 import { EmployeesService } from "./employees.service";
 import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard"; // Import Guard của bạn
-import { RolesGuard } from "../auth/roles.guard";       // Import Guard check Role/Permission
-// import { Roles } from "../../auth/roles.decorator";        // Decorator check quyền
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { EndpointPermissionsGuard } from "../auth/endpoint-permissions.guard";
 
-@Controller("employees") // Endpoint sẽ là /employees (hoặc /api/employees nếu có global prefix)
+@Controller("employees")
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard, RolesGuard) // Bật bảo mật
+@UseGuards(JwtAuthGuard, EndpointPermissionsGuard)
 export class EmployeesController {
   constructor(private readonly svc: EmployeesService) {}
 
@@ -63,8 +62,15 @@ export class EmployeesController {
     return this.svc.findOne(id);
   }
 
+  @Patch(":id/offboard")
+  offboard(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() dto: UpdateEmployeeDto
+  ) {
+    return this.svc.update(id, dto);
+  }
+
   @Patch(":id")
-  // @Roles("manage:employee")
   update(
     @Param("id", ParseIntPipe) id: number,
     @Body() dto: UpdateEmployeeDto // DTO này phải có field bank_info như Bước 1

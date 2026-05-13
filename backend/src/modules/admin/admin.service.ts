@@ -290,6 +290,51 @@ export class AdminService {
     return { message: "Permission revoked successfully" };
   }
 
+  async getGroupedPermissions() {
+    const permissions = await this.permissionRepo.find();
+    
+    // Group by module_group
+    const grouped = permissions.reduce((acc, perm) => {
+      const group = perm.module_group || 'OTHER';
+      if (!acc[group]) {
+        acc[group] = [];
+      }
+      acc[group].push(perm);
+      return acc;
+    }, {} as Record<string, Permission[]>);
+
+    return Object.keys(grouped).map((key) => ({
+      module_group: key,
+      permissions: grouped[key],
+    }));
+  }
+
+  async updateRolePermissions(positionId: number, permissionIds: number[]) {
+    // Verify position exists
+    const position = await this.positionRepo.findOne({
+      where: { position_id: positionId },
+    });
+    if (!position) {
+      throw new NotFoundException(`Position with ID ${positionId} not found`);
+    }
+
+    // Delete existing permissions
+    await this.posPermRepo.delete({ position_id: positionId });
+
+    if (permissionIds && permissionIds.length > 0) {
+      // Create new assignments
+      const assignments = permissionIds.map((permId) => 
+        this.posPermRepo.create({
+          position_id: positionId,
+          permission_id: permId,
+        })
+      );
+      await this.posPermRepo.save(assignments);
+    }
+
+    return { message: "Role permissions updated successfully" };
+  }
+
   // ============= Employee Management =============
   async getAllEmployees() {
     const employees = await this.employeeRepo.find({

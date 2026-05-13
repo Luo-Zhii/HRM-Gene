@@ -9,6 +9,15 @@ export class Permission {
   @Column()
   permission_name!: string;
 
+  @Column({ type: "varchar", length: 100, nullable: true })
+  module_group?: string;
+
+  @Column({ type: "varchar", length: 100, nullable: true })
+  method?: string;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  apiPath?: string;
+
   @OneToMany(() => PositionPermission, (pp) => pp.permission)
   positions?: PositionPermission[];
 }

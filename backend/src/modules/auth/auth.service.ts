@@ -53,7 +53,12 @@ export class AuthService {
       where: { permission_id: In(permIds) },
     });
 
-    return perms.map((p) => p.permission_name);
+    return perms.map((p) => {
+      if (p.method && p.apiPath) {
+        return `${p.method}:${p.apiPath}`;
+      }
+      return p.permission_name;
+    });
   }
 
   // --- LOGIC CHÍNH ---

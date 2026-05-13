@@ -106,6 +106,12 @@ async function run() {
   const salaryAdjRepo = ds.getRepository(SalaryAdjustment);
   const notificationRepo = ds.getRepository(Notification);
 
+  // --- 2.5 FORCE CLEAN DATABASE ---
+  console.log("🧹 Force cleaning old data...");
+  await ds.query('TRUNCATE TABLE "position_permission" CASCADE');
+  await ds.query('TRUNCATE TABLE "permission" CASCADE');
+  await ds.query('TRUNCATE TABLE "position" CASCADE');
+
   // --- 3. CREATE MASTER DATA ---
   console.log("🌱 Creating Company Settings & Profile...");
   await settingsRepo.save([
@@ -122,14 +128,31 @@ async function run() {
   }));
 
   console.log("🌱 Creating Permissions...");
-  const p_system = await permRepo.save({ permission_name: "manage:system" });
-  const p_payroll = await permRepo.save({ permission_name: "manage:payroll" });
-  const p_leave = await permRepo.save({ permission_name: "manage:leave" });
-  const p_employee = await permRepo.save({ permission_name: "manage:employee" });
-  const p_reports = await permRepo.save({ permission_name: "read:payroll_report" });
-  const p_submit_leave = await permRepo.save({ permission_name: "submit:leave" });
-  const p_read_balance = await permRepo.save({ permission_name: "read:balance" });
-  const p_check_in = await permRepo.save({ permission_name: "timekeeping:checkin" });
+  
+  // ROLES
+  const p_get_perms = await permRepo.save({ permission_name: "Get Grouped Permissions", method: "GET", apiPath: "/api/admin/permissions/grouped", module_group: "ROLES" });
+  const p_update_perms = await permRepo.save({ permission_name: "Assign Permissions", method: "PUT", apiPath: "/api/admin/roles/:id/permissions", module_group: "ROLES" });
+  const p_get_roles = await permRepo.save({ permission_name: "Get Roles", method: "GET", apiPath: "/api/admin/positions", module_group: "ROLES" });
+  const p_create_role = await permRepo.save({ permission_name: "Create Role", method: "POST", apiPath: "/api/admin/positions", module_group: "ROLES" });
+  const p_delete_role = await permRepo.save({ permission_name: "Delete Role", method: "DELETE", apiPath: "/api/admin/positions/:id", module_group: "ROLES" });
+
+  // USERS / EMPLOYEES
+  const p_get_employees = await permRepo.save({ permission_name: "View Employees", method: "GET", apiPath: "/api/admin/employees", module_group: "USERS" });
+  const p_create_employee = await permRepo.save({ permission_name: "Create Employee", method: "POST", apiPath: "/api/admin/employees", module_group: "USERS" });
+  const p_update_employee = await permRepo.save({ permission_name: "Update Employee", method: "PATCH", apiPath: "/api/admin/employees/:id", module_group: "USERS" });
+  const p_delete_employee = await permRepo.save({ permission_name: "Delete Employee", method: "DELETE", apiPath: "/api/admin/employees/:id", module_group: "USERS" });
+  const p_offboard_employee = await permRepo.save({ permission_name: "Offboard Employee", method: "PATCH", apiPath: "/api/employees/:id/offboard", module_group: "USERS" });
+
+  // COMPANIES
+  const p_get_company = await permRepo.save({ permission_name: "View Company Settings", method: "GET", apiPath: "/api/admin/company/settings", module_group: "COMPANIES" });
+  const p_update_company = await permRepo.save({ permission_name: "Update Company Settings", method: "PUT", apiPath: "/api/admin/company/settings", module_group: "COMPANIES" });
+
+  // PAYROLL & LEAVE (Examples)
+  const p_payroll = await permRepo.save({ permission_name: "Manage Payroll", method: "GET", apiPath: "/api/admin/payroll", module_group: "PAYROLL" });
+  const p_generate_payroll = await permRepo.save({ permission_name: "Generate Payroll", method: "POST", apiPath: "/api/admin/payroll/generate", module_group: "PAYROLL" });
+  const p_issue_payroll = await permRepo.save({ permission_name: "Issue Payslips", method: "POST", apiPath: "/api/admin/payroll/issue", module_group: "PAYROLL" });
+  const p_leave = await permRepo.save({ permission_name: "Manage Leave", method: "GET", apiPath: "/api/admin/leave", module_group: "LEAVE" });
+
 
   console.log("🌱 Creating Leave Types...");
   const [annualLeave, sickLeave, unpaidLeave] = await leaveTypeRepo.save([
@@ -154,28 +177,48 @@ async function run() {
   const positions = await posRepo.save([
     { position_name: "Director" },
     { position_name: "Manager" },
-    { position_name: "Team Leader" },
-    { position_name: "Senior Staff" },
+    { position_name: "Staff" },
     { position_name: "Intern" },
   ]);
-  const [posDirector, posManager, posTeamLeader, posSeniorStaff, posIntern] = positions;
+  const [posDirector, posManager, posStaff, posIntern] = positions;
 
   // --- 6. ASSIGN PERMISSIONS ---
   console.log("🌱 Assigning Permissions...");
   await ppRepo.save([
-    { position: posDirector, permission: p_system },
+    // Director gets ALL permissions
+    { position: posDirector, permission: p_get_perms },
+    { position: posDirector, permission: p_update_perms },
+    { position: posDirector, permission: p_get_roles },
+    { position: posDirector, permission: p_create_role },
+    { position: posDirector, permission: p_delete_role },
+    { position: posDirector, permission: p_get_employees },
+    { position: posDirector, permission: p_create_employee },
+    { position: posDirector, permission: p_update_employee },
+    { position: posDirector, permission: p_delete_employee },
+    { position: posDirector, permission: p_offboard_employee },
+    { position: posDirector, permission: p_get_company },
+    { position: posDirector, permission: p_update_company },
     { position: posDirector, permission: p_payroll },
+    { position: posDirector, permission: p_generate_payroll },
+    { position: posDirector, permission: p_issue_payroll },
     { position: posDirector, permission: p_leave },
-    { position: posDirector, permission: p_employee },
-    { position: posDirector, permission: p_reports },
-    { position: posDirector, permission: p_submit_leave },
-    { position: posDirector, permission: p_read_balance },
-    { position: posDirector, permission: p_check_in },
-    { position: posManager, permission: p_payroll },
-    { position: posManager, permission: p_leave },
-    { position: posSeniorStaff, permission: p_submit_leave },
-    { position: posSeniorStaff, permission: p_read_balance },
-    { position: posIntern, permission: p_check_in },
+    
+    // Manager gets GET and PATCH permissions only (excluding delete/create/update configs)
+    { position: posManager, permission: p_get_perms },
+    { position: posManager, permission: p_get_roles },
+    { position: posManager, permission: p_get_employees },
+    { position: posManager, permission: p_update_employee }, // PATCH
+    { position: posManager, permission: p_get_company },
+    { position: posManager, permission: p_payroll }, // GET
+    { position: posManager, permission: p_leave },   // GET
+    
+    // Staff gets ONLY GET permissions
+    { position: posStaff, permission: p_get_employees },
+    { position: posStaff, permission: p_get_company },
+    { position: posStaff, permission: p_leave },
+    
+    // Intern gets minimal
+    { position: posIntern, permission: p_leave },
   ]);
 
   // --- 7. CREATE EMPLOYEES ---
