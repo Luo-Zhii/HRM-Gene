@@ -17,7 +17,7 @@ export class Violation {
   @PrimaryGeneratedColumn()
   violation_id!: number;
 
-  @ManyToOne(() => Employee)
+  @ManyToOne(() => Employee, { onDelete: 'CASCADE' })
   employee!: Employee;
 
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })

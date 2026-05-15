@@ -15,9 +15,10 @@ import { useTranslation } from "react-i18next";
 import {
   Search, LayoutGrid, List, Mail, Phone,
   ArrowUpDown, ExternalLink, UserMinus,
-  Users, Building2,
+  Users, Building2, Pencil, Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import { Can } from "@/src/components/Can";
 
 // ─── Shared data shape ─────────────────────────────────────────────────────────
 // phone_number / address may be undefined when the backend strips them for
@@ -58,6 +59,12 @@ interface EmployeeTableProps {
 
   /** Called when admin clicks the Offboard button. */
   onOffboard?: (employeeId: number) => void;
+
+  /** Called when admin clicks the Edit button. */
+  onEdit?: (employee: EmployeeRow) => void;
+
+  /** Called when admin clicks the Delete button. */
+  onDelete?: (employeeId: number) => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -79,6 +86,8 @@ export default function EmployeeTable({
   showActions,
   currentUserId,
   onOffboard,
+  onEdit,
+  onDelete,
 }: EmployeeTableProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -295,27 +304,55 @@ export default function EmployeeTable({
                       <button
                         onClick={() => navigateToProfile(emp)}
                         className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors mr-2"
+                        title={t("employeeTable.viewProfile")}
                       >
-                        {t("employeeTable.viewProfile")} <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </button>
-                      <button
-                        disabled={emp.employee_id === currentUserId || emp.employment_status === "Terminated"}
-                        onClick={() => onOffboard?.(emp.employee_id)}
-                        className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors ${
-                          emp.employee_id === currentUserId || emp.employment_status === "Terminated"
-                            ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
-                            : "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
-                        }`}
-                        title={
-                          emp.employee_id === currentUserId
-                            ? t("offboard.selfError")
-                            : emp.employment_status === "Terminated"
-                            ? t("offboard.alreadyTerminated")
-                            : t("employeeTable.offboard")
-                        }
-                      >
-                        {t("employeeTable.offboard")} <UserMinus className="w-3.5 h-3.5 ml-1.5" />
-                      </button>
+
+                      <Can method="PATCH" apiPath="/api/admin/employees/:id">
+                        <button
+                          onClick={() => onEdit?.(emp)}
+                          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-50 rounded-md transition-colors mr-2"
+                          title={t("common.edit")}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      </Can>
+
+                      <Can method="DELETE" apiPath="/api/admin/employees/:id">
+                        <button
+                          disabled={emp.employee_id === currentUserId}
+                          onClick={() => onDelete?.(emp.employee_id)}
+                          className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors mr-2 ${
+                            emp.employee_id === currentUserId
+                              ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
+                              : "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
+                          }`}
+                          title={t("common.delete")}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </Can>
+                      <Can method="PATCH" apiPath="/api/employees/:id/offboard">
+                        <button
+                          disabled={emp.employee_id === currentUserId || emp.employment_status === "Terminated"}
+                          onClick={() => onOffboard?.(emp.employee_id)}
+                          className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors ${
+                            emp.employee_id === currentUserId || emp.employment_status === "Terminated"
+                              ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
+                              : "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
+                          }`}
+                          title={
+                            emp.employee_id === currentUserId
+                              ? t("offboard.selfError")
+                              : emp.employment_status === "Terminated"
+                              ? t("offboard.alreadyTerminated")
+                              : t("employeeTable.offboard")
+                          }
+                        >
+                          {t("employeeTable.offboard")} <UserMinus className="w-3.5 h-3.5 ml-1.5" />
+                        </button>
+                      </Can>
                     </td>
                   )}
                 </tr>
@@ -396,20 +433,48 @@ export default function EmployeeTable({
                     <button
                       onClick={() => navigateToProfile(emp)}
                       className="flex-1 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                      title={t("employeeTable.viewProfile")}
                     >
-                      {t("employeeTable.viewProfile")} <ExternalLink className="w-3.5 h-3.5" />
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </button>
-                    <button
-                      disabled={emp.employee_id === currentUserId || emp.employment_status === "Terminated"}
-                      onClick={() => onOffboard?.(emp.employee_id)}
-                      className={`py-2 px-3 border text-sm font-bold rounded-lg transition-colors flex items-center justify-center ${
-                        emp.employee_id === currentUserId || emp.employment_status === "Terminated"
-                          ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
-                          : "bg-red-50 hover:bg-red-100 border-red-100 text-red-600"
-                      }`}
-                    >
-                      <UserMinus className="w-4 h-4" />
-                    </button>
+
+                    <Can method="PATCH" apiPath="/api/admin/employees/:id">
+                      <button
+                        onClick={() => onEdit?.(emp)}
+                        className="py-2 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-100 text-amber-600 text-sm font-bold rounded-lg transition-colors flex items-center justify-center"
+                        title={t("common.edit")}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    </Can>
+
+                    <Can method="DELETE" apiPath="/api/admin/employees/:id">
+                      <button
+                        disabled={emp.employee_id === currentUserId}
+                        onClick={() => onDelete?.(emp.employee_id)}
+                        className={`py-2 px-3 border text-sm font-bold rounded-lg transition-colors flex items-center justify-center ${
+                          emp.employee_id === currentUserId
+                            ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
+                            : "bg-red-50 hover:bg-red-100 border-red-100 text-red-600"
+                        }`}
+                        title={t("common.delete")}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </Can>
+                    <Can method="PATCH" apiPath="/api/employees/:id/offboard">
+                      <button
+                        disabled={emp.employee_id === currentUserId || emp.employment_status === "Terminated"}
+                        onClick={() => onOffboard?.(emp.employee_id)}
+                        className={`py-2 px-3 border text-sm font-bold rounded-lg transition-colors flex items-center justify-center ${
+                          emp.employee_id === currentUserId || emp.employment_status === "Terminated"
+                            ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
+                            : "bg-red-50 hover:bg-red-100 border-red-100 text-red-600"
+                        }`}
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </button>
+                    </Can>
                   </>
                 ) : (
                   /* Regular employee: link to public directory profile only */

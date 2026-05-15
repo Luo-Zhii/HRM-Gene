@@ -402,6 +402,22 @@ export class AdminService {
     return { message: "Employee transferred successfully" };
   }
 
+  async updateEmployee(id: number, data: any) {
+    const employee = await this.employeeRepo.findOne({ where: { employee_id: id } });
+    if (!employee) throw new NotFoundException(`Employee ${id} not found`);
+
+    Object.assign(employee, data);
+    return this.employeeRepo.save(employee);
+  }
+
+  async deleteEmployee(id: number) {
+    const employee = await this.employeeRepo.findOne({ where: { employee_id: id } });
+    if (!employee) throw new NotFoundException(`Employee ${id} not found`);
+
+    await this.employeeRepo.remove(employee);
+    return { message: "Employee deleted successfully" };
+  }
+
   // ============= Organization Stats =============
   async getOrganizationStats() {
     const total_departments = await this.deptRepo.count();

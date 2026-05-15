@@ -129,6 +129,19 @@ export class AdminController {
     return this.svc.transferEmployee(id, body.department_id, body.position_id);
   }
 
+  @Patch("employees/:id")
+  async updateEmployee(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() body: any
+  ) {
+    return this.svc.updateEmployee(id, body);
+  }
+
+  @Delete("employees/:id")
+  async deleteEmployee(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.deleteEmployee(id);
+  }
+
   // ============= Seed Demo Data =============
   @Post("seed/demo-data")
   async seedDemoData(@Body() body?: { employee_id?: number }) {

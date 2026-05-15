@@ -15,24 +15,10 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useTranslation } from "react-i18next";
-import { UserMinus, X, ShieldOff } from "lucide-react";
+import { UserMinus, X, ShieldOff, Plus, Pencil, Trash2 } from "lucide-react";
 import EmployeeTable, { EmployeeRow } from "@/components/EmployeeTable";
-
-// ─── Permission helper (same logic as isPrivilegedUser in the old page) ────────
-function isPrivilegedUser(user: any): boolean {
-  if (!user) return false;
-  const perms: string[] = user.permissions ?? [];
-  const pos = (user.position?.position_name ?? user.role ?? "").toLowerCase();
-  return (
-    perms.includes("manage:employee") ||
-    perms.includes("manage:system") ||
-    perms.includes("manage:payroll") ||
-    pos === "admin" ||
-    pos === "hr" ||
-    pos === "hr manager" ||
-    pos === "director"
-  );
-}
+import { useCheckPermission } from "@/src/hooks/useCheckPermission";
+import { Can } from "@/src/components/Can";
 
 export default function AdminEmployeeDirectoryPage() {
   const router = useRouter();
@@ -51,6 +37,10 @@ export default function AdminEmployeeDirectoryPage() {
   const [offboardId, setOffboardId] = useState<number | null>(null);
   const [resignationDate, setResignationDate] = useState("");
   const [resignationReason, setResignationReason] = useState("");
+  
+  // Delete modal state
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const showToast = (title: string, desc: string, type: "success" | "error") => {
@@ -58,18 +48,28 @@ export default function AdminEmployeeDirectoryPage() {
     setTimeout(() => setToastMsg(null), 3000);
   };
 
+  const { checkPermission } = useCheckPermission();
+
   // ── RBAC render gate ────────────────────────────────────────────────────────
   // Computed synchronously after auth resolves — no data is fetched until this is true.
-  const canAccess = !authLoading && isPrivilegedUser(user);
+  const canAccess = !authLoading && checkPermission("GET", "/api/admin/employees");
 
   const loadEmployees = async () => {
     try {
       setLoading(true);
       // Admin endpoint returns full data including phone_number and address
-      const res = await fetch("/api/employees", { credentials: "include" });
-      if (!res.ok) throw new Error();
+      const res = await fetch("/api/admin/employees", { credentials: "include" });
+      if (!res.ok) {
+        if (res.status === 403) {
+          showToast("Access Denied", "You do not have permission to fetch employee data.", "error");
+        } else {
+          showToast("Error", "Failed to load employees.", "error");
+        }
+        throw new Error("Failed to load");
+      }
       setEmployees((await res.json()) || []);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setEmployees([]);
     } finally {
       setLoading(false);
@@ -92,7 +92,7 @@ export default function AdminEmployeeDirectoryPage() {
     }
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/employees/${offboardId}`, {
+      const res = await fetch(`/api/employees/${offboardId}/offboard`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -109,6 +109,27 @@ export default function AdminEmployeeDirectoryPage() {
         await loadEmployees();
       } else {
         showToast("Error", "Failed to offboard employee", "error");
+      }
+    } catch {
+      showToast("Error", "Server error", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/admin/employees/${deleteId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        showToast("Success", "Employee deleted successfully.", "success");
+        setDeleteId(null);
+        await loadEmployees();
+      } else {
+        showToast("Error", "Failed to delete employee", "error");
       }
     } catch {
       showToast("Error", "Server error", "error");
@@ -172,11 +193,20 @@ export default function AdminEmployeeDirectoryPage() {
       )}
 
       {/* Page title */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t("sidebar.employeeDirectory")}</h1>
           <p className="text-sm text-gray-500 mt-0.5">{t("directory.adminSubtitle")}</p>
         </div>
+        
+        <Can method="POST" apiPath="/api/admin/employees">
+          <button 
+            onClick={() => router.push("/admin/employees/new")}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm shrink-0"
+          >
+            <Plus size={18} /> {t("common.add")}
+          </button>
+        </Can>
       </div>
 
       {/*
@@ -191,6 +221,8 @@ export default function AdminEmployeeDirectoryPage() {
         showActions={true}
         currentUserId={user?.employee_id}
         onOffboard={(id) => setOffboardId(id)}
+        onEdit={(emp) => router.push(`/profile?id=${emp.employee_id}`)}
+        onDelete={(id) => setDeleteId(id)}
       />
 
       {/* ── Offboard modal ─────────────────────────────────────────────────── */}
@@ -262,6 +294,38 @@ export default function AdminEmployeeDirectoryPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* ── Delete modal ─────────────────────────────────────────────────── */}
+      {deleteId !== null && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden relative animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-8 h-8 text-red-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">{t("common.confirmDelete")}</h2>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to permanently delete this employee? This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteId(null)}
+                  className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition-colors"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  disabled={isSubmitting}
+                  onClick={handleDelete}
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                >
+                  {isSubmitting ? t("common.processing") : t("common.delete")}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

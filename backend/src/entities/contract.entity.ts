@@ -18,7 +18,7 @@ export class Contract {
   @PrimaryGeneratedColumn()
   contract_id!: number;
 
-  @ManyToOne(() => Employee, (e) => e.contracts)
+  @ManyToOne(() => Employee, (e) => e.contracts, { onDelete: 'CASCADE' })
   @JoinColumn({ name: "employee_id" })
   employee!: Employee;
 

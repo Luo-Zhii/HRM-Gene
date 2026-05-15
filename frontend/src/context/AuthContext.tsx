@@ -67,7 +67,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     fetchProfile();
-  }, [fetchProfile]);
+    // Empty dependency array ensures it only runs once per mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const logout = useCallback(() => {
     (async () => {

@@ -47,7 +47,9 @@ export function useNotifications() {
     return () => {
       clearInterval(interval);
     };
-  }, [user, fetchNotifications]);
+    // Use user.employee_id to avoid reference-based infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.employee_id, fetchNotifications]);
 
   const markAsRead = async (id: number) => {
     try {

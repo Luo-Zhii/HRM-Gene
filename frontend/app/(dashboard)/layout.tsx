@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useCheckPermission } from "@/src/hooks/useCheckPermission";
 import { useNotifications } from "@/src/hooks/useNotifications";
 import { useCompany, CompanyProvider } from "@/src/context/CompanyContext";
 import { Button } from "@/components/ui/button";
@@ -24,12 +25,20 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const { t } = useTranslation();
 
   const positionName = user?.position?.position_name?.toLowerCase();
-  const isAdminOrHr = positionName === "admin" || positionName === "hr" || positionName === "hr manager";
-  const hasManageSystemPermission = user?.permissions?.includes("manage:system") ?? false;
-  const hasManagePayrollPermission = user?.permissions?.includes("manage:payroll") ?? false;
-  const hasManageEmployeePermission = user?.permissions?.includes("manage:employee") ?? false;
-  const canViewDirectory = isAdminOrHr || hasManageSystemPermission || hasManageEmployeePermission || hasManagePayrollPermission;
-  const canAccessReports = hasManageSystemPermission || hasManagePayrollPermission || positionName === "admin" || positionName === "director" || positionName === "hr manager";
+  const { checkPermission } = useCheckPermission();
+
+  // Endpoint validations mapped to seeded DB entries
+  const canViewEmployees = checkPermission("GET", "/api/admin/employees");
+  const canViewCompany = checkPermission("GET", "/api/admin/company/settings");
+  const canViewPermissions = checkPermission("GET", "/api/admin/permissions/grouped");
+  const canManagePayroll = checkPermission("GET", "/api/admin/payroll");
+  const canManageLeave = checkPermission("GET", "/api/admin/leave");
+
+  // Fallbacks
+  const isAdminOrHr = positionName === "admin" || positionName === "hr" || positionName === "hr manager" || positionName === "director";
+  const canViewDirectory = canViewEmployees || isAdminOrHr;
+  const hasHRAdminAccess = canViewDirectory || canViewCompany || canViewPermissions || isAdminOrHr;
+  const canAccessReports = canManagePayroll || canViewCompany || isAdminOrHr;
 
   const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:3001';
   const logoUrl = settings?.logo_url
@@ -62,7 +71,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           <NavItem href="/directory" label={t("sidebar.staffDirectory")} icon={Users} isActive={pathname?.startsWith("/directory")} onClick={onClose} />
 
           <NavItem href="/dashboard/timekeeping" label={t("sidebar.timekeeping")} isActive={pathname === "/dashboard/timekeeping"} onClick={onClose} />
-          {(hasManageSystemPermission || isAdminOrHr || hasManageEmployeePermission) && (
+          {hasHRAdminAccess && (
             <>
               <NavGroup title={t("sidebar.hrAdministration")} />
               {canViewDirectory && (
@@ -72,23 +81,31 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
                   <NavItem href="/admin/contracts" label={t("sidebar.employmentContract")} isActive={pathname === "/admin/contracts"} onClick={onClose} />
                 </>
               )}
-              {hasManageSystemPermission && (
+              {canViewCompany && (
                 <>
                   <NavItem href="/admin/organization" label={t("sidebar.organizationalManagement")} isActive={pathname === "/admin/organization"} onClick={onClose} />
-                  <NavItem href="/admin/discipline" label={t("sidebar.discipline")} isActive={pathname === "/admin/discipline"} onClick={onClose} />
-                  <NavItem href="/admin/permissions" label={t("sidebar.permissions")} isActive={pathname === "/admin/permissions"} onClick={onClose} />
                 </>
+              )}
+              {(canViewCompany || isAdminOrHr) && (
+                <NavItem href="/admin/discipline" label={t("sidebar.discipline")} isActive={pathname === "/admin/discipline"} onClick={onClose} />
+              )}
+              {canViewPermissions && (
+                <NavItem href="/admin/permissions" label={t("sidebar.permissions")} isActive={pathname === "/admin/permissions"} onClick={onClose} />
               )}
 
               <NavGroup title={t("sidebar.attendanceAndLeave")} />
-              {(isAdminOrHr || hasManageSystemPermission) && <NavItem href="/admin/attendance" label={t("sidebar.attendanceHistory")} isActive={pathname === "/admin/attendance"} onClick={onClose} />}
-              {hasManageSystemPermission && (
+              {(isAdminOrHr || canViewCompany) && <NavItem href="/admin/attendance" label={t("sidebar.attendanceHistory")} isActive={pathname === "/admin/attendance"} onClick={onClose} />}
+              {canViewCompany && (
                 <NavItem href="/admin/qr-display" label={t("sidebar.qrDisplay")} isActive={pathname === "/admin/qr-display"} onClick={onClose} />
               )}
-              <NavItem href="/admin/leave-approvals" label={t("sidebar.leaveApprovals")} isActive={pathname === "/admin/leave-approvals"} onClick={onClose} />
+              {canManageLeave && (
+                <NavItem href="/admin/leave-approvals" label={t("sidebar.leaveApprovals")} isActive={pathname === "/admin/leave-approvals"} onClick={onClose} />
+              )}
             </>
           )}
-          <NavItem href="/admin/resignations" label={t("sidebar.resignationApprovals")} isActive={pathname === "/admin/resignations"} onClick={onClose} />
+          {(canManageLeave || isAdminOrHr) && (
+            <NavItem href="/admin/resignations" label={t("sidebar.resignationApprovals")} isActive={pathname === "/admin/resignations"} onClick={onClose} />
+          )}
           <NavItem href="/dashboard/leave" label={t("sidebar.leaveManagement")} isActive={pathname?.startsWith("/dashboard/leave")} onClick={onClose} />
 
           <NavGroup title={t("sidebar.myPerformance")} />
@@ -97,7 +114,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           <NavGroup title={t("sidebar.payrollManagement")} />
           <NavItem href="/dashboard/salary" label={t("sidebar.mySalary")} isActive={pathname === "/dashboard/salary"} onClick={onClose} />
           <NavItem href="/my-resignation" label={t("sidebar.myResignation")} isActive={pathname === "/my-resignation"} onClick={onClose} />
-          {hasManagePayrollPermission && (
+          {canManagePayroll && (
             <>
               <NavItem href="/admin/payroll/config" label={t("sidebar.salaryConfiguration")} isActive={pathname === "/admin/payroll/config"} onClick={onClose} />
               <NavItem href="/admin/payroll/adjustment" label={t("sidebar.salaryAdjustment")} isActive={pathname === "/admin/payroll/adjustment"} onClick={onClose} />
@@ -111,13 +128,13 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
               <NavItem href="/admin/reports" label={t("sidebar.analysisReport")} isActive={pathname === "/admin/reports"} onClick={onClose} />
             </>
           )}
-          {hasManageSystemPermission && (
+          {canViewCompany && (
             <>
               <NavGroup title={t("sidebar.communication")} />
               <NavItem href="/admin/announcements" label={t("sidebar.manageNews")} icon={Radio} isActive={pathname === "/admin/announcements"} onClick={onClose} />
             </>
           )}
-          {(isAdminOrHr || hasManageSystemPermission) && (
+          {(canViewCompany || isAdminOrHr) && (
             <>
               <NavGroup title={t("sidebar.performanceManagement")} />
               <NavItem href="/admin/performance/library" label={t("sidebar.kpiLibrary")} isActive={pathname === "/admin/performance/library"} onClick={onClose} />
@@ -125,10 +142,12 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
             </>
           )}
         </nav>
-        {hasManageSystemPermission && (
+        {canViewCompany && (
           <div className="p-4 border-t border-gray-100 shrink-0 space-y-1">
             <NavItem href="/admin/settings" label={t("sidebar.systemSettings")} isActive={pathname === "/admin/settings"} onClick={onClose} />
-            <NavItem href="/admin/settings/payroll" label={t("sidebar.payrollSettings")} isActive={pathname === "/admin/settings/payroll"} onClick={onClose} />
+            {canManagePayroll && (
+              <NavItem href="/admin/settings/payroll" label={t("sidebar.payrollSettings")} isActive={pathname === "/admin/settings/payroll"} onClick={onClose} />
+            )}
           </div>
         )}
       </aside>

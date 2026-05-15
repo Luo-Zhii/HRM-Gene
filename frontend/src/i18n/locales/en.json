@@ -55,7 +55,10 @@
     "info": "Info",
     "signIn": "Sign in",
     "viewAll": "View All",
-    "noData": "No data available"
+    "noData": "No data available",
+    "confirmDelete": "Confirm Delete",
+    "confirm": "Confirm",
+    "processing": "Processing..."
   },
   "header": {
     "searchPlaceholder": "Search pages & features...",

@@ -55,7 +55,10 @@
     "info": "Thông tin",
     "signIn": "Đăng nhập",
     "viewAll": "Xem tất cả",
-    "noData": "Không có dữ liệu"
+    "noData": "Không có dữ liệu",
+    "confirmDelete": "Xác nhận xóa",
+    "confirm": "Xác nhận",
+    "processing": "Đang xử lý..."
   },
   "header": {
     "searchPlaceholder": "Tìm kiếm tính năng & trang...",
