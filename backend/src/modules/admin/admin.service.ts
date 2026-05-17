@@ -11,7 +11,7 @@ import { Department } from "../../entities/department.entity";
 import { Position } from "../../entities/position.entity";
 import { Permission } from "../../entities/permission.entity";
 import { PositionPermission } from "../../entities/position-permission.entity";
-import { Employee } from "../../entities/employee.entity";
+import { Employee, EmploymentStatus } from "../../entities/employee.entity";
 import { Contract, ContractStatus, ContractType } from "../../entities/contract.entity";
 import { SalaryHistory } from "../../entities/salary-history.entity";
 import { Payslip } from "../../entities/payslip.entity";
@@ -339,6 +339,7 @@ export class AdminService {
   // ============= Employee Management =============
   async getAllEmployees() {
     const employees = await this.employeeRepo.find({
+      where: { deleted_at: null as any },
       relations: ["position", "department"],
     });
 
@@ -445,11 +446,36 @@ export class AdminService {
   }
 
   async deleteEmployee(id: number) {
-    const employee = await this.employeeRepo.findOne({ where: { employee_id: id } });
+    const employee = await this.employeeRepo.findOne({
+      where: { employee_id: id },
+      relations: ["department"],
+    });
     if (!employee) throw new NotFoundException(`Employee ${id} not found`);
 
-    await this.employeeRepo.remove(employee);
-    return { message: "Employee deleted successfully" };
+    if (employee.deleted_at) {
+      throw new BadRequestException("Employee is already deleted");
+    }
+
+    const deletedName = `${employee.first_name} ${employee.last_name}`;
+
+    // Unassign as department manager if applicable
+    if (employee.department) {
+      const dept = await this.deptRepo.findOne({
+        where: { department_id: employee.department.department_id },
+        relations: ["manager"],
+      });
+      if (dept?.manager && dept.manager.employee_id === id) {
+        dept.manager = null as any;
+        await this.deptRepo.save(dept);
+      }
+    }
+
+    // Soft delete — preserves payroll, attendance & audit history
+    employee.employment_status = EmploymentStatus.TERMINATED;
+    employee.deleted_at = new Date();
+    await this.employeeRepo.save(employee);
+
+    return { message: `Employee ${deletedName} deleted successfully` };
   }
 
   async createEmployee(data: {

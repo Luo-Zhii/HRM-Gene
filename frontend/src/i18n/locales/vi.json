@@ -108,6 +108,30 @@
     "searchPlaceholder": "Tìm tên, email, điện thoại...",
     "searchPublicPlaceholder": "Tìm tên, email, phòng ban..."
   },
+  "deleteEmployee": {
+    "title": "Xóa nhân viên",
+    "warning": "Hành động này là vĩnh viễn và không thể hoàn tác. Tất cả dữ liệu liên quan đến nhân viên này sẽ bị xóa vĩnh viễn khỏi hệ thống.",
+    "cascadeInfo": "Những dữ liệu sau cũng sẽ bị xóa: thông tin tài khoản ngân hàng, hợp đồng lao động và phân công quản lý phòng ban (nếu có). Dữ liệu chấm công và lịch sử lương sẽ được giữ lại cho mục đích kiểm toán.",
+    "typeConfirm": "Nhập <strong>DELETE</strong> để xác nhận",
+    "confirmPhrase": "DELETE",
+    "successMessage": "{{name}} đã bị xóa vĩnh viễn.",
+    "errorMessage": "Không thể xóa nhân viên. Vui lòng thử lại."
+  },
+  "editEmployee": {
+    "title": "Chỉnh sửa nhân viên",
+    "firstName": "Tên",
+    "lastName": "Họ",
+    "email": "Email",
+    "phone": "Điện thoại",
+    "address": "Địa chỉ",
+    "department": "Phòng ban",
+    "position": "Chức danh",
+    "transferHint": "Thay đổi phòng ban sẽ tự động hủy phân công trưởng phòng nếu có.",
+    "saving": "Đang lưu...",
+    "save": "Lưu thay đổi",
+    "successMessage": "Cập nhật nhân viên thành công.",
+    "errorMessage": "Không thể cập nhật nhân viên. Vui lòng thử lại."
+  },
   "offboard": {
     "title": "Xử lý nghỉ việc",
     "description": "Thao tác này sẽ chấm dứt hợp đồng lao động chính thức và cập nhật toàn bộ dữ liệu phân tích.",

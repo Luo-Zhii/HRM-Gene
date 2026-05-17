@@ -15,8 +15,9 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useTranslation } from "react-i18next";
-import { UserMinus, X, ShieldOff, Plus, Pencil, Trash2 } from "lucide-react";
+import { UserMinus, X, ShieldOff, Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import EmployeeTable, { EmployeeRow } from "@/components/EmployeeTable";
+import EditEmployeeModal from "@/components/EditEmployeeModal";
 import { canManageEmployees } from "@/src/lib/adminAccess";
 import { Can } from "@/src/components/Can";
 
@@ -40,6 +41,11 @@ export default function AdminEmployeeDirectoryPage() {
   
   // Delete modal state
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteName, setDeleteName] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  // Edit modal state
+  const [editEmployee, setEditEmployee] = useState<EmployeeRow | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -123,14 +129,16 @@ export default function AdminEmployeeDirectoryPage() {
         method: "DELETE",
       });
       if (res.ok) {
-        showToast("Success", "Employee deleted successfully.", "success");
+        showToast(t("common.success"), t("deleteEmployee.successMessage", { name: deleteName }), "success");
         setDeleteId(null);
+        setDeleteName("");
+        setDeleteConfirmText("");
         await loadEmployees();
       } else {
-        showToast("Error", "Failed to delete employee", "error");
+        showToast(t("common.error"), t("deleteEmployee.errorMessage"), "error");
       }
     } catch {
-      showToast("Error", "Server error", "error");
+      showToast(t("common.error"), t("deleteEmployee.errorMessage"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -219,8 +227,13 @@ export default function AdminEmployeeDirectoryPage() {
         showActions={true}
         currentUserId={user?.employee_id}
         onOffboard={(id) => setOffboardId(id)}
-        onEdit={(emp) => router.push(`/profile?id=${emp.employee_id}`)}
-        onDelete={(id) => setDeleteId(id)}
+        onEdit={(emp) => setEditEmployee(emp)}
+        onDelete={(id) => {
+          const emp = employees.find((e) => e.employee_id === id);
+          setDeleteId(id);
+          setDeleteName(emp ? `${emp.first_name} ${emp.last_name}` : "");
+          setDeleteConfirmText("");
+        }}
       />
 
       {/* ── Offboard modal ─────────────────────────────────────────────────── */}
@@ -298,34 +311,85 @@ export default function AdminEmployeeDirectoryPage() {
       {/* ── Delete modal ─────────────────────────────────────────────────── */}
       {deleteId !== null && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden relative animate-in zoom-in-95 duration-200">
-            <div className="p-6 text-center">
-              <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-8 h-8 text-red-600" />
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-6 pb-4 text-center">
+              <div className="w-16 h-16 rounded-full bg-red-100 border-4 border-red-50 flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">{t("common.confirmDelete")}</h2>
-              <p className="text-sm text-gray-500 mb-6">
-                Are you sure you want to permanently delete this employee? This action cannot be undone.
+              <h2 className="text-xl font-bold text-gray-900 mb-1">{t("deleteEmployee.title")}</h2>
+              <p className="text-sm font-semibold text-red-600 bg-red-50 rounded-lg px-3 py-1.5 inline-block mt-1">
+                {deleteName}
               </p>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDeleteId(null)}
-                  className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition-colors"
-                >
-                  {t("common.cancel")}
-                </button>
-                <button
-                  disabled={isSubmitting}
-                  onClick={handleDelete}
-                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
-                >
-                  {isSubmitting ? t("common.processing") : t("common.delete")}
-                </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 pb-2 space-y-3">
+              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{t("deleteEmployee.warning")}</span>
               </div>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                {t("deleteEmployee.cascadeInfo")}
+              </p>
+
+              {/* Type-to-confirm */}
+              <div>
+                <p
+                  className="text-sm font-medium text-gray-700 mb-2"
+                  dangerouslySetInnerHTML={{ __html: t("deleteEmployee.typeConfirm") }}
+                />
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={t("deleteEmployee.confirmPhrase")}
+                  className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm font-mono tracking-wider text-center focus:outline-none focus:ring-2 focus:ring-red-500 placeholder:font-sans placeholder:tracking-normal placeholder:text-gray-400"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 pt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteId(null);
+                  setDeleteName("");
+                  setDeleteConfirmText("");
+                }}
+                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition-colors"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                disabled={
+                  isSubmitting ||
+                  deleteConfirmText !== t("deleteEmployee.confirmPhrase")
+                }
+                onClick={handleDelete}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+              >
+                {isSubmitting ? t("common.processing") : t("common.delete")}
+              </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Edit modal ──────────────────────────────────────────────────── */}
+      {editEmployee !== null && (
+        <EditEmployeeModal
+          employee={editEmployee}
+          onClose={() => setEditEmployee(null)}
+          onSaved={() => {
+            setEditEmployee(null);
+            loadEmployees();
+          }}
+          onToast={showToast}
+        />
       )}
     </div>
   );

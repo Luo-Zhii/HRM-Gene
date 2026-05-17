@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DataSource, ILike, Or } from "typeorm"; // Thêm DataSource ở đây
+import { Repository, DataSource, ILike, IsNull } from "typeorm";
 import * as bcrypt from "bcrypt";
 import { Employee, EmploymentStatus } from "../../entities/employee.entity";
 import { Department } from "../../entities/department.entity";
@@ -74,10 +74,9 @@ export class EmployeesService {
   // CẬP NHẬT QUAN TRỌNG NHẤT Ở ĐÂY: Hàm này giờ sẽ "cõng" thêm lương trả về cho Frontend
   async findAll() {
     const employees = await this.employeeRepo.find({
+      where: { deleted_at: IsNull() },
       relations: ["department", "position"],
-      order: {
-        first_name: "ASC", // Sắp xếp mặc định cho đẹp
-      },
+      order: { first_name: "ASC" },
     });
 
     try {
@@ -216,9 +215,9 @@ export class EmployeesService {
     const term = `%${keyword}%`;
     const results = await this.employeeRepo.find({
       where: [
-        { first_name: ILike(term) } as any,
-        { last_name: ILike(term) } as any,
-        { email: ILike(term) } as any,
+        { first_name: ILike(term), deleted_at: IsNull() } as any,
+        { last_name: ILike(term), deleted_at: IsNull() } as any,
+        { email: ILike(term), deleted_at: IsNull() } as any,
       ],
       take: 5,
       order: { first_name: "ASC" },

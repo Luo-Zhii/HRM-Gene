@@ -13,6 +13,7 @@ import { SalaryHistory } from "../../entities/salary-history.entity";
 import { Payslip } from "../../entities/payslip.entity";
 import { PayrollPeriod } from "../../entities/payroll-period.entity";
 import { SalaryConfig } from "../../entities/salary-config.entity";
+import { BankInfo } from "../../entities/bank-info.entity";
 import { DepartmentsController } from "../departments/departments.controller";
 import { PositionsController } from "../positions/positions.controller";
 import { DepartmentsService } from "../departments/departments.service";
@@ -35,6 +36,7 @@ import { HolidayController } from "./holiday.controller";
       Payslip,
       PayrollPeriod,
       SalaryConfig,
+      BankInfo,
       PublicHoliday,
     ]),
   ],

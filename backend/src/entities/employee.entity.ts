@@ -108,4 +108,7 @@ export class Employee {
 
   @Column({ type: "date", nullable: true })
   resignation_date?: string;
+
+  @Column({ type: "timestamptz", nullable: true })
+  deleted_at?: Date;
 }

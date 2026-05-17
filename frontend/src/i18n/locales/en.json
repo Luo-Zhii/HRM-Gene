@@ -108,6 +108,30 @@
     "searchPlaceholder": "Search name, email, phone...",
     "searchPublicPlaceholder": "Search name, email, dept..."
   },
+  "deleteEmployee": {
+    "title": "Delete Employee",
+    "warning": "This action is permanent and cannot be undone. All data associated with this employee will be permanently removed from the system.",
+    "cascadeInfo": "The following will also be deleted: bank account details, employment contracts, and department manager assignments (if applicable). Attendance records and payroll history will be preserved for audit purposes.",
+    "typeConfirm": "Type <strong>DELETE</strong> to confirm",
+    "confirmPhrase": "DELETE",
+    "successMessage": "{{name}} has been permanently deleted.",
+    "errorMessage": "Failed to delete employee. Please try again."
+  },
+  "editEmployee": {
+    "title": "Edit Employee",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "department": "Department",
+    "position": "Position",
+    "transferHint": "Changing department will automatically unassign this employee as department head if applicable.",
+    "saving": "Saving...",
+    "save": "Save Changes",
+    "successMessage": "Employee updated successfully.",
+    "errorMessage": "Failed to update employee. Please try again."
+  },
   "offboard": {
     "title": "Process Resignation",
     "description": "This will terminate the employee's active contract and update all analytics.",
