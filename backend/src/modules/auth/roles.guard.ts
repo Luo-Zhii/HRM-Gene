@@ -33,13 +33,11 @@ export class RolesGuard implements CanActivate {
     // 🚀 QUAN TRỌNG: ADMIN BYPASS (Thẻ bài miễn tử)
     // Nếu là Admin, cho phép truy cập ngay lập tức, bỏ qua check quyền
     // ============================================================
-    const positionName = user.position?.position_name || user.role || "";
+    const positionName = (user.position?.position_name || user.role || "").toLowerCase();
 
-    if (
-      positionName === "Admin" ||
-      positionName === "System Admin" ||
-      positionName.toLowerCase() === "admin" // Chấp nhận cả chữ thường
-    ) {
+    // Admin / Director / HR Manager bypass - cho phép toàn quyền
+    const bypassRoles = ["admin", "system admin", "director", "hr manager", "hr"];
+    if (bypassRoles.some(role => positionName === role || positionName.includes(role))) {
       return true;
     }
 

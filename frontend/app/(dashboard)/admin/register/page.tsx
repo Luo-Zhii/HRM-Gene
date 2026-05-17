@@ -19,8 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// 1. THÊM ICON USER
-import { Mail, Lock, KeyRound, Building2, Briefcase, User } from "lucide-react";
+import { useAuth } from "@/src/hooks/useAuth";
+import { Mail, Lock, Building2, Briefcase, User, ShieldAlert } from "lucide-react";
 import { useShowStatus } from "@/hooks/use-status";
 
 interface Department {
@@ -35,16 +35,15 @@ interface Position {
 
 export default function AdminRegisterPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const showStatus = useShowStatus();
 
-  // 2. THÊM STATE CHO TÊN
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [secretKey, setSecretKey] = useState("");
   const [departmentId, setDepartmentId] = useState<number | "">("");
   const [positionId, setPositionId] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
@@ -62,8 +61,8 @@ export default function AdminRegisterPage() {
     setLoadingData(true);
     try {
       const [deptsRes, posRes] = await Promise.all([
-        fetch("/api/admin/departments", { method: "GET" }),
-        fetch("/api/admin/positions", { method: "GET" }),
+        fetch("/api/admin/departments", { credentials: "include" }),
+        fetch("/api/admin/positions", { credentials: "include" }),
       ]);
 
       if (deptsRes.ok) {
@@ -90,20 +89,24 @@ export default function AdminRegisterPage() {
       return;
     }
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch("/api/auth/admin-register", {
+      const res = await fetch("/api/admin/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
-          // 3. GỬI FIRST NAME VÀ LAST NAME LÊN BACKEND
           first_name: firstName,
           last_name: lastName,
           email,
           password,
-          secretKey,
           department_id: departmentId ? Number(departmentId) : undefined,
           position_id: positionId ? Number(positionId) : undefined,
         }),
@@ -112,16 +115,14 @@ export default function AdminRegisterPage() {
       const json = await res.json();
 
       if (res.ok) {
-        showStatus("success", `Account created successfully! ID: ${json.id}`);
-        // router.push("/dashboard/timekeeping");
+        showStatus("success", `Employee created successfully! ID: ${json.employee_id}`);
         setFirstName("");
         setLastName("");
         setEmail("");
         setPassword("");
-        setConfirmPassword("");                   
+        setConfirmPassword("");
         setDepartmentId("");
         setPositionId("");
-        // setSecretKey("");
       } else {
         setError(json.message || "Registration failed");
         showStatus("error", json.message || "Registration failed");
@@ -134,16 +135,36 @@ export default function AdminRegisterPage() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center px-4 py-12">
+        <p className="text-slate-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center px-4 py-12">
+        <Card className="w-full max-w-md shadow-2xl border border-slate-100 text-center p-8">
+          <ShieldAlert className="w-12 h-12 mx-auto text-amber-500 mb-4" />
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">Authentication Required</h2>
+          <p className="text-slate-500 mb-4">You must be logged in as an administrator to create employee accounts.</p>
+          <Button onClick={() => router.push("/login")} className="bg-indigo-600 hover:bg-indigo-700">Go to Login</Button>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center px-4 py-12">
       <Card className="w-full max-w-2xl shadow-2xl border border-slate-100">
         <CardHeader className="pb-2">
           <CardTitle className="text-2xl font-semibold text-slate-900">
-            Create Admin / Developer Account
+            Create New Employee
           </CardTitle>
           <CardDescription className="text-slate-600">
-            Secure bootstrap access. Only share the secret key with trusted team
-            members.
+            Add a new employee to the organization. They will receive their credentials via email.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-4">
@@ -154,7 +175,6 @@ export default function AdminRegisterPage() {
               </div>
             )}
 
-            {/* 4. UI: THÊM Ô NHẬP FIRST NAME & LAST NAME */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <Label
@@ -204,7 +224,7 @@ export default function AdminRegisterPage() {
                 htmlFor="email"
                 className="text-sm font-medium text-slate-700"
               >
-                Username / Email
+                Work Email
               </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -215,7 +235,7 @@ export default function AdminRegisterPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="pl-10 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                  placeholder="admin@company.com"
+                  placeholder="employee@company.com"
                 />
               </div>
             </div>
@@ -324,9 +344,9 @@ export default function AdminRegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={8}
+                    minLength={6}
                     className="pl-10 bg-slate-50 border-slate-200 focus:bg-white"
-                    placeholder="At least 8 characters"
+                    placeholder="At least 6 characters"
                   />
                 </div>
               </div>
@@ -346,7 +366,7 @@ export default function AdminRegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    minLength={8}
+                    minLength={6}
                     className="pl-10 bg-slate-50 border-slate-200 focus:bg-white"
                     placeholder="Re-enter password"
                   />
@@ -354,39 +374,16 @@ export default function AdminRegisterPage() {
               </div>
             </div>
 
-            {/* Secret Key Input */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="secretKey"
-                className="text-sm font-medium text-slate-700"
-              >
-                Admin Access Token
-              </Label>
-              <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  id="secretKey"
-                  type="password"
-                  value={secretKey}
-                  onChange={(e) => setSecretKey(e.target.value)}
-                  required
-                  className="pl-10 bg-slate-50 border-slate-200 focus:bg-white"
-                  placeholder="Enter the provided secret key"
-                />
-              </div>
-            </div>
-
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between pt-2">
               <p className="text-sm text-slate-500">
-                Only authorized administrators should create accounts with
-                elevated access.
+                The new employee will use these credentials to log in.
               </p>
               <Button
                 type="submit"
                 disabled={loading}
                 className="min-w-[180px] bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
               >
-                {loading ? "Registering…" : "Create Account"}
+                {loading ? "Creating…" : "Create Employee"}
               </Button>
             </div>
           </form>

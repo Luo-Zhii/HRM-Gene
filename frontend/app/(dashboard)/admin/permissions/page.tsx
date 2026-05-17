@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useTranslation } from "react-i18next";
+import { canManagePermissions } from "@/src/lib/adminAccess";
 import { ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
 
 interface Permission {
@@ -38,11 +39,7 @@ export default function PermissionMatrixPage() {
   const { user, loading: authLoading } = useAuth();
   const { t } = useTranslation();
 
-  const canEdit =
-    !!user?.permissions?.includes("manage:system") ||
-    !!user?.permissions?.includes("PUT:/api/admin/roles/:id/permissions") ||
-    user?.role === "Director" ||
-    user?.email === "admin@example.com";
+  const canEdit = canManagePermissions(user);
 
   const [positions, setPositions] = useState<Position[]>([]);
   const [groupedPermissions, setGroupedPermissions] = useState<GroupedPermission[]>([]);
@@ -54,20 +51,11 @@ export default function PermissionMatrixPage() {
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(null);
 
-  // Check authorization
+  // Check authorization — Director always has access
   useEffect(() => {
     if (!authLoading && user) {
-      const canView =
-        canEdit ||
-        user.permissions?.includes("view:permissions") ||
-        user.permissions?.includes("PERMISSIONS:READ") ||
-        user.permissions?.includes("GET:/api/admin/permissions/grouped"); // fallback to endpoint check
-
-      if (!canView) {
-        setStatusMessage({
-          type: "error",
-          text: t("permissions.noPermission", "You do not have permission to view this page."),
-        });
+      if (!canEdit) {
+        setStatusMessage({ type: "error", text: t("permissions.noPermission", "You do not have permission to view this page.") });
         setTimeout(() => router.push("/dashboard"), 2000);
       }
     }
@@ -105,13 +93,7 @@ export default function PermissionMatrixPage() {
   };
 
   useEffect(() => {
-    if (
-      user &&
-      (canEdit ||
-        user.permissions?.includes("view:permissions") ||
-        user.permissions?.includes("PERMISSIONS:READ") ||
-        user.permissions?.includes("GET:/api/admin/permissions/grouped"))
-    ) {
+    if (user && canEdit) {
       loadData();
     }
   }, [user]);
@@ -203,15 +185,7 @@ export default function PermissionMatrixPage() {
     );
   }
 
-  if (
-    !user ||
-    !(
-      canEdit ||
-      user.permissions?.includes("view:permissions") ||
-      user.permissions?.includes("PERMISSIONS:READ") ||
-      user.permissions?.includes("GET:/api/admin/permissions/grouped")
-    )
-  ) {
+  if (!user || !canEdit) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow p-6 max-w-md text-center">

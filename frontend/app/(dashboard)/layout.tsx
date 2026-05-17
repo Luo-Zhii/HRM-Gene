@@ -13,10 +13,79 @@ import { useTranslation } from "react-i18next";
 import {
   Menu, X, User, Users, LogOut, ChevronDown, Bell, Search,
   CheckCheck, MessageSquare, AlertCircle, FileText, Megaphone, AlertTriangle, Zap,
-  Newspaper, Radio, LayoutDashboard
+  Newspaper, Radio, LayoutDashboard, ChevronRight,
+  UserCheck, Clock, CalendarDays, DollarSign, BarChart3,
+  Settings, Shield, Building, Target,
+  CalendarX2, ClipboardList, ScanLine, UserMinus, BadgeAlert,
+  KeyRound, Wallet, TrendingUp, PieChart, Cog, Calendar,
+  Briefcase, GitBranch, UsersRound, FileCheck2, AlertOctagon,
+  LockKeyhole, Fingerprint, CreditCard, Banknote, Receipt,
+  LineChart, Megaphone as Ann, Gauge
 } from "lucide-react";
 
-// --- COMPONENT SIDEBAR (Cập nhật Menu Contracts) ---
+// ─── NavItem (leaf link) ─────────────────────────────────────────────────────
+function NavItem({
+  href, label, icon: Icon, isActive, onClick, indent = false,
+}: {
+  href: string; label: string; icon?: any; isActive?: boolean; onClick: () => void; indent?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all group w-full text-[13px] font-medium
+        ${indent ? "ml-3 pl-3 border-l-2 border-gray-100" : ""}
+        ${isActive
+          ? "bg-blue-600 text-white shadow-sm shadow-blue-200/60"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        }`}
+    >
+      {Icon && <Icon size={15} className={`shrink-0 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />}
+      <span className="truncate">{label}</span>
+    </Link>
+  );
+}
+
+// ─── NavSection (collapsible group) ─────────────────────────────────────────
+function NavSection({
+  title, icon: Icon, color = "text-gray-500", children, defaultOpen = false, forceOpen = false,
+}: {
+  title: string; icon: any; color?: string; children: React.ReactNode; defaultOpen?: boolean; forceOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen || forceOpen);
+
+  // Auto-open if a child is active
+  useEffect(() => {
+    if (forceOpen && !open) setOpen(true);
+  }, [forceOpen]);
+
+  return (
+    <div className="mb-1">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-all group"
+      >
+        <div className="flex items-center gap-2.5">
+          <div className={`w-6 h-6 rounded-md flex items-center justify-center ${open ? "bg-blue-100" : "bg-gray-100 group-hover:bg-gray-200"} transition-colors`}>
+            <Icon size={13} className={open ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"} />
+          </div>
+          <span className={`text-[12.5px] font-bold uppercase tracking-wide ${open ? "text-blue-700" : "text-gray-500 group-hover:text-gray-700"}`}>
+            {title}
+          </span>
+        </div>
+        <ChevronRight size={13} className={`text-gray-400 transition-transform duration-200 ${open ? "rotate-90 text-blue-500" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="mt-0.5 ml-1 pl-2 border-l-2 border-gray-100 space-y-0.5 pb-1">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
 function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { user } = useAuth();
   const { settings } = useCompany();
@@ -27,127 +96,124 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const positionName = user?.position?.position_name?.toLowerCase();
   const { checkPermission } = useCheckPermission();
 
-  // Endpoint validations mapped to seeded DB entries
   const canViewEmployees = checkPermission("GET", "/api/admin/employees");
   const canViewCompany = checkPermission("GET", "/api/admin/company/settings");
   const canViewPermissions = checkPermission("GET", "/api/admin/permissions/grouped");
   const canManagePayroll = checkPermission("GET", "/api/admin/payroll");
-  const canManageLeave = checkPermission("GET", "/api/admin/leave");
+  const canManageLeaveEndpoint = checkPermission("GET", "/api/admin/leave");
 
-  // Fallbacks
   const isAdminOrHr = positionName === "admin" || positionName === "hr" || positionName === "hr manager" || positionName === "director";
+  const canManageLeave = canManageLeaveEndpoint || isAdminOrHr;
   const canViewDirectory = canViewEmployees || isAdminOrHr;
   const hasHRAdminAccess = canViewDirectory || canViewCompany || canViewPermissions || isAdminOrHr;
   const canAccessReports = canManagePayroll || canViewCompany || isAdminOrHr;
 
   const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:3001';
-  const logoUrl = settings?.logo_url
-    ? `${backendBaseUrl}${settings.logo_url}`
-    : "/Logo.png";
+  const logoUrl = settings?.logo_url ? `${backendBaseUrl}${settings.logo_url}` : "/Logo.png";
+
+  const inPeople      = ["/admin/employees","/admin/contracts","/admin/organization","/admin/discipline","/admin/permissions"].some(p => pathname?.startsWith(p));
+  const inAttLeave    = ["/admin/attendance","/admin/qr-display","/admin/leave-approvals","/admin/resignations","/admin/holidays"].some(p => pathname?.startsWith(p));
+  const inPayroll     = pathname?.startsWith("/admin/payroll");
+  const inPerformance = pathname?.startsWith("/admin/performance");
+  const inComms       = pathname?.startsWith("/admin/announcements");
+  const inReports     = pathname?.startsWith("/admin/reports");
+  const inMyWork      = ["/dashboard/timekeeping","/dashboard/leave","/dashboard/performance","/dashboard/salary","/my-resignation"].some(p => pathname?.startsWith(p));
+  const inAdmin       = pathname?.startsWith("/admin");
 
   return (
     <>
       <div className={`fixed inset-0 bg-black/40 z-40 md:hidden transition-opacity ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`} onClick={onClose} />
-      <aside className={`fixed md:sticky top-0 h-screen z-50 w-[260px] bg-white border-r border-gray-200 transform transition-transform duration-300 flex flex-col ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
-        <div className={`flex items-center justify-between h-16 px-6 shrink-0 transition-all relative z-10 ${isScrolled ? "border-transparent shadow-sm" : "border-b border-gray-100"}`}>
+      <aside className={`fixed md:sticky top-0 h-screen z-50 w-[240px] bg-white border-r border-gray-200 transform transition-transform duration-300 flex flex-col ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+
+        {/* Logo */}
+        <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100 shrink-0">
           <Link href="/dashboard" className="flex items-center">
-            <img
-              src={logoUrl}
-              alt="Company Logo"
-              className="h-8 w-auto object-contain max-w-[150px] cursor-pointer hover:opacity-80 transition-opacity"
-              onError={(e) => {
-                e.currentTarget.src = "/Logo.png";
-              }}
-            />
+            <img src={logoUrl} alt="Logo" className="h-7 w-auto object-contain max-w-[130px] cursor-pointer hover:opacity-80 transition-opacity" onError={e => { e.currentTarget.src = "/Logo.png"; }} />
           </Link>
-          <button onClick={onClose} className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-md"><X size={20} /></button>
+          <button onClick={onClose} className="md:hidden p-1.5 text-gray-400 hover:bg-gray-100 rounded-md"><X size={18} /></button>
         </div>
-        <style dangerouslySetInnerHTML={{ __html: `.custom-thin-scrollbar::-webkit-scrollbar { width: 5px; } .custom-thin-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-thin-scrollbar::-webkit-scrollbar-thumb { background-color: transparent; border-radius: 10px; } .custom-thin-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #cbd5e1; } .custom-thin-scrollbar { scrollbar-width: thin; scrollbar-color: transparent transparent; } .custom-thin-scrollbar:hover { scrollbar-color: #cbd5e1 transparent; }` }} />
-        <nav onScroll={(e) => setIsScrolled(e.currentTarget.scrollTop > 0)} className="flex-1 overflow-y-auto py-6 px-4 space-y-1 custom-thin-scrollbar">
 
-          <NavItem href="/dashboard" label={t("sidebar.dashboard")} icon={LayoutDashboard} isActive={pathname === "/dashboard"} onClick={onClose} />
-          <NavItem href="/company-news" label={t("sidebar.newsFeed")} icon={Newspaper} isActive={pathname === "/company-news"} onClick={onClose} />
-          {/* Staff Directory: visible to all authenticated employees */}
-          <NavItem href="/directory" label={t("sidebar.staffDirectory")} icon={Users} isActive={pathname?.startsWith("/directory")} onClick={onClose} />
+        {/* Nav */}
+        <style dangerouslySetInnerHTML={{ __html: `.thin-sc::-webkit-scrollbar{width:4px}.thin-sc::-webkit-scrollbar-thumb{background:transparent;border-radius:4px}.thin-sc:hover::-webkit-scrollbar-thumb{background:#cbd5e1}` }} />
+        <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5 thin-sc">
 
-          <NavItem href="/dashboard/timekeeping" label={t("sidebar.timekeeping")} isActive={pathname === "/dashboard/timekeeping"} onClick={onClose} />
+          {/* Always-visible */}
+          <NavItem href="/dashboard"    label={t("sidebar.dashboard")}      icon={LayoutDashboard} isActive={pathname === "/dashboard"}             onClick={onClose} />
+          <NavItem href="/company-news" label={t("sidebar.newsFeed")}       icon={Newspaper}       isActive={pathname?.startsWith("/company-news")} onClick={onClose} />
+          <NavItem href="/directory"    label={t("sidebar.staffDirectory")} icon={Users}           isActive={pathname?.startsWith("/directory")}    onClick={onClose} />
+
+          {/* MY WORKSPACE */}
+          <div className="pt-2">
+            <NavSection title="My Workspace" icon={Gauge} forceOpen={inMyWork || !inAdmin}>
+              <NavItem href="/dashboard/timekeeping"    label={t("sidebar.timekeeping")}     icon={Fingerprint} isActive={pathname === "/dashboard/timekeeping"}    onClick={onClose} indent />
+              <NavItem href="/dashboard/leave"          label={t("sidebar.leaveManagement")} icon={CalendarX2}  isActive={pathname?.startsWith("/dashboard/leave")} onClick={onClose} indent />
+              <NavItem href="/dashboard/performance/me" label={t("sidebar.myGoals")}         icon={Target}      isActive={pathname === "/dashboard/performance/me"} onClick={onClose} indent />
+              <NavItem href="/dashboard/salary"         label={t("sidebar.mySalary")}        icon={Wallet}      isActive={pathname === "/dashboard/salary"}         onClick={onClose} indent />
+              <NavItem href="/my-resignation"           label={t("sidebar.myResignation")}   icon={UserMinus}   isActive={pathname === "/my-resignation"}           onClick={onClose} indent />
+            </NavSection>
+          </div>
+
+          {/* ADMINISTRATION */}
           {hasHRAdminAccess && (
             <>
-              <NavGroup title={t("sidebar.hrAdministration")} />
+              <div className="pt-3 pb-1">
+                <p className="px-2 text-[10px] font-black uppercase tracking-widest text-gray-300">Administration</p>
+              </div>
+
               {canViewDirectory && (
-                <>
-                  <NavItem href="/admin/employees" label={t("sidebar.employeeDirectory")} isActive={pathname === "/admin/employees"} onClick={onClose} />
-                  {/* 👇 NÚT QUẢN LÝ HỢP ĐỒNG ĐÃ ĐƯỢC CHÈN VÀO ĐÂY 👇 */}
-                  <NavItem href="/admin/contracts" label={t("sidebar.employmentContract")} isActive={pathname === "/admin/contracts"} onClick={onClose} />
-                </>
+                <NavSection title="People" icon={UsersRound} forceOpen={inPeople}>
+                  <NavItem href="/admin/employees"    label={t("sidebar.employeeDirectory")}          icon={UserCheck}    isActive={pathname === "/admin/employees"}    onClick={onClose} indent />
+                  <NavItem href="/admin/contracts"    label={t("sidebar.employmentContract")}          icon={FileCheck2}   isActive={pathname === "/admin/contracts"}    onClick={onClose} indent />
+                  {canViewCompany && <NavItem href="/admin/organization" label={t("sidebar.organizationalManagement")} icon={GitBranch}    isActive={pathname === "/admin/organization"} onClick={onClose} indent />}
+                  {(canViewCompany || isAdminOrHr) && <NavItem href="/admin/discipline" label={t("sidebar.discipline")} icon={AlertOctagon} isActive={pathname === "/admin/discipline"}   onClick={onClose} indent />}
+                  {canViewPermissions && <NavItem href="/admin/permissions" label={t("sidebar.permissions")} icon={LockKeyhole} isActive={pathname === "/admin/permissions"} onClick={onClose} indent />}
+                </NavSection>
               )}
-              {canViewCompany && (
-                <>
-                  <NavItem href="/admin/organization" label={t("sidebar.organizationalManagement")} isActive={pathname === "/admin/organization"} onClick={onClose} />
-                </>
+
+              <NavSection title="Attendance & Leave" icon={CalendarDays} forceOpen={inAttLeave}>
+                {(isAdminOrHr || canViewCompany) && <NavItem href="/admin/attendance"      label={t("sidebar.attendanceHistory")}    icon={Clock}         isActive={pathname === "/admin/attendance"}      onClick={onClose} indent />}
+                {canViewCompany                  && <NavItem href="/admin/qr-display"      label={t("sidebar.qrDisplay")}            icon={ScanLine}      isActive={pathname === "/admin/qr-display"}      onClick={onClose} indent />}
+                {canManageLeave                  && <NavItem href="/admin/leave-approvals" label={t("sidebar.leaveApprovals")}       icon={ClipboardList} isActive={pathname === "/admin/leave-approvals"} onClick={onClose} indent />}
+                {(canManageLeave || isAdminOrHr) && <NavItem href="/admin/resignations"    label={t("sidebar.resignationApprovals")} icon={UserMinus}     isActive={pathname === "/admin/resignations"}    onClick={onClose} indent />}
+                {isAdminOrHr                     && <NavItem href="/admin/holidays"        label="Public Holidays"                   icon={Calendar}      isActive={pathname === "/admin/holidays"}        onClick={onClose} indent />}
+              </NavSection>
+
+              {canManagePayroll && (
+                <NavSection title="Payroll" icon={Banknote} forceOpen={inPayroll}>
+                  <NavItem href="/admin/payroll/config"     label={t("sidebar.salaryConfiguration")} icon={CreditCard} isActive={pathname === "/admin/payroll/config"}     onClick={onClose} indent />
+                  <NavItem href="/admin/payroll/adjustment" label={t("sidebar.salaryAdjustment")}    icon={DollarSign} isActive={pathname === "/admin/payroll/adjustment"}  onClick={onClose} indent />
+                  <NavItem href="/admin/payroll/generate"   label={t("sidebar.createPayroll")}       icon={Receipt}    isActive={pathname === "/admin/payroll/generate"}    onClick={onClose} indent />
+                  <NavItem href="/admin/payroll/issue"      label={t("sidebar.issuePayslips")}       icon={FileText}   isActive={pathname === "/admin/payroll/issue"}       onClick={onClose} indent />
+                </NavSection>
               )}
+
               {(canViewCompany || isAdminOrHr) && (
-                <NavItem href="/admin/discipline" label={t("sidebar.discipline")} isActive={pathname === "/admin/discipline"} onClick={onClose} />
-              )}
-              {canViewPermissions && (
-                <NavItem href="/admin/permissions" label={t("sidebar.permissions")} isActive={pathname === "/admin/permissions"} onClick={onClose} />
+                <NavSection title="Performance" icon={TrendingUp} forceOpen={inPerformance}>
+                  <NavItem href="/admin/performance/library" label={t("sidebar.kpiLibrary")}     icon={Target}    isActive={pathname === "/admin/performance/library"} onClick={onClose} indent />
+                  <NavItem href="/admin/performance/team"    label={t("sidebar.teamPerformance")} icon={BarChart3} isActive={pathname === "/admin/performance/team"}    onClick={onClose} indent />
+                </NavSection>
               )}
 
-              <NavGroup title={t("sidebar.attendanceAndLeave")} />
-              {(isAdminOrHr || canViewCompany) && <NavItem href="/admin/attendance" label={t("sidebar.attendanceHistory")} isActive={pathname === "/admin/attendance"} onClick={onClose} />}
               {canViewCompany && (
-                <NavItem href="/admin/qr-display" label={t("sidebar.qrDisplay")} isActive={pathname === "/admin/qr-display"} onClick={onClose} />
+                <NavSection title="Communication" icon={Radio} forceOpen={inComms}>
+                  <NavItem href="/admin/announcements" label={t("sidebar.manageNews")} icon={Ann} isActive={pathname === "/admin/announcements"} onClick={onClose} indent />
+                </NavSection>
               )}
-              {canManageLeave && (
-                <NavItem href="/admin/leave-approvals" label={t("sidebar.leaveApprovals")} isActive={pathname === "/admin/leave-approvals"} onClick={onClose} />
+
+              {canAccessReports && (
+                <NavSection title="Analytics" icon={LineChart} forceOpen={inReports}>
+                  <NavItem href="/admin/reports" label={t("sidebar.analysisReport")} icon={PieChart} isActive={pathname === "/admin/reports"} onClick={onClose} indent />
+                </NavSection>
               )}
-            </>
-          )}
-          {(canManageLeave || isAdminOrHr) && (
-            <NavItem href="/admin/resignations" label={t("sidebar.resignationApprovals")} isActive={pathname === "/admin/resignations"} onClick={onClose} />
-          )}
-          <NavItem href="/dashboard/leave" label={t("sidebar.leaveManagement")} isActive={pathname?.startsWith("/dashboard/leave")} onClick={onClose} />
-
-          <NavGroup title={t("sidebar.myPerformance")} />
-          <NavItem href="/dashboard/performance/me" label={t("sidebar.myGoals")} isActive={pathname === "/dashboard/performance/me"} onClick={onClose} />
-
-          <NavGroup title={t("sidebar.payrollManagement")} />
-          <NavItem href="/dashboard/salary" label={t("sidebar.mySalary")} isActive={pathname === "/dashboard/salary"} onClick={onClose} />
-          <NavItem href="/my-resignation" label={t("sidebar.myResignation")} isActive={pathname === "/my-resignation"} onClick={onClose} />
-          {canManagePayroll && (
-            <>
-              <NavItem href="/admin/payroll/config" label={t("sidebar.salaryConfiguration")} isActive={pathname === "/admin/payroll/config"} onClick={onClose} />
-              <NavItem href="/admin/payroll/adjustment" label={t("sidebar.salaryAdjustment")} isActive={pathname === "/admin/payroll/adjustment"} onClick={onClose} />
-              <NavItem href="/admin/payroll/generate" label={t("sidebar.createPayroll")} isActive={pathname === "/admin/payroll/generate"} onClick={onClose} />
-              <NavItem href="/admin/payroll/issue" label={t("sidebar.issuePayslips")} isActive={pathname === "/admin/payroll/issue"} onClick={onClose} />
-            </>
-          )}
-          {canAccessReports && (
-            <>
-              <NavGroup title={t("sidebar.systemAnalytics")} />
-              <NavItem href="/admin/reports" label={t("sidebar.analysisReport")} isActive={pathname === "/admin/reports"} onClick={onClose} />
-            </>
-          )}
-          {canViewCompany && (
-            <>
-              <NavGroup title={t("sidebar.communication")} />
-              <NavItem href="/admin/announcements" label={t("sidebar.manageNews")} icon={Radio} isActive={pathname === "/admin/announcements"} onClick={onClose} />
-            </>
-          )}
-          {(canViewCompany || isAdminOrHr) && (
-            <>
-              <NavGroup title={t("sidebar.performanceManagement")} />
-              <NavItem href="/admin/performance/library" label={t("sidebar.kpiLibrary")} isActive={pathname === "/admin/performance/library"} onClick={onClose} />
-              <NavItem href="/admin/performance/team" label={t("sidebar.teamPerformance")} isActive={pathname === "/admin/performance/team"} onClick={onClose} />
             </>
           )}
         </nav>
+
+        {/* Settings pinned at bottom */}
         {canViewCompany && (
-          <div className="p-4 border-t border-gray-100 shrink-0 space-y-1">
-            <NavItem href="/admin/settings" label={t("sidebar.systemSettings")} isActive={pathname === "/admin/settings"} onClick={onClose} />
-            {canManagePayroll && (
-              <NavItem href="/admin/settings/payroll" label={t("sidebar.payrollSettings")} isActive={pathname === "/admin/settings/payroll"} onClick={onClose} />
-            )}
+          <div className="px-2.5 py-3 border-t border-gray-100 shrink-0 space-y-0.5">
+            <NavItem href="/admin/settings"         label={t("sidebar.systemSettings")}  icon={Cog}     isActive={pathname === "/admin/settings"}         onClick={onClose} />
+            {canManagePayroll && <NavItem href="/admin/settings/payroll" label={t("sidebar.payrollSettings")} icon={Settings} isActive={pathname === "/admin/settings/payroll"} onClick={onClose} />}
           </div>
         )}
       </aside>
@@ -155,22 +221,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   );
 }
 
-function NavGroup({ title }: { title: string }) { return <div className="mt-6 mb-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider px-3">{title}</div>; }
-function NavItem({ href, label, icon: Icon, isActive, onClick }: { href: string; label: string; icon?: any; isActive?: boolean; onClick: () => void }) {
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-2.5 rounded-none md:rounded-r-full transition-all group w-full ${isActive
-        ? "bg-blue-600 text-white font-semibold shadow-md shadow-blue-200"
-        : "text-gray-600 hover:bg-blue-50 hover:text-blue-600"
-        }`}
-    >
-      {Icon && <Icon size={18} className={isActive ? "text-white" : "text-gray-400 group-hover:text-blue-600"} />}
-      <span className="text-[14px]">{label}</span>
-    </Link>
-  );
-}
+
 
 function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClick, onRemoveNotification }: { notifications: any[], onMarkAllRead: () => void, onNotificationClick: (n: any) => void, onRemoveNotification: (id: number) => void }) {
   const { t } = useTranslation();

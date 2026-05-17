@@ -23,7 +23,7 @@ interface BankInfo { bank_info_id?: number; bank_name: string; account_number: s
 interface ProfileData {
   employee_id: number; first_name: string; last_name: string; email: string; phone_number?: string; address?: string; avatar_url?: string;
   description?: string; dark_mode?: boolean; email_notifications?: boolean; task_reminders?: boolean; announcements?: boolean; daily_reports?: boolean;
-  two_factor_auth?: boolean; push_notifications?: boolean; position?: { position_id: number; position_name: string; }; bankInfo?: BankInfo;
+  two_factor_auth?: boolean; push_notifications?: boolean; position?: { position_id: number; position_name: string; }; department?: { department_id: number; department_name: string; }; bankInfo?: BankInfo;
 }
 
 // ==========================================
@@ -55,14 +55,17 @@ function ProfileContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const [formData, setFormData] = useState({ first_name: "", last_name: "", email: "", phone_number: "", address: "", description: "" });
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [positions, setPositions] = useState<any[]>([]);
+
+  const [formData, setFormData] = useState({ first_name: "", last_name: "", email: "", phone_number: "", address: "", description: "", department_id: "", position_id: "" });
   const [bankFormData, setBankFormData] = useState({ bank_name: "", account_number: "", account_holder_name: "" });
   const [settings, setSettings] = useState({ email_notifications: true, task_reminders: true, announcements: true, daily_reports: false, dark_mode: false, two_factor_auth: false, push_notifications: true });
 
   const viewingOwnProfile = !employeeId || parseInt(employeeId) === user?.employee_id;
 
   const syncState = (data: ProfileData) => {
-    setFormData({ first_name: data.first_name || "", last_name: data.last_name || "", email: data.email || "", phone_number: data.phone_number || "", address: data.address || "", description: data.description || "" });
+    setFormData({ first_name: data.first_name || "", last_name: data.last_name || "", email: data.email || "", phone_number: data.phone_number || "", address: data.address || "", description: data.description || "", department_id: data.department?.department_id?.toString() || "", position_id: data.position?.position_id?.toString() || "" });
     if (data.bankInfo) setBankFormData({ bank_name: data.bankInfo.bank_name || "", account_number: data.bankInfo.account_number || "", account_holder_name: data.bankInfo.account_holder_name || "" });
     setSettings({
       email_notifications: data.email_notifications ?? true, task_reminders: data.task_reminders ?? true, announcements: data.announcements ?? true,
@@ -113,6 +116,13 @@ function ProfileContent() {
       .catch(() => setPayslips([]));
   }, [user, viewingOwnProfile]);
 
+  useEffect(() => {
+    if (isEditing && (user?.permissions?.includes("manage:employee") || user?.role === "Admin")) {
+      fetch("/api/admin/departments", { credentials: "include" }).then(r => r.json()).then(d => setDepartments(d || []));
+      fetch("/api/admin/positions", { credentials: "include" }).then(r => r.json()).then(d => setPositions(d || []));
+    }
+  }, [isEditing, user]);
+
   const handleAvatarClick = () => fileInputRef.current?.click();
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -134,9 +144,13 @@ function ProfileContent() {
   const handleSaveAll = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch("/api/auth/profile/update", {
+      const payload: any = { ...formData, ...settings, bank_info: bankFormData };
+      if (formData.department_id) payload.department_id = parseInt(formData.department_id, 10);
+      if (formData.position_id) payload.position_id = parseInt(formData.position_id, 10);
+
+      const response = await fetch(`/api/auth/profile/update${employeeId ? `?id=${employeeId}` : ''}`, {
         method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, ...settings, bank_info: bankFormData }),
+        body: JSON.stringify(payload),
       });
       if (response.ok) {
         const updated = await response.json();
@@ -194,7 +208,33 @@ function ProfileContent() {
                 <FormInput label={t("profile.email")} name="email" value={formData.email} onChange={(e: any) => setFormData({ ...formData, email: e.target.value })} disabled={!isEditing} />
                 <FormInput label={t("profile.phone")} name="phone_number" value={formData.phone_number} onChange={(e: any) => setFormData({ ...formData, phone_number: e.target.value })} disabled={!isEditing} />
                 <FormInput label={t("profile.address")} name="address" value={formData.address} onChange={(e: any) => setFormData({ ...formData, address: e.target.value })} disabled={!isEditing} />
-                <FormInput label={t("profile.jobTitle")} value={profileData.position?.position_name} disabled={true} />
+                
+                {/* Department Edit */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Department</Label>
+                  {isEditing && (user?.permissions?.includes("manage:employee") || user?.role === "Admin") ? (
+                    <select value={formData.department_id} onChange={(e) => setFormData({ ...formData, department_id: e.target.value })} className="w-full bg-slate-50 border-none h-11 px-3 text-sm rounded-md focus:ring-blue-500">
+                      <option value="">Select Department</option>
+                      {departments.map(d => <option key={d.department_id} value={d.department_id}>{d.department_name}</option>)}
+                    </select>
+                  ) : (
+                    <Input value={profileData.department?.department_name || "N/A"} disabled={true} className="bg-slate-50 border-none h-11 disabled:opacity-100 disabled:text-slate-500" />
+                  )}
+                </div>
+
+                {/* Position Edit */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Position</Label>
+                  {isEditing && (user?.permissions?.includes("manage:employee") || user?.role === "Admin") ? (
+                    <select value={formData.position_id} onChange={(e) => setFormData({ ...formData, position_id: e.target.value })} className="w-full bg-slate-50 border-none h-11 px-3 text-sm rounded-md focus:ring-blue-500">
+                      <option value="">Select Position</option>
+                      {positions.map(p => <option key={p.position_id} value={p.position_id}>{p.position_name}</option>)}
+                    </select>
+                  ) : (
+                    <Input value={profileData.position?.position_name || "N/A"} disabled={true} className="bg-slate-50 border-none h-11 disabled:opacity-100 disabled:text-slate-500" />
+                  )}
+                </div>
+
                 <div className="md:col-span-2">
                   <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("profile.descriptionBio")}</Label>
                   <Textarea name="description" value={formData.description} onChange={(e: any) => setFormData({ ...formData, description: e.target.value })} disabled={!isEditing} className="bg-slate-50 border-none resize-none h-24 mt-1.5 focus-visible:ring-blue-500" placeholder={t("profile.descriptionPlaceholder")} />

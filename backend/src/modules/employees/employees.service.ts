@@ -11,6 +11,8 @@ import { Department } from "../../entities/department.entity";
 import { Position } from "../../entities/position.entity";
 import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationType } from "../../entities/notification.entity";
 
 @Injectable()
 export class EmployeesService {
@@ -21,7 +23,8 @@ export class EmployeesService {
     private deptRepo: Repository<Department>,
     @InjectRepository(Position)
     private posRepo: Repository<Position>,
-    private dataSource: DataSource // Inject DataSource để lấy lương
+    private dataSource: DataSource, // Inject DataSource để lấy lương
+    private notificationsService: NotificationsService
   ) { }
 
   async create(dto: CreateEmployeeDto) {
@@ -56,7 +59,16 @@ export class EmployeesService {
       if (pos) emp.position = pos;
     }
 
-    return await this.employeeRepo.save(emp);
+    const saved = await this.employeeRepo.save(emp);
+
+    this.notificationsService.createNotification(
+      saved.employee_id,
+      "Welcome to the team!",
+      "Your employee account has been created. Please complete your profile and bank information.",
+      NotificationType.ANNOUNCEMENT
+    ).catch((e) => console.error("Notification error:", e));
+
+    return saved;
   }
 
   // CẬP NHẬT QUAN TRỌNG NHẤT Ở ĐÂY: Hàm này giờ sẽ "cõng" thêm lương trả về cho Frontend
@@ -225,11 +237,21 @@ export class EmployeesService {
    * Intentionally strips: phone_number, address, bankInfo, contracts,
    * password, and any other sensitive HR fields.
    */
-  async findAllPublic() {
+  async findAllPublic(user: any) {
+    const query: any = { employment_status: "Active" };
+    
+    // Row-Level Security: STRICTLY filter by user's department for ALL users in the public Staff Directory.
+    // Thậm chí Giám đốc/HR cũng chỉ nhìn thấy người cùng phòng ban khi vào "Staff Directory" (chứ không phải Admin Employee Directory).
+    if (user?.department?.department_id) {
+      query.department = { department_id: user.department.department_id };
+    } else {
+      query.department = { department_id: -1 }; // Hide if no department
+    }
+
     const employees = await this.employeeRepo.find({
       relations: ["department", "position"],
       order: { first_name: "ASC" },
-      where: { employment_status: "Active" } as any, // Only show active staff
+      where: query,
     });
 
     return employees.map((emp) => ({

@@ -21,6 +21,7 @@ import * as path from "path";
 import { ConfigModule } from "@nestjs/config";
 import { EmployeesModule } from "./modules/employees/employees.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
+import { MessagesModule } from "./modules/messages/messages.module";
 import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
@@ -63,7 +64,8 @@ import { ScheduleModule } from "@nestjs/schedule";
     CompanyProfileModule,
     AnnouncementsModule,
     CommentsModule,
-    DashboardModule
+    DashboardModule,
+    MessagesModule
   ],
 })
 export class AppModule { }

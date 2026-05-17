@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useTranslation } from "react-i18next";
+import { canManageSystem, canManageLeave } from "@/src/lib/adminAccess";
 import {
   Table,
   TableBody,
@@ -65,9 +66,7 @@ export default function AttendanceHistoryPage() {
   const [appliedStartDate, setAppliedStartDate] = useState<string | null>(null);
   const [appliedEndDate, setAppliedEndDate] = useState<string | null>(null);
 
-  const canViewAttendance =
-    user?.permissions?.includes("manage:system") ||
-    user?.permissions?.includes("manage:leave");
+  const canViewAttendance = canManageSystem(user) || canManageLeave(user);
 
   useEffect(() => {
     if (!authLoading && !user) {

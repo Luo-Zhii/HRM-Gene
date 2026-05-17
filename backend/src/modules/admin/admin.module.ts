@@ -17,6 +17,9 @@ import { DepartmentsController } from "../departments/departments.controller";
 import { PositionsController } from "../positions/positions.controller";
 import { DepartmentsService } from "../departments/departments.service";
 import { PositionsService } from "../positions/positions.service";
+import { PublicHoliday } from "../../entities/public-holiday.entity";
+import { HolidayService } from "./holiday.service";
+import { HolidayController } from "./holiday.controller";
 
 @Module({
   imports: [
@@ -32,10 +35,12 @@ import { PositionsService } from "../positions/positions.service";
       Payslip,
       PayrollPeriod,
       SalaryConfig,
+      PublicHoliday,
     ]),
   ],
-  providers: [AdminService, DepartmentsService, PositionsService],
+  providers: [AdminService, DepartmentsService, PositionsService, HolidayService],
   controllers: [AdminController, 
-    DepartmentsController, PositionsController],
+    DepartmentsController, PositionsController, HolidayController],
+  exports: [HolidayService],
 })
 export class AdminModule {}

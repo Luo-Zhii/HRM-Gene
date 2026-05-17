@@ -7,7 +7,10 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "lint": "eslint . --ext .ts",
-    "seed": "ts-node scripts/seed.ts"
+    "seed": "ts-node scripts/seed.ts",
+    "test": "jest --config jest.config.js",
+    "test:cov": "jest --config jest.config.js --coverage",
+    "test:report": "jest --config jest.config.js --reporters=default --reporters=jest-html-reporter"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.0.0",
@@ -46,7 +49,8 @@
     "@types/passport-jwt": "^3.0.6",
     "@types/uuid": "^9.0.0",
     "dotenv": "^17.2.3",
-    "jest": "^30.4.0",
+    "jest": "^30.4.2",
+    "jest-html-reporter": "^4.4.0",
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
     "typescript": "^4.9.0"

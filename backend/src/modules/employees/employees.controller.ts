@@ -13,12 +13,14 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Req,
 } from "@nestjs/common";
 import { EmployeesService } from "./employees.service";
 import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { EndpointPermissionsGuard } from "../auth/endpoint-permissions.guard";
+import { Public } from "../auth/public.decorator";
 
 @Controller("employees")
 @UseInterceptors(ClassSerializerInterceptor)
@@ -45,9 +47,16 @@ export class EmployeesController {
    * Returns only safe, work-related fields (no phone, no address).
    * Sensitive filtering is performed at the SERVICE layer, not here.
    */
+  @Public()
   @Get("directory")
-  findAllPublic() {
-    return this.svc.findAllPublic();
+  findAllPublic(@Req() req: any) {
+    return this.svc.findAllPublic(req.user);
+  }
+
+  @Public()
+  @Get("staff-directory")
+  staffDirectory(@Req() req: any) {
+    return this.svc.findAllPublic(req.user);
   }
 
   @Get("search")

@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/src/hooks/useAuth";
+import { canManageLeave } from "@/src/lib/adminAccess";
 import { Calendar, Clock, FileText, User as UserIcon, Building2, Briefcase, Mail, LayoutGrid, List as ListIcon, CheckCircle2, XCircle, X, MessageSquare } from "lucide-react";
 import ContextualChat from "@/src/components/ContextualChat";
 import { useTranslation } from "react-i18next";
@@ -65,8 +66,7 @@ export default function LeaveApprovalsPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      const hasPermission = user.permissions?.includes("manage:leave");
-      if (!hasPermission) {
+      if (!canManageLeave(user)) {
         setStatusMessage({
           type: "error",
           text: t("leaveApprovals.noPermission"),
@@ -75,6 +75,11 @@ export default function LeaveApprovalsPage() {
       }
     }
   }, [authLoading, user, router, t]);
+
+  // Helper: check if current user can manage leave
+  const hasLeavePermission = () => {
+    return canManageLeave(user);
+  };
 
   const loadRequests = async () => {
     try {
@@ -122,7 +127,7 @@ export default function LeaveApprovalsPage() {
   };
 
   useEffect(() => {
-    if (user && user.permissions?.includes("manage:leave")) {
+    if (user && hasLeavePermission()) {
       loadRequests();
     }
   }, [user]);
@@ -190,7 +195,7 @@ export default function LeaveApprovalsPage() {
     );
   }
 
-  if (!user || !user.permissions?.includes("manage:leave")) {
+  if (!user || !hasLeavePermission()) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow p-6 max-w-md">

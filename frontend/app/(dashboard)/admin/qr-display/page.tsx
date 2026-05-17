@@ -6,6 +6,7 @@ import { useAuthContext } from "@/src/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { RefreshCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { canManageSystem } from "@/src/lib/adminAccess";
 
 export default function QrDisplayPage() {
   const { user, loading } = useAuthContext();
@@ -16,17 +17,9 @@ export default function QrDisplayPage() {
 
   useEffect(() => {
     if (!loading) {
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-      const hasPermission =
-        user.permissions?.includes("manage:system") ||
-        user.permissions?.includes("manage:timekeeping");
-      if (!hasPermission) {
-        router.push("/dashboard");
-        return;
-      }
+      if (!user) { router.push("/login"); return; }
+      const ok = canManageSystem(user);
+      if (!ok) { router.push("/dashboard"); return; }
     }
   }, [user, loading, router]);
 
@@ -75,9 +68,7 @@ export default function QrDisplayPage() {
 
   if (!user) return null;
 
-  const hasPermission =
-    user.permissions?.includes("manage:system") ||
-    user.permissions?.includes("manage:timekeeping");
+  const hasPermission = canManageSystem(user);
   if (!hasPermission) {
     return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold">{t("qrDisplay.accessDenied")}</div>;
   }

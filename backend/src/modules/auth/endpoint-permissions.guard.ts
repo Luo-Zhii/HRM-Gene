@@ -5,12 +5,22 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import { IS_PUBLIC_KEY } from "./public.decorator";
 
 @Injectable()
 export class EndpointPermissionsGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic) {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest();
     const { user, method, route, originalUrl } = request;
 
@@ -21,13 +31,12 @@ export class EndpointPermissionsGuard implements CanActivate {
     // ============================================================
     // 🚀 ADMIN BYPASS
     // ============================================================
-    const positionName = user.position?.position_name || user.role || "";
+    const positionName = (user.position?.position_name || user.role || "").toLowerCase();
 
+    // Admin / Director / HR bypass - case-insensitive
+    const bypassRoles = ["admin", "system admin", "director", "hr manager", "hr"];
     if (
-      positionName === "Admin" ||
-      positionName === "System Admin" ||
-      positionName === "Director" ||
-      positionName.toLowerCase() === "admin" ||
+      bypassRoles.some(role => positionName === role || positionName.includes(role)) ||
       user.email === "admin@example.com"
     ) {
       return true;

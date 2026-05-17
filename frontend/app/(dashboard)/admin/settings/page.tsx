@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useCompany } from "@/src/context/CompanyContext";
+import { canManageSystem } from "@/src/lib/adminAccess";
 import { Upload, Camera, Save, ShieldAlert, DollarSign, Building, Settings, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface StatusMessage {
@@ -43,11 +44,10 @@ export default function SystemSettingsPage() {
     COMPANY_IP_WHITELIST: "",
   });
 
-  // Check authorization
+  // Check authorization — Director/Admin always allowed
   useEffect(() => {
     if (!authLoading && user) {
-      const hasPermission = user.permissions?.includes("manage:system");
-      if (!hasPermission) {
+      if (!canManageSystem(user)) {
         setStatusMessage({ type: "error", text: "You do not have permission to access this page." });
         setTimeout(() => router.push("/dashboard"), 2000);
       }
@@ -80,7 +80,7 @@ export default function SystemSettingsPage() {
   };
 
   useEffect(() => {
-    if (user && user.permissions?.includes("manage:system")) {
+    if (user && canManageSystem(user)) {
       setLoading(true);
       Promise.all([loadGenericSettings(), refreshSettings()]).finally(() => {
         setLoading(false);
@@ -217,8 +217,8 @@ export default function SystemSettingsPage() {
     );
   }
 
-  if (!user || !user.permissions?.includes("manage:system")) {
-    return null; // Handled by useEffect redirect
+  if (!user || !canManageSystem(user)) {
+    return null;
   }
 
   const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:3001';

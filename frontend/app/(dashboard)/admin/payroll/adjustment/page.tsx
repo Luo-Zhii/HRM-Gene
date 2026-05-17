@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { toQueryString } from "@/src/utils/api";
+import { canManagePayroll } from "@/src/lib/adminAccess";
 import {
   Plus,
   TrendingUp,
@@ -89,10 +90,7 @@ export default function SalaryAdjustmentPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      const ok =
-        user.permissions?.includes("manage:payroll") ||
-        user.permissions?.includes("manage:system");
-      if (!ok) {
+      if (!canManagePayroll(user)) {
         toast({ variant: "destructive", title: "Access Denied" });
         setTimeout(() => router.push("/dashboard"), 1500);
       }

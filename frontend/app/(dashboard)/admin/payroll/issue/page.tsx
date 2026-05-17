@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { canManagePayroll } from "@/src/lib/adminAccess";
 import { toQueryString } from "@/src/utils/api";
 import {
   Users,
@@ -73,8 +74,7 @@ export default function IssuePayslipsPage() {
   // Auth guard
   useEffect(() => {
     if (!authLoading && user) {
-      const ok = user.permissions?.includes("manage:payroll") || user.permissions?.includes("manage:system");
-      if (!ok) { toast({ variant: "destructive", title: "Access Denied" }); setTimeout(() => router.push("/dashboard"), 1500); }
+      if (!canManagePayroll(user)) { toast({ variant: "destructive", title: "Access Denied" }); setTimeout(() => router.push("/dashboard"), 1500); }
     }
   }, [authLoading, user, router, toast]);
 

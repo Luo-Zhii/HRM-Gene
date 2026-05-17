@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import { canManageSystem, canManageEmployees } from "@/src/lib/adminAccess";
 import { 
   Building2, 
   Send, 
@@ -68,7 +69,7 @@ export default function AnnouncementsPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      if (!user.permissions?.includes("manage:system") && !user.permissions?.includes("manage:employee")) {
+      if (!canManageSystem(user) && !canManageEmployees(user)) {
         router.push("/dashboard");
       } else {
         fetchInitialData();

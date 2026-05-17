@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import * as bcrypt from "bcrypt";
 import { CompanySettings } from "../../entities/company-settings.entity";
 import { Department } from "../../entities/department.entity";
 import { Position } from "../../entities/position.entity";
@@ -403,10 +404,43 @@ export class AdminService {
   }
 
   async updateEmployee(id: number, data: any) {
-    const employee = await this.employeeRepo.findOne({ where: { employee_id: id } });
+    const employee = await this.employeeRepo.findOne({
+      where: { employee_id: id },
+      relations: ["department"],
+    });
     if (!employee) throw new NotFoundException(`Employee ${id} not found`);
 
-    Object.assign(employee, data);
+    // Handle department assignment (relational — Object.assign can't resolve this)
+    if (data.department_id !== undefined) {
+      const dept = await this.deptRepo.findOne({
+        where: { department_id: data.department_id },
+      });
+      employee.department = dept || undefined;
+
+      // Sync: remove as manager if changing department
+      if (dept && employee.department?.department_id !== data.department_id) {
+        const oldDeptAsManager = await this.deptRepo.findOne({
+          where: { manager: { employee_id: id } },
+        });
+        if (oldDeptAsManager && oldDeptAsManager.department_id !== data.department_id) {
+          oldDeptAsManager.manager = null as any;
+          await this.deptRepo.save(oldDeptAsManager);
+        }
+      }
+    }
+
+    // Handle position assignment (relational)
+    if (data.position_id !== undefined) {
+      const pos = await this.positionRepo.findOne({
+        where: { position_id: data.position_id },
+      });
+      employee.position = pos || undefined;
+    }
+
+    // Assign scalar fields only (strip relational keys to avoid TypeORM confusion)
+    const { department_id, position_id, ...scalars } = data;
+    Object.assign(employee, scalars);
+
     return this.employeeRepo.save(employee);
   }
 
@@ -416,6 +450,51 @@ export class AdminService {
 
     await this.employeeRepo.remove(employee);
     return { message: "Employee deleted successfully" };
+  }
+
+  async createEmployee(data: {
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    department_id?: number;
+    position_id?: number;
+    phone_number?: string;
+    address?: string;
+    avatar_url?: string;
+  }) {
+    const existing = await this.employeeRepo.findOne({
+      where: { email: data.email },
+    });
+    if (existing) throw new BadRequestException("Email already exists");
+
+    const hashed = await bcrypt.hash(data.password, 10);
+
+    const emp = this.employeeRepo.create({
+      email: data.email,
+      password: hashed,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      phone_number: data.phone_number,
+      address: data.address,
+      avatar_url: data.avatar_url,
+    });
+
+    if (data.department_id) {
+      const dept = await this.deptRepo.findOne({
+        where: { department_id: data.department_id },
+      });
+      if (dept) emp.department = dept;
+    }
+
+    if (data.position_id) {
+      const pos = await this.positionRepo.findOne({
+        where: { position_id: data.position_id },
+      });
+      if (pos) emp.position = pos;
+    }
+
+    return this.employeeRepo.save(emp);
   }
 
   // ============= Organization Stats =============

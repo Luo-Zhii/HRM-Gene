@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/src/hooks/useAuth";
+import { canManageSystem } from "@/src/lib/adminAccess";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,9 +19,7 @@ export default function ManageNotificationsPage() {
   const [sending, setSending] = useState(false);
 
   // Check if admin
-  const isAdmin = user?.position?.position_name?.toLowerCase().includes("admin") || 
-                  user?.permissions?.includes("manage:system") ||
-                  user?.position?.position_name?.toLowerCase().includes("director");
+  const isAdmin = canManageSystem(user);
 
   const handleSend = async () => {
     if (!title || !message) {

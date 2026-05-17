@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import { canManageSystem } from "@/src/lib/adminAccess";
 import { Trash2, Building2, Users, Receipt, Briefcase, Edit2, X, Plus, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
@@ -71,7 +72,7 @@ export default function OrganizationPage() {
   // Check Quyền
   useEffect(() => {
     if (!authLoading && user) {
-      const hasPermission = user.permissions?.includes("manage:system");
+      const hasPermission = canManageSystem(user);
       if (!hasPermission) {
         setStatusMessage({ type: "error", text: t("org.noPermission") });
         setTimeout(() => router.push("/dashboard"), 2000);
@@ -122,7 +123,7 @@ export default function OrganizationPage() {
   };
 
   useEffect(() => {
-    if (user && user.permissions?.includes("manage:system")) loadData();
+    if (user && canManageSystem(user)) loadData();
   }, [user]);
 
   useEffect(() => {
@@ -245,7 +246,7 @@ export default function OrganizationPage() {
   };
 
   if (authLoading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-gray-600 font-medium">{t("common.loadingWorkspace", "Loading...")}</p></div>;
-  if (!user || !user.permissions?.includes("manage:system")) {
+  if (!user || !canManageSystem(user)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-sm p-8 max-w-md text-center border border-gray-100">

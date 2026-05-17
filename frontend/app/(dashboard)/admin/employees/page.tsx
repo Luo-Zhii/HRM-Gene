@@ -17,7 +17,7 @@ import { useAuth } from "@/src/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { UserMinus, X, ShieldOff, Plus, Pencil, Trash2 } from "lucide-react";
 import EmployeeTable, { EmployeeRow } from "@/components/EmployeeTable";
-import { useCheckPermission } from "@/src/hooks/useCheckPermission";
+import { canManageEmployees } from "@/src/lib/adminAccess";
 import { Can } from "@/src/components/Can";
 
 export default function AdminEmployeeDirectoryPage() {
@@ -48,11 +48,9 @@ export default function AdminEmployeeDirectoryPage() {
     setTimeout(() => setToastMsg(null), 3000);
   };
 
-  const { checkPermission } = useCheckPermission();
-
   // ── RBAC render gate ────────────────────────────────────────────────────────
   // Computed synchronously after auth resolves — no data is fetched until this is true.
-  const canAccess = !authLoading && checkPermission("GET", "/api/admin/employees");
+  const canAccess = !authLoading && canManageEmployees(user);
 
   const loadEmployees = async () => {
     try {
@@ -201,7 +199,7 @@ export default function AdminEmployeeDirectoryPage() {
         
         <Can method="POST" apiPath="/api/admin/employees">
           <button 
-            onClick={() => router.push("/admin/employees/new")}
+            onClick={() => router.push("/admin/register")}
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm shrink-0"
           >
             <Plus size={18} /> {t("common.add")}

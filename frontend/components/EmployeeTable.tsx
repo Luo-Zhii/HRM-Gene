@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import {
   Search, LayoutGrid, List, Mail, Phone,
   ArrowUpDown, ExternalLink, UserMinus,
-  Users, Building2, Pencil, Trash2,
+  Users, Building2, Pencil, Trash2, MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { Can } from "@/src/components/Can";
@@ -65,6 +65,9 @@ interface EmployeeTableProps {
 
   /** Called when admin clicks the Delete button. */
   onDelete?: (employeeId: number) => void;
+
+  /** Called to chat with an employee */
+  onMessageClick?: (employee: EmployeeRow) => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -88,6 +91,7 @@ export default function EmployeeTable({
   onOffboard,
   onEdit,
   onDelete,
+  onMessageClick,
 }: EmployeeTableProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -240,11 +244,9 @@ export default function EmployeeTable({
 
                 {/*
                   RBAC: Action column (View Profile + Offboard) is only rendered
-                  for Admin/HR users. Regular employees have no action column at all.
+                  for Admin/HR users.
                 */}
-                {showActions && (
-                  <th className="px-4 py-3 text-right">{t("employeeTable.actions")}</th>
-                )}
+                <th className="px-4 py-3 text-right">{t("employeeTable.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-gray-600 font-medium">
@@ -298,63 +300,75 @@ export default function EmployeeTable({
                     </td>
                   )}
 
-                  {/* RBAC: Action buttons — only rendered when showActions is true */}
-                  {showActions && (
-                    <td className="text-right px-4 py-3 whitespace-nowrap">
-                      <button
-                        onClick={() => navigateToProfile(emp)}
-                        className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors mr-2"
-                        title={t("employeeTable.viewProfile")}
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </button>
+                  {/* RBAC: Action buttons */}
+                  <td className="text-right px-4 py-3 whitespace-nowrap">
+                    {showActions ? (
+                      <>
+                        <button
+                          onClick={() => navigateToProfile(emp)}
+                          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors mr-2"
+                          title={t("employeeTable.viewProfile")}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
 
-                      <Can method="PATCH" apiPath="/api/admin/employees/:id">
-                        <button
-                          onClick={() => onEdit?.(emp)}
-                          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-50 rounded-md transition-colors mr-2"
-                          title={t("common.edit")}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                      </Can>
+                        <Can method="PATCH" apiPath="/api/admin/employees/:id">
+                          <button
+                            onClick={() => onEdit?.(emp)}
+                            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-50 rounded-md transition-colors mr-2"
+                            title={t("common.edit")}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        </Can>
 
-                      <Can method="DELETE" apiPath="/api/admin/employees/:id">
+                        <Can method="DELETE" apiPath="/api/admin/employees/:id">
+                          <button
+                            disabled={emp.employee_id === currentUserId}
+                            onClick={() => onDelete?.(emp.employee_id)}
+                            className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors mr-2 ${
+                              emp.employee_id === currentUserId
+                                ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
+                                : "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
+                            }`}
+                            title={t("common.delete")}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </Can>
+                        <Can method="PATCH" apiPath="/api/employees/:id/offboard">
+                          <button
+                            disabled={emp.employee_id === currentUserId || emp.employment_status === "Terminated"}
+                            onClick={() => onOffboard?.(emp.employee_id)}
+                            className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors ${
+                              emp.employee_id === currentUserId || emp.employment_status === "Terminated"
+                                ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
+                                : "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
+                            }`}
+                            title={
+                              emp.employee_id === currentUserId
+                                ? t("offboard.selfError")
+                                : emp.employment_status === "Terminated"
+                                ? t("offboard.alreadyTerminated")
+                                : t("employeeTable.offboard")
+                            }
+                          >
+                            {t("employeeTable.offboard")} <UserMinus className="w-3.5 h-3.5 ml-1.5" />
+                          </button>
+                        </Can>
+                      </>
+                    ) : (
+                      <>
                         <button
-                          disabled={emp.employee_id === currentUserId}
-                          onClick={() => onDelete?.(emp.employee_id)}
-                          className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors mr-2 ${
-                            emp.employee_id === currentUserId
-                              ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
-                              : "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
-                          }`}
-                          title={t("common.delete")}
+                          onClick={() => onMessageClick?.(emp)}
+                          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                          title="Chat"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <MessageSquare className="w-4 h-4 mr-1.5" /> Chat
                         </button>
-                      </Can>
-                      <Can method="PATCH" apiPath="/api/employees/:id/offboard">
-                        <button
-                          disabled={emp.employee_id === currentUserId || emp.employment_status === "Terminated"}
-                          onClick={() => onOffboard?.(emp.employee_id)}
-                          className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors ${
-                            emp.employee_id === currentUserId || emp.employment_status === "Terminated"
-                              ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
-                              : "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
-                          }`}
-                          title={
-                            emp.employee_id === currentUserId
-                              ? t("offboard.selfError")
-                              : emp.employment_status === "Terminated"
-                              ? t("offboard.alreadyTerminated")
-                              : t("employeeTable.offboard")
-                          }
-                        >
-                          {t("employeeTable.offboard")} <UserMinus className="w-3.5 h-3.5 ml-1.5" />
-                        </button>
-                      </Can>
-                    </td>
-                  )}
+                      </>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -477,13 +491,21 @@ export default function EmployeeTable({
                     </Can>
                   </>
                 ) : (
-                  /* Regular employee: link to public directory profile only */
-                  <Link
-                    href={`/directory/${emp.employee_id}`}
-                    className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-100 text-blue-600 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    {t("employeeTable.viewProfile")} <ExternalLink className="w-3.5 h-3.5" />
-                  </Link>
+                  /* Regular employee: link to public directory profile + Chat */
+                  <>
+                    <Link
+                      href={`/directory/${emp.employee_id}`}
+                      className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-100 text-blue-600 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      {t("employeeTable.viewProfile")} <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
+                    <button
+                      onClick={() => onMessageClick?.(emp)}
+                      className="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-600 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      Chat <MessageSquare className="w-3.5 h-3.5" />
+                    </button>
+                  </>
                 )}
               </div>
             </div>

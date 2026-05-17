@@ -29,13 +29,11 @@ export class PermissionsGuard implements CanActivate {
     // ============================================================
     // 🚀 ADMIN BYPASS
     // ============================================================
-    const positionName = user.position?.position_name || user.role || "";
+    const positionName = (user.position?.position_name || user.role || "").toLowerCase();
 
-    if (
-      positionName === "Admin" ||
-      positionName === "System Admin" ||
-      positionName.toLowerCase() === "admin"
-    ) {
+    // Admin / Director / HR bypass - case-insensitive
+    const bypassRoles = ["admin", "system admin", "director", "hr manager", "hr"];
+    if (bypassRoles.some(role => positionName === role || positionName.includes(role))) {
       return true;
     }
 

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { canManagePayroll } from "@/src/lib/adminAccess";
 import { toQueryString } from "@/src/utils/api";
 import {
   Users,
@@ -87,8 +88,7 @@ export default function CreatePayrollPage() {
   // Auth guard
   useEffect(() => {
     if (!authLoading && user) {
-      const ok = user.permissions?.includes("manage:payroll") || user.permissions?.includes("manage:system");
-      if (!ok) {
+      if (!canManagePayroll(user)) {
         toast({ variant: "destructive", title: "Access Denied" });
         setTimeout(() => router.push("/dashboard"), 1500);
       }
@@ -122,7 +122,7 @@ export default function CreatePayrollPage() {
   }, [selectedMonth, selectedYear, toast]);
 
   useEffect(() => {
-    if (user && (user.permissions?.includes("manage:payroll") || user.permissions?.includes("manage:system"))) {
+    if (user && canManagePayroll(user)) {
       loadPayslips();
     }
   }, [user, loadPayslips]);
@@ -216,7 +216,7 @@ export default function CreatePayrollPage() {
     return { count: payslips.length, totalBaseSalary, totalBonus, totalDeductions, totalNet };
   }, [payslips]);
 
-  const canApprove = user?.permissions?.includes("manage:payroll") || user?.permissions?.includes("manage:system");
+  const canApprove = canManagePayroll(user);
   const pendingCount = payslips.filter((p) => p.status === "Pending").length;
 
   if (authLoading) {

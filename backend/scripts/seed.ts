@@ -153,6 +153,18 @@ async function run() {
   const p_issue_payroll = await permRepo.save({ permission_name: "Issue Payslips", method: "POST", apiPath: "/api/admin/payroll/issue", module_group: "PAYROLL" });
   const p_leave = await permRepo.save({ permission_name: "Manage Leave", method: "GET", apiPath: "/api/admin/leave", module_group: "LEAVE" });
 
+  // ADMIN & ATTENDANCE & OTHERS
+  const p_dashboard = await permRepo.save({ permission_name: "View Admin Dashboard", method: "GET", apiPath: "/api/admin/dashboard", module_group: "ADMIN" });
+  const p_announcements = await permRepo.save({ permission_name: "Manage Announcements", method: "POST", apiPath: "/api/announcements", module_group: "ADMIN" });
+  const p_depts = await permRepo.save({ permission_name: "Manage Departments", method: "POST", apiPath: "/api/admin/departments", module_group: "ADMIN" });
+  const p_settings = await permRepo.save({ permission_name: "Manage System Settings", method: "PATCH", apiPath: "/api/admin/settings", module_group: "ADMIN" });
+  
+  const p_salaries = await permRepo.save({ permission_name: "Manage Salaries", method: "PUT", apiPath: "/api/admin/salary", module_group: "PAYROLL" });
+  const p_adjustments = await permRepo.save({ permission_name: "Manage Adjustments", method: "POST", apiPath: "/api/payroll/adjustments", module_group: "PAYROLL" });
+  
+  const p_leave_rules = await permRepo.save({ permission_name: "Manage Leave Rules", method: "PUT", apiPath: "/api/admin/leave/rules", module_group: "LEAVE" });
+  const p_attendance = await permRepo.save({ permission_name: "View Attendance History", method: "GET", apiPath: "/api/attendance/admin/all", module_group: "ATTENDANCE" });
+
 
   console.log("🌱 Creating Leave Types...");
   const [annualLeave, sickLeave, unpaidLeave] = await leaveTypeRepo.save([
@@ -202,6 +214,14 @@ async function run() {
     { position: posDirector, permission: p_generate_payroll },
     { position: posDirector, permission: p_issue_payroll },
     { position: posDirector, permission: p_leave },
+    { position: posDirector, permission: p_dashboard },
+    { position: posDirector, permission: p_announcements },
+    { position: posDirector, permission: p_depts },
+    { position: posDirector, permission: p_settings },
+    { position: posDirector, permission: p_salaries },
+    { position: posDirector, permission: p_adjustments },
+    { position: posDirector, permission: p_leave_rules },
+    { position: posDirector, permission: p_attendance },
     
     // Manager gets GET and PATCH permissions only (excluding delete/create/update configs)
     { position: posManager, permission: p_get_perms },

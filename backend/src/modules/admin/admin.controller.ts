@@ -121,6 +121,24 @@ export class AdminController {
     return this.svc.getBasicEmployees();
   }
 
+  @Post("employees")
+  async createEmployee(
+    @Body()
+    body: {
+      email: string;
+      password: string;
+      first_name: string;
+      last_name: string;
+      department_id?: number;
+      position_id?: number;
+      phone_number?: string;
+      address?: string;
+      avatar_url?: string;
+    }
+  ) {
+    return this.svc.createEmployee(body);
+  }
+
   @Put("employees/:id/transfer")
   async transferEmployee(
     @Param("id", ParseIntPipe) id: number,

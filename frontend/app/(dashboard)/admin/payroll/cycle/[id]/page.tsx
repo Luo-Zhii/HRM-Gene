@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { canManagePayroll } from "@/src/lib/adminAccess";
 import {
   Table,
   TableBody,
@@ -62,15 +63,8 @@ export default function PayrollCycleDetailPage() {
   // Check authorization
   useEffect(() => {
     if (!authLoading && user) {
-      const hasPermission =
-        user.permissions?.includes("manage:payroll") ||
-        user.permissions?.includes("manage:system");
-      if (!hasPermission) {
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "You do not have permission to access this page.",
-        });
+      if (!canManagePayroll(user)) {
+        toast({ variant: "destructive", title: "Access Denied", description: "You do not have permission to access this page." });
         setTimeout(() => router.push("/dashboard"), 2000);
       }
     }
@@ -98,12 +92,7 @@ export default function PayrollCycleDetailPage() {
   };
 
   useEffect(() => {
-    if (
-      user &&
-      periodId &&
-      (user.permissions?.includes("manage:payroll") ||
-        user.permissions?.includes("manage:system"))
-    ) {
+    if (user && periodId && canManagePayroll(user)) {
       loadData();
     }
   }, [user, periodId]);
@@ -158,18 +147,12 @@ export default function PayrollCycleDetailPage() {
     );
   }
 
-  if (
-    !user ||
-    (!user.permissions?.includes("manage:payroll") &&
-      !user.permissions?.includes("manage:system"))
-  ) {
+  if (!user || !canManagePayroll(user)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow p-6 max-w-md">
           <h1 className="text-xl font-bold text-red-600 mb-2">Access Denied</h1>
-          <p className="text-gray-600">
-            You do not have permission to access this page.
-          </p>
+          <p className="text-gray-600">You do not have permission to access this page.</p>
         </div>
       </div>
     );

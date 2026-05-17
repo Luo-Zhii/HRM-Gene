@@ -249,14 +249,65 @@ export class LeaveService {
 
     // CRITICAL LOGIC: If status is 'Approved', deduct days from LeaveBalance
     if (newStatus === "Approved") {
-      // Calculate number of days (including start and end date)
+      // Calculate number of working days (excluding weekends)
       const start = new Date(leaveRequest.start_date);
       const end = new Date(leaveRequest.end_date);
-      const daysRequested =
-        Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
-        1;
+      
+      // Count working days (Mon-Fri)
+      let daysRequested = 0;
+      const current = new Date(start);
+      while (current <= end) {
+        const dayOfWeek = current.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0=Sun, 6=Sat
+          daysRequested++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      // Fallback: if all days are weekend, use calendar days
+      if (daysRequested === 0) {
+        daysRequested = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      }
 
       // Find the corresponding LeaveBalance record
+      let balance = await this.balanceRepo.findOne({
+        where: {
+          employee: { employee_id: leaveRequest.employee.employee_id },
+          leave_type: { leave_type_id: leaveRequest.leave_type.leave_type_id },
+        },
+      });
+
+      if (!balance) {
+        // Auto-create balance record if it doesn't exist yet
+        const defaultDays = leaveRequest.leave_type?.default_days_allocated || 0;
+        balance = this.balanceRepo.create({
+          employee: leaveRequest.employee,
+          leave_type: leaveRequest.leave_type,
+          remaining_days: Math.max(0, defaultDays - daysRequested),
+        });
+        await this.balanceRepo.save(balance);
+      } else {
+        // Deduct days from remaining_days
+        balance.remaining_days = Math.max(0, balance.remaining_days - daysRequested);
+        await this.balanceRepo.save(balance);
+      }
+    }
+
+    // If revoking (back to Pending/Rejected from Approved), restore balance
+    if (newStatus === "Rejected" && leaveRequest.status === "Approved") {
+      // Recalculate days to restore
+      const start = new Date(leaveRequest.start_date);
+      const end = new Date(leaveRequest.end_date);
+      let daysToRestore = 0;
+      const current = new Date(start);
+      while (current <= end) {
+        const dayOfWeek = current.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) daysToRestore++;
+        current.setDate(current.getDate() + 1);
+      }
+      if (daysToRestore === 0) {
+        daysToRestore = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      }
+
       const balance = await this.balanceRepo.findOne({
         where: {
           employee: { employee_id: leaveRequest.employee.employee_id },
@@ -265,11 +316,11 @@ export class LeaveService {
       });
 
       if (balance) {
-        // Deduct days from remaining_days
-        balance.remaining_days -= daysRequested;
-        if (balance.remaining_days < 0) {
-          balance.remaining_days = 0; // Prevent negative balance
-        }
+        const leaveType = await this.leaveTypeRepo.findOne({
+          where: { leave_type_id: leaveRequest.leave_type.leave_type_id }
+        });
+        const maxDays = leaveType?.default_days_allocated || 999;
+        balance.remaining_days = Math.min(maxDays, balance.remaining_days + daysToRestore);
         await this.balanceRepo.save(balance);
       }
     }

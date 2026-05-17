@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { canManagePayroll } from "@/src/lib/adminAccess";
 import { ArrowUpDown, Edit2, Save, X, Trash2, User, FileText, FilePlus, Target } from "lucide-react";
 import {
   Table,
@@ -72,18 +73,11 @@ export default function SalaryConfigPage() {
   });
   const [viewingPayslip, setViewingPayslip] = useState<any>(null);
 
-  // Check authorization
+  // Check authorization — Director always allowed
   useEffect(() => {
     if (!authLoading && user) {
-      const hasPermission =
-        user.permissions?.includes("manage:payroll") ||
-        user.permissions?.includes("manage:system");
-      if (!hasPermission) {
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "You do not have permission to access this page.",
-        });
+      if (!canManagePayroll(user)) {
+        toast({ variant: "destructive", title: "Access Denied", description: "You do not have permission to access this page." });
         setTimeout(() => router.push("/dashboard"), 2000);
       }
     }
@@ -139,7 +133,7 @@ export default function SalaryConfigPage() {
   };
 
   useEffect(() => {
-    if (user && (user.permissions?.includes("manage:payroll") || user.permissions?.includes("manage:system"))) {
+    if (user && canManagePayroll(user)) {
       loadConfigs();
     }
   }, [user]);
