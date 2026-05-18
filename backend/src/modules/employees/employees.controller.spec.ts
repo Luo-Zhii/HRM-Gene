@@ -44,7 +44,7 @@ describe('EmployeesController', () => {
   describe('findAllPublic', () => {
     it('should return safe fields', async () => {
       mockSvc.findAllPublic.mockResolvedValue([]);
-      expect(await controller.findAllPublic()).toEqual([]);
+      expect(await controller.findAllPublic({ user: { department: { department_id: 1 } } } as any)).toEqual([]);
     });
   });
 

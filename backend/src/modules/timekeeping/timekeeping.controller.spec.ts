@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TimeKeepingController } from './timekeeping.controller';
 import { TimeKeepingService } from './timekeeping.service';
 import { ForbiddenException } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { CompanySettings } from '../../entities/company-settings.entity';
 
 describe('TimeKeepingController', () => {
   let controller: TimeKeepingController;
@@ -17,6 +19,7 @@ describe('TimeKeepingController', () => {
       controllers: [TimeKeepingController],
       providers: [
         { provide: TimeKeepingService, useValue: mockService },
+        { provide: getRepositoryToken(CompanySettings), useValue: { findOneBy: jest.fn().mockResolvedValue({ value: '' }) } },
       ],
     }).compile();
 

@@ -299,13 +299,13 @@ classDiagram
     %% ── Relationships ──
     Employee "1" --> "0..1" Department : department
     Employee "1" --> "0..1" Position : position
-    Employee "1" --> "0..1" BankInfo : bankInfo (1:1 cascade)
+    Employee "1" --> "0..1" BankInfo : "bankInfo (1:1 cascade)"
 
-    Department "0..1" --> "1" Employee : manager (manager_id FK)
+    Department "0..1" --> "1" Employee : "manager (manager_id FK)"
     Department "1" --> "*" Employee : employees
 
     Employee "1" --> "*" Contract : contracts
-    Contract "*" --> "1" Employee : employee (CASCADE)
+    Contract "*" --> "1" Employee : "employee (CASCADE)"
 
     Employee "1" --> "*" LeaveRequest : employee
     LeaveType "1" --> "*" LeaveRequest : leave_type
@@ -316,21 +316,21 @@ classDiagram
 
     Employee "1" --> "*" TimeKeeping : employee
 
-    Employee "1" --> "0..1" SalaryConfig : employee (1:1 CASCADE)
+    Employee "1" --> "0..1" SalaryConfig : "employee (1:1 CASCADE)"
     Employee "1" --> "*" SalaryHistory : employee
-    Employee "1" --> "*" SalaryAdjustment : employee (CASCADE)
+    Employee "1" --> "*" SalaryAdjustment : "employee (CASCADE)"
     Employee "1" --> "*" Payslip : employee
 
     PayrollPeriod "1" --> "*" Payslip : payroll_period
     Employee "1" --> "*" Payslip : created_by
 
-    Employee "1" --> "*" Violation : employee (CASCADE)
+    Employee "1" --> "*" Violation : "employee (CASCADE)"
 
-    Employee "1" --> "*" Message : sender (CASCADE)
-    Employee "1" --> "*" Message : receiver (CASCADE)
+    Employee "1" --> "*" Message : "sender (CASCADE)"
+    Employee "1" --> "*" Message : "receiver (CASCADE)"
 
     Employee "1" --> "*" Comment : author
-    Employee "1" --> "*" Notification : user (CASCADE)
+    Employee "1" --> "*" Notification : "user (CASCADE)"
     Employee "1" --> "*" AuditLog : user
 
     Employee "1" --> "*" KpiAssignment : employee

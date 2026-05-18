@@ -9,6 +9,7 @@ import { Notification } from '../../entities/notification.entity';
 import { Violation } from '../../entities/violation.entity';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('TimeKeepingService', () => {
   let service: TimeKeepingService;
@@ -58,6 +59,15 @@ describe('TimeKeepingService', () => {
         { provide: getRepositoryToken(Notification), useValue: mockRepo },
         { provide: getRepositoryToken(Violation), useValue: mockRepo },
         { provide: NotificationsGateway, useValue: gatewayMock },
+        {
+          provide: NotificationsService,
+          useValue: {
+            createNotification: jest.fn().mockImplementation(() => {
+              gatewayMock.sendNotificationToUser();
+              return Promise.resolve({});
+            }),
+          },
+        },
       ],
     }).compile();
 

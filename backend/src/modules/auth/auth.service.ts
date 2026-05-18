@@ -13,7 +13,7 @@ import { Position } from "../../entities/position.entity";
 import { PositionPermission } from "../../entities/position-permission.entity";
 import { Permission } from "../../entities/permission.entity";
 import "dotenv/config";
-import { Department } from "@/entities/department.entity";
+import { Department } from "../../entities/department.entity";
 @Injectable()
 export class AuthService {
   constructor(

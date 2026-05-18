@@ -11,16 +11,20 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 describe('ContractsService', () => {
   let service: ContractsService;
 
+  let qbInstance: any;
+
   const createQueryBuilderMock = () => {
-    const qb = {
-      leftJoinAndSelect: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      skip: jest.fn().mockReturnThis(),
-      take: jest.fn().mockReturnThis(),
-      getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
-    };
-    return qb as any;
+    if (!qbInstance) {
+      qbInstance = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+      };
+    }
+    return qbInstance;
   };
 
   const repoMockFactory = () => ({
@@ -36,6 +40,7 @@ describe('ContractsService', () => {
   let contractRepo: any, employeeRepo: any, salaryHistoryRepo: any, salaryConfigRepo: any;
 
   beforeEach(async () => {
+    qbInstance = null;
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ContractsService,

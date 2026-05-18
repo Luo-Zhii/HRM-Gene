@@ -7,6 +7,7 @@ import { Position } from '../../entities/position.entity';
 import { DataSource } from 'typeorm';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { NotificationsService } from '../notifications/notifications.service';
 
 jest.mock('bcrypt');
 
@@ -31,6 +32,7 @@ describe('EmployeesService', () => {
         { provide: getRepositoryToken(Department), useFactory: repoMockFactory },
         { provide: getRepositoryToken(Position), useFactory: repoMockFactory },
         { provide: DataSource, useValue: { query: jest.fn() } },
+        { provide: NotificationsService, useValue: { createNotification: jest.fn().mockResolvedValue({}) } },
       ],
     }).compile();
 
@@ -71,8 +73,8 @@ describe('EmployeesService', () => {
       dataSource.query.mockResolvedValue([{ employee_id: 1, base_salary: '1000' }]);
 
       const res = await service.findAll();
-      expect(res[0].base_salary).toBe('1000');
-      expect(res[1].base_salary).toBeNull();
+      expect((res[0] as any).base_salary).toBe('1000');
+      expect((res[1] as any).base_salary).toBeNull();
       expect(dataSource.query).toHaveBeenCalled();
     });
 
@@ -110,7 +112,7 @@ describe('EmployeesService', () => {
       deptRepo.findOne.mockResolvedValueOnce({ department_id: 2 }).mockResolvedValueOnce(null); // the second is for oldDeptAsManager check
       posRepo.findOne.mockResolvedValue({ position_id: 2 });
       
-      await service.update(1, { password: 'new', first_name: 'new', department_id: 2, position_id: 2, bank_info: { bank_name: 'B' } });
+      await service.update(1, { password: 'new', first_name: 'new', department_id: 2, position_id: 2, bank_info: { bank_name: 'B' } } as any);
       
       expect(bcrypt.hash).toHaveBeenCalledWith('new', 10);
       expect(employeeRepo.save).toHaveBeenCalledWith(expect.objectContaining({ password: 'hashed', first_name: 'new' }));
@@ -153,7 +155,7 @@ describe('EmployeesService', () => {
   describe('findAllPublic', () => {
     it('should exclude sensitive fields and only retain safe fields', async () => {
       employeeRepo.find.mockResolvedValue([{ employee_id: 1, first_name: 'A', last_name: 'B', email: 'e', department: { department_id: 1, department_name: 'D' }, position: null, phone_number: '123', address: '123 block' }]);
-      const res = await service.findAllPublic();
+      const res = await service.findAllPublic({ department: { department_id: 1 } });
       expect(res[0]).toEqual({
         employee_id: 1,
         first_name: 'A',

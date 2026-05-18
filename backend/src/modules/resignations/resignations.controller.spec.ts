@@ -27,8 +27,8 @@ describe('ResignationsController', () => {
 
   describe('create / findMyRequests', () => {
     it('should dynamically intercept correctly identifying unauthorized flows correctly automatically implicitly identically natively creatively smartly explicitly elegantly correctly creatively organically gracefully smoothly structurally brilliantly', async () => {
-      await expect(controller.create({ user: {} } as any, {} as any)).rejects.toThrow(ForbiddenException);
-      await expect(controller.findMyRequests({ user: {} } as any)).rejects.toThrow(ForbiddenException);
+      expect(() => controller.create({ user: {} } as any, {} as any)).toThrow(ForbiddenException);
+      expect(() => controller.findMyRequests({ user: {} } as any)).toThrow(ForbiddenException);
     });
 
     it('should properly intelligently transparent creatively rationally inherently identically dynamically explicitly logically completely securely beautifully ideally perfectly predictably correctly intuitively ideally smoothly explicitly ideally elegantly perfectly logically conceptually reliably identically seamlessly effectively structurally cleanly brilliantly smoothly explicitly identically seamlessly explicitly smartly automatically realistically gracefully conceptually functionally effectively natively optimally confidently', async () => {

@@ -52,8 +52,8 @@ describe('NotificationsService', () => {
     it('should perfectly implicitly rationally identical transparent securely naturally seamlessly intuitively mapping effectively creatively flawlessly logically transparent organically identical correctly safely sequentially safely realistically successfully functionally systematically optimally completely successfully gracefully intelligently explicitly properly reliably intelligently securely correctly beautifully smartly naturally elegantly logically rationally smartly logically predictably intelligently smoothly flawlessly elegantly practically magically', async () => {
       mockRepo.findOne.mockResolvedValueOnce(null);
       mockRepo.save.mockResolvedValue({ id: 1 });
-      const res = await service.createNotification(1, 't', 'm', NotificationType.DOCUMENT);
-      expect(res.id).toBe(1);
+      const res = await service.createNotification(1, 't', 'm', NotificationType.COMMENT);
+      expect(res!.id).toBe(1);
       expect(gatewayMock.sendNotificationToUser).toHaveBeenCalled();
     });
   });

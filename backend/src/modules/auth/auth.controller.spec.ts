@@ -91,7 +91,7 @@ describe('AuthController', () => {
   // ========== uploadAvatar ==========
   describe('uploadAvatar', () => {
     it('should throw BadRequestException if no file is provided', async () => {
-      await expect(controller.uploadAvatar({ user: { id: 1 } }, null)).rejects.toThrow(BadRequestException);
+      await expect(controller.uploadAvatar({ user: { id: 1 } }, null as any)).rejects.toThrow(BadRequestException);
     });
 
     it('should update avatar url and return result', async () => {

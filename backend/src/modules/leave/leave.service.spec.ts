@@ -11,12 +11,12 @@ import { BadRequestException } from '@nestjs/common';
 describe('LeaveService', () => {
   let service: LeaveService;
 
-  const mockRepo = {
+  const repoMockFactory = () => ({
     find: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
-  };
+  });
 
   const notificationMock = {
     createNotification: jest.fn(),
@@ -38,21 +38,22 @@ describe('LeaveService', () => {
   let reqRepo: any, balanceRepo: any, typeRepo: any, employeeRepo: any;
 
   beforeEach(async () => {
+    reqRepo = repoMockFactory();
+    balanceRepo = repoMockFactory();
+    typeRepo = repoMockFactory();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LeaveService,
-        { provide: getRepositoryToken(LeaveRequest), useValue: mockRepo },
-        { provide: getRepositoryToken(LeaveBalance), useValue: mockRepo },
-        { provide: getRepositoryToken(LeaveType), useValue: mockRepo },
+        { provide: getRepositoryToken(LeaveRequest), useValue: reqRepo },
+        { provide: getRepositoryToken(LeaveBalance), useValue: balanceRepo },
+        { provide: getRepositoryToken(LeaveType), useValue: typeRepo },
         { provide: getRepositoryToken(Employee), useValue: employeeRepoMock },
         { provide: NotificationsService, useValue: notificationMock },
       ],
     }).compile();
 
     service = module.get<LeaveService>(LeaveService);
-    reqRepo = module.get(getRepositoryToken(LeaveRequest));
-    balanceRepo = module.get(getRepositoryToken(LeaveBalance));
-    typeRepo = module.get(getRepositoryToken(LeaveType));
     employeeRepo = module.get(getRepositoryToken(Employee));
     jest.clearAllMocks();
   });

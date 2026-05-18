@@ -36,9 +36,9 @@ describe('CompanyProfileController', () => {
       mockService.getProfile.mockResolvedValue({ id: 1 });
       mockService.updateProfile.mockResolvedValue({ id: 1, name: 'T' });
       
-      const res = await controller.updateProfile({ name: 'T' });
+      const res = await controller.updateProfile({ company_name: 'T' });
       
-      expect(mockService.updateProfile).toHaveBeenCalledWith(1, { name: 'T' });
+      expect(mockService.updateProfile).toHaveBeenCalledWith(1, { company_name: 'T' });
       expect(res).toEqual({ id: 1, name: 'T' });
     });
   });

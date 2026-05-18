@@ -6,18 +6,19 @@ import { Employee } from '../../entities/employee.entity';
 import { TimeKeeping } from '../../entities/timekeeping.entity';
 import { Notification } from '../../entities/notification.entity';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 import { NotFoundException } from '@nestjs/common';
 
 describe('ViolationsService', () => {
   let service: ViolationsService;
 
-  const repoMock = {
+  const repoMockFactory = () => ({
     findOne: jest.fn(),
     find: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
     remove: jest.fn(),
-  };
+  });
 
   const gatewayMock = {
     sendNotificationToUser: jest.fn(),
@@ -26,22 +27,24 @@ describe('ViolationsService', () => {
   let violationRepo: any, employeeRepo: any, timeKeepingRepo: any, notificationRepo: any;
 
   beforeEach(async () => {
+    violationRepo = repoMockFactory();
+    employeeRepo = repoMockFactory();
+    timeKeepingRepo = repoMockFactory();
+    notificationRepo = repoMockFactory();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ViolationsService,
-        { provide: getRepositoryToken(Violation), useValue: repoMock },
-        { provide: getRepositoryToken(Employee), useValue: repoMock },
-        { provide: getRepositoryToken(TimeKeeping), useValue: repoMock },
-        { provide: getRepositoryToken(Notification), useValue: repoMock },
+        NotificationsService,
+        { provide: getRepositoryToken(Violation), useValue: violationRepo },
+        { provide: getRepositoryToken(Employee), useValue: employeeRepo },
+        { provide: getRepositoryToken(TimeKeeping), useValue: timeKeepingRepo },
+        { provide: getRepositoryToken(Notification), useValue: notificationRepo },
         { provide: NotificationsGateway, useValue: gatewayMock },
       ],
     }).compile();
 
     service = module.get<ViolationsService>(ViolationsService);
-    violationRepo = module.get(getRepositoryToken(Violation));
-    employeeRepo = module.get(getRepositoryToken(Employee));
-    timeKeepingRepo = module.get(getRepositoryToken(TimeKeeping));
-    notificationRepo = module.get(getRepositoryToken(Notification));
     jest.clearAllMocks();
   });
 
@@ -99,6 +102,8 @@ describe('ViolationsService', () => {
         deduction_amount: "5.00", status: 'Resolved', severity: 'High',
         violation_date: '2026-01-01', violation_type: 'Late'
       });
+      notificationRepo.create.mockReturnValue({});
+      notificationRepo.save.mockResolvedValue({});
 
       const res = await service.update(1, { deduction_amount: "5.00", status: 'Resolved', severity: 'High' } as any);
       
@@ -126,6 +131,8 @@ describe('ViolationsService', () => {
       employeeRepo.find.mockResolvedValue([
         { position: { position_name: 'Admin' } }
       ]);
+      notificationRepo.create.mockReturnValue({});
+      notificationRepo.save.mockResolvedValue({});
 
       const res = await service.syncAttendance();
       expect(res.createdCount).toBe(1);
