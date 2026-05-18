@@ -1,0 +1,19 @@
+{
+  "name": "hrm-gene-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HRM-Gene Black-Box E2E Tests with Playwright (IEEE-829)",
+  "scripts": {
+    "test": "playwright test --config=playwright.config.ts",
+    "test:headed": "playwright test --config=playwright.config.ts --headed",
+    "test:chromium": "playwright test --config=playwright.config.ts --project=chromium",
+    "test:firefox": "playwright test --config=playwright.config.ts --project=firefox",
+    "test:smoke": "playwright test --config=playwright.config.ts --grep \"TC_AUTH_001|TC_DASH_001|TC_EMP_001|TC_LEAVE_001|TC_PAY_001\"",
+    "test:debug": "PWDEBUG=1 playwright test --config=playwright.config.ts --headed",
+    "report": "playwright show-report e2e-report",
+    "report:open": "playwright show-report e2e-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
