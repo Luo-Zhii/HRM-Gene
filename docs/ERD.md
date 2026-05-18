@@ -261,8 +261,8 @@ classDiagram
     }
 
     class PositionPermission {
-        +int position_id PK,FK
-        +int permission_id PK,FK
+        +int position_id PK_FK
+        +int permission_id PK_FK
     }
 
     %% ── System ──
@@ -299,50 +299,50 @@ classDiagram
     %% ── Relationships ──
     Employee "1" --> "0..1" Department : department
     Employee "1" --> "0..1" Position : position
-    Employee "1" --> "0..1" BankInfo : "bankInfo (1:1 cascade)"
+    Employee "1" --> "0..1" BankInfo : bankInfo
 
-    Department "0..1" --> "1" Employee : "manager (manager_id FK)"
+    Department "0..1" --> "1" Employee : manager
     Department "1" --> "*" Employee : employees
 
     Employee "1" --> "*" Contract : contracts
-    Contract "*" --> "1" Employee : "employee (CASCADE)"
+    Contract "*" --> "1" Employee : employee
 
-    Employee "1" --> "*" LeaveRequest : employee
-    LeaveType "1" --> "*" LeaveRequest : leave_type
-    Employee "1" --> "*" LeaveRequest : manager_approver
+    Employee "1" --> "*" LeaveRequest : leaveRequests
+    LeaveType "1" --> "*" LeaveRequest : leaveType
+    Employee "1" --> "*" LeaveRequest : managerApprover
 
-    Employee "1" --> "*" LeaveBalance : employee
-    LeaveType "1" --> "*" LeaveBalance : leave_type
+    Employee "1" --> "*" LeaveBalance : leaveBalances
+    LeaveType "1" --> "*" LeaveBalance : leaveType
 
-    Employee "1" --> "*" TimeKeeping : employee
+    Employee "1" --> "*" TimeKeeping : timeKeepings
 
-    Employee "1" --> "0..1" SalaryConfig : "employee (1:1 CASCADE)"
-    Employee "1" --> "*" SalaryHistory : employee
-    Employee "1" --> "*" SalaryAdjustment : "employee (CASCADE)"
-    Employee "1" --> "*" Payslip : employee
+    Employee "1" --> "0..1" SalaryConfig : salaryConfig
+    Employee "1" --> "*" SalaryHistory : salaryHistories
+    Employee "1" --> "*" SalaryAdjustment : salaryAdjustments
+    Employee "1" --> "*" Payslip : payslips
 
-    PayrollPeriod "1" --> "*" Payslip : payroll_period
-    Employee "1" --> "*" Payslip : created_by
+    PayrollPeriod "1" --> "*" Payslip : payslips
+    Employee "1" --> "*" Payslip : createdBy
 
-    Employee "1" --> "*" Violation : "employee (CASCADE)"
+    Employee "1" --> "*" Violation : violations
 
-    Employee "1" --> "*" Message : "sender (CASCADE)"
-    Employee "1" --> "*" Message : "receiver (CASCADE)"
+    Employee "1" --> "*" Message : sentMessages
+    Employee "1" --> "*" Message : receivedMessages
 
-    Employee "1" --> "*" Comment : author
-    Employee "1" --> "*" Notification : "user (CASCADE)"
-    Employee "1" --> "*" AuditLog : user
+    Employee "1" --> "*" Comment : comments
+    Employee "1" --> "*" Notification : notifications
+    Employee "1" --> "*" AuditLog : auditLogs
 
-    Employee "1" --> "*" KpiAssignment : employee
+    Employee "1" --> "*" KpiAssignment : kpiAssignments
     KpiPeriod "1" --> "*" KpiAssignment : period
-    KpiLibrary "1" --> "*" KpiAssignment : kpi_library
+    KpiLibrary "1" --> "*" KpiAssignment : kpiLibrary
 
-    Employee "1" --> "*" KpiLibrary : created_by
+    Employee "1" --> "*" KpiLibrary : createdBy
 
-    Position "1" --> "*" PositionPermission : position
-    Permission "1" --> "*" PositionPermission : permission
+    Position "1" --> "*" PositionPermission : positionPermissions
+    Permission "1" --> "*" PositionPermission : permissionPositions
 
-    Employee "1" --> "*" ResignationRequest : employee
+    Employee "1" --> "*" ResignationRequest : resignationRequests
 ```
 
 ## Entity Summary Table
