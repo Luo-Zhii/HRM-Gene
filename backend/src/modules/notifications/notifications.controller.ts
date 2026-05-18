@@ -1,7 +1,6 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Request, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, Request, Patch, Delete, ForbiddenException } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { NotificationType } from '../../entities/notification.entity';
 
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
@@ -10,12 +9,6 @@ export class NotificationsController {
 
   @Get()
   async getUserNotifications(@Request() req: any) {
-    const userId = req.user.employee_id || req.user.id;
-    return this.notificationsService.getUserNotifications(userId);
-  }
-
-  @Get('my')
-  async getMyNotifications(@Request() req: any) {
     const userId = req.user.employee_id || req.user.id;
     return this.notificationsService.getUserNotifications(userId);
   }
@@ -32,10 +25,13 @@ export class NotificationsController {
     return this.notificationsService.deleteNotification(Number(id), userId);
   }
 
-  // Admin endpoint for announcements
   @Post('announce')
   async createAnnouncement(@Body() body: { title: string, message: string }, @Request() req: any) {
-    // Ideally check if user is Admin here by verifying req.user permissions
+    const position = req.user.position?.position_name?.toLowerCase();
+    const allowedRoles = ['admin', 'hr', 'hr manager', 'director'];
+    if (!position || !allowedRoles.includes(position)) {
+      throw new ForbiddenException('Only admins and HR can send announcements');
+    }
     const { title, message } = body;
     return this.notificationsService.sendAnnouncementToAll(title, message);
   }

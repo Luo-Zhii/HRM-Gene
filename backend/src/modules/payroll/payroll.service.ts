@@ -115,14 +115,18 @@ export class PayrollService {
         const deductions = Math.max(0, deduction);
         const net = baseSalary + bonus - deductions as any;
         const payslip = manager.getRepository(Payslip).create({
-          employee: emp, contract: contract,
+          employee: emp,
           pay_period: `${String(month).padStart(2, "0")}/${year}`,
-          salary_rate: String(baseSalary.toFixed(2)),
-          bonus: String(bonus.toFixed(2)), deductions: String(deductions.toFixed(2)),
-          net_salary: String(net.toFixed(2)), status: "Pending",
+          gross_salary: String(baseSalary.toFixed(2)),
+          bonus: String(bonus.toFixed(2)),
+          deductions: String(deductions.toFixed(2)),
+          net_salary: String(net.toFixed(2)),
+          actual_work_days: daysInMonth - absentDays,
+          ot_hours: overtimeHours,
+          status: PayslipStatus.PENDING,
           created_by_id: createdByUserId,
         } as any);
-        await manager.getRepository(Payslip).save(payslip as any);
+        await manager.getRepository(Payslip).save(payslip);
         summary.total_payroll += net; summary.total_salary_rate += baseSalary;
         summary.total_bonus += bonus; summary.total_deductions += deductions; summary.generated += 1;
       }
@@ -297,8 +301,27 @@ export class PayrollService {
 
     const workDaysMap: Record<number, number> = {};
     const absentDaysMap: Record<number, number> = {};
+
+    // Build a set of leave dates per employee (for overlap detection)
+    const leaveDateSet: Record<number, Set<string>> = {};
+    leaveRequests.forEach((lr) => {
+      const id = lr.employee.employee_id;
+      if (!leaveDateSet[id]) leaveDateSet[id] = new Set();
+      const start = new Date(lr.start_date);
+      const end = new Date(lr.end_date);
+      const cur = new Date(start);
+      while (cur <= end) {
+        leaveDateSet[id].add(cur.toISOString().slice(0, 10));
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+
     timekeepings.forEach((tk) => {
       const id = tk.employee.employee_id;
+      const tkDate = typeof tk.work_date === 'string' ? tk.work_date : new Date(tk.work_date).toISOString().slice(0, 10);
+      // Skip timekeeping on days the employee has approved leave (leave takes priority)
+      if (leaveDateSet[id]?.has(tkDate)) return;
+
       if (tk.status === "Present") {
         workDaysMap[id] = (workDaysMap[id] || 0) + 1;
       } else if (tk.status === "Half-day") {
@@ -310,9 +333,13 @@ export class PayrollService {
     });
     leaveRequests.forEach((lr) => {
       const id = lr.employee.employee_id;
-      const days =
-        Math.floor((new Date(lr.end_date).getTime() - new Date(lr.start_date).getTime()) / 86400000) + 1;
-      workDaysMap[id] = (workDaysMap[id] || 0) + days;
+      const days = Math.floor((new Date(lr.end_date).getTime() - new Date(lr.start_date).getTime()) / 86400000) + 1;
+      const isPaid = (lr.leave_type as any)?.is_paid !== false; // default true for backward compat
+      if (isPaid) {
+        workDaysMap[id] = (workDaysMap[id] || 0) + days;
+      } else {
+        absentDaysMap[id] = (absentDaysMap[id] || 0) + days;
+      }
     });
 
     const appliedMonth = `${String(month).padStart(2, "0")}/${year}`;
@@ -393,16 +420,34 @@ export class PayrollService {
       relations: ["leave_type"],
     });
 
+    const leaveDateSet = new Set<string>();
+    leaveRequests.forEach((lr) => {
+      const start = new Date(lr.start_date);
+      const end = new Date(lr.end_date);
+      const cur = new Date(start);
+      while (cur <= end) {
+        leaveDateSet.add(cur.toISOString().slice(0, 10));
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+
     const workDaysMap: Record<number, number> = { [employeeId]: 0 };
     const absentDaysMap: Record<number, number> = { [employeeId]: 0 };
     timekeepings.forEach((tk) => {
+      const tkDate = typeof tk.work_date === 'string' ? tk.work_date : new Date(tk.work_date).toISOString().slice(0, 10);
+      if (leaveDateSet.has(tkDate)) return; // leave takes priority over check-in
       if (tk.status === "Present") workDaysMap[employeeId]++;
       else if (tk.status === "Half-day") { workDaysMap[employeeId] += 0.5; absentDaysMap[employeeId] += 0.5; }
       else if (tk.status === "Absent") absentDaysMap[employeeId]++;
     });
     leaveRequests.forEach((lr) => {
       const days = Math.floor((new Date(lr.end_date).getTime() - new Date(lr.start_date).getTime()) / 86400000) + 1;
-      workDaysMap[employeeId] += days;
+      const isPaid = (lr.leave_type as any)?.is_paid !== false;
+      if (isPaid) {
+        workDaysMap[employeeId] += days;
+      } else {
+        absentDaysMap[employeeId] += days;
+      }
     });
 
     const appliedMonth = `${String(month).padStart(2, "0")}/${year}`;
@@ -476,6 +521,14 @@ export class PayrollService {
     const unpaidAbsentDays = ctx.absentDaysMap[empId] || 0;
     const unpaidAbsentDeduction = salaryPerDay * unpaidAbsentDays;
 
+    // TÍNH GIỜ TĂNG CA (OT)
+    const totalHours = ctx.timekeepings
+      .filter((tk) => (tk.employee?.employee_id || (tk as any).employee_id) === empId)
+      .reduce((sum, tk) => sum + (Number(tk.hours_worked) || 0), 0);
+    const overtimeHours = Math.max(0, totalHours - this.STANDARD_MONTHLY_HOURS);
+    const salaryPerHour = this.STANDARD_MONTHLY_HOURS > 0 ? baseSalary / this.STANDARD_MONTHLY_HOURS : 0;
+    const overtimePay = salaryPerHour * overtimeHours * (this.OVERTIME_RATE - 1);
+
     const lunchAllowance = parseFloat(salaryConfig.lunch_allowance || "0");
     const allowances =
       parseFloat(salaryConfig.transport_allowance || "0") +
@@ -512,7 +565,7 @@ export class PayrollService {
     // ==========================================
     // 2. TỔNG THU NHẬP (GROSS)
     // ==========================================
-    const totalCalculatedBonus = bonusAdj + kpiBonus;
+    const totalCalculatedBonus = bonusAdj + kpiBonus + overtimePay;
     const grossIncome = salaryPerDay * actualDays + allowances + totalCalculatedBonus;
 
     // ==========================================
@@ -523,7 +576,7 @@ export class PayrollService {
 
     // B. Thuế Thu Nhập Cá Nhân (PIT - 7 bậc)
     const personalExemption = 11_000_000; // Giảm trừ bản thân
-    const dependentExemption = ((salaryConfig as any).dependents_count || 0) * 4_400_000; // Người phụ thuộc
+    const dependentExemption = (salaryConfig.dependents_count || 0) * 4_400_000; // Người phụ thuộc
 
     // Thu nhập tính thuế = Gross - Bảo hiểm - Ăn trưa - Giảm trừ
     let taxableIncome = grossIncome - insuranceDeduction - lunchAllowance - personalExemption - dependentExemption;
@@ -547,6 +600,7 @@ export class PayrollService {
     if (payslip) {
       Object.assign(payslip, {
         actual_work_days: actualDays,
+        ot_hours: overtimeHours,
         bonus: totalCalculatedBonus.toFixed(2),
         kpi_bonus_amount: kpiBonus,
         gross_salary: grossIncome.toFixed(2),
@@ -560,6 +614,7 @@ export class PayrollService {
         employee, payroll_period: period,
         pay_period: `${String(month).padStart(2, "0")}/${year}`,
         actual_work_days: actualDays,
+        ot_hours: overtimeHours,
         bonus: totalCalculatedBonus.toFixed(2),
         kpi_bonus_amount: kpiBonus,
         gross_salary: grossIncome.toFixed(2),

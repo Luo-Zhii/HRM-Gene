@@ -19,7 +19,18 @@ export class NotificationsService {
     const employee = await this.employeeRepo.findOne({ where: { employee_id: userId } });
     
     if (employee) {
-      if ((type === NotificationType.LEAVE || type === NotificationType.LEAVE_REQUEST) && employee.push_notifications === false) {
+      const pushSensitiveTypes = [
+        NotificationType.LEAVE,
+        NotificationType.LEAVE_REQUEST,
+        NotificationType.DISCIPLINE,
+        NotificationType.WARNING,
+        NotificationType.RESIGNATION_REQUEST,
+        NotificationType.RESIGNATION_STATUS_UPDATE,
+        NotificationType.PAYROLL,
+        NotificationType.KPI,
+        NotificationType.COMMENT,
+      ];
+      if (pushSensitiveTypes.includes(type) && employee.push_notifications === false) {
         return null;
       }
       if (type === NotificationType.ANNOUNCEMENT && employee.announcements === false) {

@@ -75,6 +75,12 @@
     "english": "Tiếng Anh",
     "vietnamese": "Tiếng Việt"
   },
+  "time": {
+    "justNow": "Vừa xong",
+    "minutesAgo": "{{count}} phút trước",
+    "hoursAgo": "{{count}} giờ trước",
+    "daysAgo": "{{count}} ngày trước"
+  },
   "userMenu": {
     "myProfile": "Hồ sơ cá nhân",
     "settings": "Cài đặt",

@@ -10,4 +10,7 @@ export class LeaveType {
 
   @Column({ type: "int", default: 0 })
   default_days_allocated!: number;
+
+  @Column({ type: "boolean", default: true })
+  is_paid!: boolean;
 }

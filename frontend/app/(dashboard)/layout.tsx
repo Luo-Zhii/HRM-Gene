@@ -6,6 +6,7 @@ import { useAuth } from "@/src/hooks/useAuth";
 import { useCheckPermission } from "@/src/hooks/useCheckPermission";
 import { useNotifications } from "@/src/hooks/useNotifications";
 import { useCompany, CompanyProvider } from "@/src/context/CompanyContext";
+import { NotificationProvider } from "@/src/context/NotificationContext";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -223,8 +224,43 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
 
 
 
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffSec = Math.floor((now - then) / 1000);
+  if (diffSec < 60) return "Just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
+function getNotificationStyle(type: string) {
+  const map: Record<string, { bg: string; text: string; icon: any }> = {
+    leave: { bg: "bg-green-100", text: "text-green-600", icon: FileText },
+    leave_request: { bg: "bg-green-100", text: "text-green-600", icon: FileText },
+    task: { bg: "bg-amber-100", text: "text-amber-600", icon: AlertCircle },
+    kpi: { bg: "bg-blue-100", text: "text-blue-600", icon: Zap },
+    discipline: { bg: "bg-red-100", text: "text-red-600", icon: AlertTriangle },
+    warning: { bg: "bg-red-100", text: "text-red-600", icon: AlertTriangle },
+    payroll: { bg: "bg-emerald-100", text: "text-emerald-700", icon: MessageSquare },
+    resignation_request: { bg: "bg-orange-100", text: "text-orange-600", icon: User },
+    resignation_status_update: { bg: "bg-blue-100", text: "text-blue-600", icon: Bell },
+    comment: { bg: "bg-violet-100", text: "text-violet-600", icon: MessageSquare },
+    announcement: { bg: "bg-sky-100", text: "text-sky-600", icon: Megaphone },
+  };
+  return map[type] || { bg: "bg-gray-100", text: "text-gray-600", icon: Megaphone };
+}
+
 function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClick, onRemoveNotification }: { notifications: any[], onMarkAllRead: () => void, onNotificationClick: (n: any) => void, onRemoveNotification: (id: number) => void }) {
   const { t } = useTranslation();
+  const router = useRouter();
+  const { user } = useAuth();
+  const isAdmin = user?.position?.position_name?.toLowerCase();
+
   return (
     <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-4 z-50 animate-in fade-in zoom-in-95 duration-200">
       <div className="px-4 pb-3 border-b border-gray-50 flex items-center justify-between">
@@ -237,46 +273,43 @@ function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClic
         {notifications.length === 0 ? (
           <div className="py-10 text-center text-gray-400 text-sm">{t("header.noNewNotifications")}</div>
         ) : (
-          notifications.map((n) => (
-            <div key={n.id} onClick={() => onNotificationClick(n)} className={`px-4 py-3 hover:bg-gray-50 cursor-pointer flex gap-3 border-b border-gray-50 last:border-0 ${!n.isRead ? 'bg-blue-50/30' : ''}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${(n.type === 'leave' || n.type === 'leave_request') ? 'bg-green-100 text-green-600' :
-                n.type === 'task' ? 'bg-amber-100 text-amber-600' :
-                  n.type === 'kpi' ? 'bg-blue-100 text-blue-600' :
-                    (n.type === 'discipline' || n.type === 'warning') ? 'bg-red-100 text-red-600' :
-                      n.type === 'payroll' ? 'bg-emerald-100 text-emerald-700' :
-                        n.type === 'resignation_request' ? 'bg-orange-100 text-orange-600' :
-                          n.type === 'resignation_status_update' ? 'bg-blue-100 text-blue-600 font-bold' :
-                            n.type === 'comment' ? 'bg-blue-100 text-blue-600' :
-                              'bg-blue-100 text-blue-600'
-                }`}>
-                {(n.type === 'leave' || n.type === 'leave_request') ? <FileText size={16} /> :
-                  n.type === 'task' ? <AlertCircle size={16} /> :
-                    n.type === 'kpi' ? <Zap size={16} /> :
-                      (n.type === 'discipline' || n.type === 'warning') ? <AlertTriangle size={16} /> :
-                        n.type === 'payroll' ? <MessageSquare size={16} /> :
-                          n.type === 'resignation_request' ? <User size={16} /> :
-                            n.type === 'resignation_status_update' ? <Bell size={16} /> :
-                              n.type === 'comment' ? <MessageSquare size={16} /> :
-                                <Megaphone size={16} />}
+          notifications.slice(0, 20).map((n) => {
+            const style = getNotificationStyle(n.type);
+            const Icon = style.icon;
+            return (
+              <div key={n.id} onClick={() => onNotificationClick(n)} className={`px-4 py-3 hover:bg-gray-50 cursor-pointer flex gap-3 border-b border-gray-50 last:border-0 transition-colors ${!n.isRead ? 'bg-blue-50/30' : ''}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${style.bg} ${style.text}`}>
+                  <Icon size={16} />
+                </div>
+                <div className="flex-1 min-w-0 relative pr-6">
+                  <p className={`text-xs ${!n.isRead ? 'font-bold text-gray-900' : 'text-gray-600'} truncate`}>{n.title || n.type}</p>
+                  <p className="text-[11px] text-gray-500 line-clamp-3 mt-0.5">{n.message}</p>
+                  <p className="text-[10px] text-gray-400 mt-1">{timeAgo(n.createdAt)}</p>
+                  {!n.isRead && <span className="absolute top-1 -right-2 w-2 h-2 bg-blue-500 rounded-full" />}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onRemoveNotification(n.id); }}
+                    className="absolute -top-1 right-3 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                    aria-label="Remove notification"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
-              <div className="flex-1 min-w-0 relative pr-6">
-                <p className={`text-xs ${!n.isRead ? 'font-bold text-gray-900' : 'text-gray-600'} truncate`}>{n.title || n.type}</p>
-                <p className="text-[11px] text-gray-500 line-clamp-3 mt-0.5">{n.message}</p>
-                <p className="text-[10px] text-gray-400 mt-1">{n.time}</p>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onRemoveNotification(n.id); }}
-                  className="absolute -top-1 -right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                  aria-label="Remove notification"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
       <div className="px-4 pt-3 border-t border-gray-50">
-        <button className="w-full text-center text-xs font-bold text-gray-500 hover:text-blue-600">{t("header.viewAll")}</button>
+        <button
+          onClick={() => {
+            if (isAdmin === 'admin' || isAdmin === 'hr' || isAdmin === 'hr manager' || isAdmin === 'director') {
+              router.push('/admin/notifications/manage');
+            }
+          }}
+          className="w-full text-center text-xs font-bold text-gray-500 hover:text-blue-600 transition-colors"
+        >
+          {t("header.viewAll")}
+        </button>
       </div>
     </div>
   );
@@ -578,16 +611,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
     <CompanyProvider>
-      <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <Header onMenuClick={() => setSidebarOpen(true)} />
-          <main className="flex-1 overflow-auto p-6">
-            <div className="max-w-7xl mx-auto">{children}</div>
-          </main>
-          <Toaster />
+      <NotificationProvider>
+        <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <Header onMenuClick={() => setSidebarOpen(true)} />
+            <main className="flex-1 overflow-auto p-6">
+              <div className="max-w-7xl mx-auto">{children}</div>
+            </main>
+            <Toaster />
+          </div>
         </div>
-      </div>
+      </NotificationProvider>
     </CompanyProvider>
   );
 }

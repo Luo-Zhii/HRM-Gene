@@ -9,8 +9,8 @@ import { Repository, LessThan } from "typeorm";
 import { Violation, ViolationStatus, ViolationSeverity } from "../../entities/violation.entity";
 import { Employee } from "../../entities/employee.entity";
 import { TimeKeeping } from "../../entities/timekeeping.entity";
-import { Notification, NotificationType } from "../../entities/notification.entity";
-import { NotificationsGateway } from "../notifications/notifications.gateway";
+import { NotificationType } from "../../entities/notification.entity";
+import { NotificationsService } from "../notifications/notifications.service";
 import { CreateViolationDto } from "./dto/create-violation.dto";
 import { UpdateViolationDto } from "./dto/update-violation.dto";
 
@@ -23,9 +23,7 @@ export class ViolationsService {
     private employeeRepo: Repository<Employee>,
     @InjectRepository(TimeKeeping)
     private timeKeepingRepo: Repository<TimeKeeping>,
-    @InjectRepository(Notification)
-    private notificationRepo: Repository<Notification>,
-    private notificationsGateway: NotificationsGateway
+    private notificationsService: NotificationsService,
   ) { }
 
   async create(createDto: CreateViolationDto) {
@@ -53,14 +51,12 @@ export class ViolationsService {
     const mdyDate = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
     const employeeFullName = `${employee.first_name} ${employee.last_name || ''}`.trim();
 
-    const notif = this.notificationRepo.create({
-      title: `Violation: ${saved.violation_type}`,
-      message: `${employeeFullName} has an ${saved.violation_type} on ${mdyDate}. Severity: ${saved.severity}.`,
-      type: NotificationType.DISCIPLINE,
-      user: employee,
-    });
-    const savedNotif = await this.notificationRepo.save(notif);
-    this.notificationsGateway.sendNotificationToUser(employee.employee_id, savedNotif);
+    await this.notificationsService.createNotification(
+      employee.employee_id,
+      `Violation: ${saved.violation_type}`,
+      `${employeeFullName} has an ${saved.violation_type} on ${mdyDate}. Severity: ${saved.severity}.`,
+      NotificationType.DISCIPLINE,
+    );
 
     return saved;
   }
@@ -139,15 +135,12 @@ export class ViolationsService {
 
     const notifTitle = "Discipline Record Updated";
 
-    const notif = this.notificationRepo.create({
-      title: notifTitle,
-      message: notifMessage,
-      type: NotificationType.WARNING,
-      user: violation.employee,
-    });
-    
-    const savedNotif = await this.notificationRepo.save(notif);
-    this.notificationsGateway.sendNotificationToUser(violation.employee.employee_id, savedNotif);
+    await this.notificationsService.createNotification(
+      violation.employee.employee_id,
+      notifTitle,
+      notifMessage,
+      NotificationType.WARNING,
+    );
 
     return saved;
   }
@@ -163,8 +156,9 @@ export class ViolationsService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleDailyAttendanceSync() {
+    const today = new Date().toISOString().slice(0, 10);
     const attendanceRecords = await this.timeKeepingRepo.find({
-      where: { hours_worked: LessThan(8) },
+      where: { hours_worked: LessThan(8), work_date: today },
       relations: ["employee"]
     });
 
@@ -194,39 +188,34 @@ export class ViolationsService {
         });
         await this.violationRepo.save(violation);
 
-        const empNotif = this.notificationRepo.create({
-          title: "Disciplinary Record Added",
-          message: "An auto-drafted violation (Incomplete Shift) has been added to your profile.",
-          type: NotificationType.DISCIPLINE,
-          user: record.employee,
-          isRead: false
-        });
-        await this.notificationRepo.save(empNotif);
+        await this.notificationsService.createNotification(
+          record.employee.employee_id,
+          "Disciplinary Record Added",
+          "An auto-drafted violation (Incomplete Shift) has been added to your profile.",
+          NotificationType.DISCIPLINE,
+        );
 
         createdCount++;
       }
     }
 
     if (createdCount > 0) {
-      // Create notification for Admins/HR
       const admins = await this.employeeRepo.find({
         relations: ["position"],
       });
-      
+
       const hrAdmins = admins.filter(emp => {
         const p = emp.position?.position_name?.toLowerCase();
         return p === "admin" || p === "hr manager" || p === "hr" || p === "director";
       });
 
-      const notifs = hrAdmins.map(admin => this.notificationRepo.create({
-        title: "Attendance Sync Complete",
-        message: `Auto-sync created ${createdCount} new violation drafts for incomplete shifts.`,
-        type: NotificationType.DISCIPLINE,
-        user: admin,
-      }));
-
-      if (notifs.length > 0) {
-        await this.notificationRepo.save(notifs);
+      for (const admin of hrAdmins) {
+        await this.notificationsService.createNotification(
+          admin.employee_id,
+          "Attendance Sync Complete",
+          `Auto-sync created ${createdCount} new violation drafts for incomplete shifts.`,
+          NotificationType.DISCIPLINE,
+        );
       }
     }
 

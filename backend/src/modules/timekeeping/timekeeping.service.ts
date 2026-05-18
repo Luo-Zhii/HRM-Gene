@@ -11,9 +11,9 @@ import { v4 as uuidv4 } from "uuid";
 import { TimeKeeping } from "../../entities/timekeeping.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Employee } from "../../entities/employee.entity";
-import { Notification, NotificationType } from "../../entities/notification.entity";
+import { NotificationType } from "../../entities/notification.entity";
 import { Violation, ViolationSeverity, ViolationStatus } from "../../entities/violation.entity";
-import { NotificationsGateway } from "../notifications/notifications.gateway";
+import { NotificationsService } from "../notifications/notifications.service";
 
 @Injectable()
 export class TimeKeepingService {
@@ -24,10 +24,9 @@ export class TimeKeepingService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(TimeKeeping) private tkRepo: Repository<TimeKeeping>,
     @InjectRepository(Employee) private empRepo: Repository<Employee>,
-    @InjectRepository(Notification) private notificationRepo: Repository<Notification>,
     @InjectRepository(Violation) private violationRepo: Repository<Violation>,
-    private notificationsGateway: NotificationsGateway,
-    private dataSource: DataSource
+    private notificationsService: NotificationsService,
+    private dataSource: DataSource,
   ) {
     // Periodically clean up expired tokens directly to prevent memory leaks
     setInterval(() => {
@@ -219,16 +218,12 @@ export class TimeKeepingService {
           await this.violationRepo.save(violation);
 
           // 2. Send dynamic Notification
-          const warningNotif = this.notificationRepo.create({
-            title: "Warning: Incomplete Shift",
-            message: "You have checked out, but your total working hours today are less than 8 hours.",
-            type: NotificationType.WARNING,
-            user: employee,
-            isRead: false
-          });
-          const savedNotif = await this.notificationRepo.save(warningNotif);
-          // Emit via WebSocket
-          this.notificationsGateway.sendNotificationToUser(employee.employee_id, savedNotif);
+          await this.notificationsService.createNotification(
+            employee.employee_id,
+            "Warning: Incomplete Shift",
+            "You have checked out, but your total working hours today are less than 8 hours.",
+            NotificationType.WARNING,
+          );
         }
 
         return {
@@ -354,16 +349,12 @@ export class TimeKeepingService {
           await this.violationRepo.save(violation);
 
           // 2. Send dynamic Notification
-          const warningNotif = this.notificationRepo.create({
-            title: "Warning: Incomplete Shift",
-            message: "You have checked out, but your total working hours today are less than 8 hours.",
-            type: NotificationType.WARNING,
-            user: employee,
-            isRead: false
-          });
-          const savedNotif = await this.notificationRepo.save(warningNotif);
-          // Emit via WebSocket
-          this.notificationsGateway.sendNotificationToUser(employee.employee_id, savedNotif);
+          await this.notificationsService.createNotification(
+            employee.employee_id,
+            "Warning: Incomplete Shift",
+            "You have checked out, but your total working hours today are less than 8 hours.",
+            NotificationType.WARNING,
+          );
         }
 
         return {

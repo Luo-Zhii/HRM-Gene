@@ -75,6 +75,12 @@
     "english": "English",
     "vietnamese": "Vietnamese"
   },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  },
   "userMenu": {
     "myProfile": "My Profile",
     "settings": "Settings",

@@ -33,6 +33,9 @@ export class SalaryConfig {
 
   @Column({ type: "float", default: 0 })
   kpi_bonus_percentage!: number;
+
+  @Column({ type: "int", default: 0 })
+  dependents_count!: number;
 }
 
 

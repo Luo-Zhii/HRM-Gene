@@ -21,9 +21,18 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   constructor(private jwtService: JwtService) {}
 
+  private extractTokenFromCookie(cookieHeader?: string): string | null {
+    if (!cookieHeader) return null;
+    const match = cookieHeader.match(/access_token=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.split(' ')[1];
+      const token =
+        client.handshake.auth?.token ||
+        client.handshake.headers?.authorization?.split(' ')[1] ||
+        this.extractTokenFromCookie(client.handshake.headers?.cookie);
       if (!token) {
         client.disconnect();
         return;

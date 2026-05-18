@@ -219,6 +219,9 @@ export class LeaveService {
       throw new BadRequestException("Leave request not found");
     }
 
+    // Save original status before mutation (needed for restore logic)
+    const previousStatus = leaveRequest.status;
+
     // Get manager details
     const manager = await this.employeeRepo.findOne({
       where: { employee_id: managerId },
@@ -228,7 +231,7 @@ export class LeaveService {
     leaveRequest.status = newStatus;
     leaveRequest.manager_approver = manager ?? undefined;
     if (adminNote) {
-      leaveRequest.admin_note = adminNote; // Lưu lý do vào DB
+      leaveRequest.admin_note = adminNote;
     }
 
     await this.leaveReqRepo.save(leaveRequest);
@@ -293,7 +296,7 @@ export class LeaveService {
     }
 
     // If revoking (back to Pending/Rejected from Approved), restore balance
-    if (newStatus === "Rejected" && leaveRequest.status === "Approved") {
+    if (newStatus === "Rejected" && previousStatus === "Approved") {
       // Recalculate days to restore
       const start = new Date(leaveRequest.start_date);
       const end = new Date(leaveRequest.end_date);
