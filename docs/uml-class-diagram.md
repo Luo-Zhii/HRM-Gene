@@ -8,63 +8,72 @@
 
 ```mermaid
 graph TD
-    subgraph "Core Modules"
-        Auth[Auth Module]
-        Employees[Employees Module]
-        Departments[Departments Module]
-        Positions[Positions Module]
-        Permissions[Permissions Module]
-        CompanyProfile[Company Profile Module]
-        CompanySettings[Company Settings]
+    subgraph CoreModules["Core Modules"]
+        Auth["Auth Module"]
+        Employees["Employees Module"]
+        Departments["Departments Module"]
+        Positions["Positions Module"]
+        Permissions["Permissions Module"]
+        CompanyProfile["Company Profile Module"]
+        CompanySettings["Company Settings Module"]
     end
 
-    subgraph "HR Operations"
-        Contracts[Contracts Module]
-        Leave[Leave Module]
-        Timekeeping[Timekeeping Module]
-        Violations[Violations Module]
-        Resignations[Resignations Module]
+    subgraph HROperations["HR Operations"]
+        Contracts["Contracts Module"]
+        Leave["Leave Module"]
+        Timekeeping["Timekeeping Module"]
+        Violations["Violations Module"]
+        Resignations["Resignations Module"]
     end
 
-    subgraph "Finance"
-        Payroll[Payroll Module]
-        KPI[KPI Module]
+    subgraph Finance["Finance"]
+        Payroll["Payroll Module"]
+        KPI["KPI Module"]
     end
 
-    subgraph "Communication"
-        Announcements[Announcements Module]
-        Messages[Messages Module]
-        Comments[Comments Module]
-        Notifications[Notifications Module]
+    subgraph Communication["Communication"]
+        Announcements["Announcements Module"]
+        Messages["Messages Module"]
+        Comments["Comments Module"]
+        Notifications["Notifications Module"]
     end
 
-    subgraph "Analytics"
-        Dashboard[Dashboard Module]
-        Reports[Reports Module]
-        Analytics[Analytics Module]
+    subgraph AnalyticsGroup["Analytics"]
+        Dashboard["Dashboard Module"]
+        Reports["Reports Module"]
+        Analytics["Analytics Module"]
     end
 
-    subgraph "Admin"
-        Admin[Admin Module]
+    subgraph AdminGroup["Admin"]
+        Admin["Admin Module"]
     end
 
     %% Core dependencies
     Auth --> Employees
     Auth --> Notifications
 
+    Employees --> Departments
+    Employees --> Positions
+    Employees --> Permissions
+    Employees --> CompanyProfile
+    Employees --> CompanySettings
+
     %% HR Operations depend on Core
-    Leave --> Notifications
+    Contracts --> Employees
     Leave --> Employees
+    Leave --> Notifications
+    Timekeeping --> Employees
     Timekeeping --> Notifications
     Timekeeping --> Violations
+    Violations --> Employees
     Violations --> Notifications
+    Resignations --> Employees
     Resignations --> Notifications
-    Contracts --> Employees
 
     %% Finance dependencies
-    Payroll --> Notifications
-    Payroll --> KPI
     Payroll --> Employees
+    Payroll --> KPI
+    Payroll --> Notifications
     KPI --> Employees
 
     %% Communication dependencies
@@ -72,7 +81,23 @@ graph TD
     Messages --> Notifications
     Comments --> Notifications
 
-    %% Notifications is the hub
+    %% Analytics dependencies
+    Dashboard --> Employees
+    Dashboard --> Payroll
+    Dashboard --> Leave
+    Dashboard --> Timekeeping
+    Reports --> Employees
+    Reports --> Payroll
+    Reports --> Timekeeping
+    Analytics --> Employees
+    Analytics --> Payroll
+
+    %% Admin dependencies
+    Admin --> Employees
+    Admin --> Permissions
+    Admin --> CompanySettings
+
+    %% Notifications hub
     Notifications -.-> Leave
     Notifications -.-> Payroll
     Notifications -.-> Timekeeping
@@ -93,18 +118,18 @@ classDiagram
     direction TB
 
     class AuthService {
-        -employeeRepo: Repository~Employee~
-        -jwtService: JwtService
+        -employeeRepo RepositoryEmployee
+        -jwtService JwtService
         +validateUser(email, password) User
         +login(user) tokenData
         +register(dto) Employee
     }
 
     class EmployeesService {
-        -employeeRepo: Repository~Employee~
-        -dataSource: DataSource
+        -employeeRepo RepositoryEmployee
+        -dataSource DataSource
         +create(dto) Employee
-        +findAll(filters) Employee[]
+        +findAll(filters) EmployeeList
         +findOne(id) Employee
         +update(id, dto) Employee
         +softDelete(id) void
@@ -112,26 +137,26 @@ classDiagram
     }
 
     class LeaveService {
-        -leaveReqRepo: Repository~LeaveRequest~
-        -balanceRepo: Repository~LeaveBalance~
-        -leaveTypeRepo: Repository~LeaveType~
-        -employeeRepo: Repository~Employee~
-        -notificationsService: NotificationsService
-        +getLeaveTypes() LeaveType[]
-        +getBalance(employeeId) LeaveBalance[]
-        +getMyRequests(employeeId) LeaveRequest[]
+        -leaveReqRepo RepositoryLeaveRequest
+        -balanceRepo RepositoryLeaveBalance
+        -leaveTypeRepo RepositoryLeaveType
+        -employeeRepo RepositoryEmployee
+        -notificationsService NotificationsService
+        +getLeaveTypes() LeaveTypeList
+        +getBalance(employeeId) LeaveBalanceList
+        +getMyRequests(employeeId) LeaveRequestList
         +submitRequest(employeeId, leaveTypeId, startDate, endDate, reason) LeaveRequest
-        +getPendingRequests() { data, stats }
+        +getPendingRequests() PendingLeaveData
         +approveLeaveRequest(requestId, status, managerId, adminNote) void
     }
 
     class TimeKeepingService {
-        -tkRepo: Repository~TimeKeeping~
-        -empRepo: Repository~Employee~
-        -violationRepo: Repository~Violation~
-        -notificationsService: NotificationsService
-        -dataSource: DataSource
-        -dynamicQrTokens: Map~string, number~
+        -tkRepo RepositoryTimeKeeping
+        -empRepo RepositoryEmployee
+        -violationRepo RepositoryViolation
+        -notificationsService NotificationsService
+        -dataSource DataSource
+        -dynamicQrTokens TokenMap
         +generateDynamicQr() token
         +recordCheckInByDynamicQr(employeeId, token) result
         +recordCheckInByIP(employeeId, ip) result
@@ -139,61 +164,66 @@ classDiagram
     }
 
     class PayrollService {
-        -STANDARD_MONTHLY_HOURS: 160
-        -OVERTIME_RATE: 1.5
-        -employeeRepo: Repository~Employee~
-        -payslipRepo: Repository~Payslip~
-        -payrollPeriodRepo: Repository~PayrollPeriod~
-        -salaryConfigRepo: Repository~SalaryConfig~
-        -leaveRequestRepo: Repository~LeaveRequest~
-        -adjustmentRepo: Repository~SalaryAdjustment~
-        -settingsRepo: Repository~CompanySettings~
-        -kpiService: KpiService
-        -notificationsService: NotificationsService
+        -STANDARD_MONTHLY_HOURS number
+        -OVERTIME_RATE number
+        -employeeRepo RepositoryEmployee
+        -payslipRepo RepositoryPayslip
+        -payrollPeriodRepo RepositoryPayrollPeriod
+        -salaryConfigRepo RepositorySalaryConfig
+        -leaveRequestRepo RepositoryLeaveRequest
+        -adjustmentRepo RepositorySalaryAdjustment
+        -settingsRepo RepositoryCompanySettings
+        -kpiService KpiService
+        -notificationsService NotificationsService
         -calculatePIT(taxableIncome) number
         -monthRange(month, year) dateRange
         -calculateAndSavePayslip(manager, employee, period, month, year, ctx) PayslipResult
         +runPayroll(month, year, createdBy) summary
         +generatePayslips(month, year, createdBy) summary
         +generateSinglePayslip(empId, month, year, createdBy) payslip
-        +getPayslipsByPeriod(month, year) Payslip[]
-        +getEmployeePayslips(empId) Payslip[]
+        +getPayslipsByPeriod(month, year) PayslipList
+        +getEmployeePayslips(empId) PayslipList
         +getPayslipById(id) PayslipDetail
         +approvePayslip(id) Payslip
         +markPayslipPaid(id) Payslip
         +approveAllPayslips(month, year) count
-        +getAllSalaryConfigs() configs
+        +getAllSalaryConfigs() configList
         +updateSalaryConfig(empId, data) config
         +createAdjustment(data) adjustment
-        +getAllAdjustments(type) adjustments
+        +getAllAdjustments(type) adjustmentList
         +updateAdjustment(id, data) adjustment
     }
 
     class KpiService {
-        -kpiLibraryRepo: Repository~KpiLibrary~
-        -kpiPeriodRepo: Repository~KpiPeriod~
-        -kpiAssignmentRepo: Repository~KpiAssignment~
-        -employeeRepo: Repository~Employee~
+        -kpiLibraryRepo RepositoryKpiLibrary
+        -kpiPeriodRepo RepositoryKpiPeriod
+        -kpiAssignmentRepo RepositoryKpiAssignment
+        -employeeRepo RepositoryEmployee
         +getPeriodByMonthAndYear(month, year) KpiPeriod
         +calculateFinalKpiScore(empId, periodId) number
-        +CRUD methods...
+        +createKpiLibrary(dto) KpiLibrary
+        +updateKpiLibrary(id, dto) KpiLibrary
+        +deleteKpiLibrary(id) void
+        +createPeriod(dto) KpiPeriod
+        +assignKpi(dto) KpiAssignment
+        +updateAssignment(id, dto) KpiAssignment
     }
 
     class NotificationsService {
-        -notificationRepo: Repository~Notification~
-        -employeeRepo: Repository~Employee~
-        -notificationsGateway: NotificationsGateway
+        -notificationRepo RepositoryNotification
+        -employeeRepo RepositoryEmployee
+        -notificationsGateway NotificationsGateway
         +createNotification(userId, title, message, type, link) Notification
-        +getUserNotifications(userId) Notification[]
+        +getUserNotifications(userId) NotificationList
         +markAsRead(id, userId) void
         +deleteNotification(id, userId) void
         +sendAnnouncementToAll(title, message) count
     }
 
     class NotificationsGateway {
-        -jwtService: JwtService
-        -userSockets: Map~number, Set~string~~
-        +server: Server
+        -jwtService JwtService
+        -userSockets UserSocketMap
+        +server Server
         +handleConnection(client) void
         +handleDisconnect(client) void
         -extractTokenFromCookie(cookieHeader) string
@@ -201,12 +231,12 @@ classDiagram
     }
 
     class ViolationsService {
-        -violationRepo: Repository~Violation~
-        -employeeRepo: Repository~Employee~
-        -timeKeepingRepo: Repository~TimeKeeping~
-        -notificationsService: NotificationsService
+        -violationRepo RepositoryViolation
+        -employeeRepo RepositoryEmployee
+        -timeKeepingRepo RepositoryTimeKeeping
+        -notificationsService NotificationsService
         +create(dto) Violation
-        +findAll(employeeId) { records, stats }
+        +findAll(employeeId) ViolationData
         +findOne(id) Violation
         +update(id, dto) Violation
         +remove(id) void
@@ -214,61 +244,152 @@ classDiagram
     }
 
     class ResignationsService {
-        -resignationRepo: Repository~ResignationRequest~
-        -employeeRepo: Repository~Employee~
-        -notificationsService: NotificationsService
+        -resignationRepo RepositoryResignationRequest
+        -employeeRepo RepositoryEmployee
+        -notificationsService NotificationsService
         +submit(employeeId, dto) ResignationRequest
-        +findAll() ResignationRequest[]
+        +findAll() ResignationRequestList
         +updateStatus(id, status, adminNote) void
     }
 
     class AnnouncementsService {
-        -announcementRepo: Repository~Announcement~
-        -notificationsService: NotificationsService
+        -announcementRepo RepositoryAnnouncement
+        -notificationsService NotificationsService
         +create(dto) Announcement
-        +findAll(filters) Announcement[]
+        +findAll(filters) AnnouncementList
         +update(id, dto) Announcement
         +delete(id) void
     }
 
     class ContractsService {
-        -contractRepo: Repository~Contract~
-        -employeeRepo: Repository~Employee~
-        -salaryHistoryRepo: Repository~SalaryHistory~
+        -contractRepo RepositoryContract
+        -employeeRepo RepositoryEmployee
+        -salaryHistoryRepo RepositorySalaryHistory
         +create(dto) Contract
-        +findAll(filters) Contract[]
+        +findAll(filters) ContractList
         +update(id, dto) Contract
         +delete(id) void
     }
 
     class MessagesService {
-        -messageRepo: Repository~Message~
-        -notificationsService: NotificationsService
+        -messageRepo RepositoryMessage
+        -notificationsService NotificationsService
         +send(senderId, receiverId, content) Message
-        +getConversation(userId1, userId2) Message[]
+        +getConversation(userId1, userId2) MessageList
         +markRead(id) void
     }
 
     class CommentsService {
-        -commentRepo: Repository~Comment~
-        -notificationsService: NotificationsService
+        -commentRepo RepositoryComment
+        -notificationsService NotificationsService
         +add(entityType, entityId, authorId, content) Comment
-        +findByEntity(entityType, entityId) Comment[]
+        +findByEntity(entityType, entityId) CommentList
+    }
+
+    class DepartmentsService {
+        -departmentRepo RepositoryDepartment
+        -employeeRepo RepositoryEmployee
+        +create(dto) Department
+        +findAll() DepartmentList
+        +findOne(id) Department
+        +update(id, dto) Department
+        +remove(id) void
+    }
+
+    class PositionsService {
+        -positionRepo RepositoryPosition
+        -permissionRepo RepositoryPermission
+        +create(dto) Position
+        +findAll() PositionList
+        +findOne(id) Position
+        +update(id, dto) Position
+        +remove(id) void
+        +assignPermissions(positionId, permissionIds) void
+    }
+
+    class PermissionsService {
+        -permissionRepo RepositoryPermission
+        -positionPermissionRepo RepositoryPositionPermission
+        +findAll() PermissionList
+        +findByPosition(positionId) PermissionList
+        +grant(positionId, permissionId) void
+        +revoke(positionId, permissionId) void
+    }
+
+    class DashboardService {
+        -employeeRepo RepositoryEmployee
+        -leaveRepo RepositoryLeaveRequest
+        -timeKeepingRepo RepositoryTimeKeeping
+        -payrollRepo RepositoryPayslip
+        +getOverview() DashboardOverview
+        +getStats() DashboardStats
+    }
+
+    class ReportsService {
+        -employeeRepo RepositoryEmployee
+        -timeKeepingRepo RepositoryTimeKeeping
+        -payslipRepo RepositoryPayslip
+        +generateEmployeeReport(filters) Report
+        +generatePayrollReport(month, year) Report
+        +generateAttendanceReport(filters) Report
+    }
+
+    class AnalyticsService {
+        -employeeRepo RepositoryEmployee
+        -payslipRepo RepositoryPayslip
+        -timeKeepingRepo RepositoryTimeKeeping
+        +getEmployeeAnalytics() AnalyticsData
+        +getPayrollAnalytics() AnalyticsData
+        +getAttendanceAnalytics() AnalyticsData
     }
 
     %% ── Dependency arrows ──
-    LeaveService --> NotificationsService : notifies on submit/approve
-    TimeKeepingService --> NotificationsService : notifies on warning
-    TimeKeepingService --> ViolationsService : auto-creates violations
+    AuthService --> EmployeesService : validates employee
+
+    EmployeesService --> DepartmentsService : uses departments
+    EmployeesService --> PositionsService : uses positions
+    EmployeesService --> PermissionsService : checks permissions
+
+    LeaveService --> NotificationsService : notify submit approve
+    LeaveService --> EmployeesService : validates employee
+
+    TimeKeepingService --> NotificationsService : notify warning
+    TimeKeepingService --> ViolationsService : auto creates violations
+    TimeKeepingService --> EmployeesService : validates employee
+
     PayrollService --> KpiService : gets KPI scores
-    PayrollService --> NotificationsService : notifies on approve/paid
-    ViolationsService --> NotificationsService : notifies on create/update
-    ResignationsService --> NotificationsService : notifies on status change
-    AnnouncementsService --> NotificationsService : notifies on publish
-    MessagesService --> NotificationsService : notifies on new message
-    CommentsService --> NotificationsService : notifies on new comment
-    NotificationsService --> NotificationsGateway : emits real-time events
+    PayrollService --> NotificationsService : notify approve paid
+    PayrollService --> EmployeesService : uses employees
+
+    ViolationsService --> NotificationsService : notify create update
+    ViolationsService --> EmployeesService : validates employee
+
+    ResignationsService --> NotificationsService : notify status change
+    ResignationsService --> EmployeesService : updates employee status
+
+    AnnouncementsService --> NotificationsService : notify publish
+
+    MessagesService --> NotificationsService : notify new message
+    CommentsService --> NotificationsService : notify new comment
+
+    NotificationsService --> NotificationsGateway : emits realtime events
+
     ContractsService --> EmployeesService : validates employee
+
+    PositionsService --> PermissionsService : manages permissions
+
+    DashboardService --> EmployeesService : reads employee stats
+    DashboardService --> PayrollService : reads payroll stats
+    DashboardService --> LeaveService : reads leave stats
+    DashboardService --> TimeKeepingService : reads attendance stats
+
+    ReportsService --> EmployeesService : reads employee data
+    ReportsService --> PayrollService : reads payroll data
+    ReportsService --> TimeKeepingService : reads attendance data
+
+    AnalyticsService --> EmployeesService : analyzes employees
+    AnalyticsService --> PayrollService : analyzes payroll
+    AnalyticsService --> TimeKeepingService : analyzes attendance
 ```
 
 ---
