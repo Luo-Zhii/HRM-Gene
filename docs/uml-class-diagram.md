@@ -127,13 +127,17 @@ classDiagram
 
     class EmployeesService {
         -employeeRepo RepositoryEmployee
+        -deptRepo RepositoryDepartment
+        -posRepo RepositoryPosition
         -dataSource DataSource
+        -notificationsService NotificationsService
         +create(dto) Employee
-        +findAll(filters) EmployeeList
+        +findAll() EmployeeList
+        +findAllPublic(user) PublicEmployeeList
         +findOne(id) Employee
         +update(id, dto) Employee
-        +softDelete(id) void
-        +offboard(id, reason) void
+        +remove(id) void
+        +search(keyword) SearchResult[]
     }
 
     class LeaveService {
@@ -199,14 +203,19 @@ classDiagram
         -kpiPeriodRepo RepositoryKpiPeriod
         -kpiAssignmentRepo RepositoryKpiAssignment
         -employeeRepo RepositoryEmployee
+        -notificationsService NotificationsService
         +getPeriodByMonthAndYear(month, year) KpiPeriod
         +calculateFinalKpiScore(empId, periodId) number
-        +createKpiLibrary(dto) KpiLibrary
-        +updateKpiLibrary(id, dto) KpiLibrary
-        +deleteKpiLibrary(id) void
+        +createLibrary(dto, creatorId) KpiLibrary
+        +updateLibrary(id, dto) void
+        +getLibrary() KpiLibrary[]
         +createPeriod(dto) KpiPeriod
-        +assignKpi(dto) KpiAssignment
-        +updateAssignment(id, dto) KpiAssignment
+        +getPeriods() KpiPeriod[]
+        +assignKpis(dto) KpiAssignment[]
+        +updateActual(id, actualValue) KpiAssignment
+        +gradeAssignment(id, managerScore) KpiAssignment
+        +getEmployeeAssignments(empId, periodId) KpiAssignment[]
+        +deleteAssignment(id) void
     }
 
     class NotificationsService {
@@ -265,10 +274,13 @@ classDiagram
         -contractRepo RepositoryContract
         -employeeRepo RepositoryEmployee
         -salaryHistoryRepo RepositorySalaryHistory
+        -salaryConfigRepo RepositorySalaryConfig
         +create(dto) Contract
         +findAll(filters) ContractList
+        +findByEmployee(employeeId) Contract[]
+        +findOne(id) Contract
         +update(id, dto) Contract
-        +delete(id) void
+        +remove(id) void
     }
 
     class MessagesService {
@@ -317,12 +329,15 @@ classDiagram
     }
 
     class DashboardService {
-        -employeeRepo RepositoryEmployee
         -leaveRepo RepositoryLeaveRequest
-        -timeKeepingRepo RepositoryTimeKeeping
-        -payrollRepo RepositoryPayslip
-        +getOverview() DashboardOverview
-        +getStats() DashboardStats
+        -resignationRepo RepositoryResignationRequest
+        -employeeRepo RepositoryEmployee
+        -leaveBalanceRepo RepositoryLeaveBalance
+        -leaveTypeRepo RepositoryLeaveType
+        -announcementsService AnnouncementsService
+        +getEmployeeData(user) EmployeeDashboardData
+        +getAdminData() AdminDashboardData
+        +getHolidayList() Holiday[]
     }
 
     class ReportsService {

@@ -396,7 +396,7 @@ stateDiagram-v2
 stateDiagram-v2
     state "Tạo hợp đồng mới" as create
     state "Xác thực nhân viên tồn tại" as validate_emp
-    state "Sinh mã hợp đồng" as gen_number
+    state "Kiểm tra mã hợp đồng không trùng" as gen_number
     state "Lưu hợp đồng (status: Active)" as save_contract
     state "Lưu lịch sử lương (old=0 → new=salary_rate)" as save_history
     state "Hợp đồng đang hiệu lực" as active
@@ -450,8 +450,6 @@ stateDiagram-v2
     state "Báo lỗi: Email đã tồn tại" as email_exists
     state "Mã hóa mật khẩu (bcrypt)" as hash_pwd
     state "Lưu Employee" as save_emp
-    state "Tạo BankInfo" as create_bank
-    state "Tạo LeaveBalance (3 loại phép)" as create_balance
     state "Gửi thông báo chào mừng" as welcome_notif
     state "Nhân viên đang làm việc (Active)" as active
     state "Cập nhật hồ sơ" as update_profile
@@ -460,7 +458,6 @@ stateDiagram-v2
     state "Offboard nhân viên" as offboard
     state "Cập nhật trạng thái → Terminated" as set_terminated
     state "Chấm dứt hợp đồng active" as end_contracts
-    state "Xóa mềm (deleted_at)" as soft_delete
     state "Hoàn tất" as done
 
     [*] --> create_emp
@@ -469,9 +466,7 @@ stateDiagram-v2
     check_email --> hash_pwd : Mới
     email_exists --> [*]
     hash_pwd --> save_emp
-    save_emp --> create_bank
-    create_bank --> create_balance
-    create_balance --> welcome_notif
+    save_emp --> welcome_notif
     welcome_notif --> active
 
     active --> update_profile : Cập nhật
@@ -485,8 +480,7 @@ stateDiagram-v2
 
     offboard --> set_terminated
     set_terminated --> end_contracts
-    end_contracts --> soft_delete
-    soft_delete --> done
+    end_contracts --> done
     done --> [*]
 ```
 
@@ -557,8 +551,6 @@ stateDiagram-v2
     state "Lọc nhân viên theo target_audience" as filter_emp
     state "Tạo notification cho từng nhân viên" as create_notifs
     state "Gửi WebSocket cho nhân viên online" as push_ws
-    state "Kênh email được chọn?" as check_email
-    state "Gửi email hàng loạt" as send_emails
     state "Hoàn tất" as done
 
     [*] --> create
@@ -568,22 +560,17 @@ stateDiagram-v2
     save --> check_inapp
 
     check_inapp --> filter_emp : Có
-    check_inapp --> check_email : Không
+    check_inapp --> done : Không
 
     filter_emp --> create_notifs
     create_notifs --> push_ws
-    push_ws --> check_email
-
-    check_email --> send_emails : Có
-    check_email --> done : Không
-    send_emails --> done
+    push_ws --> done
     done --> [*]
 
     note right of filter_emp
         target_audience:
         - "all": toàn bộ nhân viên
-        - "department:X": phòng ban cụ thể
-        - "position:Y": chức vụ cụ thể
+        - "dept_X": phòng ban cụ thể
     end note
 ```
 

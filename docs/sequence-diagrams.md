@@ -51,7 +51,7 @@ sequenceDiagram
     participant GW as WebSocket Gateway
 
     %% ── Nộp đơn ──
-    E->>LC: POST /api/leave/submit { leaveTypeId, startDate, endDate, reason }
+    E->>LC: POST /api/leave/request { leave_type_id, start_date, end_date, reason }
     LC->>LS: submitRequest(employeeId, ...)
     LS->>DB: SELECT LeaveType WHERE leave_type_id = ?
     DB-->>LS: LeaveType
@@ -72,8 +72,8 @@ sequenceDiagram
     LC-->>E: 201 Created
 
     %% ── Duyệt ──
-    M->>LC: PATCH /api/leave/approve/:id { status: "Approved", adminNote }
-    LC->>LS: approveLeaveRequest(requestId, "Approved", managerId, adminNote)
+    M->>LC: PATCH /api/leave/request/:id/approve { status: "Approved", reason }
+    LC->>LS: approveLeaveRequest(requestId, "Approved", managerId, reason)
     LS->>DB: SELECT LeaveRequest WHERE request_id = ? (kèm employee, leave_type)
     DB-->>LS: LeaveRequest
     LS->>LS: previousStatus = leaveRequest.status
@@ -347,8 +347,8 @@ sequenceDiagram
     participant DB as PostgreSQL
     participant NS as NotificationsService
 
-    E->>RC: POST /api/resignations/submit { requested_last_day, reason_text }
-    RC->>RS: submit(employeeId, dto)
+    E->>RC: POST /api/resignations { requested_last_day, reason_text }
+    RC->>RS: create(employeeId, dto)
     RS->>DB: Kiểm tra đơn đang active
     alt đã có đơn pending/approved
         RS-->>RC: 400 BadRequest
@@ -361,11 +361,12 @@ sequenceDiagram
         RC-->>E: 201 Created
     end
 
-    H->>RC: PATCH /api/resignations/:id/approve { status: "Approved", admin_note }
-    RC->>RS: updateStatus(id, "Approved", adminNote)
+    H->>RC: PATCH /api/resignations/:id { status: "Approved", resignation_category }
+    RC->>RS: updateStatus(id, dto)
     RS->>DB: SELECT ResignationRequest WHERE id = ?
     RS->>DB: UPDATE resignation_request SET status='Approved'
-    RS->>DB: UPDATE employee SET employment_status='Terminated', resignation_date=NOW()
+    RS->>DB: UPDATE employee SET employment_status='Terminated', resignation_reason, resignation_date
+    RS->>DB: UPDATE contract SET status='Terminated' WHERE employee_id AND status='Active'
     RS->>NS: Thông báo nhân viên về quyết định
     RS-->>RC: { success }
     RC-->>H: 200 OK
@@ -383,10 +384,11 @@ sequenceDiagram
     participant DB as PostgreSQL
     participant SH as SalaryHistory
 
-    HR->>CC: POST /api/contracts { employee_id, contract_type, start_date, salary_rate, ... }
+    HR->>CC: POST /api/contracts { employee_id, contract_number, contract_type, start_date, salary_rate, ... }
     CC->>CS: create(dto)
     CS->>DB: SELECT Employee WHERE employee_id = ?
     DB-->>CS: Employee tồn tại
+    CS->>DB: Kiểm tra contract_number không trùng
     CS->>DB: INSERT INTO contract (contract_number, type, start_date, salary_rate, status='Active')
     DB-->>CS: Contract đã tạo
     CS->>SH: INSERT INTO salary_history (old_salary, new_salary, change_date, reason)
@@ -433,10 +435,8 @@ sequenceDiagram
         EC-->>HR: "Email đã được sử dụng"
     else email mới
         ES->>ES: bcrypt.hash(password)
-        ES->>DB: INSERT INTO employee
+        ES->>DB: INSERT INTO employee (kèm department, position)
         DB-->>ES: Employee đã tạo
-        ES->>DB: INSERT INTO bank_info (employee, bank_name, account_number)
-        ES->>DB: INSERT INTO leave_balance (employee, leave_type, remaining_days) × 3 loại
         ES->>NS: createNotification(employeeId, "Chào mừng đến với công ty!", ...)
         ES-->>EC: Employee
         EC-->>HR: 201 Created
@@ -444,13 +444,12 @@ sequenceDiagram
 
     %% ── Offboarding ──
     HR->>EC: PATCH /api/employees/:id/offboard { employment_status: "Terminated", resignation_reason, resignation_date }
-    EC->>ES: offboard(id, dto)
+    EC->>ES: update(id, dto)
     ES->>DB: SELECT Employee WHERE employee_id = ?
     DB-->>ES: Employee
-    ES->>DB: UPDATE employee SET employment_status='Terminated', resignation_reason, resignation_date, deleted_at=NOW()
+    ES->>DB: UPDATE employee SET employment_status='Terminated', resignation_reason, resignation_date
     DB-->>ES: Đã cập nhật
     ES->>DB: UPDATE contract SET status='Terminated' WHERE employee_id = ? AND status='Active'
-    ES->>NS: Thông báo cho HR về offboarding
     ES-->>EC: Employee đã offboard
     EC-->>HR: 200 OK
 ```
@@ -484,12 +483,14 @@ sequenceDiagram
     KC-->>M: 201 Created
 
     %% ── Gán KPI cho nhân viên ──
-    M->>KC: POST /api/kpi/assign { employee_ids: [], kpi_library_id, period_id, target_value, weight }
+    M->>KC: POST /api/kpi/assign { employee_id, period_id, assignments: [{ kpi_library_id, target_value, weight }] }
     KC->>KS: assignKpis(dto)
-    loop với mỗi employee_id
+    KS->>DB: Xóa assignment cũ của employee + period này
+    loop với mỗi assignment trong mảng
         KS->>DB: INSERT INTO kpi_assignment (employee, period, kpi_library, target_value, weight, status='Assigned')
         DB-->>KS: KpiAssignment đã tạo
     end
+    KS->>NS: createNotification(employeeId, "New KPI Assigned", ...)
     KS-->>KC: Assignments[]
     KC-->>M: 201 Created
 
@@ -515,7 +516,7 @@ sequenceDiagram
     KS->>DB: SELECT KpiAssignment WHERE employee_id AND period_id
     DB-->>KS: Assignments[]
     KS->>KS: score = sum(actual_value/target_value * 100 * weight/100)
-    KS-->>KC: { finalScore }
+    KS-->>KC: finalScore (số thực, tối đa 120)
     KC-->>M: 200 OK
 ```
 
@@ -645,12 +646,13 @@ sequenceDiagram
     MS-->>MC: { success }
     MC-->>U2: 200 OK
 
-    %% ── Xóa tin nhắn ──
+    %% ── Xóa tin nhắn (soft delete) ──
     U1->>MC: DELETE /api/messages/:id
     MC->>MS: deleteMessage(userId, messageId)
-    MS->>DB: DELETE FROM message WHERE id = ? AND sender_id = ?
-    DB-->>MS: Đã xóa
-    MS-->>MC: { success }
+    MS->>DB: UPDATE message SET is_deleted=true, content='This message was deleted' WHERE id = ? AND sender_id = ?
+    DB-->>MS: Đã cập nhật
+    MS->>GW: Emit 'messageDeleted' event cho sender + receiver
+    MS-->>MC: Message đã cập nhật
     MC-->>U1: 200 OK
 ```
 
@@ -663,40 +665,29 @@ sequenceDiagram
     actor U as Người dùng
     participant DC as DashboardController
     participant DS as DashboardService
+    participant AS as AnnouncementsService
     participant DB as PostgreSQL
 
     %% ── Dashboard nhân viên ──
     U->>DC: GET /api/dashboard/employee
     DC->>DS: getEmployeeData(user)
-    DS->>DB: SELECT Employee WHERE employee_id (kèm department, position, bankInfo)
-    DB-->>DS: Employee
-    DS->>DB: SELECT TimeKeeping WHERE employee_id AND work_date = TODAY
-    DB-->>DS: Chấm công hôm nay
-    DS->>DB: SELECT LeaveBalance WHERE employee_id
+    DS->>DB: SELECT LeaveBalance WHERE employee_id (lấy số dư phép đầu tiên)
     DB-->>DS: Số dư nghỉ phép
-    DS->>DB: SELECT LeaveRequest WHERE employee_id LIMIT 5
-    DB-->>DS: Đơn nghỉ phép gần đây
-    DS->>DB: SELECT KpiAssignment WHERE employee_id AND period status='Active'
-    DB-->>DS: KPI hiện tại
-    DS->>DS: Tổng hợp dữ liệu cá nhân
-    DS-->>DC: EmployeeDashboardData
+    DS->>AS: getFeed(user) — lấy thông báo công ty phù hợp
+    AS-->>DS: Danh sách thông báo đã lọc
+    DS->>DS: Tổng hợp: ptoBalance, daysWorkedThisMonth, nextHoliday, recentAnnouncements
+    DS-->>DC: { stats: { ptoBalance, daysWorkedThisMonth }, nextHoliday, recentAnnouncements }
     DC-->>U: 200 OK
 
     %% ── Dashboard quản trị ──
     U->>DC: GET /api/dashboard/admin
     DC->>DS: getAdminData()
-    DS->>DB: SELECT COUNT(*) FROM employee WHERE employment_status='Active'
-    DB-->>DS: Tổng nhân viên
     DS->>DB: SELECT COUNT(*) FROM leave_request WHERE status='Pending'
     DB-->>DS: Đơn nghỉ phép đang chờ
-    DS->>DB: SELECT COUNT(*) FROM time_keeping WHERE work_date=TODAY AND status='Present'
-    DB-->>DS: Nhân viên có mặt hôm nay
-    DS->>DB: SELECT thống kê payroll tháng hiện tại
-    DB-->>DS: Tổng lương tháng
-    DS->>DB: SELECT thống kê theo phòng ban
-    DB-->>DS: Phân bổ theo phòng ban
-    DS->>DS: Tổng hợp dữ liệu quản trị
-    DS-->>DC: AdminDashboardData
+    DS->>DB: SELECT COUNT(*) FROM resignation_request WHERE status='Pending'
+    DB-->>DS: Đơn từ chức đang chờ
+    DS->>DS: Tổng hợp: attendance (ước lượng) + pendingApprovals (real-time)
+    DS-->>DC: { attendance, pendingApprovals: { leaveRequests, resignations } }
     DC-->>U: 200 OK
 ```
 
