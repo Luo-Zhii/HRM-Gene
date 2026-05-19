@@ -10,6 +10,7 @@ export function Toaster() {
   return (
     <div className="fixed top-6 right-6 z-[99999] flex flex-col gap-3 w-[350px] max-w-[calc(100vw-2rem)] pointer-events-none">
       {toasts.map(function (t) {
+        if (t.open === false) return null;
         let Icon = Info;
         let colorClass = "bg-white border-slate-200 text-slate-800";
         let iconColor = "text-blue-500";

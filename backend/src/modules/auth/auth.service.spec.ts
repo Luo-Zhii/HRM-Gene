@@ -7,7 +7,7 @@ import { Position } from '../../entities/position.entity';
 import { PositionPermission } from '../../entities/position-permission.entity';
 import { Permission } from '../../entities/permission.entity';
 import { Department } from '../../entities/department.entity';
-import { NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 jest.mock('bcrypt');
@@ -114,28 +114,28 @@ describe('AuthService', () => {
 
   // ========== validateUser ==========
   describe('validateUser', () => {
-    it('should return null if user not found', async () => {
+    it('should throw NotFoundException if user not found', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue(null);
-      expect(await service.validateUser('test@email.com', 'pass')).toBeNull();
+      await expect(service.validateUser('test@email.com', 'pass')).rejects.toThrow(NotFoundException);
     });
 
-    it('should return null if password mismatch', async () => {
-      mockEmployeeRepo.findOne.mockResolvedValue({ password: 'hashed' });
+    it('should throw UnauthorizedException if password mismatch', async () => {
+      mockEmployeeRepo.findOne.mockResolvedValue({ password: 'hashed', failed_attempts: 0 });
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
-      expect(await service.validateUser('test@email.com', 'wrong')).toBeNull();
+      await expect(service.validateUser('test@email.com', 'wrong')).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should throw UnauthorizedException if terminated and past resignation date', async () => {
+    it('should throw ForbiddenException if terminated and past resignation date', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({ 
-        password: 'hashed', employment_status: 'Terminated', resignation_date: '2000-01-01'
+        password: 'hashed', employment_status: 'Terminated', resignation_date: '2000-01-01', failed_attempts: 0
       });
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      await expect(service.validateUser('test', 'pass')).rejects.toThrow(UnauthorizedException);
+      await expect(service.validateUser('test', 'pass')).rejects.toThrow(ForbiddenException);
     });
 
     it('should return user without password and append permissions on success', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({ 
-        password: 'hashed', email: 'test@example.com', position: { position_id: 1 }
+        password: 'hashed', email: 'test@example.com', position: { position_id: 1 }, failed_attempts: 0
       });
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       mockPpRepo.find.mockResolvedValue([]);

@@ -192,6 +192,28 @@ export class EmployeesService {
     return this.findOne(id);
   }
 
+  async onboard(id: number) {
+    const emp = await this.employeeRepo.findOne({
+      where: { employee_id: id } as any,
+    });
+    if (!emp) throw new NotFoundException("Employee not found");
+
+    emp.employment_status = EmploymentStatus.ACTIVE;
+    emp.resignation_date = null as any;
+    emp.resignation_reason = null as any;
+    emp.failed_attempts = 0;
+
+    await this.employeeRepo.save(emp as any);
+
+    // Reactivate contracts that were terminated during offboarding
+    await this.dataSource.query(
+      `UPDATE contract SET status = 'Active', end_date = null WHERE employee_id = $1 AND status = 'Terminated'`,
+      [id]
+    );
+
+    return this.findOne(id);
+  }
+
   async remove(id: number) {
     const emp = await this.employeeRepo.findOne({
       where: { employee_id: id } as any,

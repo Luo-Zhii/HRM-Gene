@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -72,14 +73,57 @@ export class AuthService {
     if (!employee) throw new NotFoundException();
 
     // Cập nhật thông tin cơ bản
+    if (data.first_name !== undefined) {
+      if (!data.first_name || !data.first_name.trim()) {
+        throw new BadRequestException("First name cannot be empty");
+      }
+      if (data.first_name.length > 50) {
+        throw new BadRequestException("First name cannot exceed 50 characters");
+      }
+      employee.first_name = data.first_name.trim();
+    }
+    if (data.last_name !== undefined) {
+      if (!data.last_name || !data.last_name.trim()) {
+        throw new BadRequestException("Last name cannot be empty");
+      }
+      if (data.last_name.length > 50) {
+        throw new BadRequestException("Last name cannot exceed 50 characters");
+      }
+      employee.last_name = data.last_name.trim();
+    }
+    if (data.email !== undefined) {
+      const emailTrimmed = data.email.trim();
+      if (!emailTrimmed) {
+        throw new BadRequestException("Email cannot be empty");
+      }
+      if (emailTrimmed.length > 100) {
+        throw new BadRequestException("Email cannot exceed 100 characters");
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailTrimmed)) {
+        throw new BadRequestException("Invalid email format");
+      }
+      employee.email = emailTrimmed;
+    }
 
-    if (data.first_name !== undefined) employee.first_name = data.first_name;
-    if (data.last_name !== undefined) employee.last_name = data.last_name;
-    if (data.email !== undefined) employee.email = data.email;
-
-    if (data.phone_number !== undefined) employee.phone_number = data.phone_number;
-    if (data.address !== undefined) employee.address = data.address;
-    if (data.description !== undefined) employee.description = data.description;
+    if (data.phone_number !== undefined) {
+      if (data.phone_number && data.phone_number.length > 20) {
+        throw new BadRequestException("Phone number cannot exceed 20 characters");
+      }
+      employee.phone_number = data.phone_number;
+    }
+    if (data.address !== undefined) {
+      if (data.address && data.address.length > 200) {
+        throw new BadRequestException("Address cannot exceed 200 characters");
+      }
+      employee.address = data.address;
+    }
+    if (data.description !== undefined) {
+      if (data.description && data.description.length > 500) {
+        throw new BadRequestException("Description cannot exceed 500 characters");
+      }
+      employee.description = data.description;
+    }
 
     // Preferences & Settings
     if (data.email_notifications !== undefined) employee.email_notifications = data.email_notifications;
@@ -156,18 +200,46 @@ export class AuthService {
       relations: ["position"],
     });
 
-    if (!user) return null;
+    if (!user) {
+      console.warn(`[AUTH] Login failed: Email not found - ${email}`);
+      throw new NotFoundException("Email không tồn tại trong hệ thống.");
+    }
 
-    const match = await bcrypt.compare(pass, user.password);
-    if (!match) return null;
+    // Check account lockout
+    if (user.failed_attempts >= 5) {
+      console.warn(`[AUTH] Login failed: Account locked for ${email} (attempts: ${user.failed_attempts})`);
+      throw new UnauthorizedException("Tài khoản đã bị khóa do nhập sai quá 5 lần.");
+    }
 
-    // SECURITY LOCKOUT: Check if employee is terminated and past their resignation date
+    // Check deactivated
     if (user.employment_status === 'Terminated' && user.resignation_date) {
       const today = new Date().toISOString().split('T')[0];
       if (today > user.resignation_date) {
-        throw new UnauthorizedException('Your account has been deactivated due to resignation/termination.');
+        console.warn(`[AUTH] Login failed: Account deactivated for ${email}`);
+        throw new ForbiddenException("Tài khoản nhân viên đã bị vô hiệu hóa (Nghỉ việc).");
       }
     }
+
+    const match = await bcrypt.compare(pass, user.password);
+    if (!match) {
+      user.failed_attempts = (user.failed_attempts || 0) + 1;
+      await this.employeeRepo.save(user);
+
+      console.warn(`[AUTH] Login failed: Incorrect password for ${email}. Failed attempts: ${user.failed_attempts}`);
+
+      if (user.failed_attempts >= 5) {
+        throw new UnauthorizedException("Tài khoản đã bị khóa do nhập sai quá 5 lần.");
+      }
+      throw new UnauthorizedException("Sai mật khẩu. Incorrect password");
+    }
+
+    // Reset failed attempts on success
+    if (user.failed_attempts > 0) {
+      user.failed_attempts = 0;
+      await this.employeeRepo.save(user);
+    }
+
+    console.log(`[AUTH] Login successful: ${email}`);
 
     const permissions = user.position
       ? await this.getUserPermissions(user.position.position_id)

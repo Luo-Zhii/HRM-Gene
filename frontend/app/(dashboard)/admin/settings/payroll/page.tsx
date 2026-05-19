@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Toaster } from "@/components/ui/toaster";
 import { Settings, Save, Clock, Percent } from "lucide-react";
 
 export default function PayrollSettingsPage() {
@@ -168,7 +167,7 @@ export default function PayrollSettingsPage() {
         </div>
       </div>
 
-      <Toaster />
+
     </div>
   );
 }

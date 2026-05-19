@@ -79,6 +79,13 @@ export class EmployeesController {
     return this.svc.update(id, dto);
   }
 
+  @Patch(":id/onboard")
+  onboard(
+    @Param("id", ParseIntPipe) id: number
+  ) {
+    return this.svc.onboard(id);
+  }
+
   @Patch(":id")
   update(
     @Param("id", ParseIntPipe) id: number,

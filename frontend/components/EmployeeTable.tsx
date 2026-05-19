@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import {
   Search, LayoutGrid, List, Mail, Phone,
   ArrowUpDown, ExternalLink, UserMinus,
-  Users, Building2, Pencil, Trash2, MessageSquare,
+  Users, Building2, Pencil, Trash2, MessageSquare, Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { Can } from "@/src/components/Can";
@@ -60,6 +60,9 @@ interface EmployeeTableProps {
   /** Called when admin clicks the Offboard button. */
   onOffboard?: (employeeId: number) => void;
 
+  /** Called when admin clicks the Onboard button. */
+  onOnboard?: (employeeId: number) => void;
+
   /** Called when admin clicks the Edit button. */
   onEdit?: (employee: EmployeeRow) => void;
 
@@ -89,6 +92,7 @@ export default function EmployeeTable({
   showActions,
   currentUserId,
   onOffboard,
+  onOnboard,
   onEdit,
   onDelete,
   onMessageClick,
@@ -96,6 +100,7 @@ export default function EmployeeTable({
   const { t } = useTranslation();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDept, setSelectedDept] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [sortConfig, setSortConfig] = useState<{
     key: string | null;
@@ -109,6 +114,17 @@ export default function EmployeeTable({
     }));
   };
 
+  // Extract unique department names from the loaded employees list
+  const departments = useMemo(() => {
+    const set = new Set<string>();
+    employees.forEach((emp) => {
+      if (emp.department?.department_name) {
+        set.add(emp.department.department_name);
+      }
+    });
+    return Array.from(set).sort();
+  }, [employees]);
+
   // ── Filtered + sorted list ─────────────────────────────────────────────────
   const processed = useMemo(() => {
     const q = searchTerm.toLowerCase();
@@ -118,7 +134,13 @@ export default function EmployeeTable({
       const nameMatch = name.includes(q);
       // Only include phone in search when we're allowed to show it
       const phoneMatch = showSensitive && !!e.phone_number?.includes(q);
-      return nameMatch || emailMatch || phoneMatch;
+      const matchesSearch = nameMatch || emailMatch || phoneMatch;
+
+      const matchesDept = selectedDept
+        ? e.department?.department_name === selectedDept
+        : true;
+
+      return matchesSearch && matchesDept;
     });
 
     if (sortConfig.key) {
@@ -141,7 +163,7 @@ export default function EmployeeTable({
       });
     }
     return list;
-  }, [employees, searchTerm, sortConfig, showSensitive]);
+  }, [employees, searchTerm, selectedDept, sortConfig, showSensitive]);
 
   // ── Profile navigation ─────────────────────────────────────────────────────
   // Admin → full profile page with HR data
@@ -168,16 +190,40 @@ export default function EmployeeTable({
     <div>
       {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b pb-4">
-        {/* Search */}
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder={showSensitive ? t("employeeTable.searchPlaceholder") : t("employeeTable.searchPublicPlaceholder")}
-            className="pl-9 h-10 w-full bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          {/* Search */}
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder={showSensitive ? t("employeeTable.searchPlaceholder") : t("employeeTable.searchPublicPlaceholder")}
+              className="pl-9 h-10 w-full bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Department Filter */}
+          <div className="relative w-full sm:w-48">
+            <select
+              value={selectedDept}
+              onChange={(e) => setSelectedDept(e.target.value)}
+              className="h-10 w-full bg-white border border-gray-200 rounded-xl text-sm px-3 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer appearance-none pr-8 font-medium text-gray-600"
+              style={{
+                backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                backgroundPosition: 'right 0.5rem center',
+                backgroundSize: '1.25rem 1.25rem',
+                backgroundRepeat: 'no-repeat'
+              }}
+            >
+              <option value="">{t("employeeTable.allDepartments")}</option>
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* View toggle */}
@@ -336,26 +382,36 @@ export default function EmployeeTable({
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </Can>
-                        <Can method="PATCH" apiPath="/api/employees/:id/offboard">
-                          <button
-                            disabled={emp.employee_id === currentUserId || emp.employment_status === "Terminated"}
-                            onClick={() => onOffboard?.(emp.employee_id)}
-                            className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors ${
-                              emp.employee_id === currentUserId || emp.employment_status === "Terminated"
-                                ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
-                                : "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
-                            }`}
-                            title={
-                              emp.employee_id === currentUserId
-                                ? t("offboard.selfError")
-                                : emp.employment_status === "Terminated"
-                                ? t("offboard.alreadyTerminated")
-                                : t("employeeTable.offboard")
-                            }
-                          >
-                            {t("employeeTable.offboard")} <UserMinus className="w-3.5 h-3.5 ml-1.5" />
-                          </button>
-                        </Can>
+                        {emp.employment_status === "Terminated" ? (
+                          <Can method="PATCH" apiPath="/api/employees/:id/onboard">
+                            <button
+                              onClick={() => onOnboard?.(emp.employee_id)}
+                              className="inline-flex items-center px-3 py-1.5 text-sm font-semibold border border-green-100 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+                              title={t("employeeTable.onboard")}
+                            >
+                              {t("employeeTable.onboard")} <Plus className="w-3.5 h-3.5 ml-1.5" />
+                            </button>
+                          </Can>
+                        ) : (
+                          <Can method="PATCH" apiPath="/api/employees/:id/offboard">
+                            <button
+                              disabled={emp.employee_id === currentUserId}
+                              onClick={() => onOffboard?.(emp.employee_id)}
+                              className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border rounded-md transition-colors ${
+                                emp.employee_id === currentUserId
+                                  ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
+                                  : "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
+                              }`}
+                              title={
+                                emp.employee_id === currentUserId
+                                  ? t("offboard.selfError")
+                                  : t("employeeTable.offboard")
+                              }
+                            >
+                              {t("employeeTable.offboard")} <UserMinus className="w-3.5 h-3.5 ml-1.5" />
+                            </button>
+                          </Can>
+                        )}
                       </>
                     ) : (
                       <>
@@ -476,19 +532,36 @@ export default function EmployeeTable({
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </Can>
-                    <Can method="PATCH" apiPath="/api/employees/:id/offboard">
-                      <button
-                        disabled={emp.employee_id === currentUserId || emp.employment_status === "Terminated"}
-                        onClick={() => onOffboard?.(emp.employee_id)}
-                        className={`py-2 px-3 border text-sm font-bold rounded-lg transition-colors flex items-center justify-center ${
-                          emp.employee_id === currentUserId || emp.employment_status === "Terminated"
-                            ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
-                            : "bg-red-50 hover:bg-red-100 border-red-100 text-red-600"
-                        }`}
-                      >
-                        <UserMinus className="w-4 h-4" />
-                      </button>
-                    </Can>
+                    {emp.employment_status === "Terminated" ? (
+                      <Can method="PATCH" apiPath="/api/employees/:id/onboard">
+                        <button
+                          onClick={() => onOnboard?.(emp.employee_id)}
+                          className="py-2 px-3 border border-green-100 text-green-600 bg-green-50 hover:bg-green-100 text-sm font-bold rounded-lg transition-colors flex items-center justify-center"
+                          title={t("employeeTable.onboard")}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </Can>
+                    ) : (
+                      <Can method="PATCH" apiPath="/api/employees/:id/offboard">
+                        <button
+                          disabled={emp.employee_id === currentUserId}
+                          onClick={() => onOffboard?.(emp.employee_id)}
+                          className={`py-2 px-3 border text-sm font-bold rounded-lg transition-colors flex items-center justify-center ${
+                            emp.employee_id === currentUserId
+                              ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-50"
+                              : "bg-red-50 hover:bg-red-100 border-red-100 text-red-600"
+                          }`}
+                          title={
+                            emp.employee_id === currentUserId
+                              ? t("offboard.selfError")
+                              : t("employeeTable.offboard")
+                          }
+                        >
+                          <UserMinus className="w-4 h-4" />
+                        </button>
+                      </Can>
+                    )}
                   </>
                 ) : (
                   /* Regular employee: link to public directory profile + Chat */

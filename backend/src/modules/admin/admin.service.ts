@@ -438,6 +438,54 @@ export class AdminService {
       employee.position = pos || undefined;
     }
 
+    if (data.first_name !== undefined) {
+      if (!data.first_name || !data.first_name.trim()) {
+        throw new BadRequestException("First name cannot be empty");
+      }
+      if (data.first_name.length > 50) {
+        throw new BadRequestException("First name cannot exceed 50 characters");
+      }
+      data.first_name = data.first_name.trim();
+    }
+    if (data.last_name !== undefined) {
+      if (!data.last_name || !data.last_name.trim()) {
+        throw new BadRequestException("Last name cannot be empty");
+      }
+      if (data.last_name.length > 50) {
+        throw new BadRequestException("Last name cannot exceed 50 characters");
+      }
+      data.last_name = data.last_name.trim();
+    }
+    if (data.email !== undefined) {
+      const emailTrimmed = data.email.trim();
+      if (!emailTrimmed) {
+        throw new BadRequestException("Email cannot be empty");
+      }
+      if (emailTrimmed.length > 100) {
+        throw new BadRequestException("Email cannot exceed 100 characters");
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailTrimmed)) {
+        throw new BadRequestException("Invalid email format");
+      }
+      data.email = emailTrimmed;
+    }
+    if (data.phone_number !== undefined) {
+      if (data.phone_number && data.phone_number.length > 20) {
+        throw new BadRequestException("Phone number cannot exceed 20 characters");
+      }
+    }
+    if (data.address !== undefined) {
+      if (data.address && data.address.length > 200) {
+        throw new BadRequestException("Address cannot exceed 200 characters");
+      }
+    }
+    if (data.description !== undefined) {
+      if (data.description && data.description.length > 500) {
+        throw new BadRequestException("Description cannot exceed 500 characters");
+      }
+    }
+
     // Assign scalar fields only (strip relational keys to avoid TypeORM confusion)
     const { department_id, position_id, ...scalars } = data;
     Object.assign(employee, scalars);

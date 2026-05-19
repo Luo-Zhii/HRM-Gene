@@ -127,6 +127,23 @@ describe('EmployeesService', () => {
     });
   });
 
+  describe('onboard', () => {
+    it('should throw if no employee', async () => {
+      employeeRepo.findOne.mockResolvedValue(null);
+      await expect(service.onboard(1)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should reactivate terminated employee and contracts', async () => {
+      employeeRepo.findOne.mockResolvedValue({ employee_id: 1, employment_status: EmploymentStatus.TERMINATED });
+      employeeRepo.save.mockResolvedValue({ employee_id: 1 });
+
+      await service.onboard(1);
+
+      expect(employeeRepo.save).toHaveBeenCalledWith(expect.objectContaining({ employment_status: EmploymentStatus.ACTIVE, resignation_date: null, resignation_reason: null }));
+      expect(dataSource.query).toHaveBeenCalledWith(expect.any(String), [1]);
+    });
+  });
+
   describe('remove', () => {
     it('should throw if not found', async () => {
       employeeRepo.findOne.mockResolvedValue(null);

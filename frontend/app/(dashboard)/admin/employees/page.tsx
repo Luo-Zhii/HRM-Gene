@@ -121,6 +121,25 @@ export default function AdminEmployeeDirectoryPage() {
     }
   };
 
+  const handleOnboard = async (id: number) => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/employees/${id}/onboard`, {
+        method: "PATCH",
+      });
+      if (res.ok) {
+        showToast("Success", "Employee successfully onboarded back.", "success");
+        await loadEmployees();
+      } else {
+        showToast("Error", "Failed to onboard employee back.", "error");
+      }
+    } catch {
+      showToast("Error", "Server error", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteId) return;
     setIsSubmitting(true);
@@ -227,6 +246,7 @@ export default function AdminEmployeeDirectoryPage() {
         showActions={true}
         currentUserId={user?.employee_id}
         onOffboard={(id) => setOffboardId(id)}
+        onOnboard={(id) => handleOnboard(id)}
         onEdit={(emp) => setEditEmployee(emp)}
         onDelete={(id) => {
           const emp = employees.find((e) => e.employee_id === id);

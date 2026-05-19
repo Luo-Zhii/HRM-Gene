@@ -107,10 +107,13 @@
     "actions": "Thao tác",
     "viewProfile": "Xem",
     "offboard": "Thôi việc",
+    "onboard": "Nhận việc lại",
     "terminated": "Đã nghỉ việc",
     "head": "Trưởng nhóm",
     "noPhone": "Chưa cập nhật",
     "noEmployees": "Không tìm thấy nhân viên",
+    "allDepartments": "Tất cả phòng ban",
+    "filterDepartment": "Lọc theo phòng ban",
     "searchPlaceholder": "Tìm tên, email, điện thoại...",
     "searchPublicPlaceholder": "Tìm tên, email, phòng ban..."
   },
@@ -368,7 +371,10 @@
     "saveChanges": "Lưu thay đổi",
     "saving": "Đang lưu...",
     "loadingProfile": "Đang tải hồ sơ...",
-    "userNotFound": "Không tìm thấy người dùng"
+    "userNotFound": "Không tìm thấy người dùng",
+    "validationError": "Họ, tên và email là các trường bắt buộc.",
+    "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
+    "maxLengthError": "Một hoặc nhiều trường vượt quá giới hạn độ dài (Họ/Tên: 50, Email: 100, SĐT: 20, Địa chỉ: 200, Tiểu sử: 500)."
   },
   "accounting": {
     "title": "Bảng điều khiển kế toán",

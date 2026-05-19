@@ -92,6 +92,9 @@ export class Employee {
   @Column({ default: "en" })
   language!: string;
 
+  @Column({ default: 0 })
+  failed_attempts!: number;
+
   @Column({
     type: "enum",
     enum: EmploymentStatus,

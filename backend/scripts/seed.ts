@@ -142,6 +142,7 @@ async function run() {
   const p_update_employee = await permRepo.save({ permission_name: "Update Employee", method: "PATCH", apiPath: "/api/admin/employees/:id", module_group: "USERS" });
   const p_delete_employee = await permRepo.save({ permission_name: "Delete Employee", method: "DELETE", apiPath: "/api/admin/employees/:id", module_group: "USERS" });
   const p_offboard_employee = await permRepo.save({ permission_name: "Offboard Employee", method: "PATCH", apiPath: "/api/employees/:id/offboard", module_group: "USERS" });
+  const p_onboard_employee = await permRepo.save({ permission_name: "Onboard Employee", method: "PATCH", apiPath: "/api/employees/:id/onboard", module_group: "USERS" });
 
   // COMPANIES
   const p_get_company = await permRepo.save({ permission_name: "View Company Settings", method: "GET", apiPath: "/api/admin/company/settings", module_group: "COMPANIES" });
@@ -208,6 +209,7 @@ async function run() {
     { position: posDirector, permission: p_update_employee },
     { position: posDirector, permission: p_delete_employee },
     { position: posDirector, permission: p_offboard_employee },
+    { position: posDirector, permission: p_onboard_employee },
     { position: posDirector, permission: p_get_company },
     { position: posDirector, permission: p_update_company },
     { position: posDirector, permission: p_payroll },

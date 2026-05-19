@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { UpdateEmployeeDto } from '../employees/dto/update-employee.dto';
 
 describe('AuthController', () => {
@@ -38,10 +38,9 @@ describe('AuthController', () => {
 
   // ========== login ==========
   describe('login', () => {
-    it('should return error if invalid credentials', async () => {
-      mockAuthService.validateUser.mockResolvedValue(null);
-      const res = await controller.login({ email: 'a@a.com', password: 'w' }, mockResponse);
-      expect(res).toEqual({ error: 'Invalid credentials' });
+    it('should propagate exceptions thrown by validateUser', async () => {
+      mockAuthService.validateUser.mockRejectedValue(new NotFoundException('Email không tồn tại trong hệ thống.'));
+      await expect(controller.login({ email: 'a@a.com', password: 'w' }, mockResponse)).rejects.toThrow(NotFoundException);
     });
 
     it('should return token and set cookie on success', async () => {

@@ -75,6 +75,17 @@ export default function EditEmployeeModal({
       return;
     }
 
+    if (
+      firstName.trim().length > 50 ||
+      lastName.trim().length > 50 ||
+      email.trim().length > 100 ||
+      phone.trim().length > 20 ||
+      address.trim().length > 200
+    ) {
+      onToast(t("common.error"), "One or more fields exceed maximum allowed characters (Names: 50, Email: 100, Phone: 20, Address: 200).", "error");
+      return;
+    }
+
     setSaving(true);
     try {
       // 1. Update basic info via PATCH
@@ -148,6 +159,7 @@ export default function EditEmployeeModal({
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
+                maxLength={50}
                 className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -159,6 +171,7 @@ export default function EditEmployeeModal({
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
+                maxLength={50}
                 className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -173,6 +186,7 @@ export default function EditEmployeeModal({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              maxLength={100}
               className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -187,6 +201,7 @@ export default function EditEmployeeModal({
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                maxLength={20}
                 className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -198,6 +213,7 @@ export default function EditEmployeeModal({
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                maxLength={200}
                 className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

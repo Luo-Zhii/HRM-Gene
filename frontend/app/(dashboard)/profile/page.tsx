@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Toaster } from "@/components/ui/toaster";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit2, Save, X, Mail, Phone, Briefcase, DollarSign, FileText, AlertTriangle, CreditCard, Camera, Lock, ShieldCheck } from "lucide-react";
@@ -144,9 +143,51 @@ function ProfileContent() {
   };
 
   const handleSaveAll = async () => {
+    if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.email.trim()) {
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("profile.validationError"),
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("profile.invalidEmail"),
+      });
+      return;
+    }
+
+    if (
+      formData.first_name.trim().length > 50 ||
+      formData.last_name.trim().length > 50 ||
+      formData.email.trim().length > 100 ||
+      (formData.phone_number && formData.phone_number.length > 20) ||
+      (formData.address && formData.address.length > 200) ||
+      (formData.description && formData.description.length > 500)
+    ) {
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("profile.maxLengthError"),
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const payload: any = { ...formData, ...settings, bank_info: bankFormData };
+      const payload: any = {
+        ...formData,
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        email: formData.email.trim(),
+        ...settings,
+        bank_info: bankFormData
+      };
       if (formData.department_id) payload.department_id = parseInt(formData.department_id, 10);
       if (formData.position_id) payload.position_id = parseInt(formData.position_id, 10);
 
@@ -205,11 +246,11 @@ function ProfileContent() {
               )}
               <h2 className="text-lg font-bold mb-8">{t("profile.personalInfo")}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                <FormInput label={t("profile.firstName")} name="first_name" value={formData.first_name} onChange={(e: any) => setFormData({ ...formData, first_name: e.target.value })} disabled={!isEditing} />
-                <FormInput label={t("profile.lastName")} name="last_name" value={formData.last_name} onChange={(e: any) => setFormData({ ...formData, last_name: e.target.value })} disabled={!isEditing} />
-                <FormInput label={t("profile.email")} name="email" value={formData.email} onChange={(e: any) => setFormData({ ...formData, email: e.target.value })} disabled={!isEditing} />
-                <FormInput label={t("profile.phone")} name="phone_number" value={formData.phone_number} onChange={(e: any) => setFormData({ ...formData, phone_number: e.target.value })} disabled={!isEditing} />
-                <FormInput label={t("profile.address")} name="address" value={formData.address} onChange={(e: any) => setFormData({ ...formData, address: e.target.value })} disabled={!isEditing} />
+                <FormInput label={t("profile.firstName")} name="first_name" value={formData.first_name} onChange={(e: any) => setFormData({ ...formData, first_name: e.target.value })} disabled={!isEditing} maxLength={50} />
+                <FormInput label={t("profile.lastName")} name="last_name" value={formData.last_name} onChange={(e: any) => setFormData({ ...formData, last_name: e.target.value })} disabled={!isEditing} maxLength={50} />
+                <FormInput label={t("profile.email")} name="email" value={formData.email} onChange={(e: any) => setFormData({ ...formData, email: e.target.value })} disabled={!isEditing} maxLength={100} />
+                <FormInput label={t("profile.phone")} name="phone_number" value={formData.phone_number} onChange={(e: any) => setFormData({ ...formData, phone_number: e.target.value })} disabled={!isEditing} maxLength={20} />
+                <FormInput label={t("profile.address")} name="address" value={formData.address} onChange={(e: any) => setFormData({ ...formData, address: e.target.value })} disabled={!isEditing} maxLength={200} />
                 
                 {/* Department Edit */}
                 <div className="space-y-1.5">
@@ -239,7 +280,7 @@ function ProfileContent() {
 
                 <div className="md:col-span-2">
                   <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("profile.descriptionBio")}</Label>
-                  <Textarea name="description" value={formData.description} onChange={(e: any) => setFormData({ ...formData, description: e.target.value })} disabled={!isEditing} className="bg-slate-50 border-none resize-none h-24 mt-1.5 focus-visible:ring-blue-500" placeholder={t("profile.descriptionPlaceholder")} />
+                  <Textarea name="description" value={formData.description} onChange={(e: any) => setFormData({ ...formData, description: e.target.value })} disabled={!isEditing} maxLength={500} className="bg-slate-50 border-none resize-none h-24 mt-1.5 focus-visible:ring-blue-500" placeholder={t("profile.descriptionPlaceholder")} />
                 </div>
               </div>
             </div>
@@ -466,14 +507,13 @@ function ProfileContent() {
           </Accordion>
         </div>
         <ChangePasswordDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog} />
-        <Toaster />
       </div>
     </div>
   );
 }
 
-function FormInput({ label, value, onChange, disabled, name }: any) {
-  return (<div className="space-y-1.5"><Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</Label><Input name={name} value={value || ""} onChange={onChange} disabled={disabled} className="bg-slate-50 border-none h-11 focus-visible:ring-blue-500 disabled:opacity-100 disabled:text-slate-500" /></div>);
+function FormInput({ label, value, onChange, disabled, name, maxLength }: any) {
+  return (<div className="space-y-1.5"><Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</Label><Input name={name} value={value || ""} onChange={onChange} disabled={disabled} maxLength={maxLength} className="bg-slate-50 border-none h-11 focus-visible:ring-blue-500 disabled:opacity-100 disabled:text-slate-500" /></div>);
 }
 function ToggleRow({ title, checked, onChange, disabled }: any) {
   return (<div className="flex items-center justify-between py-1"><span className="text-sm text-slate-600">{title}</span><CustomToggle checked={checked} onChange={onChange} disabled={disabled} /></div>);
