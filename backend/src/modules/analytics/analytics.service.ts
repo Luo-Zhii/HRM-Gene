@@ -6,6 +6,10 @@ import { Payslip } from '../../entities/payslip.entity';
 import { KpiAssignment, KpiAssignmentStatus } from '../../entities/kpi-assignment.entity';
 import { Department } from '../../entities/department.entity';
 import { Employee, EmploymentStatus, ResignationReason } from '../../entities/employee.entity';
+import { Announcement } from '../../entities/announcement.entity';
+import { LeaveRequest } from '../../entities/leave-request.entity';
+import { TimeKeeping } from '../../entities/timekeeping.entity';
+import { ResignationRequest } from '../../entities/resignation-request.entity';
 
 @Injectable()
 export class AnalyticsService {
@@ -15,6 +19,10 @@ export class AnalyticsService {
     @InjectRepository(KpiAssignment) private kpiRepo: Repository<KpiAssignment>,
     @InjectRepository(Department) private deptRepo: Repository<Department>,
     @InjectRepository(Employee) private employeeRepo: Repository<Employee>,
+    @InjectRepository(Announcement) private announcementRepo: Repository<Announcement>,
+    @InjectRepository(LeaveRequest) private leaveRequestRepo: Repository<LeaveRequest>,
+    @InjectRepository(TimeKeeping) private timekeepingRepo: Repository<TimeKeeping>,
+    @InjectRepository(ResignationRequest) private resignationRepo: Repository<ResignationRequest>,
   ) {}
 
   async getDashboardData() {
@@ -228,5 +236,176 @@ export class AnalyticsService {
       payrollBudget,
       topKpi
     };
+  }
+
+  async fetchRawActivities() {
+    const activities: any[] = [];
+
+    // 1. Announcements
+    try {
+      const announcements = await this.announcementRepo.find({
+        order: { created_at: 'DESC' },
+        take: 100,
+      });
+      announcements.forEach(a => {
+        activities.push({
+          id: `ann_${a.id}`,
+          timestamp: a.created_at || new Date(),
+          actor: "Admin/Director",
+          type: "Announcement",
+          action: "Tạo thông báo",
+          target: a.title,
+          details: `Phát thông báo tới ${a.target_audience === 'all' ? 'toàn bộ nhân sự' : 'phòng ban'} (Độ ưu tiên: ${a.priority})`,
+        });
+      });
+    } catch (e) {
+      console.error("Error fetching announcements activities:", e);
+    }
+
+    // 2. Payslips / Payroll
+    try {
+      const payslips = await this.payslipRepo.find({
+        relations: ['employee', 'payroll_period'],
+        order: { payslip_id: 'DESC' },
+        take: 100,
+      });
+      payslips.forEach(p => {
+        const empName = p.employee ? `${p.employee.first_name} ${p.employee.last_name}` : "Nhân viên";
+        const timestamp = p.payroll_period ? new Date(p.payroll_period.year, p.payroll_period.month - 1, 1) : new Date();
+        activities.push({
+          id: `pay_${p.payslip_id}`,
+          timestamp,
+          actor: "Admin/Director",
+          type: "Payroll",
+          action: "Tính lương / Chốt sổ",
+          target: empName,
+          details: `Chốt lương chu kỳ ${p.pay_period || 'N/A'}. Thực lĩnh: ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Number(p.net_salary))}`,
+        });
+      });
+    } catch (e) {
+      console.error("Error fetching payslip activities:", e);
+    }
+
+    // 3. KPI Assignments
+    try {
+      const kpis = await this.kpiRepo.find({
+        relations: ['employee', 'period'],
+        order: { id: 'DESC' },
+        take: 100,
+      });
+      kpis.forEach(k => {
+        const empName = k.employee ? `${k.employee.first_name} ${k.employee.last_name}` : "Nhân viên";
+        activities.push({
+          id: `kpi_${k.id}`,
+          timestamp: k.period?.start_date ? new Date(k.period.start_date) : new Date(),
+          actor: "Admin/Director",
+          type: "Performance",
+          action: k.status === 'Approved' ? "Chốt điểm KPI" : "Giao KPI",
+          target: empName,
+          details: `Thực tế: ${k.actual_value} / Chỉ tiêu: ${k.target_value} (Trạng thái: ${k.status})`,
+        });
+      });
+    } catch (e) {
+      console.error("Error fetching KPI activities:", e);
+    }
+
+    // 4. Leave Requests
+    try {
+      const leaves = await this.leaveRequestRepo.find({
+        relations: ['employee', 'leave_type'],
+        order: { start_date: 'DESC' },
+        take: 100,
+      });
+      leaves.forEach(l => {
+        const empName = l.employee ? `${l.employee.first_name} ${l.employee.last_name}` : "Nhân viên";
+        activities.push({
+          id: `leave_${l.request_id}`,
+          timestamp: new Date(l.start_date),
+          actor: empName,
+          type: "Leave",
+          action: "Nộp đơn nghỉ phép",
+          target: l.leave_type?.name || "Nghỉ phép",
+          details: `Từ ngày ${l.start_date} đến ${l.end_date} (Trạng thái: ${l.status})`,
+        });
+      });
+    } catch (e) {
+      console.error("Error fetching leave requests activities:", e);
+    }
+
+    // 5. Resignation Requests
+    try {
+      const resignations = await this.resignationRepo.find({
+        relations: ['employee'],
+        order: { created_at: 'DESC' },
+        take: 100,
+      });
+      resignations.forEach(r => {
+        const empName = r.employee ? `${r.employee.first_name} ${r.employee.last_name}` : "Nhân viên";
+        activities.push({
+          id: `res_${r.id}`,
+          timestamp: r.created_at || new Date(),
+          actor: empName,
+          type: "Employee",
+          action: "Đơn xin thôi việc",
+          target: "Thôi việc",
+          details: `Ngày dự kiến nghỉ: ${r.requested_last_day}. Trạng thái: ${r.status}`,
+        });
+      });
+    } catch (e) {
+      console.error("Error fetching resignation activities:", e);
+    }
+
+    // 6. Timekeeping
+    try {
+      const checkins = await this.timekeepingRepo.find({
+        relations: ['employee'],
+        order: { check_in_time: 'DESC' },
+        take: 100,
+      });
+      checkins.forEach(tk => {
+        const empName = tk.employee ? `${tk.employee.first_name} ${tk.employee.last_name}` : "Nhân viên";
+        activities.push({
+          id: `tk_${tk.timekeeping_id}`,
+          timestamp: tk.check_in_time,
+          actor: empName,
+          type: "Attendance",
+          action: "Điểm danh / Check-in",
+          target: tk.work_date,
+          details: `Giờ vào: ${new Date(tk.check_in_time).toLocaleTimeString('vi-VN')} (Trạng thái: ${tk.status})`,
+        });
+      });
+    } catch (e) {
+      console.error("Error fetching timekeeping activities:", e);
+    }
+
+    activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return activities;
+  }
+
+  async getActivities(startDate?: string, endDate?: string, month?: string, type?: string) {
+    let list = await this.fetchRawActivities();
+
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      list = list.filter(item => new Date(item.timestamp) >= start);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      list = list.filter(item => new Date(item.timestamp) <= end);
+    }
+    if (month) {
+      list = list.filter(item => {
+        const itemDate = new Date(item.timestamp);
+        const itemYearMonth = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}`;
+        return itemYearMonth === month;
+      });
+    }
+    if (type && type !== 'All') {
+      list = list.filter(item => item.type.toLowerCase() === type.toLowerCase());
+    }
+
+    return list;
   }
 }

@@ -58,7 +58,8 @@
     "noData": "No data available",
     "confirmDelete": "Confirm Delete",
     "confirm": "Confirm",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "export": "Export CSV"
   },
   "header": {
     "searchPlaceholder": "Search pages & features...",
@@ -980,5 +981,37 @@
     "fieldsRequired": "Please fill all required fields.",
     "payPeriod": "Pay Period",
     "totalGross": "Total Gross"
+  },
+  "reports": {
+    "title": "Reports & Analytics",
+    "subtitle": "Visualizing organization-wide performance and financial metrics.",
+    "totalHeadcount": "Total Headcount",
+    "newHires": "New Hires",
+    "turnoverRate": "Turnover Rate",
+    "workforceFluctuations": "Workforce Fluctuations",
+    "resignationReasons": "Reasons for Resignation",
+    "payrollBudget": "Payroll Budget by Department",
+    "topKpi": "Top 5 KPI Departments",
+    "exportReport": "Export Report",
+    "exportSuccess": "Report exported successfully",
+    "systemActivities": "System Activity History",
+    "time": "Time",
+    "actor": "Actor",
+    "category": "Category",
+    "action": "Action",
+    "target": "Target",
+    "details": "Details",
+    "filterMonth": "Filter by Month",
+    "filterStartDate": "Start Date",
+    "filterEndDate": "End Date",
+    "filterType": "Activity Type",
+    "exportActivities": "Export Activities",
+    "all": "All",
+    "announcement": "Announcement",
+    "payroll": "Payroll",
+    "employee": "Employee",
+    "performance": "Performance / KPI",
+    "leave": "Leave",
+    "attendance": "Attendance"
   }
 }

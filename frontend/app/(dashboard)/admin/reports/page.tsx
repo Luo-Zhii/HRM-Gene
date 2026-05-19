@@ -7,8 +7,9 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserPlus, UserMinus, Download, Calendar, MapPin } from "lucide-react";
+import { Users, UserPlus, UserMinus, Download, Calendar, MapPin, Filter, FileSpreadsheet } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 
 interface DashboardData {
   summary: {
@@ -22,17 +23,27 @@ interface DashboardData {
   topKpi: Array<{ department: string; score: string; status: string }>;
 }
 
+interface ActivityItem {
+  id: string;
+  timestamp: string;
+  actor: string;
+  type: string;
+  action: string;
+  target: string;
+  details: string;
+}
+
 const DONUT_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#f43f5e", "#8b5cf6"];
 
 function StatCard({ title, value, trend, isPositive, icon: Icon, colorClass, bgClass }: any) {
   return (
-    <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col justify-between hover:shadow-md transition-all">
+    <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col justify-between hover:shadow-md transition-all duration-300">
       <div className="flex justify-between items-start mb-4">
         <div>
           <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{title}</p>
           <h3 className="text-3xl font-bold text-slate-800 tracking-tight">{value}</h3>
         </div>
-        <div className={`p-3 rounded-2xl ${bgClass} ${colorClass}`}>
+        <div className={`p-3 rounded-2xl ${bgClass} ${colorClass} transition-transform hover:scale-105 duration-300`}>
           <Icon size={22} />
         </div>
       </div>
@@ -47,13 +58,30 @@ function StatCard({ title, value, trend, isPositive, icon: Icon, colorClass, bgC
 }
 
 export default function AnalyticsDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Activity feed states
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [actLoading, setActLoading] = useState(true);
+  const [filterMonth, setFilterMonth] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+  const [filterType, setFilterType] = useState("All");
+
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  };
+
   useEffect(() => {
     async function loadData() {
       try {
+        setLoading(true);
         const res = await fetch("/api/analytics/dashboard", { credentials: "include" });
         if (!res.ok) throw new Error("Failed to load dashboard data");
         const json = await res.json();
@@ -67,39 +95,146 @@ export default function AnalyticsDashboard() {
     loadData();
   }, []);
 
+  const loadActivities = async () => {
+    try {
+      setActLoading(true);
+      let query = `type=${filterType}`;
+      if (filterMonth) query += `&month=${filterMonth}`;
+      if (filterStartDate) query += `&startDate=${filterStartDate}`;
+      if (filterEndDate) query += `&endDate=${filterEndDate}`;
+
+      const res = await fetch(`/api/analytics/activities?${query}`, { credentials: "include" });
+      if (res.ok) {
+        const json = await res.json();
+        setActivities(json);
+      }
+    } catch (err) {
+      console.error("Failed to load activities:", err);
+    } finally {
+      setActLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadActivities();
+  }, [filterMonth, filterStartDate, filterEndDate, filterType]);
+
+  const handleExportDashboard = () => {
+    if (!data) return;
+    const headers = ["Metric", "Value", "Trend", "Status"];
+    const rows = [
+      ["Total Headcount", data.summary.headcount.value, data.summary.headcount.trend, data.summary.headcount.isPositive ? "Positive" : "Negative"],
+      ["New Hires", data.summary.newHires.value, data.summary.newHires.trend, data.summary.newHires.isPositive ? "Positive" : "Negative"],
+      ["Turnover Rate", `${data.summary.turnover.value}%`, data.summary.turnover.trend, data.summary.turnover.isPositive ? "Positive" : "Negative"],
+    ];
+    
+    data.payrollBudget.forEach(b => {
+      rows.push([`Payroll Budget - ${b.department} (Actual)`, b.actual, "", ""]);
+      rows.push([`Payroll Budget - ${b.department} (Planned)`, b.planned, "", ""]);
+    });
+
+    data.topKpi.forEach(k => {
+      rows.push([`KPI - ${k.department}`, `${k.score}%`, k.status, ""]);
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `analytics_summary_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    triggerToast(t("reports.exportSuccess"));
+  };
+
+  const handleExportActivities = () => {
+    if (activities.length === 0) {
+      triggerToast("No data to export");
+      return;
+    }
+
+    const headers = [
+      t("reports.time"),
+      t("reports.actor"),
+      t("reports.category"),
+      t("reports.action"),
+      t("reports.target"),
+      t("reports.details")
+    ];
+
+    const rows = activities.map(act => [
+      `"${new Date(act.timestamp).toLocaleString("vi-VN").replace(/"/g, '""')}"`,
+      `"${(act.actor || "").replace(/"/g, '""')}"`,
+      `"${(act.type || "").replace(/"/g, '""')}"`,
+      `"${(act.action || "").replace(/"/g, '""')}"`,
+      `"${(act.target || "").replace(/"/g, '""')}"`,
+      `"${(act.details || "").replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `system_activities_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    triggerToast(t("reports.exportSuccess"));
+  };
+
+  const clearFilters = () => {
+    setFilterMonth("");
+    setFilterStartDate("");
+    setFilterEndDate("");
+    setFilterType("All");
+  };
+
   if (error && !data) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow p-6 max-w-md">
-          <h1 className="text-xl font-bold text-red-600 mb-2">Data Error</h1>
-          <p className="text-gray-600">{error}</p>
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center border border-gray-100">
+          <h1 className="text-2xl font-black text-red-600 mb-2">Data Error</h1>
+          <p className="text-gray-600 font-medium">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 bg-gray-50 min-h-screen pb-10">
+    <div className="space-y-8 bg-gray-50 min-h-screen pb-12 relative">
+      {/* Toast Alert */}
+      {toastMsg && (
+        <div className="fixed top-4 right-4 z-[9999] bg-slate-900 text-white font-bold text-sm px-4 py-3 rounded-xl shadow-xl border border-slate-800 animate-in fade-in slide-in-from-top-3 duration-200">
+          {toastMsg}
+        </div>
+      )}
+
       {/* Header Controls */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-6">
         <div>
-          <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">Report Analytics</h1>
-          <p className="text-[14px] text-slate-500 mt-1 font-medium">
-            Visualizing organization-wide performance and financial metrics
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">{t("reports.title")}</h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium">
+            {t("reports.subtitle")}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-           <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
-              <Calendar size={16} className="text-gray-500" />
-              <span className="text-sm font-semibold text-slate-700">This Month</span>
+        <div className="flex flex-wrap items-center gap-3">
+           <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm">
+              <Calendar size={16} className="text-blue-500" />
+              <span className="text-xs font-bold text-slate-700">
+                {new Date().toLocaleString('vi-VN', { month: 'long', year: 'numeric' })}
+              </span>
            </div>
-           <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
-              <MapPin size={16} className="text-gray-500" />
-              <span className="text-sm font-semibold text-slate-700">All Branches</span>
-           </div>
-           <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-sm font-semibold text-sm transition-colors">
+           <button 
+             onClick={handleExportDashboard}
+             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl shadow-md font-bold text-sm transition-all hover:-translate-y-0.5 duration-200"
+           >
               <Download size={16} />
-              Export Report
+              {t("reports.exportReport")}
            </button>
         </div>
       </div>
@@ -115,7 +250,7 @@ export default function AnalyticsDashboard() {
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatCard 
-              title="Total Headcount" 
+              title={t("reports.totalHeadcount")} 
               value={data?.summary.headcount.value}
               trend={data?.summary.headcount.trend}
               isPositive={data?.summary.headcount.isPositive}
@@ -124,7 +259,7 @@ export default function AnalyticsDashboard() {
               colorClass="text-blue-600"
             />
             <StatCard 
-              title="New Hires" 
+              title={t("reports.newHires")} 
               value={data?.summary.newHires.value}
               trend={data?.summary.newHires.trend}
               isPositive={data?.summary.newHires.isPositive}
@@ -133,7 +268,7 @@ export default function AnalyticsDashboard() {
               colorClass="text-emerald-600"
             />
             <StatCard 
-              title="Turnover Rate" 
+              title={t("reports.turnoverRate")} 
               value={`${data?.summary.turnover.value}%`}
               trend={data?.summary.turnover.trend}
               isPositive={data?.summary.turnover.isPositive}
@@ -145,76 +280,76 @@ export default function AnalyticsDashboard() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Workforce Fluctuations */}
-            <Card className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
+            <Card className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-bold text-slate-800">Workforce Fluctuations</CardTitle>
+                <CardTitle className="text-lg font-bold text-slate-800">{t("reports.workforceFluctuations")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[320px] w-full">
                    <ResponsiveContainer width="100%" height="100%">
-                     <AreaChart data={data?.workforceFluctuations} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorHeadcount" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis 
-                          dataKey="month" 
-                          axisLine={false} 
-                          tickLine={false} 
-                          tick={{ fill: "#64748b", fontSize: 12, fontWeight: 500 }} 
-                          dy={10} 
-                        />
-                        <YAxis 
-                          axisLine={false} 
-                          tickLine={false} 
-                          tick={{ fill: "#64748b", fontSize: 12 }} 
-                        />
-                        <Tooltip 
-                           contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                           itemStyle={{ fontWeight: 'bold' }}
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="headcount" 
-                          stroke="#3b82f6" 
-                          strokeWidth={4} 
-                          fill="url(#colorHeadcount)" 
-                          activeDot={{ r: 6, strokeWidth: 0, fill: "#3b82f6" }}
-                        />
-                     </AreaChart>
+                      <AreaChart data={data?.workforceFluctuations} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                         <defs>
+                           <linearGradient id="colorHeadcount" x1="0" y1="0" x2="0" y2="1">
+                             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                           </linearGradient>
+                         </defs>
+                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                         <XAxis 
+                           dataKey="month" 
+                           axisLine={false} 
+                           tickLine={false} 
+                           tick={{ fill: "#64748b", fontSize: 12, fontWeight: 500 }} 
+                           dy={10} 
+                         />
+                         <YAxis 
+                           axisLine={false} 
+                           tickLine={false} 
+                           tick={{ fill: "#64748b", fontSize: 12 }} 
+                         />
+                         <Tooltip 
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                            itemStyle={{ fontWeight: 'bold' }}
+                         />
+                         <Area 
+                           type="monotone" 
+                           dataKey="headcount" 
+                           stroke="#3b82f6" 
+                           strokeWidth={4} 
+                           fill="url(#colorHeadcount)" 
+                           activeDot={{ r: 6, strokeWidth: 0, fill: "#3b82f6" }}
+                         />
+                      </AreaChart>
                    </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
 
             {/* Reasons for Resignation */}
-            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
+            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
               <CardHeader className="pb-2 text-center">
-                <CardTitle className="text-lg font-bold text-slate-800">Reasons for Resignation</CardTitle>
+                <CardTitle className="text-lg font-bold text-slate-800">{t("reports.resignationReasons")}</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
                  <div className="h-[220px] w-full relative flex items-center justify-center">
                    <ResponsiveContainer width="100%" height="100%">
-                     <PieChart>
-                       <Pie
-                         data={data?.resignationReasons}
-                         cx="50%" cy="50%"
-                         innerRadius={70} outerRadius={90}
-                         paddingAngle={4}
-                         dataKey="count"
-                         stroke="none"
-                       >
-                         {data?.resignationReasons.map((entry: any, index: number) => (
-                           <Cell key={`cell-${index}`} fill={DONUT_COLORS[index % DONUT_COLORS.length]} />
-                         ))}
-                       </Pie>
-                       <Tooltip 
-                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-                       />
-                     </PieChart>
+                      <PieChart>
+                        <Pie
+                          data={data?.resignationReasons}
+                          cx="50%" cy="50%"
+                          innerRadius={70} outerRadius={90}
+                          paddingAngle={4}
+                          dataKey="count"
+                          stroke="none"
+                        >
+                          {data?.resignationReasons.map((entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={DONUT_COLORS[index % DONUT_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                        />
+                      </PieChart>
                    </ResponsiveContainer>
                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                       <span className="text-3xl font-bold text-slate-800">
@@ -242,9 +377,9 @@ export default function AnalyticsDashboard() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Payroll Budget by Department */}
-            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
+            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-bold text-slate-800">Payroll Budget by Department</CardTitle>
+                <CardTitle className="text-lg font-bold text-slate-800">{t("reports.payrollBudget")}</CardTitle>
               </CardHeader>
               <CardContent>
                  <div className="h-[300px] w-full">
@@ -284,9 +419,9 @@ export default function AnalyticsDashboard() {
             </Card>
 
             {/* Top 5 KPI Departments */}
-            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
+            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-bold text-slate-800">Top 5 KPI Departments</CardTitle>
+                <CardTitle className="text-lg font-bold text-slate-800">{t("reports.topKpi")}</CardTitle>
               </CardHeader>
               <CardContent>
                  <div className="overflow-x-auto mt-2">
@@ -333,6 +468,166 @@ export default function AnalyticsDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* ── System Activities / Log Section ── */}
+          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-8">
+            <CardHeader className="px-0 pt-0 pb-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl font-black text-slate-800 flex items-center gap-2">
+                  <FileSpreadsheet className="text-emerald-500" />
+                  {t("reports.systemActivities")}
+                </CardTitle>
+                <p className="text-xs font-medium text-slate-400 mt-1">
+                  System logs matching your search parameters and date ranges.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={clearFilters}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+                >
+                  Clear Filters
+                </button>
+                <button
+                  onClick={handleExportActivities}
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl shadow-sm font-bold text-xs transition-all"
+                >
+                  <Download size={14} />
+                  {t("reports.exportActivities")}
+                </button>
+              </div>
+            </CardHeader>
+
+            {/* Interactive Filters Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-6 border-b border-gray-100/60">
+              {/* Month Picker */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("reports.filterMonth")}</label>
+                <input
+                  type="month"
+                  value={filterMonth}
+                  onChange={(e) => {
+                    setFilterMonth(e.target.value);
+                    setFilterStartDate("");
+                    setFilterEndDate("");
+                  }}
+                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Start Date */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("reports.filterStartDate")}</label>
+                <input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => {
+                    setFilterStartDate(e.target.value);
+                    setFilterMonth("");
+                  }}
+                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* End Date */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("reports.filterEndDate")}</label>
+                <input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => {
+                    setFilterEndDate(e.target.value);
+                    setFilterMonth("");
+                  }}
+                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Type Select */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("reports.filterType")}</label>
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="All">{t("reports.all")}</option>
+                  <option value="Announcement">{t("reports.announcement")}</option>
+                  <option value="Payroll">{t("reports.payroll")}</option>
+                  <option value="Employee">{t("reports.employee")}</option>
+                  <option value="Performance">{t("reports.performance")}</option>
+                  <option value="Leave">{t("reports.leave")}</option>
+                  <option value="Attendance">{t("reports.attendance")}</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Activities Table */}
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[15%]">{t("reports.time")}</th>
+                      <th className="py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[15%]">{t("reports.actor")}</th>
+                      <th className="py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[12%]">{t("reports.category")}</th>
+                      <th className="py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[18%]">{t("reports.action")}</th>
+                      <th className="py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[15%]">{t("reports.target")}</th>
+                      <th className="py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-[25%]">{t("reports.details")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 font-medium text-xs text-slate-700">
+                    {actLoading ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-slate-400 font-bold">
+                          Loading activity log...
+                        </td>
+                      </tr>
+                    ) : activities.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-slate-400 font-bold">
+                          No activities match the filters selected.
+                        </td>
+                      </tr>
+                    ) : (
+                      activities.map((act) => {
+                        const dateStr = new Date(act.timestamp).toLocaleString("vi-VN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric"
+                        });
+                        return (
+                          <tr key={act.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="py-4 text-slate-500 font-semibold">{dateStr}</td>
+                            <td className="py-4 font-bold text-slate-800">{act.actor}</td>
+                            <td className="py-4">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                act.type === 'Announcement' ? 'bg-blue-50 text-blue-700' :
+                                act.type === 'Payroll' ? 'bg-emerald-50 text-emerald-700' :
+                                act.type === 'Employee' ? 'bg-purple-50 text-purple-700' :
+                                act.type === 'Performance' ? 'bg-indigo-50 text-indigo-700' :
+                                act.type === 'Leave' ? 'bg-orange-50 text-orange-700' :
+                                'bg-slate-100 text-slate-700'
+                              }`}>
+                                {act.type}
+                              </span>
+                            </td>
+                            <td className="py-4 font-bold text-slate-900">{act.action}</td>
+                            <td className="py-4 text-slate-500">{act.target}</td>
+                            <td className="py-4 text-slate-600 font-normal pr-4">{act.details}</td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

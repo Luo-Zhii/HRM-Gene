@@ -15,7 +15,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import { useTranslation } from "react-i18next";
-import { UserMinus, X, ShieldOff, Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { UserMinus, X, ShieldOff, Plus, Pencil, Trash2, AlertTriangle, Download } from "lucide-react";
 import EmployeeTable, { EmployeeRow } from "@/components/EmployeeTable";
 import EditEmployeeModal from "@/components/EditEmployeeModal";
 import { canManageEmployees } from "@/src/lib/adminAccess";
@@ -52,6 +52,46 @@ export default function AdminEmployeeDirectoryPage() {
   const showToast = (title: string, desc: string, type: "success" | "error") => {
     setToastMsg({ title, desc, type });
     setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const handleExportCSV = () => {
+    if (employees.length === 0) {
+      showToast("Info", "No employee data to export", "error");
+      return;
+    }
+    
+    const headers = [
+      "Employee",
+      "Email",
+      "Department",
+      "Position",
+      "Phone",
+      "Bank Name",
+      "Bank Account",
+      "Address"
+    ];
+    
+    const rows = employees.map(emp => [
+      `"${(`${emp.first_name || ""} ${emp.last_name || ""}`).trim().replace(/"/g, '""')}"`,
+      `"${(emp.email || "").replace(/"/g, '""')}"`,
+      `"${(emp.department?.department_name || "").replace(/"/g, '""')}"`,
+      `"${(emp.position?.position_name || "").replace(/"/g, '""')}"`,
+      `"${(emp.phone_number || "").replace(/"/g, '""')}"`,
+      `"${(emp.bankInfo?.bank_name || "").replace(/"/g, '""')}"`,
+      `"${(emp.bankInfo?.account_number || "").replace(/"/g, '""')}"`,
+      `"${(emp.address || "").replace(/"/g, '""')}"`
+    ]);
+    
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `employee_directory_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // ── RBAC render gate ────────────────────────────────────────────────────────
@@ -224,14 +264,23 @@ export default function AdminEmployeeDirectoryPage() {
           <p className="text-sm text-gray-500 mt-0.5">{t("directory.adminSubtitle")}</p>
         </div>
         
-        <Can method="POST" apiPath="/api/admin/employees">
+        <div className="flex items-center gap-3 shrink-0">
           <button 
-            onClick={() => router.push("/admin/register")}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm shrink-0"
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm"
           >
-            <Plus size={18} /> {t("common.add")}
+            <Download size={18} /> {t("common.export")}
           </button>
-        </Can>
+          
+          <Can method="POST" apiPath="/api/admin/employees">
+            <button 
+              onClick={() => router.push("/admin/register")}
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm"
+            >
+              <Plus size={18} /> {t("common.add")}
+            </button>
+          </Can>
+        </div>
       </div>
 
       {/*

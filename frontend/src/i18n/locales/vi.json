@@ -58,7 +58,8 @@
     "noData": "Không có dữ liệu",
     "confirmDelete": "Xác nhận xóa",
     "confirm": "Xác nhận",
-    "processing": "Đang xử lý..."
+    "processing": "Đang xử lý...",
+    "export": "Xuất CSV"
   },
   "header": {
     "searchPlaceholder": "Tìm kiếm tính năng & trang...",
@@ -980,5 +981,37 @@
     "fieldsRequired": "Vui lòng điền đầy đủ các trường bắt buộc.",
     "payPeriod": "Kỳ lương",
     "totalGross": "Lương Gross"
+  },
+  "reports": {
+    "title": "Báo cáo & Phân tích",
+    "subtitle": "Trực quan hóa hiệu suất làm việc và các chỉ số tài chính của tổ chức.",
+    "totalHeadcount": "Tổng Nhân sự",
+    "newHires": "Nhân viên mới",
+    "turnoverRate": "Tỷ lệ thôi việc",
+    "workforceFluctuations": "Biến động nhân sự",
+    "resignationReasons": "Lý do thôi việc",
+    "payrollBudget": "Ngân sách lương theo phòng ban",
+    "topKpi": "Top 5 phòng ban KPI cao nhất",
+    "exportReport": "Xuất báo cáo",
+    "exportSuccess": "Xuất báo cáo thành công",
+    "systemActivities": "Lịch sử hoạt động hệ thống",
+    "time": "Thời gian",
+    "actor": "Người thực hiện",
+    "category": "Phân loại",
+    "action": "Hành động",
+    "target": "Đối tượng",
+    "details": "Chi tiết",
+    "filterMonth": "Lọc theo tháng",
+    "filterStartDate": "Từ ngày",
+    "filterEndDate": "Đến ngày",
+    "filterType": "Loại hoạt động",
+    "exportActivities": "Xuất lịch sử hoạt động",
+    "all": "Tất cả",
+    "announcement": "Thông báo",
+    "payroll": "Lương / Bảng lương",
+    "employee": "Nhân sự",
+    "performance": "Hiệu suất / KPI",
+    "leave": "Nghỉ phép",
+    "attendance": "Điểm danh / Chấm công"
   }
 }
