@@ -94,7 +94,16 @@ export class AdminService {
     if (!departmentName) {
       throw new BadRequestException("Department name is required");
     }
-    const dept = this.deptRepo.create({ department_name: departmentName });
+    const nameTrimmed = departmentName.trim();
+    const existing = await this.deptRepo
+      .createQueryBuilder("dept")
+      .where("LOWER(dept.department_name) = LOWER(:name)", { name: nameTrimmed })
+      .getOne();
+    if (existing) {
+      throw new BadRequestException("Department with this name already exists");
+    }
+
+    const dept = this.deptRepo.create({ department_name: nameTrimmed });
     return this.deptRepo.save(dept);
   }
 
@@ -107,6 +116,16 @@ export class AdminService {
       throw new BadRequestException("Department name is required");
     }
 
+    const nameTrimmed = departmentName.trim();
+    const existing = await this.deptRepo
+      .createQueryBuilder("dept")
+      .where("LOWER(dept.department_name) = LOWER(:name)", { name: nameTrimmed })
+      .andWhere("dept.department_id != :id", { id })
+      .getOne();
+    if (existing) {
+      throw new BadRequestException("Department with this name already exists");
+    }
+
     const dept = await this.deptRepo.findOne({
       where: { department_id: id },
     });
@@ -115,7 +134,7 @@ export class AdminService {
       throw new NotFoundException("Department not found");
     }
 
-    dept.department_name = departmentName;
+    dept.department_name = nameTrimmed;
 
     if (managerId) {
       const manager = await this.employeeRepo.findOne({

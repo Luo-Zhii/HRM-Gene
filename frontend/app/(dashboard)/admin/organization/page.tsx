@@ -142,7 +142,14 @@ export default function OrganizationPage() {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ department_name: departmentInput }),
       });
-      if (!response.ok) throw new Error(t("org.errCreateDept"));
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errMsg = errorData.message;
+        if (errMsg === "Department with this name already exists") {
+          throw new Error(t("org.errDuplicateDept"));
+        }
+        throw new Error(errMsg || t("org.errCreateDept"));
+      }
       toast({ variant: "success", title: "Success", description: t("org.msgDeptCreated") });
       setDepartmentInput("");
       await loadData();
@@ -181,7 +188,14 @@ export default function OrganizationPage() {
         body: JSON.stringify({ department_name: editDeptName, manager_id }),
       });
 
-      if (!response.ok) throw new Error(t("org.errUpdateDept"));
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errMsg = errorData.message;
+        if (errMsg === "Department with this name already exists") {
+          throw new Error(t("org.errDuplicateDept"));
+        }
+        throw new Error(errMsg || t("org.errUpdateDept"));
+      }
 
       toast({ variant: "success", title: "Success", description: t("org.msgDeptUpdated") });
       setEditingDept(null);

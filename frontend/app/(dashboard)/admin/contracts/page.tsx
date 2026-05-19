@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, Edit2, FileText, X } from "lucide-react";
+import { Search, Plus, Edit2, FileText, X, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
@@ -141,6 +141,18 @@ export default function AdminContractsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.employee_id) {
+      toast({ variant: "destructive", title: t("contracts.errorTitle"), description: t("contracts.errorEmployeeRequired"), duration: 4000 });
+      return;
+    }
+    if (formData.start_date && formData.end_date) {
+      const start = new Date(formData.start_date);
+      const end = new Date(formData.end_date);
+      if (start > end) {
+        toast({ variant: "destructive", title: t("contracts.errorTitle"), description: t("contracts.errorDateOrder"), duration: 4000 });
+        return;
+      }
+    }
     setIsSaving(true);
     try {
       const url = editingContract ? `/api/contracts/${editingContract.contract_id}` : `/api/contracts`;
@@ -167,6 +179,27 @@ export default function AdminContractsPage() {
       toast({ variant: "destructive", title: t("contracts.errorTitle"), description: t("contracts.errorUnexpected"), duration: 4000 });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (contractId: number, contractNumber: string) => {
+    if (!window.confirm(t("contracts.confirmDelete", { number: contractNumber }))) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/contracts/${contractId}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      if (res.ok) {
+        toast({ title: t("contracts.successTitle"), description: t("contracts.msgDeleted"), duration: 3000 });
+        fetchContracts();
+      } else {
+        const errorData = await res.json();
+        toast({ variant: "destructive", title: t("contracts.errorTitle"), description: errorData.message || t("contracts.errorDelete"), duration: 4000 });
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: t("contracts.errorTitle"), description: t("contracts.errorUnexpected"), duration: 4000 });
     }
   };
 
@@ -288,6 +321,9 @@ export default function AdminContractsPage() {
                         )}
                         <Button variant="ghost" size="icon" className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full h-8 w-8" onClick={() => handleOpenModal(contract)}>
                           <Edit2 size={16} />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full h-8 w-8" onClick={() => handleDelete(contract.contract_id, contract.contract_number)}>
+                          <Trash2 size={16} />
                         </Button>
                       </TableCell>
                     </TableRow>

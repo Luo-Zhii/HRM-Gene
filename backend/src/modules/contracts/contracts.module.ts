@@ -7,6 +7,7 @@ import { Contract } from "../../entities/contract.entity";
 import { Employee } from "../../entities/employee.entity";
 import { SalaryHistory } from "../../entities/salary-history.entity";
 import { SalaryConfig } from "../../entities/salary-config.entity";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SalaryConfig } from "../../entities/salary-config.entity";
       SalaryHistory,
       SalaryConfig,
     ]),
+    NotificationsModule,
   ],
   providers: [ContractsService],
   controllers: [ContractsController, SalaryHistoryController],

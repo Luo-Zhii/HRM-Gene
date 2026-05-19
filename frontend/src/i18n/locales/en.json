@@ -534,11 +534,18 @@
     "errorLoadData": "Failed to load data.",
     "errorSave": "Failed to save contract.",
     "errorUnexpected": "An unexpected error occurred.",
+    "errorDateOrder": "Start date cannot be after end date.",
+    "errorEmployeeRequired": "Please select an employee.",
     "msgCreated": "Contract created successfully.",
-    "msgUpdated": "Contract updated successfully."
+    "msgUpdated": "Contract updated successfully.",
+    "btnDelete": "Delete",
+    "confirmDelete": "Are you sure you want to delete contract {{number}}?",
+    "msgDeleted": "Contract deleted successfully.",
+    "errorDelete": "Failed to delete contract."
   },
   "org": {
     "title": "Organizational Management",
+    "errDuplicateDept": "Department with this name already exists.",
     "accessDenied": "Access Denied",
     "noPermission": "You do not have permission to access this page.",
     "loadingData": "Loading organization data...",

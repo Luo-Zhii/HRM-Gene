@@ -14,6 +14,8 @@ import { SalaryHistory } from "../../entities/salary-history.entity";
 import { SalaryConfig } from "../../entities/salary-config.entity";
 import { CreateContractDto } from "./dto/create-contract.dto";
 import { UpdateContractDto } from "./dto/update-contract.dto";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationType } from "../../entities/notification.entity";
 
 @Injectable()
 export class ContractsService {
@@ -26,16 +28,29 @@ export class ContractsService {
     private salaryHistoryRepo: Repository<SalaryHistory>,
     @InjectRepository(SalaryConfig)
     private salaryConfigRepo: Repository<SalaryConfig>,
-    private dataSource: DataSource
+    private dataSource: DataSource,
+    private notificationsService: NotificationsService
   ) {}
 
   async create(createDto: CreateContractDto) {
+    if (!createDto.employee_id || isNaN(Number(createDto.employee_id))) {
+      throw new BadRequestException("Employee ID is required and must be a number");
+    }
+
     // Verify employee exists
     const employee = await this.employeeRepo.findOne({
       where: { employee_id: createDto.employee_id },
     });
     if (!employee) {
       throw new NotFoundException("Employee not found");
+    }
+
+    if (createDto.start_date && createDto.end_date) {
+      const start = new Date(createDto.start_date);
+      const end = new Date(createDto.end_date);
+      if (start > end) {
+        throw new BadRequestException("Start date cannot be after end date");
+      }
     }
 
     // Check if contract number already exists
@@ -73,6 +88,19 @@ export class ContractsService {
     }
 
     const saved = await this.contractRepo.save(contract);
+
+    // Send notification to employee
+    try {
+      await this.notificationsService.createNotification(
+        employee.employee_id,
+        "Hợp đồng mới được tạo / New Contract Created",
+        `Hợp đồng lao động mới (${saved.contract_number}) đã được tạo. / Your new labor contract (${saved.contract_number}) has been created.`,
+        NotificationType.ANNOUNCEMENT,
+        "/profile"
+      );
+    } catch (e) {
+      console.warn("Failed to create contract notification", e);
+    }
 
     // Record salary change in history if salary changed
     if (currentSalary) {
@@ -156,6 +184,17 @@ export class ContractsService {
   async update(id: number, updateDto: UpdateContractDto, employeeId?: number) {
     const contract = await this.findOne(id, employeeId);
 
+    const finalStartDate = updateDto.start_date ?? contract.start_date;
+    const finalEndDate = updateDto.end_date !== undefined ? updateDto.end_date : contract.end_date;
+
+    if (finalStartDate && finalEndDate) {
+      const start = new Date(finalStartDate);
+      const end = new Date(finalEndDate);
+      if (start > end) {
+        throw new BadRequestException("Start date cannot be after end date");
+      }
+    }
+
     // If salary is being updated, record in history
     if (updateDto.salary_rate && updateDto.salary_rate !== contract.salary_rate) {
       await this.recordSalaryChange(
@@ -175,12 +214,42 @@ export class ContractsService {
     }
 
     Object.assign(contract, updateDto);
-    return this.contractRepo.save(contract);
+    const updated = await this.contractRepo.save(contract);
+
+    // Send notification to employee about update
+    try {
+      await this.notificationsService.createNotification(
+        updated.employee.employee_id,
+        "Hợp đồng đã được cập nhật / Contract Updated",
+        `Hợp đồng lao động (${updated.contract_number}) của bạn đã được cập nhật. / Your labor contract (${updated.contract_number}) has been updated.`,
+        NotificationType.ANNOUNCEMENT,
+        "/profile"
+      );
+    } catch (e) {
+      console.warn("Failed to create contract update notification", e);
+    }
+
+    return updated;
   }
 
   async remove(id: number, employeeId?: number) {
     const contract = await this.findOne(id, employeeId);
+    const employeeIdToNotify = contract.employee.employee_id;
+    const contractNumber = contract.contract_number;
     await this.contractRepo.remove(contract);
+
+    try {
+      await this.notificationsService.createNotification(
+        employeeIdToNotify,
+        "Hợp đồng đã bị xóa / Contract Deleted",
+        `Hợp đồng lao động (${contractNumber}) đã bị xóa khỏi hệ thống. / Your labor contract (${contractNumber}) has been deleted.`,
+        NotificationType.ANNOUNCEMENT,
+        "/profile"
+      );
+    } catch (e) {
+      console.warn("Failed to create contract delete notification", e);
+    }
+
     return { message: "Contract deleted successfully" };
   }
 

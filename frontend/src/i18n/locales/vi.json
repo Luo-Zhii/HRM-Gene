@@ -534,11 +534,18 @@
     "errorLoadData": "Lỗi khi tải dữ liệu.",
     "errorSave": "Lưu hợp đồng thất bại.",
     "errorUnexpected": "Đã xảy ra lỗi không mong muốn.",
+    "errorDateOrder": "Ngày bắt đầu không được sau ngày kết thúc.",
+    "errorEmployeeRequired": "Vui lòng chọn nhân viên.",
     "msgCreated": "Đã tạo hợp đồng thành công.",
-    "msgUpdated": "Cập nhật hợp đồng thành công."
+    "msgUpdated": "Cập nhật hợp đồng thành công.",
+    "btnDelete": "Xóa",
+    "confirmDelete": "Bạn có chắc chắn muốn xóa hợp đồng {{number}}?",
+    "msgDeleted": "Đã xóa hợp đồng thành công.",
+    "errorDelete": "Xóa hợp đồng thất bại."
   },
   "org": {
     "title": "Sơ đồ Tổ chức",
+    "errDuplicateDept": "Phòng ban với tên này đã tồn tại.",
     "accessDenied": "Từ chối truy cập",
     "noPermission": "Bạn không có quyền truy cập trang này.",
     "loadingData": "Đang tải dữ liệu tổ chức...",

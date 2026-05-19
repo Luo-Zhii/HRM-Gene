@@ -20,8 +20,20 @@ export class DepartmentsService {
   ) {}
 
   async create(dto: CreateDepartmentDto) {
+    if (!dto.department_name) {
+      throw new BadRequestException("Department name is required");
+    }
+    const nameTrimmed = dto.department_name.trim();
+    const existing = await this.deptRepo
+      .createQueryBuilder("dept")
+      .where("LOWER(dept.department_name) = LOWER(:name)", { name: nameTrimmed })
+      .getOne();
+    if (existing) {
+      throw new BadRequestException("Department with this name already exists");
+    }
+
     const dept = this.deptRepo.create({
-      department_name: dto.department_name,
+      department_name: nameTrimmed,
     } as any);
     return this.deptRepo.save(dept);
   }
@@ -44,8 +56,18 @@ export class DepartmentsService {
     });
     if (!dept) throw new NotFoundException("Department not found");
 
-    if (dto.department_name !== undefined)
-      dept.department_name = dto.department_name;
+    if (dto.department_name !== undefined) {
+      const nameTrimmed = dto.department_name.trim();
+      const existing = await this.deptRepo
+        .createQueryBuilder("dept")
+        .where("LOWER(dept.department_name) = LOWER(:name)", { name: nameTrimmed })
+        .andWhere("dept.department_id != :id", { id })
+        .getOne();
+      if (existing) {
+        throw new BadRequestException("Department with this name already exists");
+      }
+      dept.department_name = nameTrimmed;
+    }
 
     await this.deptRepo.save(dept as any);
     return this.findOne(id);
