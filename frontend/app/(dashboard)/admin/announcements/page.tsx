@@ -223,7 +223,7 @@ export default function AnnouncementsPage() {
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Megaphone className="w-5 h-5 text-blue-600" />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-gray-900 font-inter">{t("adminNews.title")}</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t("adminNews.title")}</h1>
             </div>
             <p className="text-sm text-gray-500 max-w-2xl">
               {t("adminNews.subtitle")}

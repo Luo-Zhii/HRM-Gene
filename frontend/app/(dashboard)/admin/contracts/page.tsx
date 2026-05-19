@@ -186,7 +186,7 @@ export default function AdminContractsPage() {
   if (authLoading) return <div className="min-h-screen flex items-center justify-center">{t("common.loadingWorkspace", "Loading...")}</div>;
 
   return (
-    <div className="p-8 font-inter bg-slate-50 min-h-screen">
+    <div className="p-8 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Header Section */}

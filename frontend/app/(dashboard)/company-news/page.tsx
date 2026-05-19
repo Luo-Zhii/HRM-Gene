@@ -144,7 +144,7 @@ export default function CompanyNewsPage() {
               <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-200">
                 <Megaphone className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900 font-inter">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                 {t("news.pageTitle")}
               </h1>
             </div>

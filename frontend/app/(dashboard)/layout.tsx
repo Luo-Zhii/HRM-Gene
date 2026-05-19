@@ -112,14 +112,14 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:3001';
   const logoUrl = settings?.logo_url ? `${backendBaseUrl}${settings.logo_url}` : "/Logo.png";
 
-  const inPeople      = ["/admin/employees","/admin/contracts","/admin/organization","/admin/discipline","/admin/permissions"].some(p => pathname?.startsWith(p));
-  const inAttLeave    = ["/admin/attendance","/admin/qr-display","/admin/leave-approvals","/admin/resignations","/admin/holidays"].some(p => pathname?.startsWith(p));
-  const inPayroll     = pathname?.startsWith("/admin/payroll");
+  const inPeople = ["/admin/employees", "/admin/contracts", "/admin/organization", "/admin/discipline", "/admin/permissions"].some(p => pathname?.startsWith(p));
+  const inAttLeave = ["/admin/attendance", "/admin/qr-display", "/admin/leave-approvals", "/admin/resignations", "/admin/holidays"].some(p => pathname?.startsWith(p));
+  const inPayroll = pathname?.startsWith("/admin/payroll");
   const inPerformance = pathname?.startsWith("/admin/performance");
-  const inComms       = pathname?.startsWith("/admin/announcements");
-  const inReports     = pathname?.startsWith("/admin/reports");
-  const inMyWork      = ["/dashboard/timekeeping","/dashboard/leave","/dashboard/performance","/dashboard/salary","/my-resignation"].some(p => pathname?.startsWith(p));
-  const inAdmin       = pathname?.startsWith("/admin");
+  const inComms = pathname?.startsWith("/admin/announcements");
+  const inReports = pathname?.startsWith("/admin/reports");
+  const inMyWork = ["/dashboard/timekeeping", "/dashboard/leave", "/dashboard/performance", "/dashboard/salary", "/my-resignation"].some(p => pathname?.startsWith(p));
+  const inAdmin = pathname?.startsWith("/admin");
 
   return (
     <>
@@ -139,18 +139,18 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5 thin-sc">
 
           {/* Always-visible */}
-          <NavItem href="/dashboard"    label={t("sidebar.dashboard")}      icon={LayoutDashboard} isActive={pathname === "/dashboard"}             onClick={onClose} />
-          <NavItem href="/company-news" label={t("sidebar.newsFeed")}       icon={Newspaper}       isActive={pathname?.startsWith("/company-news")} onClick={onClose} />
-          <NavItem href="/directory"    label={t("sidebar.staffDirectory")} icon={Users}           isActive={pathname?.startsWith("/directory")}    onClick={onClose} />
+          <NavItem href="/dashboard" label={t("sidebar.dashboard")} icon={LayoutDashboard} isActive={pathname === "/dashboard"} onClick={onClose} />
+          <NavItem href="/company-news" label={t("sidebar.newsFeed")} icon={Newspaper} isActive={pathname?.startsWith("/company-news")} onClick={onClose} />
+          <NavItem href="/directory" label={t("sidebar.staffDirectory")} icon={Users} isActive={pathname?.startsWith("/directory")} onClick={onClose} />
 
           {/* MY WORKSPACE */}
           <div className="pt-2">
             <NavSection title="My Workspace" icon={Gauge} forceOpen={inMyWork || !inAdmin}>
-              <NavItem href="/dashboard/timekeeping"    label={t("sidebar.timekeeping")}     icon={Fingerprint} isActive={pathname === "/dashboard/timekeeping"}    onClick={onClose} indent />
-              <NavItem href="/dashboard/leave"          label={t("sidebar.leaveManagement")} icon={CalendarX2}  isActive={pathname?.startsWith("/dashboard/leave")} onClick={onClose} indent />
-              <NavItem href="/dashboard/performance/me" label={t("sidebar.myGoals")}         icon={Target}      isActive={pathname === "/dashboard/performance/me"} onClick={onClose} indent />
-              <NavItem href="/dashboard/salary"         label={t("sidebar.mySalary")}        icon={Wallet}      isActive={pathname === "/dashboard/salary"}         onClick={onClose} indent />
-              <NavItem href="/my-resignation"           label={t("sidebar.myResignation")}   icon={UserMinus}   isActive={pathname === "/my-resignation"}           onClick={onClose} indent />
+              <NavItem href="/dashboard/timekeeping" label={t("sidebar.timekeeping")} icon={Fingerprint} isActive={pathname === "/dashboard/timekeeping"} onClick={onClose} indent />
+              <NavItem href="/dashboard/leave" label={t("sidebar.leaveManagement")} icon={CalendarX2} isActive={pathname?.startsWith("/dashboard/leave")} onClick={onClose} indent />
+              <NavItem href="/dashboard/performance/me" label={t("sidebar.myGoals")} icon={Target} isActive={pathname === "/dashboard/performance/me"} onClick={onClose} indent />
+              <NavItem href="/dashboard/salary" label={t("sidebar.mySalary")} icon={Wallet} isActive={pathname === "/dashboard/salary"} onClick={onClose} indent />
+              <NavItem href="/my-resignation" label={t("sidebar.myResignation")} icon={UserMinus} isActive={pathname === "/my-resignation"} onClick={onClose} indent />
             </NavSection>
           </div>
 
@@ -163,35 +163,35 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
 
               {canViewDirectory && (
                 <NavSection title="People" icon={UsersRound} forceOpen={inPeople}>
-                  <NavItem href="/admin/employees"    label={t("sidebar.employeeDirectory")}          icon={UserCheck}    isActive={pathname === "/admin/employees"}    onClick={onClose} indent />
-                  <NavItem href="/admin/contracts"    label={t("sidebar.employmentContract")}          icon={FileCheck2}   isActive={pathname === "/admin/contracts"}    onClick={onClose} indent />
-                  {canViewCompany && <NavItem href="/admin/organization" label={t("sidebar.organizationalManagement")} icon={GitBranch}    isActive={pathname === "/admin/organization"} onClick={onClose} indent />}
-                  {(canViewCompany || isAdminOrHr) && <NavItem href="/admin/discipline" label={t("sidebar.discipline")} icon={AlertOctagon} isActive={pathname === "/admin/discipline"}   onClick={onClose} indent />}
+                  <NavItem href="/admin/employees" label={t("sidebar.employeeDirectory")} icon={UserCheck} isActive={pathname === "/admin/employees"} onClick={onClose} indent />
+                  <NavItem href="/admin/contracts" label={t("sidebar.employmentContract")} icon={FileCheck2} isActive={pathname === "/admin/contracts"} onClick={onClose} indent />
+                  {canViewCompany && <NavItem href="/admin/organization" label={t("sidebar.organizationalManagement")} icon={GitBranch} isActive={pathname === "/admin/organization"} onClick={onClose} indent />}
+                  {(canViewCompany || isAdminOrHr) && <NavItem href="/admin/discipline" label={t("sidebar.discipline")} icon={AlertOctagon} isActive={pathname === "/admin/discipline"} onClick={onClose} indent />}
                   {canViewPermissions && <NavItem href="/admin/permissions" label={t("sidebar.permissions")} icon={LockKeyhole} isActive={pathname === "/admin/permissions"} onClick={onClose} indent />}
                 </NavSection>
               )}
 
-              <NavSection title="Attendance & Leave" icon={CalendarDays} forceOpen={inAttLeave}>
-                {(isAdminOrHr || canViewCompany) && <NavItem href="/admin/attendance"      label={t("sidebar.attendanceHistory")}    icon={Clock}         isActive={pathname === "/admin/attendance"}      onClick={onClose} indent />}
-                {canViewCompany                  && <NavItem href="/admin/qr-display"      label={t("sidebar.qrDisplay")}            icon={ScanLine}      isActive={pathname === "/admin/qr-display"}      onClick={onClose} indent />}
-                {canManageLeave                  && <NavItem href="/admin/leave-approvals" label={t("sidebar.leaveApprovals")}       icon={ClipboardList} isActive={pathname === "/admin/leave-approvals"} onClick={onClose} indent />}
-                {(canManageLeave || isAdminOrHr) && <NavItem href="/admin/resignations"    label={t("sidebar.resignationApprovals")} icon={UserMinus}     isActive={pathname === "/admin/resignations"}    onClick={onClose} indent />}
-                {isAdminOrHr                     && <NavItem href="/admin/holidays"        label="Public Holidays"                   icon={Calendar}      isActive={pathname === "/admin/holidays"}        onClick={onClose} indent />}
+              <NavSection title="Attend & Leave" icon={CalendarDays} forceOpen={inAttLeave}>
+                {(isAdminOrHr || canViewCompany) && <NavItem href="/admin/attendance" label={t("sidebar.attendanceHistory")} icon={Clock} isActive={pathname === "/admin/attendance"} onClick={onClose} indent />}
+                {canViewCompany && <NavItem href="/admin/qr-display" label={t("sidebar.qrDisplay")} icon={ScanLine} isActive={pathname === "/admin/qr-display"} onClick={onClose} indent />}
+                {canManageLeave && <NavItem href="/admin/leave-approvals" label={t("sidebar.leaveApprovals")} icon={ClipboardList} isActive={pathname === "/admin/leave-approvals"} onClick={onClose} indent />}
+                {(canManageLeave || isAdminOrHr) && <NavItem href="/admin/resignations" label={t("sidebar.resignationApprovals")} icon={UserMinus} isActive={pathname === "/admin/resignations"} onClick={onClose} indent />}
+                {isAdminOrHr && <NavItem href="/admin/holidays" label="Public Holidays" icon={Calendar} isActive={pathname === "/admin/holidays"} onClick={onClose} indent />}
               </NavSection>
 
               {canManagePayroll && (
                 <NavSection title="Payroll" icon={Banknote} forceOpen={inPayroll}>
-                  <NavItem href="/admin/payroll/config"     label={t("sidebar.salaryConfiguration")} icon={CreditCard} isActive={pathname === "/admin/payroll/config"}     onClick={onClose} indent />
-                  <NavItem href="/admin/payroll/adjustment" label={t("sidebar.salaryAdjustment")}    icon={DollarSign} isActive={pathname === "/admin/payroll/adjustment"}  onClick={onClose} indent />
-                  <NavItem href="/admin/payroll/generate"   label={t("sidebar.createPayroll")}       icon={Receipt}    isActive={pathname === "/admin/payroll/generate"}    onClick={onClose} indent />
-                  <NavItem href="/admin/payroll/issue"      label={t("sidebar.issuePayslips")}       icon={FileText}   isActive={pathname === "/admin/payroll/issue"}       onClick={onClose} indent />
+                  <NavItem href="/admin/payroll/config" label={t("sidebar.salaryConfiguration")} icon={CreditCard} isActive={pathname === "/admin/payroll/config"} onClick={onClose} indent />
+                  <NavItem href="/admin/payroll/adjustment" label={t("sidebar.salaryAdjustment")} icon={DollarSign} isActive={pathname === "/admin/payroll/adjustment"} onClick={onClose} indent />
+                  <NavItem href="/admin/payroll/generate" label={t("sidebar.createPayroll")} icon={Receipt} isActive={pathname === "/admin/payroll/generate"} onClick={onClose} indent />
+                  <NavItem href="/admin/payroll/issue" label={t("sidebar.issuePayslips")} icon={FileText} isActive={pathname === "/admin/payroll/issue"} onClick={onClose} indent />
                 </NavSection>
               )}
 
               {(canViewCompany || isAdminOrHr) && (
                 <NavSection title="Performance" icon={TrendingUp} forceOpen={inPerformance}>
-                  <NavItem href="/admin/performance/library" label={t("sidebar.kpiLibrary")}     icon={Target}    isActive={pathname === "/admin/performance/library"} onClick={onClose} indent />
-                  <NavItem href="/admin/performance/team"    label={t("sidebar.teamPerformance")} icon={BarChart3} isActive={pathname === "/admin/performance/team"}    onClick={onClose} indent />
+                  <NavItem href="/admin/performance/library" label={t("sidebar.kpiLibrary")} icon={Target} isActive={pathname === "/admin/performance/library"} onClick={onClose} indent />
+                  <NavItem href="/admin/performance/team" label={t("sidebar.teamPerformance")} icon={BarChart3} isActive={pathname === "/admin/performance/team"} onClick={onClose} indent />
                 </NavSection>
               )}
 
@@ -213,7 +213,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         {/* Settings pinned at bottom */}
         {canViewCompany && (
           <div className="px-2.5 py-3 border-t border-gray-100 shrink-0 space-y-0.5">
-            <NavItem href="/admin/settings"         label={t("sidebar.systemSettings")}  icon={Cog}     isActive={pathname === "/admin/settings"}         onClick={onClose} />
+            <NavItem href="/admin/settings" label={t("sidebar.systemSettings")} icon={Cog} isActive={pathname === "/admin/settings"} onClick={onClose} />
             {canManagePayroll && <NavItem href="/admin/settings/payroll" label={t("sidebar.payrollSettings")} icon={Settings} isActive={pathname === "/admin/settings/payroll"} onClick={onClose} />}
           </div>
         )}
@@ -421,11 +421,11 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
 
   // Quick Links: shown when the palette is open but the query is empty
   const QUICK_LINKS: SearchResult[] = [
-    { title: "Dashboard",      path: "/dashboard",           description: "Home overview" },
-    { title: "Staff Directory", path: "/directory",           description: "Browse colleagues" },
-    { title: "Timekeeping",    path: "/dashboard/timekeeping",description: "Clock in/out" },
-    { title: "Leave Management",path: "/dashboard/leave",     description: "Apply for leave" },
-    { title: "Profile",        path: "/profile",              description: "Your profile" },
+    { title: "Dashboard", path: "/dashboard", description: "Home overview" },
+    { title: "Staff Directory", path: "/directory", description: "Browse colleagues" },
+    { title: "Timekeeping", path: "/dashboard/timekeeping", description: "Clock in/out" },
+    { title: "Leave Management", path: "/dashboard/leave", description: "Apply for leave" },
+    { title: "Profile", path: "/profile", description: "Your profile" },
   ];
 
   const handleSearchSelect = useCallback((result: SearchResult) => {
@@ -459,7 +459,7 @@ function Header({ onMenuClick }: { onMenuClick: () => void }) {
         <div className="relative" ref={searchRef}>
           <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-56 md:w-72 transition-all focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 focus-within:bg-white">
             <Search size={15} className="text-gray-400 shrink-0" />
-          <input
+            <input
               type="text"
               placeholder={t("header.searchPlaceholder")}
               value={searchQuery}

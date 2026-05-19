@@ -231,7 +231,7 @@ export default function SystemSettingsPage() {
         {/* Header containing the existing Create button */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 font-inter">Company Settings</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Company Settings</h1>
             <p className="text-sm text-gray-500 mt-1">Manage organizational details, localization, and system security.</p>
           </div>
           <Link href="/admin/register">

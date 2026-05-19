@@ -122,6 +122,34 @@ export class AuthService {
     return this.getProfile(id);
   }
 
+  async changePassword(
+    employeeId: number,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const employee = await this.employeeRepo.findOne({
+      where: { employee_id: employeeId },
+    });
+
+    if (!employee) {
+      throw new NotFoundException("User not found");
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, employee.password);
+    if (!isMatch) {
+      throw new BadRequestException("Current password is incorrect");
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestException("New password must be at least 6 characters");
+    }
+
+    employee.password = await bcrypt.hash(newPassword, 10);
+    await this.employeeRepo.save(employee);
+
+    return { message: "Password changed successfully" };
+  }
+
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.employeeRepo.findOne({
       where: { email },

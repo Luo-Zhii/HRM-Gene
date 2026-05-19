@@ -123,7 +123,22 @@ export class AuthController {
     return this.authService.updateAvatarUrl(userId, avatarUrl);
   }
 
-  // --- 5. NAVIGATION (Menu Sidebar) ---
+  // --- 5. CHANGE PASSWORD ---
+  @UseGuards(JwtAuthGuard)
+  @Patch("profile/password")
+  async changePassword(
+    @Request() req: any,
+    @Body() body: { currentPassword: string; newPassword: string },
+  ) {
+    const userId = req.user.employee_id || req.user.id;
+    return this.authService.changePassword(
+      userId,
+      body.currentPassword,
+      body.newPassword,
+    );
+  }
+
+  // --- 6. NAVIGATION (Menu Sidebar) ---
   @UseGuards(JwtAuthGuard)
   @Get("navigation")
   async navigation(
@@ -179,7 +194,7 @@ export class AuthController {
     return navigation;
   }
 
-  // --- 6. ADMIN/DEVELOPER REGISTRATION (Bootstrap only) ---
+  // --- 7. ADMIN/DEVELOPER REGISTRATION (Bootstrap only) ---
   @Post("admin-register")
   async adminRegister(
     @Body()

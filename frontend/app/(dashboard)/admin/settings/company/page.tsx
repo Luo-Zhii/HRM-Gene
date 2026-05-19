@@ -116,7 +116,7 @@ export default function CompanyProfilePage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto py-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 font-inter">Company Profile</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Company Profile</h1>
         <p className="text-gray-500 mt-1">Set up company profile details and branding.</p>
       </div>
 

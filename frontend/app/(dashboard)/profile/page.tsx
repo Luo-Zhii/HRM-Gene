@@ -15,6 +15,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit2, Save, X, Mail, Phone, Briefcase, DollarSign, FileText, AlertTriangle, CreditCard, Camera, Lock, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
 
 // ==========================================
 // INTERFACES
@@ -54,6 +55,7 @@ function ProfileContent() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   const [departments, setDepartments] = useState<any[]>([]);
   const [positions, setPositions] = useState<any[]>([]);
@@ -168,7 +170,7 @@ function ProfileContent() {
   const initials = `${profileData.first_name?.[0]?.toUpperCase() || ""}${profileData.last_name?.[0]?.toUpperCase() || ""}`;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-10 font-inter">
+    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-10">
       <div className="max-w-[1100px] mx-auto space-y-8">
         <h1 className="text-2xl font-bold text-slate-900">{t("profile.title")}</h1>
 
@@ -258,6 +260,16 @@ function ProfileContent() {
               <div className="flex items-center gap-3"><ShieldCheck className="text-blue-600 w-5 h-5" /><span className="text-sm font-bold">{t("profile.enable2fa")}</span></div>
               <CustomToggle checked={settings.two_factor_auth} onChange={(v) => setSettings({ ...settings, two_factor_auth: v })} disabled={!isEditing} />
             </div>
+            {viewingOwnProfile && (
+              <Button
+                onClick={() => setShowPasswordDialog(true)}
+                variant="outline"
+                className="w-full border-slate-200 hover:bg-slate-50 text-slate-700"
+              >
+                <Lock className="w-4 h-4 mr-2" />
+                {t("profile.changePassword")}
+              </Button>
+            )}
           </div>
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b pb-2"><h3 className="font-bold">{t("profile.pushNotifications")}</h3><CustomToggle checked={settings.push_notifications} onChange={(v) => setSettings({ ...settings, push_notifications: v })} disabled={!isEditing} /></div>
@@ -453,6 +465,7 @@ function ProfileContent() {
             </AccordionItem>
           </Accordion>
         </div>
+        <ChangePasswordDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog} />
         <Toaster />
       </div>
     </div>

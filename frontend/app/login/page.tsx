@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +17,28 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
+    // ==========================================
+    // 1. FRONTEND VALIDATION (Xử lý các TC LOGIN_02, 03, 04)
+    // ==========================================
+    if (!email && !password) {
+      setError("Vui lòng nhập tài khoản và mật khẩu."); // LOGIN_02
+      setLoading(false);
+      return;
+    }
+    if (!email) {
+      setError("Vui lòng nhập tài khoản."); // LOGIN_04
+      setLoading(false);
+      return;
+    }
+    if (!password) {
+      setError("Vui lòng nhập mật khẩu."); // LOGIN_03
+      setLoading(false);
+      return;
+    }
+
+    // ==========================================
+    // 2. CALL API & BACKEND ERROR MAPPING
+    // ==========================================
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -30,29 +51,42 @@ export default function LoginPage() {
       if (res.ok && json.success) {
         window.location.href = "/dashboard";
       } else {
-        setError(json.message || "Login failed. Please check credentials.");
+        // Phân loại lỗi dựa trên HTTP Status Code từ NestJS trả về
+        let customErrorMsg = json.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+
+        switch (res.status) {
+          case 404:
+            customErrorMsg = "Email không tồn tại trong hệ thống."; // LOGIN_08
+            break;
+          case 401:
+            // Tuỳ thuộc vào backend NestJS của bạn trả về string gì trong json.message
+            if (json.message?.toLowerCase().includes("password")) {
+              customErrorMsg = "Sai mật khẩu."; // LOGIN_05
+            } else if (json.message?.toLowerCase().includes("lock") || json.message?.toLowerCase().includes("quá 5 lần")) {
+              customErrorMsg = "Tài khoản đã bị khóa do nhập sai quá 5 lần."; // LOGIN_09
+            } else {
+              customErrorMsg = "Sai tài khoản hoặc mật khẩu."; // LOGIN_06, LOGIN_07
+            }
+            break;
+          case 403:
+            customErrorMsg = "Tài khoản nhân viên đã bị vô hiệu hóa (Nghỉ việc)."; // LOGIN_10
+            break;
+        }
+        setError(customErrorMsg);
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      setError("Hệ thống đang bận. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    /* SỬ DỤNG INLINE STYLE CHO BACKGROUND SVG
-      - Lấy file trực tiếp từ thư mục public thông qua url('/bg-waves.svg')
-      - Đảm bảo Next.js render hình ảnh chính xác ngay cả khi Tailwind chưa kịp cập nhật bộ nhớ đệm
-    */
     <div
       className="relative min-h-screen flex items-center justify-center p-4 bg-[#5885ff] bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/bg-waves.svg')" }}
     >
-
-      {/* Form Container */}
       <div className="relative z-10 w-full max-w-[480px] bg-white rounded-[24px] p-10 shadow-2xl">
-
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Login to Account</h1>
           <p className="text-sm text-gray-500">
@@ -60,32 +94,28 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Error Notification */}
         {error && (
-          <div className="mb-4 p-3 rounded bg-red-50 text-sm text-red-600 border border-red-200 text-center">
+          <div className="mb-4 p-3 rounded bg-red-50 text-sm text-red-600 border border-red-200 text-center transition-all">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-
-          {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium text-gray-600">
               Email address:
             </Label>
+            {/* Đã bỏ thuộc tính `required` ở đây để React tự handle */}
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@example.com"
-              required
               className="bg-[#f4f6f9] border-transparent focus:border-blue-400 focus:bg-white h-12 rounded-lg text-gray-900"
             />
           </div>
 
-          {/* Password */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label htmlFor="password" className="text-sm font-medium text-gray-600">
@@ -95,18 +125,17 @@ export default function LoginPage() {
                 Forget Password?
               </a>
             </div>
+            {/* Đã bỏ thuộc tính `required` ở đây để React tự handle */}
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••"
-              required
               className="bg-[#f4f6f9] border-transparent focus:border-blue-400 focus:bg-white h-12 rounded-lg text-2xl tracking-widest placeholder:tracking-normal placeholder:text-base text-gray-900"
             />
           </div>
 
-          {/* Remember Me */}
           <div className="flex items-center space-x-2 pt-2">
             <input
               type="checkbox"
@@ -118,7 +147,6 @@ export default function LoginPage() {
             </Label>
           </div>
 
-          {/* Submit */}
           <Button
             type="submit"
             disabled={loading}
@@ -126,11 +154,6 @@ export default function LoginPage() {
           >
             {loading ? "Signing in..." : "Sign In"}
           </Button>
-
-          <div className="mt-8 text-xs text-gray-400 text-center opacity-70">
-            <p>Admin: admin@example.com / admin</p>
-            <p>Employee: user31@company.com / password123</p>
-          </div>
         </form>
       </div>
     </div>

@@ -51,7 +51,7 @@ export default function ManageNotificationsPage() {
   };
 
   if (!isAdmin) {
-    return <div className="p-8 font-inter text-gray-500">Access Denied</div>;
+    return <div className="p-8 text-gray-500">Access Denied</div>;
   }
 
   return (

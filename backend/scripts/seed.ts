@@ -281,6 +281,20 @@ async function run() {
   }
   console.log(`✅ Created ${employees.length} employees`);
 
+  // --- 7.2. WELCOME NOTIFICATIONS ---
+  console.log("🌱 Creating Welcome Notifications...");
+  for (const employee of employees) {
+    await notificationRepo.save(notificationRepo.create({
+      user: employee,
+      userId: employee.employee_id,
+      title: "Welcome to the team!",
+      message: "Your employee account has been created. Please complete your profile and bank information.",
+      type: NotificationType.ANNOUNCEMENT,
+      isRead: false,
+    }));
+  }
+  console.log(`✅ Created ${employees.length} welcome notifications`);
+
   // --- 7.5. BANK INFO & LEAVE BALANCES ---
   console.log("🌱 Creating Bank Info & Leave Balances...");
   for (const employee of employees) {
@@ -631,8 +645,8 @@ async function run() {
     }));
   }
 
-  // --- 14. ANNOUNCEMENTS & NOTIFICATIONS ---
-  console.log("🌱 Creating Announcements & Notifications...");
+  // --- 14. ANNOUNCEMENTS ---
+  console.log("🌱 Creating Announcements...");
   await announcementRepo.save([
     announcementRepo.create({
       title: "Welcome to HRM AI Inc.",
@@ -662,36 +676,6 @@ async function run() {
       delivery_methods: ["in_app", "email"]
     })
   ]);
-
-  // Read / Unread Notifications
-  await notificationRepo.save(notificationRepo.create({
-    user: adminUser,
-    userId: adminUser.employee_id,
-    title: "New Policy Announcement",
-    message: "A new company policy regarding Annual Leave has been published.",
-    type: NotificationType.ANNOUNCEMENT,
-    isRead: false
-  }));
-
-  // Create notifications for the first standard user
-  if (employees.length > 1) {
-    await notificationRepo.save(notificationRepo.create({
-      user: employees[1],
-      userId: employees[1].employee_id,
-      title: "KPI Assignment",
-      message: "You have been assigned 2 new KPIs for Q2 2026.",
-      type: NotificationType.KPI,
-      isRead: false
-    }));
-    await notificationRepo.save(notificationRepo.create({
-      user: employees[1],
-      userId: employees[1].employee_id,
-      title: "Payslip ready",
-      message: "Your April 2026 payslip has been generated.",
-      type: NotificationType.PAYROLL,
-      isRead: true
-    }));
-  }
 
   // --- 15. AUDIT LOG ---
   await auditRepo.save(auditRepo.create({

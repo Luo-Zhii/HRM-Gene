@@ -1,8 +1,13 @@
+const { fontFamily } = require("tailwindcss/defaultTheme");
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     darkMode: ["class"],
-    content: ["./app/**/*.{js,ts,jsx,tsx,mdx}", "./src/**/*.{js,ts,jsx,tsx,mdx}"],
+    content: ["./app/**/*.{js,ts,jsx,tsx,mdx}", "./components/**/*.{js,ts,jsx,tsx,mdx}", "./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
+  	fontFamily: {
+  		sans: ["var(--font-inter)", ...fontFamily.sans],
+  	},
   	extend: {
   		borderRadius: {
   			lg: 'var(--radius)',
