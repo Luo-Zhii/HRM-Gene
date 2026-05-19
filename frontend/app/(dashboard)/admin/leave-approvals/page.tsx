@@ -25,6 +25,7 @@ interface LeaveRequest {
   reason?: string;
   status: string;
   manager_approver?: string;
+  remaining_leave_days?: number;
 }
 
 interface StatusMessage {
@@ -37,6 +38,30 @@ const getInitials = (name?: string) => {
   const parts = name.trim().split(" ");
   if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
   return name[0].toUpperCase();
+};
+
+const calculateWorkingDays = (startDate: string, endDate: string): number => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  if (end < start) return 0;
+
+  let days = 0;
+  const current = new Date(start);
+  while (current <= end) {
+    const dayOfWeek = current.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0=Sun, 6=Sat
+      days++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  if (days === 0) {
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    days = diffDays + 1;
+  }
+  return days;
 };
 
 export default function LeaveApprovalsPage() {
@@ -57,12 +82,77 @@ export default function LeaveApprovalsPage() {
   const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
   const [statusFilter, setStatusFilter] = useState('Pending');
 
+  // Search and date filters
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+
   const filteredRequests = useMemo(() => {
-    return requests.filter(req =>
-      req.status === statusFilter ||
-      (statusFilter === 'Pending' && req.status === 'Approved_By_Manager')
-    );
-  }, [requests, statusFilter]);
+    return requests.filter(req => {
+      // Status Filter
+      const matchesStatus = req.status === statusFilter ||
+        (statusFilter === 'Pending' && req.status === 'Approved_By_Manager');
+      if (!matchesStatus) return false;
+
+      // Search Filter
+      if (searchTerm.trim() !== "") {
+        const term = searchTerm.toLowerCase();
+        const name = req.employee_name?.toLowerCase() || "";
+        const email = req.employee_email?.toLowerCase() || "";
+        if (!name.includes(term) && !email.includes(term)) {
+          return false;
+        }
+      }
+
+      // Date Range Filter (Overlapping range)
+      if (filterStartDate && req.end_date < filterStartDate) {
+        return false;
+      }
+      if (filterEndDate && req.start_date > filterEndDate) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [requests, statusFilter, searchTerm, filterStartDate, filterEndDate]);
+
+  const computedStats = useMemo(() => {
+    let total = 0;
+    let pending = 0;
+    let approved = 0;
+    let rejected = 0;
+
+    requests.forEach((req) => {
+      // Search Filter
+      if (searchTerm.trim() !== "") {
+        const term = searchTerm.toLowerCase();
+        const name = req.employee_name?.toLowerCase() || "";
+        const email = req.employee_email?.toLowerCase() || "";
+        if (!name.includes(term) && !email.includes(term)) {
+          return;
+        }
+      }
+
+      // Date Range Filter (Overlapping range)
+      if (filterStartDate && req.end_date < filterStartDate) {
+        return;
+      }
+      if (filterEndDate && req.start_date > filterEndDate) {
+        return;
+      }
+
+      total++;
+      if (req.status === "Pending" || req.status === "Approved_By_Manager") {
+        pending++;
+      } else if (req.status === "Approved") {
+        approved++;
+      } else if (req.status === "Rejected") {
+        rejected++;
+      }
+    });
+
+    return { total, pending, approved, rejected };
+  }, [requests, searchTerm, filterStartDate, filterEndDate]);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -209,9 +299,7 @@ export default function LeaveApprovalsPage() {
   // Calculate days for active request
   let totalDays = 0;
   if (activeRequest) {
-    const start = new Date(activeRequest.start_date);
-    const end = new Date(activeRequest.end_date);
-    totalDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    totalDays = calculateWorkingDays(activeRequest.start_date, activeRequest.end_date);
   }
 
   return (
@@ -238,30 +326,83 @@ export default function LeaveApprovalsPage() {
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsTotal")}</p>
-              <h3 className="text-2xl font-bold text-gray-900">{stats.total}</h3>
+              <h3 className="text-2xl font-bold text-gray-900">{computedStats.total}</h3>
             </div>
             <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center"><FileText className="w-6 h-6 text-blue-600" /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsPending")}</p>
-              <h3 className="text-2xl font-bold text-yellow-600">{stats.pending}</h3>
+              <h3 className="text-2xl font-bold text-yellow-600">{computedStats.pending}</h3>
             </div>
             <div className="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsApproved")}</p>
-              <h3 className="text-2xl font-bold text-green-600">{stats.approved}</h3>
+              <h3 className="text-2xl font-bold text-green-600">{computedStats.approved}</h3>
             </div>
             <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center"><CheckCircle2 className="w-6 h-6 text-green-600" /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsRejected")}</p>
-              <h3 className="text-2xl font-bold text-red-600">{stats.rejected}</h3>
+              <h3 className="text-2xl font-bold text-red-600">{computedStats.rejected}</h3>
             </div>
             <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center"><XCircle className="w-6 h-6 text-red-600" /></div>
+          </div>
+        </div>
+
+        {/* Modern Filter Bar */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div>
+            <Label htmlFor="search-emp" className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+              Search Employee
+            </Label>
+            <input
+              id="search-emp"
+              type="text"
+              placeholder="Name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
+          <div>
+            <Label htmlFor="filter-start" className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+              From Date
+            </Label>
+            <input
+              id="filter-start"
+              type="date"
+              value={filterStartDate}
+              onChange={(e) => setFilterStartDate(e.target.value)}
+              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
+          <div>
+            <Label htmlFor="filter-end" className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+              To Date
+            </Label>
+            <input
+              id="filter-end"
+              type="date"
+              value={filterEndDate}
+              onChange={(e) => setFilterEndDate(e.target.value)}
+              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
+          <div>
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setFilterStartDate("");
+                setFilterEndDate("");
+              }}
+              className="w-full h-10 px-4 text-sm font-bold text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+            >
+              Clear Filters
+            </button>
           </div>
         </div>
 
@@ -298,6 +439,7 @@ export default function LeaveApprovalsPage() {
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colEmp")}</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colType")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Remaining Balance</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colStart")}</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colEnd")}</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colDays")}</th>
@@ -309,17 +451,15 @@ export default function LeaveApprovalsPage() {
                 <tbody className="divide-y divide-gray-100">
                   {loading && filteredRequests.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">{t("leaveApprovals.loadingReqs")}</td>
+                      <td colSpan={9} className="px-6 py-8 text-center text-gray-500">{t("leaveApprovals.loadingReqs")}</td>
                     </tr>
                   ) : filteredRequests.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">{t("leaveApprovals.noReqsStat", { status: getTranslatedTab(statusFilter).toLowerCase() })}</td>
+                      <td colSpan={9} className="px-6 py-8 text-center text-gray-500">{t("leaveApprovals.noReqsStat", { status: getTranslatedTab(statusFilter).toLowerCase() })}</td>
                     </tr>
                   ) : (
                     filteredRequests.map((request) => {
-                      const start = new Date(request.start_date);
-                      const end = new Date(request.end_date);
-                      const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                      const days = calculateWorkingDays(request.start_date, request.end_date);
                       const isProcessing = processingIds.has(request.request_id);
                       const displayName = request.employee_name || request.employee_email || `Employee #${request.employee_id || request.request_id}`;
 
@@ -341,6 +481,9 @@ export default function LeaveApprovalsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-700 font-medium">{request.leave_type_name}</td>
+                          <td className={`px-6 py-4 text-sm font-semibold ${request.remaining_leave_days !== undefined && request.remaining_leave_days < 0 ? "text-red-600 font-bold" : "text-gray-900"}`}>
+                            {request.remaining_leave_days !== undefined ? `${request.remaining_leave_days} days` : "-"}
+                          </td>
                           <td className="px-6 py-4 text-sm text-gray-600">{new Date(request.start_date).toLocaleDateString()}</td>
                           <td className="px-6 py-4 text-sm text-gray-600">{new Date(request.end_date).toLocaleDateString()}</td>
                           <td className="px-6 py-4 text-sm text-gray-900 font-medium">{days}</td>
@@ -538,10 +681,16 @@ export default function LeaveApprovalsPage() {
                         <FileText className="w-4 h-4 mr-2" /> {t("leaveApprovals.leaveInfo")}
                       </h3>
                       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100 border-b border-gray-100">
+                        <div className="grid grid-cols-2 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-gray-100 border-b border-gray-100">
                           <div className="p-4 bg-gray-50/30">
                             <p className="text-xs text-gray-500 mb-1 font-medium">{t("leaveApprovals.colType")}</p>
                             <p className="font-semibold text-gray-900">{activeRequest.leave_type_name}</p>
+                          </div>
+                          <div className="p-4 bg-gray-50/30">
+                            <p className="text-xs text-gray-500 mb-1 font-medium">Remaining Balance</p>
+                            <p className={`font-semibold ${activeRequest.remaining_leave_days !== undefined && activeRequest.remaining_leave_days < 0 ? "text-red-600 font-bold" : "text-gray-900"}`}>
+                              {activeRequest.remaining_leave_days !== undefined ? `${activeRequest.remaining_leave_days} days` : "-"}
+                            </p>
                           </div>
                           <div className="p-4 bg-gray-50/30">
                             <p className="text-xs text-gray-500 mb-1 font-medium flex items-center"><Calendar className="w-3 h-3 mr-1" /> {t("leaveApprovals.lblFrom")}</p>

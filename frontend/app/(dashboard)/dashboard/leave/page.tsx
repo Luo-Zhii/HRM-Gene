@@ -59,7 +59,7 @@ type LeaveType = {
   default_days_allocated: number;
 };
 
-// Calculate days between two dates (inclusive, fixed logic)
+// Calculate days between two dates (inclusive, excluding weekends)
 const calculateDays = (
   startDate: Date | null | string,
   endDate: Date | null | string
@@ -75,9 +75,21 @@ const calculateDays = (
 
   if (end < start) return 0;
 
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays + 1;
+  let days = 0;
+  const current = new Date(start);
+  while (current <= end) {
+    const dayOfWeek = current.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0 = Sunday, 6 = Saturday
+      days++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  if (days === 0) {
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    days = diffDays + 1;
+  }
+  return days;
 };
 
 // Skeleton Loading Components

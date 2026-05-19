@@ -171,7 +171,8 @@ export default function AdminDisciplinePage() {
   };
 
   const formatCurrency = (amount: string) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(parseFloat(amount) || 0);
+    const val = parseFloat(amount) || 0;
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(-val);
   };
 
   const getStatusBadge = (status: string) => {
@@ -274,7 +275,7 @@ export default function AdminDisciplinePage() {
                         {new Date(v.violation_date).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="border-b border-slate-50 py-4">{getSeverityBadge(v.severity)}</TableCell>
-                      <TableCell className="font-bold text-slate-700 border-b border-slate-50 py-4">{formatCurrency(v.deduction_amount)}</TableCell>
+                      <TableCell className="font-bold text-red-600 border-b border-slate-50 py-4">{formatCurrency(v.deduction_amount)}</TableCell>
                       <TableCell className="border-b border-slate-50 py-4">{getStatusBadge(v.status)}</TableCell>
                       <TableCell className="text-right space-x-2 border-b border-slate-50 py-4">
                         <Button variant="ghost" size="icon" className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full h-8 w-8" onClick={() => handleOpenModal(v)}>

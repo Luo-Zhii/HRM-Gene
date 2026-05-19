@@ -76,16 +76,37 @@ const SkeletonTable = () => (
   </div>
 );
 
-// Calculate days between two dates (inclusive)
+// Calculate days between two dates (inclusive, excluding weekends)
 const calculateDays = (
-  startDate: Date | null,
-  endDate: Date | null
+  startDate: Date | null | string,
+  endDate: Date | null | string
 ): number => {
   if (!startDate || !endDate) return 0;
-  if (endDate < startDate) return 0;
-  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays + 1;
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Reset time to midnight to avoid timezone shift issues
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  if (end < start) return 0;
+
+  let days = 0;
+  const current = new Date(start);
+  while (current <= end) {
+    const dayOfWeek = current.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0 = Sunday, 6 = Saturday
+      days++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  if (days === 0) {
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    days = diffDays + 1;
+  }
+  return days;
 };
 
 // Calendar View Component
@@ -571,9 +592,7 @@ export default function LeavePage() {
                       </TableHeader>
                       <TableBody>
                         {requests.map((req) => {
-                          const start = new Date(req.start_date);
-                          const end = new Date(req.end_date);
-                          const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                          const days = calculateDays(req.start_date, req.end_date);
                           return (
                             <TableRow key={req.request_id} className="hover:bg-gray-50/50">
                               <TableCell className="font-semibold text-gray-900 py-4">{req.leave_type_name}</TableCell>

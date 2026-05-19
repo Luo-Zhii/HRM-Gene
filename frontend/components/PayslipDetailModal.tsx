@@ -285,15 +285,36 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
           <div>
             <SectionTitle>{t("payslip.deductions")}</SectionTitle>
             <div className="space-y-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2">
-              {deductionRows.map((item, i) => (
-                <LineItem
-                  key={i}
-                  label={item.name}
-                  value={`-${fmt(item.value)}`}
-                  highlight="red"
-                  icon={item.name.toLowerCase().includes("penalt") ? <TrendingDown className="w-3 h-3 text-red-500" /> : undefined}
-                />
-              ))}
+              {deductionRows.map((item, i) => {
+                let displayLabel = item.name;
+                if (item.name === "Personal Income Tax (PIT)") {
+                  displayLabel = t("payslip.pit");
+                } else if (item.name === "Social + Health + Unemployment (10.5%)") {
+                  displayLabel = t("payslip.insurance");
+                } else if (item.name === "Disciplinary Penalties") {
+                  displayLabel = t("payslip.discipline");
+                } else if (item.name === "Unpaid Leave Deductions") {
+                  displayLabel = t("payslip.unpaidLeave");
+                } else if (item.name === "Other Deductions / Penalties") {
+                  displayLabel = t("payslip.otherDeductions");
+                } else if (item.name.startsWith("Social + Health + Unemployment")) {
+                  displayLabel = t("payslip.insurance");
+                }
+                const isPenaltyOrViolation =
+                  item.name.toLowerCase().includes("penalt") ||
+                  item.name.toLowerCase().includes("disciplin") ||
+                  item.name.toLowerCase().includes("leave") ||
+                  item.name.toLowerCase().includes("absent");
+                return (
+                  <LineItem
+                    key={i}
+                    label={displayLabel}
+                    value={`-${fmt(item.value)}`}
+                    highlight="red"
+                    icon={isPenaltyOrViolation ? <TrendingDown className="w-3 h-3 text-red-500" /> : undefined}
+                  />
+                );
+              })}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
                 <LineItem label={t("payslip.totalDeductions")} value={`-${fmt(deductions)}`} bold highlight="red" />
               </div>

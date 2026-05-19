@@ -60,6 +60,11 @@ export class AdminController {
     return this.svc.updateDepartment(id, body.department_name, body.manager_id);
   }
 
+  @Delete("departments/:id")
+  async deleteDepartment(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.deleteDepartment(id);
+  }
+
   // ============= Position Management =============
   @Get("positions")
   async getAllPositions() {
@@ -69,6 +74,11 @@ export class AdminController {
   @Post("positions")
   async createPosition(@Body() body: { position_name: string }) {
     return this.svc.createPosition(body.position_name);
+  }
+
+  @Delete("positions/:id")
+  async deletePosition(@Param("id", ParseIntPipe) id: number) {
+    return this.svc.deletePosition(id);
   }
 
   // ============= Permission Matrix Management =============

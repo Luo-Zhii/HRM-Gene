@@ -37,8 +37,15 @@ describe('LeaveService', () => {
 
   let reqRepo: any, balanceRepo: any, typeRepo: any, employeeRepo: any;
 
+  const reqQbMock = {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    getOne: jest.fn().mockResolvedValue(null),
+  };
+
   beforeEach(async () => {
     reqRepo = repoMockFactory();
+    reqRepo.createQueryBuilder = jest.fn().mockReturnValue(reqQbMock);
     balanceRepo = repoMockFactory();
     typeRepo = repoMockFactory();
 
@@ -55,6 +62,8 @@ describe('LeaveService', () => {
 
     service = module.get<LeaveService>(LeaveService);
     employeeRepo = module.get(getRepositoryToken(Employee));
+    reqQbMock.getOne.mockReset();
+    reqQbMock.getOne.mockResolvedValue(null);
     jest.clearAllMocks();
   });
 
@@ -92,6 +101,14 @@ describe('LeaveService', () => {
     it('should explicitly force failure if requested configuration is unlocatable dynamically preserving database integrity gracefully', async () => {
       typeRepo.findOne.mockResolvedValue(null);
       await expect(service.submitRequest(1, 2, 'start', 'end')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if there is an overlapping approved request', async () => {
+      typeRepo.findOne.mockResolvedValue({ name: 'Type', leave_type_id: 2 });
+      employeeRepo.findOne.mockResolvedValue({ employee_id: 1, first_name: 'F', last_name: 'L' });
+      reqQbMock.getOne.mockResolvedValueOnce({ start_date: '2026-05-01', end_date: '2026-05-05' });
+
+      await expect(service.submitRequest(1, 2, '2026-05-02', '2026-05-04', 'Overlap')).rejects.toThrow(BadRequestException);
     });
 
     it('should accurately compute relational requirements safely aggregating push notifications structurally bypassing isolated loops quietly identically', async () => {
@@ -133,7 +150,7 @@ describe('LeaveService', () => {
       );
     });
 
-    it('should natively catch mathematical overflow naturally resetting limits appropriately universally keeping bounds cleanly preserved dynamically', async () => {
+    it('should allow negative leave balance for Leave in Advance policy', async () => {
       reqRepo.findOne.mockResolvedValue({ 
         request_id: 10, start_date: '2026-01-01', end_date: '2026-01-03', // 3 days
         employee: { employee_id: 3 }, leave_type: { leave_type_id: 1 }
@@ -143,7 +160,7 @@ describe('LeaveService', () => {
 
       await service.approveLeaveRequest(10, 'Approved', 2);
 
-      expect(balanceRepo.save).toHaveBeenCalledWith(expect.objectContaining({ remaining_days: 0 }));
+      expect(balanceRepo.save).toHaveBeenCalledWith(expect.objectContaining({ remaining_days: -1 }));
     });
   });
 });

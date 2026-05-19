@@ -94,6 +94,23 @@ export class LeaveService {
       throw new BadRequestException("Employee not found");
     }
 
+    // Validate overlapping dates for approved/accepted requests
+    const overlappingRequest = await this.leaveReqRepo
+      .createQueryBuilder("req")
+      .where("req.employee.employee_id = :employeeId", { employeeId })
+      .andWhere("req.status IN (:...statuses)", { statuses: ["Approved", "Approved_By_Manager"] })
+      .andWhere("req.start_date <= :endDate AND req.end_date >= :startDate", {
+        startDate,
+        endDate,
+      })
+      .getOne();
+
+    if (overlappingRequest) {
+      throw new BadRequestException(
+        `You already have an approved leave request during this period (${overlappingRequest.start_date} to ${overlappingRequest.end_date})`
+      );
+    }
+
     // Create new leave request with default status 'Pending'
     const leaveRequest = this.leaveReqRepo.create({
       employee,
@@ -170,21 +187,37 @@ export class LeaveService {
       else if (req.status === "Rejected") rejected++;
     }
 
-    const data = requests.map((r) => ({
-      request_id: r.request_id,
-      employee_id: r.employee?.employee_id,
-      employee_email: r.employee?.email,
-      employee_name: `${r.employee?.first_name} ${r.employee?.last_name}`,
-      employee_avatar: r.employee?.avatar_url,
-      employee_department: r.employee?.department?.department_name,
-      employee_position: r.employee?.position?.position_name,
-      leave_type_name: r.leave_type?.name,
-      start_date: r.start_date,
-      end_date: r.end_date,
-      reason: r.reason,
-      status: r.status,
-      manager_approver: r.manager_approver?.email,
-    }));
+    const data = await Promise.all(
+      requests.map(async (r) => {
+        let remainingDays = 0;
+        if (r.employee && r.leave_type) {
+          const balance = await this.balanceRepo.findOne({
+            where: {
+              employee: { employee_id: r.employee.employee_id },
+              leave_type: { leave_type_id: r.leave_type.leave_type_id },
+            },
+          });
+          remainingDays = balance ? balance.remaining_days : r.leave_type.default_days_allocated;
+        }
+
+        return {
+          request_id: r.request_id,
+          employee_id: r.employee?.employee_id,
+          employee_email: r.employee?.email,
+          employee_name: `${r.employee?.first_name} ${r.employee?.last_name}`,
+          employee_avatar: r.employee?.avatar_url,
+          employee_department: r.employee?.department?.department_name,
+          employee_position: r.employee?.position?.position_name,
+          leave_type_name: r.leave_type?.name,
+          start_date: r.start_date,
+          end_date: r.end_date,
+          reason: r.reason,
+          status: r.status,
+          manager_approver: r.manager_approver?.email,
+          remaining_leave_days: remainingDays,
+        };
+      })
+    );
 
     return {
       data,
@@ -285,12 +318,12 @@ export class LeaveService {
         balance = this.balanceRepo.create({
           employee: leaveRequest.employee,
           leave_type: leaveRequest.leave_type,
-          remaining_days: Math.max(0, defaultDays - daysRequested),
+          remaining_days: defaultDays - daysRequested,
         });
         await this.balanceRepo.save(balance);
       } else {
-        // Deduct days from remaining_days
-        balance.remaining_days = Math.max(0, balance.remaining_days - daysRequested);
+        // Deduct days from remaining_days (allows negative balance)
+        balance.remaining_days = balance.remaining_days - daysRequested;
         await this.balanceRepo.save(balance);
       }
     }

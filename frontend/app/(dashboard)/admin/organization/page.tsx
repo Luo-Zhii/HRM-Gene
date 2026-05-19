@@ -238,8 +238,11 @@ export default function OrganizationPage() {
   const handleDeleteDepartment = async (department: Department) => {
     if (!confirm(t("org.confirmDelDept", { name: department.department_name }))) return;
     try {
-      const response = await fetch(`/api/departments/${department.department_id}`, { method: "DELETE", credentials: "include" });
-      if (!response.ok) throw new Error(t("org.errDelDept"));
+      const response = await fetch(`/api/admin/departments/${department.department_id}`, { method: "DELETE", credentials: "include" });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || t("org.errDelDept"));
+      }
       toast({ variant: "success", title: "Success", description: t("org.msgDeptDeleted") });
       setDepartments((prev) => prev.filter((d) => d.department_id !== department.department_id));
     } catch (error) {
@@ -250,8 +253,11 @@ export default function OrganizationPage() {
   const handleDeletePosition = async (position: Position) => {
     if (!confirm(t("org.confirmDelPos", { name: position.position_name }))) return;
     try {
-      const response = await fetch(`/api/positions/${position.position_id}`, { method: "DELETE", credentials: "include" });
-      if (!response.ok) throw new Error(t("org.errDelPos"));
+      const response = await fetch(`/api/admin/positions/${position.position_id}`, { method: "DELETE", credentials: "include" });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || t("org.errDelPos"));
+      }
       toast({ variant: "success", title: "Success", description: t("org.msgPosDeleted") });
       setPositions((prev) => prev.filter((p) => p.position_id !== position.position_id));
     } catch (error) {

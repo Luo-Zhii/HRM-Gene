@@ -13,6 +13,7 @@ import { Permission } from "@/entities/permission.entity";
 import { Contract } from "@/entities/contract.entity";
 import { SalaryAdjustment } from "@/entities/salary-adjustment.entity";
 import { CompanySettings } from "@/entities/company-settings.entity";
+import { Violation } from "@/entities/violation.entity";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { KpiModule } from "../kpi/kpi.module";
 
@@ -30,6 +31,7 @@ import { KpiModule } from "../kpi/kpi.module";
       Contract,
       SalaryAdjustment,
       CompanySettings,
+      Violation,
     ]),
     NotificationsModule,
     KpiModule,

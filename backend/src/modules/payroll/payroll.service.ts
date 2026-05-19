@@ -10,10 +10,12 @@ import { PayrollPeriod } from "../../entities/payroll-period.entity";
 import { SalaryConfig } from "../../entities/salary-config.entity";
 import { LeaveRequest } from "../../entities/leave-request.entity";
 import { SalaryAdjustment, AdjustmentType, AdjustmentStatus } from "../../entities/salary-adjustment.entity";
+import { LeaveBalance } from "../../entities/leave-balance.entity";
 import { NotificationsService } from "../notifications/notifications.service";
 import { NotificationType } from "../../entities/notification.entity";
 import { CompanySettings } from "../../entities/company-settings.entity";
 import { KpiService } from "../kpi/kpi.service";
+import { Violation } from "../../entities/violation.entity";
 
 @Injectable()
 export class PayrollService {
@@ -32,6 +34,7 @@ export class PayrollService {
     @InjectRepository(LeaveRequest) private leaveRequestRepo: Repository<LeaveRequest>,
     @InjectRepository(SalaryAdjustment) private adjustmentRepo: Repository<SalaryAdjustment>,
     @InjectRepository(CompanySettings) private settingsRepo: Repository<CompanySettings>,
+    @InjectRepository(Violation) private violationRepo: Repository<Violation>,
     private readonly kpiService: KpiService
   ) { }
 
@@ -219,28 +222,144 @@ export class PayrollService {
       earnings.push({ name: "Performance Bonus (KPI)", value: payslip.kpi_bonus_amount });
     }
 
-    // ── Build optimized deductions array (NOW INCLUDES PIT) ──
-    const deductionItems: { name: string; value: number }[] = [];
-    const baseSalaryForInsurance = salaryConfig
-      ? parseFloat(salaryConfig.base_salary || "0")
-      : parseFloat(payslip.gross_salary || "0");
+    // ── Build optimized deductions array (NOW INCLUDES PIT & DISCIPLINE SEPARATELY) ──
+    let month = 1;
+    let year = 2026;
+    if (payslip.payroll_period) {
+      month = payslip.payroll_period.month;
+      year = payslip.payroll_period.year;
+    } else if (payslip.pay_period) {
+      const parts = payslip.pay_period.split("/");
+      month = parseInt(parts[0], 10);
+      year = parseInt(parts[1], 10);
+    }
+    const { start, end } = this.monthRange(month, year);
+    const empId = payslip.employee.employee_id;
 
+    // Disciplinary violations
+    const violations = await this.violationRepo.find({
+      where: {
+        employee: { employee_id: empId },
+        violation_date: Between(start, end)
+      }
+    });
+    const disciplinaryDeductions = violations.reduce((sum, v) => sum + parseFloat(v.deduction_amount || "0"), 0);
+
+    // Penalty adjustments
+    const appliedMonth = `${String(month).padStart(2, "0")}/${year}`;
+    const adjustments = await this.adjustmentRepo.find({
+      where: {
+        employee: { employee_id: empId },
+        applied_month: appliedMonth,
+        status: AdjustmentStatus.APPROVED
+      }
+    });
+    const penaltyAdj = adjustments.filter(a => a.type === "Penalty").reduce((sum, a) => sum + parseFloat(a.amount), 0);
+
+    // Unpaid leave days
+    const timekeepings = await this.timekeepingRepo.find({
+      where: {
+        employee: { employee_id: empId },
+        work_date: Between(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10))
+      }
+    });
+    const leaveRequests = await this.leaveRequestRepo.find({
+      where: {
+        employee: { employee_id: empId },
+        status: "Approved",
+        start_date: Between(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10))
+      },
+      relations: ["leave_type"]
+    });
+
+    const leaveDateSet = new Set<string>();
+    leaveRequests.forEach((lr) => {
+      const startD = new Date(lr.start_date);
+      const endD = new Date(lr.end_date);
+      const cur = new Date(startD);
+      while (cur <= endD) {
+        leaveDateSet.add(cur.toISOString().slice(0, 10));
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+
+    let absentDays = 0;
+    timekeepings.forEach((tk) => {
+      const tkDate = typeof tk.work_date === 'string' ? tk.work_date : new Date(tk.work_date).toISOString().slice(0, 10);
+      if (leaveDateSet.has(tkDate)) return;
+      if (tk.status === "Half-day") absentDays += 0.5;
+      else if (tk.status === "Absent") absentDays += 1;
+    });
+    leaveRequests.forEach((lr) => {
+      const days = Math.floor((new Date(lr.end_date).getTime() - new Date(lr.start_date).getTime()) / 86400000) + 1;
+      const isPaid = (lr.leave_type as any)?.is_paid !== false;
+      if (!isPaid) absentDays += days;
+    });
+
+    const baseSalary = salaryConfig ? parseFloat(salaryConfig.base_salary || "0") : parseFloat(payslip.gross_salary || "0");
+    const standardDays = payslip.payroll_period?.standard_work_days || 26;
+    const salaryPerDay = standardDays > 0 ? baseSalary / standardDays : 0;
+    const unpaidAbsentDeduction = salaryPerDay * absentDays;
+
+    // Social insurance
     let INSURANCE_RATE = 0.105;
     try {
       const rateSetting = await this.settingsRepo.findOne({ where: { key: "social_insurance_rate" } });
       if (rateSetting?.value) INSURANCE_RATE = parseFloat(rateSetting.value) / 100;
     } catch { /* use default */ }
+    const insurance = baseSalary * INSURANCE_RATE;
 
-    const insurance = baseSalaryForInsurance * INSURANCE_RATE;
-    const taxesAndPenalties = Math.max(0, deductions - insurance); // Cục này giờ chứa cả Thuế TNCN và Tiền vắng mặt
+    // PIT Tax
+    const lunchAllowance = salaryConfig ? parseFloat(salaryConfig.lunch_allowance || "0") : 0;
+    const personalExemption = 11_000_000;
+    const dependentExemption = salaryConfig ? (salaryConfig.dependents_count || 0) * 4_400_000 : 0;
+    const grossIncome = parseFloat(payslip.gross_salary || "0");
+    let taxableIncome = grossIncome - insurance - lunchAllowance - personalExemption - dependentExemption;
+    taxableIncome = Math.max(0, taxableIncome);
+    const pit = this.calculatePIT(taxableIncome);
 
-    if (insurance > 0) deductionItems.push({ name: `Social + Health + Unemployment (${(INSURANCE_RATE * 100).toFixed(1)}%)`, value: insurance });
-    if (taxesAndPenalties > 0) deductionItems.push({ name: "Personal Income Tax (PIT) & Other Deductions", value: taxesAndPenalties });
+    // Negative leave balance deduction for final settlement
+    let negativeLeaveDeduction = 0;
+    if (payslip.employee.employment_status === "Terminated") {
+      const balances = await this.dataSource.getRepository(LeaveBalance).find({
+        where: { employee: { employee_id: empId } },
+      });
+      for (const bal of balances) {
+        if (bal.remaining_days < 0) {
+          negativeLeaveDeduction += Math.abs(bal.remaining_days) * salaryPerDay;
+        }
+      }
+    }
+
+    const deductionItems: { name: string; value: number }[] = [];
+    if (insurance > 0) {
+      deductionItems.push({ name: "Social + Health + Unemployment (10.5%)", value: insurance });
+    }
+    if (pit > 0) {
+      deductionItems.push({ name: "Personal Income Tax (PIT)", value: pit });
+    }
+    if (disciplinaryDeductions > 0) {
+      deductionItems.push({ name: "Disciplinary Penalties", value: disciplinaryDeductions });
+    }
+    if (unpaidAbsentDeduction > 0) {
+      deductionItems.push({ name: "Unpaid Leave Deductions", value: unpaidAbsentDeduction });
+    }
+    if (negativeLeaveDeduction > 0) {
+      deductionItems.push({ name: "Negative Leave Balance Deduction (Final Settlement)", value: negativeLeaveDeduction });
+    }
+    const calculatedSum = insurance + pit + disciplinaryDeductions + unpaidAbsentDeduction + penaltyAdj + negativeLeaveDeduction;
+    let otherDeductions = penaltyAdj;
+    if (Math.abs(deductions - calculatedSum) > 0.01) {
+      otherDeductions = Math.max(0, deductions - insurance - pit - disciplinaryDeductions - unpaidAbsentDeduction - negativeLeaveDeduction);
+    }
+    if (otherDeductions > 0.01) {
+      deductionItems.push({ name: "Other Deductions / Penalties", value: otherDeductions });
+    }
 
     // ── Summary & metadata fields ──
     const grossNum = parseFloat(payslip.gross_salary || "0");
-    const deductionsNum = parseFloat(payslip.deductions || "0");
-    const netNum = parseFloat(payslip.net_salary || "0");
+    const deductionsNum = deductionItems.reduce((sum, item) => sum + item.value, 0);
+    const netNum = Math.max(0, grossNum - deductionsNum);
     const netPayInWords = numberToVietnameseWords(netNum);
 
     const employeeName = [payslip.employee?.first_name ?? "", payslip.employee?.last_name ?? ""].filter(Boolean).join(" ") || "Employee";
@@ -260,6 +379,8 @@ export class PayrollService {
 
     return {
       ...payslip,
+      deductions: deductionsNum.toFixed(2),
+      net_salary: netNum.toFixed(2),
       salaryConfig,
       earnings,
       deduction_items: deductionItems,
@@ -356,6 +477,19 @@ export class PayrollService {
       else penaltyMap[id] = (penaltyMap[id] || 0) + amt;
     }
 
+    const violations = await this.violationRepo.find({
+      where: { violation_date: Between(start, end) },
+      relations: ["employee"],
+    });
+    const violationMap: Record<number, number> = {};
+    for (const v of violations) {
+      if (v.employee?.employee_id) {
+        const id = v.employee.employee_id;
+        const amt = parseFloat(v.deduction_amount || "0");
+        violationMap[id] = (violationMap[id] || 0) + amt;
+      }
+    }
+
     let INSURANCE_RATE = 0.105;
     try {
       const rateSetting = await this.settingsRepo.findOne({ where: { key: "social_insurance_rate" } });
@@ -377,7 +511,7 @@ export class PayrollService {
             period!,
             month,
             year,
-            { timekeepings, workDaysMap, absentDaysMap, bonusMap, penaltyMap, insuranceRate: INSURANCE_RATE },
+            { timekeepings, workDaysMap, absentDaysMap, bonusMap, penaltyMap, violationMap, insuranceRate: INSURANCE_RATE },
             createdByUserId
           );
 
@@ -455,6 +589,14 @@ export class PayrollService {
     const bonusAdj = adjustments.filter(a => a.type === "Bonus").reduce((sum, a) => sum + parseFloat(a.amount), 0);
     const penaltyAdj = adjustments.filter(a => a.type === "Penalty").reduce((sum, a) => sum + parseFloat(a.amount), 0);
 
+    const violations = await this.violationRepo.find({
+      where: {
+        employee: { employee_id: employeeId },
+        violation_date: Between(start, end)
+      }
+    });
+    const violationAdj = violations.reduce((sum, v) => sum + parseFloat(v.deduction_amount || "0"), 0);
+
     let insuranceRate = 0.105;
     const rateSetting = await this.settingsRepo.findOne({ where: { key: "social_insurance_rate" } });
     if (rateSetting?.value) insuranceRate = parseFloat(rateSetting.value) / 100;
@@ -462,7 +604,7 @@ export class PayrollService {
     const result = await this.dataSource.transaction(async manager => {
       try {
         return await this.calculateAndSavePayslip(manager, employee, period!, month, year, {
-          timekeepings, workDaysMap, absentDaysMap, bonusMap: { [employeeId]: bonusAdj }, penaltyMap: { [employeeId]: penaltyAdj }, insuranceRate,
+          timekeepings, workDaysMap, absentDaysMap, bonusMap: { [employeeId]: bonusAdj }, penaltyMap: { [employeeId]: penaltyAdj }, violationMap: { [employeeId]: violationAdj }, insuranceRate,
         }, createdByUserId);
       } catch (err) {
         console.error(`Lỗi khi tạo phiếu lương đơn cho nhân viên ${employeeId}:`, err);
@@ -493,6 +635,7 @@ export class PayrollService {
       absentDaysMap: Record<number, number>;
       bonusMap: Record<number, number>;
       penaltyMap: Record<number, number>;
+      violationMap?: Record<number, number>;
       insuranceRate: number;
     },
     createdByUserId?: number
@@ -586,7 +729,20 @@ export class PayrollService {
     const pitDeduction = this.calculatePIT(taxableIncome);
 
     // C. Chốt Tổng Khấu Trừ
-    const deductions = insuranceDeduction + pitDeduction + penaltyAdj + unpaidAbsentDeduction;
+    let negativeLeaveDeduction = 0;
+    if (employee.employment_status === "Terminated") {
+      const balances = await manager.getRepository(LeaveBalance).find({
+        where: { employee: { employee_id: empId } },
+      });
+      for (const bal of balances) {
+        if (bal.remaining_days < 0) {
+          negativeLeaveDeduction += Math.abs(bal.remaining_days) * salaryPerDay;
+        }
+      }
+    }
+
+    const disciplinaryDeduction = ctx.violationMap ? (ctx.violationMap[empId] || 0) : 0;
+    const deductions = insuranceDeduction + pitDeduction + penaltyAdj + unpaidAbsentDeduction + disciplinaryDeduction + negativeLeaveDeduction;
 
     // ==========================================
     // 4. THỰC NHẬN (NET) & LƯU DB

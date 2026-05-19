@@ -12,6 +12,7 @@ import {
   ParseIntPipe,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { PayrollService } from "./payroll.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
@@ -153,10 +154,19 @@ export class PayrollController {
 
   // ============= Catch-All Dynamic Routes (MUST BE AT THE VERY BOTTOM) =============
 
-  @Permissions("manage:payroll")
   @Get(":id")
-  async getPayslipDetail(@Param("id", ParseIntPipe) id: number) {
-    return this.svc.getPayslipById(id);
+  async getPayslipDetail(@Request() req: any, @Param("id", ParseIntPipe) id: number) {
+    const payslip = await this.svc.getPayslipById(id);
+
+    // Security check: regular employees can only view their own payslips
+    const positionName = (req.user.position?.position_name || req.user.role || "").toLowerCase();
+    const bypassRoles = ["admin", "system admin", "director", "hr manager", "hr"];
+    const isHrOrAdmin = bypassRoles.some(role => positionName === role || positionName.includes(role)) || (req.user.permissions || []).includes("manage:payroll");
+
+    if (!isHrOrAdmin && payslip.employee?.employee_id !== req.user.employee_id) {
+      throw new ForbiddenException("You are not authorized to view this payslip");
+    }
+    return payslip;
   }
 
   @Permissions("manage:payroll")

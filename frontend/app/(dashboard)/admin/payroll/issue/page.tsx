@@ -70,6 +70,7 @@ export default function IssuePayslipsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [viewPayslip, setViewPayslip] = useState<Payslip | null>(null);
   const [issuedSet, setIssuedSet] = useState<Set<number>>(new Set());
+  const [fetchingDetail, setFetchingDetail] = useState(false);
 
   // Auth guard
   useEffect(() => {
@@ -77,6 +78,22 @@ export default function IssuePayslipsPage() {
       if (!canManagePayroll(user)) { toast({ variant: "destructive", title: "Access Denied" }); setTimeout(() => router.push("/dashboard"), 1500); }
     }
   }, [authLoading, user, router, toast]);
+
+  // Fetch detailed payslip
+  const handleViewDetail = async (id: number) => {
+    setFetchingDetail(true);
+    try {
+      if (!id || isNaN(Number(id))) throw new Error("Invalid ID");
+      const res = await fetch(`/api/payroll/${String(id)}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch detail");
+      const data = await res.json();
+      setViewPayslip(data);
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "Could not load payslip detail" });
+    } finally {
+      setFetchingDetail(false);
+    }
+  };
 
   // Load payslips
   const loadPayslips = useCallback(async () => {
@@ -342,11 +359,12 @@ export default function IssuePayslipsPage() {
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-end gap-1">
                           <button
-                            onClick={() => setViewPayslip(p)}
+                            onClick={() => handleViewDetail(p.payslip_id)}
+                            disabled={fetchingDetail}
                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                             title="View detail"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className={`w-4 h-4 ${fetchingDetail ? "animate-pulse" : ""}`} />
                           </button>
                           {issueStatus !== "Sent" && (
                             <button

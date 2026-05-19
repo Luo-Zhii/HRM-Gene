@@ -50,6 +50,7 @@ export default function MySalaryPage() {
   const [salaryConfig, setSalaryConfig] = useState<SalaryConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewPayslip, setViewPayslip] = useState<Payslip | null>(null);
+  const [fetchingDetail, setFetchingDetail] = useState(false);
 
   // Load payslips + salary config
   useEffect(() => {
@@ -75,6 +76,21 @@ export default function MySalaryPage() {
     };
     load();
   }, [user]);
+
+  // Fetch detailed payslip
+  const handleViewDetail = async (id: number) => {
+    setFetchingDetail(true);
+    try {
+      const res = await fetch(`/api/payroll/${String(id)}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch detail");
+      const data = await res.json();
+      setViewPayslip(data);
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "Could not load payslip detail" });
+    } finally {
+      setFetchingDetail(false);
+    }
+  };
 
   // Summary stats
   const lastPayslip = payslips[0] ?? null;
@@ -177,10 +193,11 @@ export default function MySalaryPage() {
                     <td className="px-6 py-4">
                       <div className="flex justify-end">
                         <button
-                          onClick={() => setViewPayslip({ ...p, salaryConfig: salaryConfig ?? undefined })}
+                          onClick={() => handleViewDetail(p.payslip_id)}
+                          disabled={fetchingDetail}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-colors"
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className={`w-3.5 h-3.5 ${fetchingDetail ? "animate-pulse" : ""}`} />
                           View Detail
                         </button>
                       </div>
