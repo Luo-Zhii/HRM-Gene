@@ -493,6 +493,9 @@
     "noRecentDesc": "Sent announcements will appear here.",
     "broadcastSuccess": "Announcement broadcasted successfully!",
     "broadcastError": "Error sending announcement",
+    "editAnnouncement": "Edit Announcement",
+    "saveChanges": "Save Changes",
+    "cancelEdit": "Cancel Edit",
     "deleteConfirm": "Are you sure you want to delete this announcement?",
     "deleteSuccess": "Announcement deleted successfully",
     "deleteError": "Error deleting announcement"

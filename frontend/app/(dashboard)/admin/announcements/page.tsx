@@ -18,7 +18,8 @@ import {
   Calendar,
   Filter,
   Users,
-  Trash2
+  Trash2,
+  Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ export default function AnnouncementsPage() {
   const [saving, setSaving] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState<number | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -83,7 +85,7 @@ export default function AnnouncementsPage() {
       const apiBase = "/api";
       const token = localStorage.getItem('access_token') || localStorage.getItem('token');
       
-      const depsRes = await fetch(`${apiBase}/employees`, { 
+      const depsRes = await fetch(`${apiBase}/departments`, { 
         credentials: "include",
         headers: {
           ...(token ? { "Authorization": `Bearer ${token}` } : {})
@@ -119,6 +121,43 @@ export default function AnnouncementsPage() {
     }
   };
 
+  const handleEditAnnouncement = (ann: any) => {
+    setEditingAnnouncementId(ann.id);
+    let target_audience = "all";
+    let department_id = "";
+    if (ann.target_audience.startsWith("dept_")) {
+      target_audience = "department";
+      department_id = ann.target_audience.split("_")[1];
+    }
+
+    setFormData({
+      type: ann.type || "General",
+      title: ann.title || "",
+      target_audience,
+      department_id,
+      content: ann.content || "",
+      in_app_notification: ann.delivery_methods?.includes("in_app") ?? true,
+      email_notification: ann.delivery_methods?.includes("email") ?? false,
+      priority: ann.priority || "Normal",
+      scheduled_at: ann.scheduled_at ? new Date(ann.scheduled_at).toISOString().slice(0, 16) : "",
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingAnnouncementId(null);
+    setFormData({
+      type: "General",
+      title: "",
+      target_audience: "all",
+      department_id: "",
+      content: "",
+      in_app_notification: true,
+      email_notification: false,
+      priority: "Normal",
+      scheduled_at: "",
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -142,8 +181,10 @@ export default function AnnouncementsPage() {
       };
 
       const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-      const res = await fetch(`${apiBase}/announcements`, {
-        method: "POST",
+      const url = editingAnnouncementId ? `${apiBase}/announcements/${editingAnnouncementId}` : `${apiBase}/announcements`;
+      const method = editingAnnouncementId ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { 
           "Content-Type": "application/json",
           ...(token ? { "Authorization": `Bearer ${token}` } : {})
@@ -157,6 +198,7 @@ export default function AnnouncementsPage() {
       setStatusMessage({ type: "success", text: t("adminNews.broadcastSuccess") });
       
       // Reset form
+      setEditingAnnouncementId(null);
       setFormData({
         type: "General",
         title: "",
@@ -246,7 +288,7 @@ export default function AnnouncementsPage() {
             <div className="bg-white border rounded-2xl shadow-sm overflow-hidden">
               <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
                 <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  {t("adminNews.composeNew")}
+                  {editingAnnouncementId ? t("adminNews.editAnnouncement") : t("adminNews.composeNew")}
                 </h2>
               </div>
               
@@ -376,11 +418,19 @@ export default function AnnouncementsPage() {
                 </div>
 
                 <div className="border-t border-gray-100 pt-6 flex items-center justify-end gap-3">
+                  {editingAnnouncementId && (
+                    <Button type="button" variant="ghost" onClick={handleCancelEdit} className="h-11 px-6 rounded-xl text-gray-500 font-semibold">
+                      {t("adminNews.cancelEdit")}
+                    </Button>
+                  )}
                   <Button type="button" variant="outline" className="h-11 px-6 rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold shadow-sm">
                     <Eye className="w-4 h-4 mr-2" /> {t("adminNews.btnPreview")}
                   </Button>
                   <Button type="submit" disabled={saving} className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition-all">
-                    {saving ? t("adminNews.btnBroadcasting") : t("adminNews.btnSend")}
+                    {editingAnnouncementId 
+                      ? (saving ? t("adminNews.btnBroadcasting") : t("adminNews.saveChanges"))
+                      : (saving ? t("adminNews.btnBroadcasting") : t("adminNews.btnSend"))
+                    }
                     <Send className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -413,7 +463,11 @@ export default function AnnouncementsPage() {
                 ) : (
                   <div className="space-y-1">
                     {announcements.map(ann => (
-                      <div key={ann.id} className="p-4 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-gray-100 group">
+                      <div 
+                        key={ann.id} 
+                        onClick={() => handleEditAnnouncement(ann)}
+                        className="p-4 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-gray-100 group"
+                      >
                         <div className="flex justify-between items-start mb-2">
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
                             ann.type === 'Policy' ? 'bg-purple-100 text-purple-700' :
@@ -433,9 +487,19 @@ export default function AnnouncementsPage() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                handleEditAnnouncement(ann);
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all opacity-60 group-hover:opacity-100"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 handleDeleteAnnouncement(ann.id);
                               }}
-                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all opacity-60 group-hover:opacity-100"
                             >
                               <Trash2 size={14} />
                             </button>

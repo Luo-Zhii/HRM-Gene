@@ -493,6 +493,9 @@
     "noRecentDesc": "Danh sách thông báo đã gửi sẽ hiển thị ở đây.",
     "broadcastSuccess": "Đã phát thông báo thành công!",
     "broadcastError": "Gửi thông báo thất bại",
+    "editAnnouncement": "Chỉnh sửa thông báo",
+    "saveChanges": "Lưu thay đổi",
+    "cancelEdit": "Hủy chỉnh sửa",
     "deleteConfirm": "Bạn có chắc chắn muốn xóa bản thông báo này không?",
     "deleteSuccess": "Đã xóa thông báo thành công",
     "deleteError": "Xóa thông báo thất bại"
