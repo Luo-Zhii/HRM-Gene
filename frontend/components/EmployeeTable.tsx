@@ -31,6 +31,11 @@ export interface EmployeeRow {
   avatar_url?: string | null;
   phone_number?: string | null;   // Only present in admin responses
   address?: string | null;        // Only present in admin responses
+  bankInfo?: {
+    bank_name: string;
+    account_number: string;
+    account_holder_name: string;
+  } | null;
   department?: { department_id?: number; department_name: string } | null;
   position?: { position_id?: number; position_name: string } | null;
   is_department_head?: boolean;
@@ -281,11 +286,16 @@ export default function EmployeeTable({
                   Regular employees never see this column header or any cell data.
                 */}
                 {showSensitive && (
-                  <th className="px-4 py-3 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("phone_number")}>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-gray-400" /> {t("employeeTable.phone")} <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
-                    </div>
-                  </th>
+                  <>
+                    <th className="px-4 py-3 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("phone_number")}>
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5 text-gray-400" /> {t("employeeTable.phone")} <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-3">{t("employeeTable.bankName")}</th>
+                    <th className="px-4 py-3">{t("employeeTable.bankAccount")}</th>
+                    <th className="px-4 py-3">{t("employeeTable.address")}</th>
+                  </>
                 )}
 
                 {/*
@@ -337,13 +347,26 @@ export default function EmployeeTable({
 
                   {/* RBAC: Phone cell — only rendered when showSensitive is true */}
                   {showSensitive && (
-                    <td className="px-4 py-3">
-                      {emp.phone_number ? (
-                        <span className="bg-blue-50 text-blue-700 font-semibold px-2.5 py-1 rounded-md text-xs border border-blue-100">
-                          {emp.phone_number}
-                        </span>
-                      ) : "—"}
-                    </td>
+                    <>
+                      <td className="px-4 py-3">
+                        {emp.phone_number ? (
+                          <span className="bg-blue-50 text-blue-700 font-semibold px-2.5 py-1 rounded-md text-xs border border-blue-100">
+                            {emp.phone_number}
+                          </span>
+                        ) : "—"}
+                      </td>
+                      <td className="text-gray-600 px-4 py-3 font-medium">{emp.bankInfo?.bank_name || "—"}</td>
+                      <td className="px-4 py-3">
+                        {emp.bankInfo?.account_number ? (
+                          <span className="font-mono bg-slate-50 text-slate-700 px-2 py-1 rounded border border-slate-100 text-xs font-semibold">
+                            {emp.bankInfo.account_number}
+                          </span>
+                        ) : "—"}
+                      </td>
+                      <td className="text-gray-600 px-4 py-3 text-xs max-w-[150px] truncate" title={emp.address || ""}>
+                        {emp.address || "—"}
+                      </td>
+                    </>
                   )}
 
                   {/* RBAC: Action buttons */}

@@ -693,13 +693,13 @@ export class PayrollService {
         let targetBonus = 0;
         // Áp dụng luật: Chỉ lương >= 10tr mới có thưởng KPI
         if (baseSalary >= 10000000) {
-          // Lấy đúng cột phần trăm
           const percentage = (salaryConfig as any).kpi_bonus_percentage || 0;
-          targetBonus = baseSalary * (percentage / 100);
+          const factor = percentage > 1 ? percentage / 100 : percentage;
+          targetBonus = baseSalary * factor;
         }
 
-        // Tiền thực nhận = Tiền mục tiêu * Hệ số điểm
-        kpiBonus = (kpiScore / 100) * targetBonus;
+        // Tiền thực nhận = Tiền mục tiêu (Vì KPI bonus percentage đã được cập nhật/đồng bộ trực tiếp từ điểm KPI)
+        kpiBonus = targetBonus;
       }
     } catch (error) {
       console.error(`Failed to calculate KPI for ${empId}:`, error);
@@ -708,7 +708,8 @@ export class PayrollService {
     // ==========================================
     // 2. TỔNG THU NHẬP (GROSS)
     // ==========================================
-    const totalCalculatedBonus = bonusAdj + kpiBonus + overtimePay;
+    const nonKpiBonus = bonusAdj + overtimePay;
+    const totalCalculatedBonus = nonKpiBonus + kpiBonus;
     const grossIncome = salaryPerDay * actualDays + allowances + totalCalculatedBonus;
 
     // ==========================================
@@ -757,7 +758,7 @@ export class PayrollService {
       Object.assign(payslip, {
         actual_work_days: actualDays,
         ot_hours: overtimeHours,
-        bonus: totalCalculatedBonus.toFixed(2),
+        bonus: nonKpiBonus.toFixed(2),
         kpi_bonus_amount: kpiBonus,
         gross_salary: grossIncome.toFixed(2),
         deductions: deductions.toFixed(2),
@@ -771,7 +772,7 @@ export class PayrollService {
         pay_period: `${String(month).padStart(2, "0")}/${year}`,
         actual_work_days: actualDays,
         ot_hours: overtimeHours,
-        bonus: totalCalculatedBonus.toFixed(2),
+        bonus: nonKpiBonus.toFixed(2),
         kpi_bonus_amount: kpiBonus,
         gross_salary: grossIncome.toFixed(2),
         deductions: deductions.toFixed(2),
@@ -926,6 +927,13 @@ export class PayrollService {
         throw new BadRequestException("All salary fields are required");
       }
       let config = await this.salaryConfigRepo.findOne({ where: { employee: { employee_id: employeeId } }, relations: ["employee"] });
+      
+      let pct = data.kpi_bonus_percentage;
+      if (pct > 1) {
+        pct = pct / 100;
+      }
+      data.kpi_bonus_percentage = pct;
+
       if (!config) {
         const employee = await this.employeeRepo.findOne({ where: { employee_id: employeeId } });
         if (!employee) throw new NotFoundException(`Employee with ID ${employeeId} not found`);

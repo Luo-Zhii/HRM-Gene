@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { toQueryString } from "@/src/utils/api";
 import { canManagePayroll } from "@/src/lib/adminAccess";
@@ -64,6 +65,7 @@ const getEmployeeName = (emp: Employee) =>
 
 export default function SalaryAdjustmentPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
@@ -91,11 +93,11 @@ export default function SalaryAdjustmentPage() {
   useEffect(() => {
     if (!authLoading && user) {
       if (!canManagePayroll(user)) {
-        toast({ variant: "destructive", title: "Access Denied" });
+        toast({ variant: "destructive", title: t("payroll.accessDenied") });
         setTimeout(() => router.push("/dashboard"), 1500);
       }
     }
-  }, [authLoading, user, router, toast]);
+  }, [authLoading, user, router, toast, t]);
 
   // ─── Load employees (for dropdown) ────────────────────────────────────────
 
@@ -146,11 +148,11 @@ export default function SalaryAdjustmentPage() {
       const data = await res.json();
       setAdjustments(Array.isArray(data) ? data : []);
     } catch {
-      toast({ variant: "destructive", title: "Error", description: "Failed to load adjustments" });
+      toast({ variant: "destructive", title: t("payroll.saveError"), description: t("payroll.loadFailed") });
     } finally {
       setLoadingTable(false);
     }
-  }, [tab, toast]);
+  }, [tab, toast, t]);
   useEffect(() => {
     if (user) loadAdjustments();
   }, [user, loadAdjustments]);
@@ -160,7 +162,7 @@ export default function SalaryAdjustmentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.employee_id || !form.amount || !form.applied_month) {
-      toast({ variant: "destructive", title: "Validation", description: "Please fill all required fields." });
+      toast({ variant: "destructive", title: t("payroll.validation"), description: t("payroll.fieldsRequired") });
       return;
     }
     setSubmitting(true);
@@ -181,14 +183,14 @@ export default function SalaryAdjustmentPage() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || "Failed to save");
       }
-      toast({ title: "Adjustment saved successfully" });
+      toast({ title: t("payroll.saveSuccess") });
       setForm({ employee_id: "", type: "Bonus", amount: "", applied_month: "", reason: "" });
       loadAdjustments();
     } catch (err) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: err instanceof Error ? err.message : "Failed to save",
+        title: t("payroll.saveError"),
+        description: err instanceof Error ? err.message : t("payroll.saveError"),
       });
     } finally {
       setSubmitting(false);
@@ -198,17 +200,17 @@ export default function SalaryAdjustmentPage() {
   // ─── Delete ───────────────────────────────────────────────────────────────
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this adjustment?")) return;
+    if (!confirm(t("payroll.deleteConfirm"))) return;
     try {
       if (!id || isNaN(Number(id))) throw new Error("Invalid ID");
       await fetch(`/api/payroll/adjustments/${String(id)}`, {
         method: "DELETE",
         credentials: "include",
       });
-      toast({ title: "Deleted" });
+      toast({ title: t("payroll.saveSuccess") });
       loadAdjustments();
     } catch {
-      toast({ variant: "destructive", title: "Error", description: "Failed to delete" });
+      toast({ variant: "destructive", title: t("payroll.saveError"), description: t("payroll.saveError") });
     }
   };
 
@@ -225,7 +227,7 @@ export default function SalaryAdjustmentPage() {
       });
       loadAdjustments();
     } catch {
-      toast({ variant: "destructive", title: "Error" });
+      toast({ variant: "destructive", title: t("payroll.saveError") });
     }
   };
 
@@ -258,10 +260,10 @@ export default function SalaryAdjustmentPage() {
       {/* ── Page Header ── */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Salary Adjustments
+          {t("payroll.adjustments")}
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Create bonus or penalty adjustments for employees
+          {t("payroll.adjustmentsSubtitle")}
         </p>
       </div>
 
@@ -270,21 +272,21 @@ export default function SalaryAdjustmentPage() {
         <StatCard
           icon={<TrendingUp className="w-5 h-5 text-emerald-600" />}
           bg="bg-emerald-50 dark:bg-emerald-900/20"
-          label="Total Bonuses"
+          label={t("payroll.totalBonuses")}
           value={formatVND(totalBonus)}
           valueColor="text-emerald-700 dark:text-emerald-400"
         />
         <StatCard
           icon={<TrendingDown className="w-5 h-5 text-red-500" />}
           bg="bg-red-50 dark:bg-red-900/20"
-          label="Total Penalties"
+          label={t("payroll.totalPenalties")}
           value={formatVND(totalPenalty)}
           valueColor="text-red-600 dark:text-red-400"
         />
         <StatCard
           icon={<Clock className="w-5 h-5 text-amber-600" />}
           bg="bg-amber-50 dark:bg-amber-900/20"
-          label="Pending Review"
+          label={t("payroll.pendingReview")}
           value={String(pendingCount)}
           valueColor="text-amber-700 dark:text-amber-400"
         />
@@ -295,7 +297,7 @@ export default function SalaryAdjustmentPage() {
         <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
           <Plus className="w-5 h-5 text-blue-600" />
           <h2 className="font-semibold text-gray-900 dark:text-white">
-            Create New Adjustment
+            {t("payroll.createNewAdjustment")}
           </h2>
         </div>
 
@@ -304,7 +306,7 @@ export default function SalaryAdjustmentPage() {
             {/* Employee */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Employee <span className="text-red-500">*</span>
+                {t("payroll.employee")} <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.employee_id}
@@ -312,7 +314,7 @@ export default function SalaryAdjustmentPage() {
                 className="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
-                <option value="">Select an employee...</option>
+                <option value="">{t("payroll.selectEmployee")}</option>
                 {employees.map((emp) => (
                   <option key={emp.employee_id} value={emp.employee_id}>
                     {getEmployeeName(emp)}
@@ -324,8 +326,8 @@ export default function SalaryAdjustmentPage() {
               {form.employee_id && (
                 <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
                   {currentSalary !== null
-                    ? <>Current Base Salary: <span className="font-semibold text-gray-600 dark:text-gray-300">{formatVND(currentSalary)}</span></>
-                    : "Loading salary info..."}
+                    ? <>{t("payroll.currentBaseSalary")} <span className="font-semibold text-gray-600 dark:text-gray-300">{formatVND(currentSalary)}</span></>
+                    : t("payroll.loadingSalary")}
                 </p>
               )}
             </div>
@@ -333,24 +335,24 @@ export default function SalaryAdjustmentPage() {
             {/* Adjustment Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Adjustment Type <span className="text-red-500">*</span>
+                {t("payroll.adjustmentType")} <span className="text-red-500">*</span>
               </label>
               <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden h-10">
-                {(["Bonus", "Penalty"] as const).map((t) => (
+                {(["Bonus", "Penalty"] as const).map((tType) => (
                   <button
-                    key={t}
+                    key={tType}
                     type="button"
-                    onClick={() => setForm({ ...form, type: t })}
+                    onClick={() => setForm({ ...form, type: tType })}
                     className={`flex-1 flex items-center justify-center gap-1.5 text-sm font-medium transition-colors
-                      ${form.type === t
-                        ? t === "Bonus"
+                      ${form.type === tType
+                        ? tType === "Bonus"
                           ? "bg-emerald-500 text-white"
                           : "bg-red-500 text-white"
                         : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
                       }`}
                   >
-                    {t === "Bonus" ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                    {t}
+                    {tType === "Bonus" ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                    {tType === "Bonus" ? t("payroll.bonus") : t("payroll.penalty")}
                   </button>
                 ))}
               </div>
@@ -359,7 +361,7 @@ export default function SalaryAdjustmentPage() {
             {/* Amount */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Amount (VND) <span className="text-red-500">*</span>
+                {t("payroll.amount")} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₫</span>
@@ -379,7 +381,7 @@ export default function SalaryAdjustmentPage() {
             {/* Applied Month */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Applied Month <span className="text-red-500">*</span>
+                {t("payroll.appliedMonth")} <span className="text-red-500">*</span>
               </label>
               <input
                 type="month"
@@ -405,13 +407,13 @@ export default function SalaryAdjustmentPage() {
             {/* Reason */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Reason
+                {t("payroll.reason")}
               </label>
               <textarea
                 rows={3}
                 value={form.reason}
                 onChange={(e) => setForm({ ...form, reason: e.target.value })}
-                placeholder="Describe the reason for the adjustment..."
+                placeholder={t("payroll.reasonPlaceholder")}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               />
             </div>
@@ -429,7 +431,7 @@ export default function SalaryAdjustmentPage() {
               ) : (
                 <Plus className="w-4 h-4" />
               )}
-              {submitting ? "Saving..." : "Save Adjustment"}
+              {submitting ? t("payroll.saving") : t("payroll.saveAdjustment")}
             </button>
           </div>
         </form>
@@ -440,19 +442,19 @@ export default function SalaryAdjustmentPage() {
         {/* Header + Tabs */}
         <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="font-semibold text-gray-900 dark:text-white">
-            Recent History
+            {t("payroll.recentHistory")}
           </h2>
           <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            {TABS.map((t) => (
+            {TABS.map((tTab) => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${tab === t
+                key={tTab}
+                onClick={() => setTab(tTab)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${tab === tTab
                   ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
                   }`}
               >
-                {t}
+                {tTab === "All" ? t("payroll.all") : tTab === "Bonus" ? t("payroll.bonus") : t("payroll.penalty")}
               </button>
             ))}
           </div>
@@ -467,20 +469,20 @@ export default function SalaryAdjustmentPage() {
           ) : adjustments.length === 0 ? (
             <div className="text-center py-16 text-gray-400 dark:text-gray-500">
               <TrendingUp className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">No adjustments found</p>
+              <p className="text-sm">{t("payroll.noAdjustments")}</p>
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-700">
-                  <th className="px-6 py-3 text-left">Employee</th>
-                  <th className="px-6 py-3 text-left">Type</th>
-                  <th className="px-6 py-3 text-right">Amount</th>
-                  <th className="px-6 py-3 text-left">Applied Month</th>
-                  <th className="px-6 py-3 text-left">Reason</th>
-                  <th className="px-6 py-3 text-left">Date Created</th>
-                  <th className="px-6 py-3 text-left">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+                  <th className="px-6 py-3 text-left">{t("payroll.employee")}</th>
+                  <th className="px-6 py-3 text-left">{t("payroll.adjustmentType")}</th>
+                  <th className="px-6 py-3 text-right">{t("payroll.amount")}</th>
+                  <th className="px-6 py-3 text-left">{t("payroll.appliedMonth")}</th>
+                  <th className="px-6 py-3 text-left">{t("payroll.reason")}</th>
+                  <th className="px-6 py-3 text-left">{t("payroll.dateCreated")}</th>
+                  <th className="px-6 py-3 text-left">{t("payroll.status")}</th>
+                  <th className="px-6 py-3 text-right">{t("payroll.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -529,7 +531,7 @@ export default function SalaryAdjustmentPage() {
                         ) : (
                           <TrendingDown className="w-3 h-3" />
                         )}
-                        {adj.type}
+                        {adj.type === "Bonus" ? t("payroll.bonus") : t("payroll.penalty")}
                       </span>
                     </td>
 
@@ -555,7 +557,7 @@ export default function SalaryAdjustmentPage() {
 
                     {/* Status */}
                     <td className="px-6 py-4">
-                      <StatusBadge status={adj.status} />
+                      <StatusBadge status={adj.status} t={t} />
                     </td>
 
                     {/* Actions */}
@@ -566,14 +568,14 @@ export default function SalaryAdjustmentPage() {
                             <button
                               onClick={() => handleStatus(adj.id, "Approved")}
                               className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-                              title="Approve"
+                              title={t("payroll.approve")}
                             >
                               <CheckCircle className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleStatus(adj.id, "Rejected")}
                               className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                              title="Reject"
+                              title={t("payroll.reject")}
                             >
                               <XCircle className="w-4 h-4" />
                             </button>
@@ -582,7 +584,7 @@ export default function SalaryAdjustmentPage() {
                         <button
                           onClick={() => handleDelete(adj.id)}
                           className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Delete"
+                          title={t("payroll.delete")}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -627,15 +629,20 @@ function StatCard({
   );
 }
 
-function StatusBadge({ status }: { status: "Pending" | "Approved" | "Rejected" }) {
+function StatusBadge({ status, t }: { status: "Pending" | "Approved" | "Rejected"; t: any }) {
   const map = {
     Pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     Approved: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
     Rejected: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
   };
+  const labelMap = {
+    Pending: t("payroll.pendingApproval"),
+    Approved: t("payroll.approved"),
+    Rejected: t("payroll.rejected"),
+  };
   return (
     <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${map[status]}`}>
-      {status}
+      {labelMap[status]}
     </span>
   );
 }

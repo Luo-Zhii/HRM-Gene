@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { canManagePayroll } from "@/src/lib/adminAccess";
 import { toQueryString } from "@/src/utils/api";
@@ -57,6 +58,7 @@ const deriveIssueStatus = (p: Payslip): IssuedStatus => {
 
 export default function IssuePayslipsPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
@@ -75,9 +77,12 @@ export default function IssuePayslipsPage() {
   // Auth guard
   useEffect(() => {
     if (!authLoading && user) {
-      if (!canManagePayroll(user)) { toast({ variant: "destructive", title: "Access Denied" }); setTimeout(() => router.push("/dashboard"), 1500); }
+      if (!canManagePayroll(user)) {
+        toast({ variant: "destructive", title: t("payroll.accessDenied"), description: t("payroll.accessDeniedDesc") });
+        setTimeout(() => router.push("/dashboard"), 1500);
+      }
     }
-  }, [authLoading, user, router, toast]);
+  }, [authLoading, user, router, toast, t]);
 
   // Fetch detailed payslip
   const handleViewDetail = async (id: number) => {
@@ -89,7 +94,7 @@ export default function IssuePayslipsPage() {
       const data = await res.json();
       setViewPayslip(data);
     } catch {
-      toast({ variant: "destructive", title: "Error", description: "Could not load payslip detail" });
+      toast({ variant: "destructive", title: t("payroll.validation"), description: t("payroll.loadFailed") });
     } finally {
       setFetchingDetail(false);
     }
@@ -105,11 +110,11 @@ export default function IssuePayslipsPage() {
       const data = await res.json();
       setPayslips(Array.isArray(data) ? data : []);
     } catch {
-      toast({ variant: "destructive", title: "Error", description: "Failed to load payslips" });
+      toast({ variant: "destructive", title: t("payroll.validation"), description: t("payroll.loadFailed") });
     } finally {
       setLoading(false);
     }
-  }, [selectedMonth, selectedYear, toast]);
+  }, [selectedMonth, selectedYear, toast, t]);
 
   useEffect(() => {
     if (user) loadPayslips();
@@ -149,7 +154,7 @@ export default function IssuePayslipsPage() {
   // Send bulk
   const handleSendBulk = async () => {
     const ids = selectedIds.size > 0 ? Array.from(selectedIds) : filtered.map((p) => p.payslip_id);
-    if (ids.length === 0) { toast({ variant: "destructive", title: "Nothing to send" }); return; }
+    if (ids.length === 0) { toast({ variant: "destructive", title: t("payroll.nothingToSend") }); return; }
     setSending(true);
     try {
       // Mark selected payslips as Paid via approve+mark-paid cascade
@@ -163,11 +168,11 @@ export default function IssuePayslipsPage() {
       const updated = new Set(issuedSet);
       ids.forEach((id) => updated.add(id));
       setIssuedSet(updated);
-      toast({ title: `✅ ${ids.length} payslips sent successfully` });
+      toast({ title: `✅ ${ids.length} ${t("payroll.sendSuccess")}` });
       await loadPayslips();
       setSelectedIds(new Set());
     } catch {
-      toast({ variant: "destructive", title: "Error", description: "Some payslips could not be sent" });
+      toast({ variant: "destructive", title: t("payroll.validation"), description: t("payroll.sendError") });
     } finally {
       setSending(false);
     }
@@ -187,9 +192,9 @@ export default function IssuePayslipsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Issue Payslips</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("payroll.issuePayslips")}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Send and track payslip delivery for {MONTHS[selectedMonth - 1]} {selectedYear}
+            {t("payroll.issuePayslipsSubtitle")} {t(`payroll.months.${selectedMonth}`)} {selectedYear}
           </p>
         </div>
         <button
@@ -198,8 +203,8 @@ export default function IssuePayslipsPage() {
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
         >
           {sending
-            ? <><RefreshCw className="w-4 h-4 animate-spin" /> Sending...</>
-            : <><SendHorizonal className="w-4 h-4" /> Send bulk payslips{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}</>
+            ? <><RefreshCw className="w-4 h-4 animate-spin" /> {t("payroll.processing")}</>
+            : <><SendHorizonal className="w-4 h-4" /> {t("payroll.sendBulk")}{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}</>
           }
         </button>
       </div>
@@ -209,18 +214,20 @@ export default function IssuePayslipsPage() {
         <div className="flex flex-wrap gap-4">
           {/* Month */}
           <div className="flex-1 min-w-[140px]">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Month</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t("payroll.month")}</label>
             <div className="relative">
               <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))}
                 className="w-full h-10 pl-3 pr-8 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
-                {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i} value={i + 1}>{t(`payroll.months.${i + 1}`)}</option>
+                ))}
               </select>
               <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
           </div>
           {/* Year */}
           <div className="w-28">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Year</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t("payroll.year")}</label>
             <div className="relative">
               <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}
                 className="w-full h-10 pl-3 pr-8 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -231,11 +238,11 @@ export default function IssuePayslipsPage() {
           </div>
           {/* Department */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Department</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t("payroll.department")}</label>
             <div className="relative">
               <select value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)}
                 className="w-full h-10 pl-3 pr-8 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
-                {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+                {departments.map((d) => <option key={d} value={d}>{d === "All" ? t("payroll.all") : d}</option>)}
               </select>
               <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
@@ -251,7 +258,7 @@ export default function IssuePayslipsPage() {
             <Users className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <p className="text-xs text-gray-500 font-medium">Total Employees</p>
+            <p className="text-xs text-gray-500 font-medium">{t("payroll.totalEmployees")}</p>
             <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{filtered.length}</p>
           </div>
         </div>
@@ -263,7 +270,7 @@ export default function IssuePayslipsPage() {
               <Send className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-medium">Payslips Sent</p>
+              <p className="text-xs text-gray-500 font-medium">{t("payroll.payslipsSent")}</p>
               <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
                 {sentCount}<span className="text-sm font-normal text-gray-400 ml-1">/ {payslips.length}</span>
               </p>
@@ -284,7 +291,7 @@ export default function IssuePayslipsPage() {
             <Clock className="w-5 h-5 text-amber-600" />
           </div>
           <div>
-            <p className="text-xs text-gray-500 font-medium">Pending Review</p>
+            <p className="text-xs text-gray-500 font-medium">{t("payroll.pendingReview")}</p>
             <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{pendingCount}</p>
           </div>
         </div>
@@ -300,7 +307,7 @@ export default function IssuePayslipsPage() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <Send className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">No payslips found for this period</p>
+              <p className="text-sm">{t("payroll.noPayslipsGenerated")}</p>
             </div>
           ) : (
             <table className="w-full text-sm">
@@ -312,13 +319,13 @@ export default function IssuePayslipsPage() {
                       {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4" />}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left">Employee</th>
-                  <th className="px-4 py-3 text-left">Pay Period</th>
-                  <th className="px-4 py-3 text-left">Payment Date</th>
-                  <th className="px-4 py-3 text-right">Total Gross</th>
-                  <th className="px-4 py-3 text-right">Net Received</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th className="px-4 py-3 text-left">{t("payroll.employee")}</th>
+                  <th className="px-4 py-3 text-left">{t("payroll.payPeriod")}</th>
+                  <th className="px-4 py-3 text-left">{t("payroll.paymentDate")}</th>
+                  <th className="px-4 py-3 text-right">{t("payroll.totalGross")}</th>
+                  <th className="px-4 py-3 text-right">{t("payroll.netReceived")}</th>
+                  <th className="px-4 py-3 text-left">{t("payroll.status")}</th>
+                  <th className="px-4 py-3 text-right">{t("payroll.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -362,7 +369,7 @@ export default function IssuePayslipsPage() {
                             onClick={() => handleViewDetail(p.payslip_id)}
                             disabled={fetchingDetail}
                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="View detail"
+                            title={t("payroll.detailedReport")}
                           >
                             <Eye className={`w-4 h-4 ${fetchingDetail ? "animate-pulse" : ""}`} />
                           </button>
@@ -375,12 +382,12 @@ export default function IssuePayslipsPage() {
                                   if (p.status === "Pending") await fetch(`/api/payroll/${String(p.payslip_id)}/approve`, { method: "PATCH", credentials: "include" });
                                   await fetch(`/api/payroll/${String(p.payslip_id)}/mark-paid`, { method: "PATCH", credentials: "include" });
                                   setIssuedSet((prev) => new Set([...prev, p.payslip_id]));
-                                  toast({ title: "Payslip sent" });
+                                  toast({ title: t("payroll.sendSuccess") });
                                   await loadPayslips();
                                 } finally { setSending(false); }
                               }}
                               className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-                              title="Send"
+                              title={t("payroll.sent")}
                             >
                               <SendHorizonal className="w-4 h-4" />
                             </button>
@@ -409,10 +416,16 @@ export default function IssuePayslipsPage() {
 }
 
 function IssueStatusBadge({ status }: { status: IssuedStatus }) {
+  const { t } = useTranslation();
   const map: Record<IssuedStatus, string> = {
     Sent: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
     Pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     Error: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
   };
-  return <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${map[status]}`}>{status}</span>;
+  const labelMap: Record<IssuedStatus, string> = {
+    Sent: t("payroll.sent"),
+    Pending: t("payroll.pendingReview"),
+    Error: t("payroll.validation"),
+  };
+  return <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${map[status]}`}>{labelMap[status] || status}</span>;
 }

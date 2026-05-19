@@ -359,7 +359,7 @@ export class AdminService {
   async getAllEmployees() {
     const employees = await this.employeeRepo.find({
       where: { deleted_at: null as any },
-      relations: ["position", "department"],
+      relations: ["position", "department", "bankInfo"],
     });
 
     const departments = await this.deptRepo.find({ relations: ["manager"] });

@@ -398,6 +398,7 @@ async function run() {
       transport_allowance: String(base * 0.1),
       lunch_allowance: "730000",
       responsibility_allowance: employee.position?.position_name === "Manager" ? String(base * 0.15) : "0",
+      kpi_bonus_percentage: 10,
     }));
   }
 
@@ -458,7 +459,8 @@ async function run() {
       const responsibilityAllowance = emp.position?.position_name === "Manager" ? baseSalary * 0.15 : 0;
 
       const totalAllowance = transportAllowance + lunchAllowance + responsibilityAllowance;
-      const totalBonus = overtimePay + thirteenthBonus + tetBonus + performanceBonus;
+      const nonKpiBonus = overtimePay + thirteenthBonus + tetBonus;
+      const totalBonus = nonKpiBonus + performanceBonus;
       const grossIncome = workSalary + totalAllowance + totalBonus;
 
       const insurance = baseSalary * 0.105;
@@ -472,7 +474,8 @@ async function run() {
         payroll_period: period,
         actual_work_days: actualDays,
         ot_hours: otHours,
-        bonus: totalBonus.toFixed(2),
+        bonus: nonKpiBonus.toFixed(2),
+        kpi_bonus_amount: performanceBonus,
         gross_salary: grossIncome.toFixed(2),
         deductions: deductions.toFixed(2),
         net_salary: netSalary.toFixed(2),
@@ -493,42 +496,49 @@ async function run() {
     status: ViolationStatus.RESOLVED
   }));
 
-  // --- 12. TIMEKEEPING (Current Month) ---
+  // --- 12. TIMEKEEPING (Current & Previous Months) ---
   console.log("🌱 Creating Timekeeping...");
-  for (let d = 1; d <= now.getDate(); d++) {
-    const workDate = new Date(now.getFullYear(), now.getMonth(), d);
-    if (workDate.getDay() === 0 || workDate.getDay() === 6) continue;
+  const seedMonths = [
+    { m: now.getMonth() + 1, y: now.getFullYear() }, // Current Month
+    { m: now.getMonth(), y: now.getFullYear() },     // Previous Month
+  ];
+  for (const item of seedMonths) {
+    const daysInMonth = new Date(item.y, item.m, 0).getDate();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const workDate = new Date(item.y, item.m - 1, d);
+      if (workDate.getDay() === 0 || workDate.getDay() === 6) continue;
 
-    for (const emp of activeEmployees) {
-      const rand = Math.random();
-      let status = "Present";
-      let hours = 8;
-      let checkIn = new Date(workDate);
-      checkIn.setHours(8, randomBetween(0, 5), 0);
-      let checkOut: Date | undefined = new Date(workDate);
-      checkOut.setHours(17, randomBetween(0, 15), 0);
+      for (const emp of activeEmployees) {
+        const rand = Math.random();
+        let status = "Present";
+        let hours = 8;
+        let checkIn = new Date(workDate);
+        checkIn.setHours(8, randomBetween(0, 5), 0);
+        let checkOut: Date | undefined = new Date(workDate);
+        checkOut.setHours(17, randomBetween(0, 15), 0);
 
-      if (rand < 0.025) {
-        status = "Absent";
-        hours = 0;
-        checkIn.setHours(0, 0, 0); // fallback for non-nullable DB schema
-        checkOut = undefined;
-      } else if (rand < 0.05) {
-        status = "Late";
-        const lateMinutes = randomBetween(15, 60);
-        checkIn.setHours(8, lateMinutes, 0);
-        hours = 8 - (lateMinutes / 60);
+        if (rand < 0.025) {
+          status = "Absent";
+          hours = 0;
+          checkIn.setHours(0, 0, 0); // fallback for non-nullable DB schema
+          checkOut = undefined;
+        } else if (rand < 0.05) {
+          status = "Late";
+          const lateMinutes = randomBetween(15, 60);
+          checkIn.setHours(8, lateMinutes, 0);
+          hours = 8 - (lateMinutes / 60);
+        }
+
+        await timeRepo.save(timeRepo.create({
+          employee: emp,
+          work_date: formatDate(workDate),
+          check_in_time: checkIn,
+          check_out_time: checkOut,
+          hours_worked: parseFloat(hours.toFixed(2)),
+          status: status,
+          ip_address: checkOut ? "127.0.0.1" : undefined
+        }));
       }
-
-      await timeRepo.save(timeRepo.create({
-        employee: emp,
-        work_date: formatDate(workDate),
-        check_in_time: checkIn,
-        check_out_time: checkOut,
-        hours_worked: parseFloat(hours.toFixed(2)),
-        status: status,
-        ip_address: checkOut ? "127.0.0.1" : undefined
-      }));
     }
   }
 

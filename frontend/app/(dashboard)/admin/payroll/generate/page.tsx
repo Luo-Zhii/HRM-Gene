@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { canManagePayroll } from "@/src/lib/adminAccess";
 import { toQueryString } from "@/src/utils/api";
@@ -71,6 +72,7 @@ const getInitials = (p: Payslip["employee"]) =>
 
 export default function CreatePayrollPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
@@ -89,11 +91,11 @@ export default function CreatePayrollPage() {
   useEffect(() => {
     if (!authLoading && user) {
       if (!canManagePayroll(user)) {
-        toast({ variant: "destructive", title: "Access Denied" });
+        toast({ variant: "destructive", title: t("payroll.accessDenied") });
         setTimeout(() => router.push("/dashboard"), 1500);
       }
     }
-  }, [authLoading, user, router, toast]);
+  }, [authLoading, user, router, toast, t]);
 
   // Load payslips for selected period
   const loadPayslips = useCallback(async () => {
@@ -115,11 +117,11 @@ export default function CreatePayrollPage() {
         setPayslips([]);
       }
     } catch {
-      toast({ variant: "destructive", title: "Error", description: "Failed to load payroll data" });
+      toast({ variant: "destructive", title: t("payroll.saveError"), description: t("payroll.loadFailed") });
     } finally {
       setLoading(false);
     }
-  }, [selectedMonth, selectedYear, toast]);
+  }, [selectedMonth, selectedYear, toast, t]);
 
   useEffect(() => {
     if (user && canManagePayroll(user)) {
@@ -142,12 +144,12 @@ export default function CreatePayrollPage() {
       }
       const summary: GenerateSummary = await res.json();
       toast({
-        title: `✅ Payroll generated for ${MONTHS[selectedMonth - 1]} ${selectedYear}`,
-        description: `${summary.generated} payslips created`,
+        title: `✅ ${t("payroll.createPayroll")} ${t("payroll.months." + selectedMonth)} ${selectedYear}`,
+        description: `${summary.generated} ${t("payroll.payslipsSent") || "payslips created"}`,
       });
       await loadPayslips();
     } catch (err) {
-      toast({ variant: "destructive", title: "Error", description: err instanceof Error ? err.message : "Failed to generate" });
+      toast({ variant: "destructive", title: t("payroll.saveError"), description: err instanceof Error ? err.message : t("payroll.saveError") });
     } finally {
       setGenerating(false);
     }
@@ -164,10 +166,10 @@ export default function CreatePayrollPage() {
       });
       if (!res.ok) throw new Error("Failed to approve");
       const data = await res.json();
-      toast({ title: `✅ ${data.approved} payslips approved` });
+      toast({ title: `✅ ${data.approved} ${t("payroll.approved")}` });
       await loadPayslips();
     } catch (err) {
-      toast({ variant: "destructive", title: "Error", description: err instanceof Error ? err.message : "Failed" });
+      toast({ variant: "destructive", title: t("payroll.saveError"), description: err instanceof Error ? err.message : "Failed" });
     } finally {
       setApprovingAll(false);
     }
@@ -179,7 +181,7 @@ export default function CreatePayrollPage() {
       if (!id || isNaN(Number(id))) throw new Error("Invalid ID");
       await fetch(`/api/payroll/${String(id)}/approve`, { method: "PATCH", credentials: "include" });
       await loadPayslips();
-    } catch { toast({ variant: "destructive", title: "Error" }); }
+    } catch { toast({ variant: "destructive", title: t("payroll.saveError") }); }
   };
   // Mark paid single
   const handleMarkPaid = async (id: number) => {
@@ -187,7 +189,7 @@ export default function CreatePayrollPage() {
       if (!id || isNaN(Number(id))) throw new Error("Invalid ID");
       await fetch(`/api/payroll/${String(id)}/mark-paid`, { method: "PATCH", credentials: "include" });
       await loadPayslips();
-    } catch { toast({ variant: "destructive", title: "Error" }); }
+    } catch { toast({ variant: "destructive", title: t("payroll.saveError") }); }
   };
 
   // Fetch individual detail
@@ -200,7 +202,7 @@ export default function CreatePayrollPage() {
       const data = await res.json();
       setSelectedPayslip(data);
     } catch {
-      toast({ variant: "destructive", title: "Error", description: "Could not load payslip detail" });
+      toast({ variant: "destructive", title: t("payroll.saveError"), description: t("payroll.loadFailed") });
     } finally {
       setFetchingDetail(false);
     }
@@ -236,9 +238,9 @@ export default function CreatePayrollPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Payroll</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("payroll.createPayroll")}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Generate and manage monthly payroll for all employees
+            {t("payroll.createPayrollSubtitle")}
           </p>
         </div>
         {periodId && (
@@ -247,7 +249,7 @@ export default function CreatePayrollPage() {
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <FileText className="w-4 h-4" />
-            Detailed Report
+            {t("payroll.detailedReport")}
           </button>
         )}
       </div>
@@ -258,7 +260,7 @@ export default function CreatePayrollPage() {
           {/* Month */}
           <div className="flex-1 min-w-0">
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
-              Month
+              {t("payroll.month")}
             </label>
             <div className="relative">
               <select
@@ -266,8 +268,8 @@ export default function CreatePayrollPage() {
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
                 className="w-full h-10 pl-3 pr-8 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {MONTHS.map((m, i) => (
-                  <option key={i} value={i + 1}>{m}</option>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i} value={i + 1}>{t(`payroll.months.${i + 1}`)}</option>
                 ))}
               </select>
               <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -277,7 +279,7 @@ export default function CreatePayrollPage() {
           {/* Year */}
           <div className="w-28">
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
-              Year
+              {t("payroll.year")}
             </label>
             <div className="relative">
               <select
@@ -298,8 +300,8 @@ export default function CreatePayrollPage() {
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
           >
             {generating
-              ? <><RefreshCw className="w-4 h-4 animate-spin" /> Calculating...</>
-              : <><Play className="w-4 h-4" /> Automatic payroll calculation</>
+              ? <><RefreshCw className="w-4 h-4 animate-spin" /> {t("payroll.calculating")}</>
+              : <><Play className="w-4 h-4" /> {t("payroll.autoCalculate")}</>
             }
           </button>
         </div>
@@ -308,20 +310,20 @@ export default function CreatePayrollPage() {
       {/* 5 Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <SummaryCard icon={<Users className="w-5 h-5 text-blue-600" />} bg="bg-blue-50 dark:bg-blue-900/20"
-          label="Total Employees" value={String(stats.count)} valueColor="text-blue-700 dark:text-blue-400" />
+          label={t("payroll.totalEmployees")} value={String(stats.count)} valueColor="text-blue-700 dark:text-blue-400" />
         <SummaryCard icon={<Wallet className="w-5 h-5 text-violet-600" />} bg="bg-violet-50 dark:bg-violet-900/20"
-          label="Total Basic Salary" value={fmt(stats.totalBaseSalary)} valueColor="text-violet-700 dark:text-violet-400" compact />
+          label={t("payroll.baseSalary")} value={fmt(stats.totalBaseSalary)} valueColor="text-violet-700 dark:text-violet-400" compact />
         <SummaryCard icon={<TrendingUp className="w-5 h-5 text-emerald-600" />} bg="bg-emerald-50 dark:bg-emerald-900/20"
-          label="Total Bonus" value={fmt(stats.totalBonus)} valueColor="text-emerald-700 dark:text-emerald-400" compact />
+          label={t("payroll.commissionBonus")} value={fmt(stats.totalBonus)} valueColor="text-emerald-700 dark:text-emerald-400" compact />
         <SummaryCard icon={<TrendingDown className="w-5 h-5 text-red-500" />} bg="bg-red-50 dark:bg-red-900/20"
-          label="Total Deductions" value={fmt(stats.totalDeductions)} valueColor="text-red-600 dark:text-red-400" compact />
+          label={t("payroll.deductionsInsurance")} value={fmt(stats.totalDeductions)} valueColor="text-red-600 dark:text-red-400" compact />
         {/* Dark net salary card */}
         <div className="col-span-2 lg:col-span-1 bg-gray-900 dark:bg-gray-950 rounded-xl p-5 flex items-center gap-4 border border-gray-800">
           <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
             <DollarSign className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs text-gray-400 font-medium">Net Salary</p>
+            <p className="text-xs text-gray-400 font-medium">{t("payroll.totalNetSalary")}</p>
             <p className="text-base font-bold text-white mt-0.5 truncate">{fmt(stats.totalNet)}</p>
           </div>
         </div>
@@ -333,13 +335,13 @@ export default function CreatePayrollPage() {
         <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-white">
-              Preview payroll
+              {t("payroll.previewPayroll")}
               <span className="ml-2 text-xs font-normal text-gray-400">
-                {MONTHS[selectedMonth - 1]} {selectedYear}
+                {t(`payroll.months.${selectedMonth}`)} {selectedYear}
               </span>
             </h2>
             {payslips.length === 0 && !loading && (
-              <p className="text-xs text-gray-400 mt-0.5">No payslips yet. Click "Automatic payroll calculation" to generate.</p>
+              <p className="text-xs text-gray-400 mt-0.5">{t("payroll.noPayslipsMsg")}</p>
             )}
           </div>
           {pendingCount > 0 && canApprove && (
@@ -349,8 +351,8 @@ export default function CreatePayrollPage() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
             >
               {approvingAll
-                ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Approving...</>
-                : <><CheckCheck className="w-3.5 h-3.5" /> Approve payroll ({pendingCount})</>
+                ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> {t("payroll.processing")}</>
+                : <><CheckCheck className="w-3.5 h-3.5" /> {t("payroll.approvePayroll")} ({pendingCount})</>
               }
             </button>
           )}
@@ -365,20 +367,20 @@ export default function CreatePayrollPage() {
           ) : payslips.length === 0 ? (
             <div className="text-center py-16 text-gray-400 dark:text-gray-500">
               <DollarSign className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm font-medium">No payslips generated yet</p>
-              <p className="text-xs mt-1">Use the calculation button above to create payslips for this period</p>
+              <p className="text-sm font-medium">{t("payroll.noPayslipsGenerated")}</p>
+              <p className="text-xs mt-1">{t("payroll.calcInstructions")}</p>
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/60">
-                  <th className="px-6 py-3 text-left">Employee</th>
-                  <th className="px-6 py-3 text-right">Basic Salary</th>
-                  <th className="px-6 py-3 text-right">Commission / Bonus</th>
-                  <th className="px-6 py-3 text-right">Deductions (Insurance 10.5%)</th>
-                  <th className="px-6 py-3 text-right">Net Salary</th>
-                  <th className="px-6 py-3 text-left">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+                  <th className="px-6 py-3 text-left">{t("payroll.employee")}</th>
+                  <th className="px-6 py-3 text-right">{t("payroll.baseSalary")}</th>
+                  <th className="px-6 py-3 text-right">{t("payroll.commissionBonus")}</th>
+                  <th className="px-6 py-3 text-right">{t("payroll.deductionsInsurance")}</th>
+                  <th className="px-6 py-3 text-right">{t("payroll.netReceived")}</th>
+                  <th className="px-6 py-3 text-left">{t("payroll.status")}</th>
+                  <th className="px-6 py-3 text-right">{t("payroll.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -433,7 +435,7 @@ export default function CreatePayrollPage() {
 
                       {/* Status */}
                       <td className="px-6 py-4">
-                        <StatusPill status={p.status} />
+                        <StatusPill status={p.status} t={t} />
                       </td>
 
                       {/* Actions */}
@@ -441,7 +443,7 @@ export default function CreatePayrollPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="View detail"
+                            title={t("payroll.view") || "View"}
                             disabled={fetchingDetail}
                             onClick={() => handleViewDetail(p.payslip_id)}
                           >
@@ -452,7 +454,7 @@ export default function CreatePayrollPage() {
                               onClick={() => handleApproveOne(p.payslip_id)}
                               className="px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 rounded-lg transition-colors"
                             >
-                              Approve
+                              {t("payroll.approve")}
                             </button>
                           )}
                           {canApprove && p.status === "Approved" && (
@@ -460,7 +462,7 @@ export default function CreatePayrollPage() {
                               onClick={() => handleMarkPaid(p.payslip_id)}
                               className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg transition-colors"
                             >
-                              Mark Paid
+                              {t("payroll.markPaid")}
                             </button>
                           )}
                         </div>
@@ -504,15 +506,20 @@ function SummaryCard({
   );
 }
 
-function StatusPill({ status }: { status: "Pending" | "Approved" | "Paid" }) {
+function StatusPill({ status, t }: { status: "Pending" | "Approved" | "Paid"; t: any }) {
   const map = {
     Pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     Approved: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
     Paid: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
   };
+  const labelMap = {
+    Pending: t("payroll.pendingApproval"),
+    Approved: t("payroll.approved"),
+    Paid: t("payroll.paid"),
+  };
   return (
     <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${map[status]}`}>
-      {status === "Pending" ? "Pending approval" : status}
+      {labelMap[status]}
     </span>
   );
 }

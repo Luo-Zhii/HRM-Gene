@@ -5,6 +5,7 @@ import { KpiLibrary } from "../../entities/kpi-library.entity";
 import { KpiPeriod, KpiPeriodStatus } from "../../entities/kpi-period.entity";
 import { KpiAssignment, KpiAssignmentStatus } from "../../entities/kpi-assignment.entity";
 import { Employee } from "../../entities/employee.entity";
+import { SalaryConfig } from "../../entities/salary-config.entity";
 import {
   CreateKpiLibraryDto,
   CreateKpiPeriodDto,
@@ -22,6 +23,7 @@ export class KpiService {
     @InjectRepository(KpiPeriod) private kpiPeriodRepo: Repository<KpiPeriod>,
     @InjectRepository(KpiAssignment) private kpiAssignmentRepo: Repository<KpiAssignment>,
     @InjectRepository(Employee) private employeeRepo: Repository<Employee>,
+    @InjectRepository(SalaryConfig) private salaryConfigRepo: Repository<SalaryConfig>,
     private notificationsService: NotificationsService
   ) { }
 
@@ -40,6 +42,17 @@ export class KpiService {
 
   // --- Periods ---
   async createPeriod(dto: CreateKpiPeriodDto) {
+    if (!dto.name || dto.name.trim() === "") {
+      throw new BadRequestException("Period name cannot be empty");
+    }
+    if (!dto.start_date || !dto.end_date) {
+      throw new BadRequestException("Start date and end date are required");
+    }
+    const start = new Date(dto.start_date);
+    const end = new Date(dto.end_date);
+    if (start > end) {
+      throw new BadRequestException("End date must be after or equal to start date");
+    }
     const period = this.kpiPeriodRepo.create(dto);
     return this.kpiPeriodRepo.save(period);
   }
@@ -131,8 +144,21 @@ export class KpiService {
     });
   }
 
+  private async updateEmployeeSalaryConfigKpiBonus(employeeId: number, periodId: number) {
+    try {
+      const finalScore = await this.calculateFinalKpiScore(employeeId, periodId);
+      const config = await this.salaryConfigRepo.findOne({ where: { employee: { employee_id: employeeId } } });
+      if (config) {
+        config.kpi_bonus_percentage = finalScore / 100;
+        await this.salaryConfigRepo.save(config);
+      }
+    } catch (e) {
+      console.error("Failed to update salary config KPI bonus:", e);
+    }
+  }
+
   async updateActual(id: number, actualValue: number) {
-    const assignment = await this.kpiAssignmentRepo.findOne({ where: { id } });
+    const assignment = await this.kpiAssignmentRepo.findOne({ where: { id }, relations: ["employee", "period"] });
     if (!assignment) throw new NotFoundException("Assignment not found");
 
     // Ensure actualValue is a valid number, default to 0 if NaN or null
@@ -140,18 +166,22 @@ export class KpiService {
 
     assignment.actual_value = safeValue;
     assignment.status = KpiAssignmentStatus.SUBMITTED;
-    return this.kpiAssignmentRepo.save(assignment);
+    const saved = await this.kpiAssignmentRepo.save(assignment);
+    await this.updateEmployeeSalaryConfigKpiBonus(assignment.employee.employee_id, assignment.period.id);
+    return saved;
   }
 
   async gradeAssignment(id: number, managerScore: number) {
-    const assignment = await this.kpiAssignmentRepo.findOne({ where: { id } });
+    const assignment = await this.kpiAssignmentRepo.findOne({ where: { id }, relations: ["employee", "period"] });
     if (!assignment) throw new NotFoundException("Assignment not found");
 
     // manager_score is nullable, but if it's NaN we should probably keep it null or set to 0.
     // If it's NaN from frontend (parseFloat("")), we treat it as null (unset).
     assignment.manager_score = isNaN(managerScore) ? undefined : managerScore;
     assignment.status = KpiAssignmentStatus.APPROVED;
-    return this.kpiAssignmentRepo.save(assignment);
+    const saved = await this.kpiAssignmentRepo.save(assignment);
+    await this.updateEmployeeSalaryConfigKpiBonus(assignment.employee.employee_id, assignment.period.id);
+    return saved;
   }
 
   async getEmployeeAssignments(employeeId: number, periodId: number) {
@@ -161,8 +191,25 @@ export class KpiService {
     });
   }
   async deleteAssignment(id: number) {
-    await this.kpiAssignmentRepo.delete(id);
+    const assignment = await this.kpiAssignmentRepo.findOne({ where: { id }, relations: ["employee", "period"] });
+    if (assignment) {
+      await this.kpiAssignmentRepo.delete(id);
+      await this.updateEmployeeSalaryConfigKpiBonus(assignment.employee.employee_id, assignment.period.id);
+    }
     return { success: true, message: "Assignment deleted" };
+  }
+  async deleteLibrary(id: number) {
+    const count = await this.kpiAssignmentRepo.count({
+      where: { kpi_library: { id } },
+    });
+    if (count > 0) {
+      throw new BadRequestException("Cannot delete KPI definition because it is currently assigned in an evaluation period and has data.");
+    }
+    const result = await this.kpiLibraryRepo.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException("KPI definition not found");
+    }
+    return { success: true, message: "KPI definition deleted successfully" };
   }
   // --- Final Score Calculation ---
   async calculateFinalKpiScore(employeeId: number, periodId: number): Promise<number> {

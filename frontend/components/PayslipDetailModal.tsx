@@ -99,7 +99,7 @@ function SquigglyLine() {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function PayslipDetailModal({ payslip, userName, onClose }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const cfg = payslip.salaryConfig;
   const gross = payslip.total_income ?? parseFloat(payslip.gross_salary || "0");
   const bonus = parseFloat(payslip.bonus || "0");
@@ -287,8 +287,16 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
             <div className="space-y-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2">
               {deductionRows.map((item, i) => {
                 let displayLabel = item.name;
+                let subText: string | undefined = undefined;
                 if (item.name === "Personal Income Tax (PIT)") {
                   displayLabel = t("payslip.pit");
+                  if (gross > 0) {
+                    const isVi = i18n.language?.startsWith("vi");
+                    const rate = ((item.value / gross) * 100).toFixed(1);
+                    subText = isVi
+                      ? `Thuế suất hiệu dụng: ${rate}% gross (Thuế lũy tiến 7 bậc Việt Nam 5% - 35% sau giảm trừ)`
+                      : `Effective tax rate: ${rate}% of gross (7-bracket progressive tax after exemption)`;
+                  }
                 } else if (item.name === "Social + Health + Unemployment (10.5%)") {
                   displayLabel = t("payslip.insurance");
                 } else if (item.name === "Disciplinary Penalties") {
@@ -312,6 +320,7 @@ export default function PayslipDetailModal({ payslip, userName, onClose }: Props
                     value={`-${fmt(item.value)}`}
                     highlight="red"
                     icon={isPenaltyOrViolation ? <TrendingDown className="w-3 h-3 text-red-500" /> : undefined}
+                    subText={subText}
                   />
                 );
               })}
@@ -446,24 +455,31 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string
 }
 
 function LineItem({
-  label, value, sub, bold, highlight, icon,
+  label, value, sub, bold, highlight, icon, subText,
 }: {
   label: string; value: string; sub?: boolean; bold?: boolean;
-  highlight?: "red" | "emerald"; icon?: React.ReactNode;
+  highlight?: "red" | "emerald"; icon?: React.ReactNode; subText?: string;
 }) {
   const valColor = highlight === "red" ? "text-red-600 dark:text-red-400"
     : highlight === "emerald" ? "text-emerald-600 dark:text-emerald-400"
       : "text-gray-900 dark:text-white";
 
   return (
-    <div className={`flex items-center justify-between ${sub ? "pl-3" : ""}`}>
-      <div className="flex items-center gap-1.5">
-        {icon}
-        <span className={`${sub ? "text-[11px] text-gray-400 dark:text-gray-500" : bold ? "text-xs font-semibold text-gray-700 dark:text-gray-200" : "text-xs text-gray-600 dark:text-gray-300"}`}>
-          {label}
-        </span>
+    <div className={`flex flex-col ${sub ? "pl-3" : ""}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          {icon}
+          <span className={`${sub ? "text-[11px] text-gray-400 dark:text-gray-500" : bold ? "text-xs font-semibold text-gray-700 dark:text-gray-200" : "text-xs text-gray-600 dark:text-gray-300"}`}>
+            {label}
+          </span>
+        </div>
+        <span className={`text-xs ${bold ? "font-bold" : "font-medium"} ${valColor}`}>{value}</span>
       </div>
-      <span className={`text-xs ${bold ? "font-bold" : "font-medium"} ${valColor}`}>{value}</span>
+      {subText && (
+        <span className="text-[10px] text-gray-400 dark:text-gray-500 italic mt-0.5 leading-snug">
+          {subText}
+        </span>
+      )}
     </div>
   );
 }

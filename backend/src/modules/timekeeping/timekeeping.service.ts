@@ -390,7 +390,8 @@ export class TimeKeepingService {
     page: number,
     limit: number,
     startDate?: string,
-    endDate?: string
+    endDate?: string,
+    search?: string
   ): Promise<{
     data: TimeKeeping[];
     total: number;
@@ -437,13 +438,23 @@ export class TimeKeepingService {
     const rangeStartStr = rangeStart.toISOString().slice(0, 10);
     const rangeEndStr = rangeEnd.toISOString().slice(0, 10);
 
-    const [items, total] = await this.tkRepo
+    const query = this.tkRepo
       .createQueryBuilder("tk")
       .leftJoinAndSelect("tk.employee", "employee")
       .where("tk.work_date BETWEEN :start AND :end", {
         start: rangeStartStr,
         end: rangeEndStr,
-      })
+      });
+
+    if (search && search.trim() !== "") {
+      const searchLower = `%${search.trim().toLowerCase()}%`;
+      query.andWhere(
+        "(LOWER(employee.first_name) LIKE :search OR LOWER(employee.last_name) LIKE :search OR LOWER(CONCAT(employee.first_name, ' ', employee.last_name)) LIKE :search)",
+        { search: searchLower }
+      );
+    }
+
+    const [items, total] = await query
       .orderBy("tk.work_date", "DESC")
       .addOrderBy("tk.check_in_time", "DESC")
       .skip((page - 1) * limit)
@@ -452,22 +463,70 @@ export class TimeKeepingService {
 
     const totalPages = Math.max(1, Math.ceil(total / limit) || 1);
 
+    // 1. Get the total number of active employees (optionally filtered by search)
+    let totalActiveEmployees = 0;
+    if (search && search.trim() !== "") {
+      const searchLower = `%${search.trim().toLowerCase()}%`;
+      totalActiveEmployees = await this.empRepo
+        .createQueryBuilder("emp")
+        .where("emp.employment_status = :status", { status: "Active" })
+        .andWhere(
+          "(LOWER(emp.first_name) LIKE :search OR LOWER(emp.last_name) LIKE :search OR LOWER(CONCAT(emp.first_name, ' ', emp.last_name)) LIKE :search)",
+          { search: searchLower }
+        )
+        .getCount();
+    } else {
+      totalActiveEmployees = await this.empRepo.count({
+        where: { employment_status: "Active" as any },
+      });
+    }
+
+    // 2. Get the number of working days in the filtered range (excluding weekends)
+    const getWorkingDaysCount = (startD: Date, endD: Date): number => {
+      let count = 0;
+      const curDate = new Date(startD.getTime());
+      while (curDate <= endD) {
+        const day = curDate.getUTCDay();
+        if (day !== 0 && day !== 6) { // Exclude Sunday (0) and Saturday (6)
+          count++;
+        }
+        curDate.setUTCDate(curDate.getUTCDate() + 1);
+      }
+      return count;
+    };
+
+    const workingDays = getWorkingDaysCount(rangeStart, rangeEnd);
+    const totalExpectedShifts = totalActiveEmployees * workingDays;
+
     // Calculate stats based on all records in the filtered range
-    const allRecordsInRange = await this.tkRepo
+    const statsQuery = this.tkRepo
       .createQueryBuilder("tk")
       .leftJoin("tk.employee", "employee")
       .select(["tk.status", "employee.employee_id"])
       .where("tk.work_date BETWEEN :start AND :end", {
         start: rangeStartStr,
         end: rangeEndStr,
-      })
-      .getMany();
+      });
+
+    if (search && search.trim() !== "") {
+      const searchLower = `%${search.trim().toLowerCase()}%`;
+      statsQuery.andWhere(
+        "(LOWER(employee.first_name) LIKE :search OR LOWER(employee.last_name) LIKE :search OR LOWER(CONCAT(employee.first_name, ' ', employee.last_name)) LIKE :search)",
+        { search: searchLower }
+      );
+    }
+
+    const allRecordsInRange = await statsQuery.getMany();
+
+    const presentCount = allRecordsInRange.filter(r => r.status === "Present" || r.status === "Half-day").length;
+    const lateCount = allRecordsInRange.filter(r => r.status === "Late").length;
+    const absentCount = Math.max(0, totalExpectedShifts - (presentCount + lateCount));
 
     const stats = {
-      totalEmployees: new Set(allRecordsInRange.map(r => r.employee?.employee_id)).size,
-      present: allRecordsInRange.filter(r => r.status === "Present" || r.status === "Half-day").length,
-      late: allRecordsInRange.filter(r => r.status === "Late").length,
-      absent: 0, // Set to 0 as fallback or implement actual absent logic if total expected employees is known
+      totalEmployees: totalActiveEmployees,
+      present: presentCount,
+      late: lateCount,
+      absent: absentCount,
     };
 
     // Format records to include id (Employee ID) and location (Fallback from IP)

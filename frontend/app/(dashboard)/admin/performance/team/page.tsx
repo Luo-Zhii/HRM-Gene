@@ -34,6 +34,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 
 interface Employee {
   employee_id: number;
@@ -66,7 +67,9 @@ interface KpiAssignment {
 }
 
 export default function TeamPerformancePage() {
+  const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [periods, setPeriods] = useState<KpiPeriod[]>([]);
   const [library, setLibrary] = useState<KpiLibrary[]>([]);
@@ -98,7 +101,22 @@ export default function TeamPerformancePage() {
       const perData = await perRes.json();
       const libData = await libRes.json();
 
-      setEmployees(Array.isArray(empData) ? empData : []);
+      let filteredEmployees = Array.isArray(empData) ? empData : [];
+      if (user) {
+        const isGlobalManager =
+          user.position?.position_name === "Admin" ||
+          user.position?.position_name === "System Admin" ||
+          user.position?.position_name === "Director" ||
+          user.position?.position_name?.toLowerCase() === "admin";
+
+        if (!isGlobalManager && user.department?.department_id) {
+          filteredEmployees = filteredEmployees.filter(
+            (emp: any) => emp.department?.department_id === user.department?.department_id
+          );
+        }
+      }
+
+      setEmployees(filteredEmployees);
       setPeriods(Array.isArray(perData) ? perData : []);
       setLibrary(Array.isArray(libData) ? libData : []);
 
@@ -113,7 +131,7 @@ export default function TeamPerformancePage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user]);
   const handleDeleteAssignment = async (id: number) => {
     if (!confirm("Are you sure ?")) return;
     try {
@@ -243,14 +261,14 @@ export default function TeamPerformancePage() {
         <div className="p-4 border-b bg-gray-50/50">
           <div className="flex items-center gap-2 mb-4">
             <Users className="w-5 h-5 text-blue-600" />
-            <h2 className="font-bold text-gray-900">Direct Reports</h2>
+            <h2 className="font-bold text-gray-900">{t("performance.directReports")}</h2>
           </div>
           <div className="relative">
             <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             {/* Sidebar Select vẫn xài của Radix được vì nó không nằm trong Modal */}
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
               <SelectTrigger className="pl-9 h-10 w-full bg-white border-gray-200">
-                <SelectValue placeholder="Select Period" />
+                <SelectValue placeholder={t("performance.selectPeriod")} />
               </SelectTrigger>
               <SelectContent>
                 {periods.map(p => (
@@ -295,8 +313,8 @@ export default function TeamPerformancePage() {
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
               <Award className="w-10 h-10" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">Select an employee</h3>
-            <p className="max-w-[280px]">Pick a team member from the left to start grading their performance for the selected period.</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">{t("performance.selectEmployee")}</h3>
+            <p className="max-w-[280px]">{t("performance.pickTeamMember")}</p>
           </div>
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -325,10 +343,10 @@ export default function TeamPerformancePage() {
                   variant="outline"
                   className="bg-white border-blue-200 text-blue-600 hover:bg-blue-50 font-bold uppercase tracking-wider text-[10px] px-4"
                 >
-                  <Plus className="w-4 h-4 mr-2" /> Assign KPIs
+                  <Plus className="w-4 h-4 mr-2" /> {t("performance.assignKpis")}
                 </Button>
                 <Button className="bg-blue-600 text-white hover:bg-blue-700 font-black uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-blue-100" onClick={handleSubmitAll}>
-                  Submit All
+                  {t("performance.submitAll")}
                 </Button>
               </div>
             </div>
@@ -337,29 +355,30 @@ export default function TeamPerformancePage() {
               <Table>
                 <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
                   <TableRow className="bg-gray-50/50">
-                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 px-6">KPI Description</TableHead>
-                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-center">Weight</TableHead>
-                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-center">Target</TableHead>
-                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-center">Actual</TableHead>
-                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-center">Achieve %</TableHead>
-                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-center">Score</TableHead>
-                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-right pr-6">Status</TableHead>
-                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-right pr-6">Action</TableHead>
+                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 px-6">{t("performance.kpiDescription")}</TableHead>
+                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-center">{t("performance.weight")}</TableHead>
+                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-center">{t("performance.target")}</TableHead>
+                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-center">{t("performance.actual")}</TableHead>
+                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-center">{t("performance.achieve")}</TableHead>
+                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-center">{t("performance.score")}</TableHead>
+                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-right pr-6">{t("performance.status")}</TableHead>
+                    <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-gray-400 text-right pr-6">{t("performance.action")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {assignments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-20 text-gray-400 italic">No KPIs assigned for this period.</TableCell>
+                      <TableCell colSpan={7} className="text-center py-20 text-gray-400 italic">{t("performance.noKpisAssigned")}</TableCell>
                     </TableRow>
                   ) : (
                     assignments.map(a => {
-                      const achievement = calculateAchievement(a.actual_value, a.target_value);
+                      const effectiveScore = a.manager_score !== null && a.manager_score !== undefined ? a.manager_score : a.actual_value;
+                      const achievement = calculateAchievement(effectiveScore, a.target_value);
                       return (
                         <TableRow key={a.id} className="hover:bg-gray-50/50 group">
                           <TableCell className="px-6 py-4">
                             <p className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{a.kpi_library.name}</p>
-                            <p className="text-[10px] text-gray-400 font-medium">Measurement: {a.kpi_library.unit}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{t("performance.measurement")} {a.kpi_library.unit}</p>
                           </TableCell>
                           <TableCell className="text-center">
                             <span className="bg-gray-100 text-gray-600 font-black text-[10px] px-2 py-1 rounded-md">{a.weight}%</span>
@@ -397,7 +416,7 @@ export default function TeamPerformancePage() {
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${a.status === "Approved" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-amber-50 text-amber-600 border border-amber-100"
                               }`}>
                               {a.status === "Approved" && <CheckCircle2 className="w-3 h-3" />}
-                              {a.status}
+                              {a.status === "Approved" ? t("performance.approvedStatus") : a.status === "Submitted" ? t("performance.submittedStatus") : t("performance.assignedStatus")}
                             </span>
                           </TableCell>
                           <TableCell className="text-right pr-6">
@@ -426,23 +445,31 @@ export default function TeamPerformancePage() {
               <div className="p-4 border-t bg-gray-50/50 flex items-center justify-between">
                 <div className="flex items-center gap-8">
                   <div>
-                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Weighted KPI Score</p>
+                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">{t("performance.weightedKpiScore")}</p>
                     <p className="text-2xl font-black text-blue-600">
-                      {(assignments.reduce((sum, a) => sum + (calculateAchievement(a.actual_value, a.target_value) * a.weight / 100), 0)).toFixed(1)}%
+                      {(assignments.reduce((sum, a) => {
+                        const score = a.manager_score !== null && a.manager_score !== undefined ? a.manager_score : a.actual_value;
+                        return sum + (calculateAchievement(score, a.target_value) * a.weight / 100);
+                      }, 0)).toFixed(1)}%
                     </p>
                   </div>
                   <div className="h-10 w-px bg-gray-200" />
                   <div>
-                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Bonus Multiplier</p>
+                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">{t("performance.bonusMultiplier")}</p>
                     <div className="flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-emerald-500" />
-                      <p className="text-xl font-black text-emerald-600">x{(assignments.reduce((sum, a) => sum + (calculateAchievement(a.actual_value, a.target_value) * a.weight / 100), 0) / 100).toFixed(2)}</p>
+                      <p className="text-xl font-black text-emerald-600">
+                        x{(assignments.reduce((sum, a) => {
+                          const score = a.manager_score !== null && a.manager_score !== undefined ? a.manager_score : a.actual_value;
+                          return sum + (calculateAchievement(score, a.target_value) * a.weight / 100);
+                        }, 0) / 100).toFixed(2)}
+                      </p>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 p-3 rounded-2xl">
-                  <AlertCircle className="w-4 h-4 text-blue-600" />
-                  <p className="text-[10px] font-bold text-blue-800 leading-tight">Approved scores will be automatically factored <br /> into the next payroll cycle for this employee.</p>
+                <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 p-3 rounded-2xl max-w-[320px]">
+                  <AlertCircle className="w-4 h-4 text-blue-600 shrink-0" />
+                  <p className="text-[10px] font-bold text-blue-800 leading-tight">{t("performance.approvedScoresFactor")}</p>
                 </div>
               </div>
             )}
@@ -461,10 +488,10 @@ export default function TeamPerformancePage() {
             <div className="p-6 bg-blue-600 text-white flex justify-between items-start">
               <div>
                 <h2 className="text-2xl font-black tracking-tight uppercase italic flex items-center gap-3">
-                  <Award className="w-8 h-8" /> Assign Performance Goals
+                  <Award className="w-8 h-8" /> {t("performance.assignPerformanceGoals")}
                 </h2>
                 <p className="text-blue-100 text-sm mt-1">
-                  Define metrics for {selectedEmployee?.first_name} {selectedEmployee?.last_name}
+                  {t("performance.defineMetricsFor")} {selectedEmployee?.first_name} {selectedEmployee?.last_name}
                 </p>
               </div>
               <button
@@ -480,9 +507,12 @@ export default function TeamPerformancePage() {
               <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-start gap-3 shadow-sm">
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-800 leading-relaxed font-medium">
-                  Ensure the total weight of all assigned KPIs equals exactly <span className="font-black underline">100%</span>.
-                  Current Total: <span className={`font-black ml-1 ${newAssignments.reduce((s, a) => s + a.weight, 0) === 100 ? "text-emerald-600" : "text-red-600"}`}>
-                    {newAssignments.reduce((s, a) => s + a.weight, 0)}%
+                  {t("performance.ensureTotalWeight")}
+                  <span className="block mt-1 font-bold">
+                    {t("performance.currentTotal")}{" "}
+                    <span className={`font-black ${newAssignments.reduce((s, a) => s + a.weight, 0) === 100 ? "text-emerald-600" : "text-red-600"}`}>
+                      {newAssignments.reduce((s, a) => s + a.weight, 0)}%
+                    </span>
                   </span>
                 </p>
               </div>
@@ -493,7 +523,7 @@ export default function TeamPerformancePage() {
 
                     {/* Đã thay bằng <select> mặc định để tránh lỗi đè Layer của Radix */}
                     <div className="col-span-5">
-                      <Label className="text-[10px] font-black uppercase text-gray-400 mb-2 block">KPI Variable</Label>
+                      <Label className="text-[10px] font-black uppercase text-gray-400 mb-2 block">{t("performance.kpiVariable")}</Label>
                       <select
                         className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                         value={na.kpi_library_id.toString()}
@@ -503,13 +533,13 @@ export default function TeamPerformancePage() {
                           setNewAssignments(updated);
                         }}
                       >
-                        <option value="0" disabled>-- Select KPI --</option>
+                        <option value="0" disabled>{t("performance.selectKpi")}</option>
                         {library.map(k => <option key={k.id} value={k.id.toString()}>{k.name}</option>)}
                       </select>
                     </div>
 
                     <div className="col-span-3">
-                      <Label className="text-[10px] font-black uppercase text-gray-400 mb-2 block">Weight (%)</Label>
+                      <Label className="text-[10px] font-black uppercase text-gray-400 mb-2 block">{t("performance.weight")} (%)</Label>
                       <Input
                         type="number"
                         className="bg-gray-50 border-gray-200 focus:bg-white"
@@ -523,7 +553,7 @@ export default function TeamPerformancePage() {
                     </div>
 
                     <div className="col-span-3">
-                      <Label className="text-[10px] font-black uppercase text-gray-400 mb-2 block">Target Value</Label>
+                      <Label className="text-[10px] font-black uppercase text-gray-400 mb-2 block">{t("performance.target")}</Label>
                       <Input
                         type="number"
                         className="bg-blue-50/50 border-blue-200 text-blue-700 font-bold focus:bg-white"
@@ -555,20 +585,20 @@ export default function TeamPerformancePage() {
                 className="w-full border-dashed border-2 py-8 rounded-2xl text-gray-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 flex-col gap-2 font-bold uppercase tracking-widest text-[10px] bg-white transition-colors"
                 onClick={() => setNewAssignments([...newAssignments, { kpi_library_id: library[0]?.id || 0, weight: 0, target_value: 0 }])}
               >
-                <Plus className="w-6 h-6 mb-1" /> Add Metric Variable
+                <Plus className="w-6 h-6 mb-1" /> {t("performance.addMetricVariable")}
               </Button>
             </div>
 
             {/* Footer */}
             <div className="p-6 bg-white border-t border-gray-100 flex justify-end gap-3 rounded-b-3xl">
               <Button variant="ghost" className="font-bold text-gray-500 hover:text-gray-900" onClick={() => setIsAssignModalOpen(false)}>
-                Discard
+                {t("performance.discard")}
               </Button>
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white px-10 font-black uppercase tracking-widest shadow-lg shadow-blue-200"
                 onClick={handleAssign}
               >
-                Confirm Goals
+                {t("performance.confirmGoals")}
               </Button>
             </div>
           </div>

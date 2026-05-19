@@ -45,6 +45,12 @@ export class KpiController {
     return this.kpiService.deleteAssignment(id);
   }
 
+  @Delete("library/:id")
+  @Permissions("manage:system")
+  deleteLibrary(@Param("id", ParseIntPipe) id: number) {
+    return this.kpiService.deleteLibrary(id);
+  }
+
   @Post("period")
   @Permissions("manage:system")
   createPeriod(@Body() dto: CreateKpiPeriodDto) {

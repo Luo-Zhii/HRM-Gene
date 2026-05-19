@@ -60,11 +60,26 @@ export default function AttendanceHistoryPage() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 29);
+    return getLocalDateString(d);
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return getLocalDateString(new Date());
+  });
   const [searchEmployee, setSearchEmployee] = useState("");
   const [appliedStartDate, setAppliedStartDate] = useState<string | null>(null);
   const [appliedEndDate, setAppliedEndDate] = useState<string | null>(null);
+  const [appliedSearch, setAppliedSearch] = useState<string | null>(null);
 
   const canViewAttendance = canManageSystem(user) || canManageLeave(user);
 
@@ -77,7 +92,8 @@ export default function AttendanceHistoryPage() {
   const loadAttendance = async (
     pageToLoad: number,
     start?: string | null,
-    end?: string | null
+    end?: string | null,
+    search?: string | null
   ) => {
     try {
       setLoading(true);
@@ -93,6 +109,7 @@ export default function AttendanceHistoryPage() {
 
       if (start) params.append("startDate", start);
       if (end) params.append("endDate", end);
+      if (search) params.append("search", search);
 
       const res = await fetch(`${base}/api/attendance/admin/all?${params.toString()}`, {
         credentials: "include",
@@ -119,6 +136,7 @@ export default function AttendanceHistoryPage() {
       setTotalPages(json.totalPages || 1);
       setAppliedStartDate(start || null);
       setAppliedEndDate(end || null);
+      setAppliedSearch(search || null);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Error loading attendance records"
@@ -131,12 +149,12 @@ export default function AttendanceHistoryPage() {
 
   useEffect(() => {
     if (!authLoading && user && canViewAttendance) {
-      loadAttendance(1, startDate || null, endDate || null);
+      loadAttendance(1, startDate || null, endDate || null, searchEmployee || null);
     }
   }, [authLoading, user]);
 
   const applyFilter = () => {
-    loadAttendance(1, startDate || null, endDate || null);
+    loadAttendance(1, startDate || null, endDate || null, searchEmployee || null);
   };
 
   const formatDateTime = (value: string | null) => {
@@ -177,10 +195,6 @@ export default function AttendanceHistoryPage() {
     }
     return t("attendance.lblRangeAll");
   };
-
-  const filteredRecords = records.filter((rec) =>
-    getEmployeeName(rec).toLowerCase().includes(searchEmployee.toLowerCase())
-  );
 
   if (authLoading || loading) {
     return (
@@ -265,9 +279,14 @@ export default function AttendanceHistoryPage() {
                 </button>
                 <button
                   onClick={() => {
-                    setStartDate("");
-                    setEndDate("");
-                    loadAttendance(1, null, null);
+                    const defaultStart = new Date();
+                    defaultStart.setDate(defaultStart.getDate() - 29);
+                    const startStr = getLocalDateString(defaultStart);
+                    const endStr = getLocalDateString(new Date());
+                    setStartDate(startStr);
+                    setEndDate(endStr);
+                    setSearchEmployee("");
+                    loadAttendance(1, startStr, endStr, null);
                   }}
                   className="text-sm px-3 py-2 rounded border"
                 >
@@ -339,7 +358,7 @@ export default function AttendanceHistoryPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredRecords.map((rec) => (
+                    {records.map((rec) => (
                       <TableRow key={rec.timekeeping_id}>
                         <TableCell className="font-medium text-slate-500">#{rec.id || rec.employee.employee_id}</TableCell>
                         <TableCell>{formatDate(rec.work_date)}</TableCell>
@@ -388,7 +407,7 @@ export default function AttendanceHistoryPage() {
                   disabled={page <= 1}
                   onClick={() =>
                     page > 1 &&
-                    loadAttendance(page - 1, appliedStartDate, appliedEndDate)
+                    loadAttendance(page - 1, appliedStartDate, appliedEndDate, appliedSearch)
                   }
                 >
                   {t("attendance.btnPrev")}
@@ -398,7 +417,7 @@ export default function AttendanceHistoryPage() {
                   disabled={page >= totalPages}
                   onClick={() =>
                     page < totalPages &&
-                    loadAttendance(page + 1, appliedStartDate, appliedEndDate)
+                    loadAttendance(page + 1, appliedStartDate, appliedEndDate, appliedSearch)
                   }
                 >
                   {t("attendance.btnNext")}
