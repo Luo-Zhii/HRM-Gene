@@ -52,7 +52,7 @@ services:
     networks:
       - hrm-network
 
-# Bỏ volumes pgdata vì data đang nằm ở container cũ
+# Bỏ volumes pgdata vì data đang nằm ở container cũ.
 # volumes:
 #   pgdata:
 
