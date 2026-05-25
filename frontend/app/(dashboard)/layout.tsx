@@ -30,6 +30,24 @@ function NavItem({
 }: {
   href: string; label: string; icon?: any; isActive?: boolean; onClick: () => void; indent?: boolean;
 }) {
+  let allowed = true;
+  if (typeof window !== "undefined") {
+    try {
+      const cacheKey = Object.keys(sessionStorage).find(k => k.startsWith("sidebar_dept_visibility_"));
+      if (cacheKey) {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed[href] === false) {
+            allowed = false;
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  if (!allowed) return null;
+
   return (
     <Link
       href={href}
@@ -93,6 +111,43 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const { t } = useTranslation();
+
+  const [deptVisibility, setDeptVisibility] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!user) return;
+    const userDept = user?.department?.department_name || "";
+    if (!userDept) return;
+
+    // Load from cache first
+    const cached = sessionStorage.getItem(`sidebar_dept_visibility_${userDept}`);
+    if (cached) {
+      try {
+        setDeptVisibility(JSON.parse(cached));
+      } catch (e) {}
+    }
+
+    fetch(`/api/admin/settings/sidebar_dept_visibility`, { credentials: "include" })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.value) {
+          try {
+            const parsed = JSON.parse(data.value);
+            const currentDeptSettings = parsed[userDept] || {};
+            setDeptVisibility(currentDeptSettings);
+            sessionStorage.setItem(`sidebar_dept_visibility_${userDept}`, JSON.stringify(currentDeptSettings));
+          } catch (e) {}
+        }
+      });
+  }, [user]);
+
+  const isPathAllowed = (path: string) => {
+    // If the path is explicitly set to false for this user's department, hide it
+    if (deptVisibility[path] === false) {
+      return false;
+    }
+    return true;
+  };
 
   const positionName = user?.position?.position_name?.toLowerCase();
   const { checkPermission } = useCheckPermission();

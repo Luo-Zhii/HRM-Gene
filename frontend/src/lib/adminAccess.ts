@@ -18,6 +18,7 @@ const ADMIN_BYPASS_ROLES = [
 
 type User = {
   position?: { position_name?: string };
+  department?: { department_name?: string };
   role?: string;
   permissions?: string[];
   email?: string;
@@ -38,10 +39,29 @@ export function isAdminBypassRole(user: User): boolean {
   return ADMIN_BYPASS_ROLES.some(r => pos === r || pos.includes(r));
 }
 
+/** Helper to check if a specific path is explicitly blocked for the user's department */
+export function isPathAllowedForDept(path: string): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const cacheKey = Object.keys(sessionStorage).find(k => k.startsWith("sidebar_dept_visibility_"));
+    if (cacheKey) {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed[path] === false) {
+          return false;
+        }
+      }
+    }
+  } catch (e) {}
+  return true;
+}
+
 // ── Specific guards ────────────────────────────────────────────────────────
 
 /** Can manage system settings (Company Settings, QR, etc.) */
 export function canManageSystem(user: User): boolean {
+  if (!isPathAllowedForDept("/admin/settings")) return false;
   if (isAdminBypassRole(user)) return true;
   return (
     !!user?.permissions?.includes("manage:system") ||
@@ -52,7 +72,13 @@ export function canManageSystem(user: User): boolean {
 
 /** Can manage payroll */
 export function canManagePayroll(user: User): boolean {
+  if (!isPathAllowedForDept("/admin/payroll/config")) return false;
   if (isAdminBypassRole(user)) return true;
+
+  // Finance department members bypass this check if the path is allowed
+  const deptName = user?.department?.department_name?.toLowerCase() || "";
+  if (deptName.includes("finance")) return true;
+
   return (
     !!user?.permissions?.includes("manage:payroll") ||
     !!user?.permissions?.includes("GET:/api/admin/payroll")
@@ -61,6 +87,7 @@ export function canManagePayroll(user: User): boolean {
 
 /** Can view/edit RBAC permissions */
 export function canManagePermissions(user: User): boolean {
+  if (!isPathAllowedForDept("/admin/permissions")) return false;
   if (isAdminBypassRole(user)) return true;
   return (
     !!user?.permissions?.includes("manage:system") ||
@@ -71,7 +98,13 @@ export function canManagePermissions(user: User): boolean {
 
 /** Can manage leave (approvals, holidays) */
 export function canManageLeave(user: User): boolean {
+  if (!isPathAllowedForDept("/admin/leave-approvals")) return false;
   if (isAdminBypassRole(user)) return true;
+
+  // HR department members bypass this check if the path is allowed
+  const deptName = user?.department?.department_name?.toLowerCase() || "";
+  if (deptName.includes("hr")) return true;
+
   return (
     !!user?.permissions?.includes("manage:leave") ||
     !!user?.permissions?.includes("GET:/api/admin/leave")
@@ -80,7 +113,13 @@ export function canManageLeave(user: User): boolean {
 
 /** Can manage employees / HR directory */
 export function canManageEmployees(user: User): boolean {
+  if (!isPathAllowedForDept("/admin/employees")) return false;
   if (isAdminBypassRole(user)) return true;
+
+  // HR department members bypass this check if the path is allowed
+  const deptName = user?.department?.department_name?.toLowerCase() || "";
+  if (deptName.includes("hr")) return true;
+
   return (
     !!user?.permissions?.includes("manage:hr") ||
     !!user?.permissions?.includes("GET:/api/admin/employees")
@@ -89,6 +128,12 @@ export function canManageEmployees(user: User): boolean {
 
 /** Can manage reports / analytics */
 export function canManageReports(user: User): boolean {
+  if (!isPathAllowedForDept("/admin/reports")) return false;
   if (isAdminBypassRole(user)) return true;
+
+  // Finance and HR members bypass this check if allowed
+  const deptName = user?.department?.department_name?.toLowerCase() || "";
+  if (deptName.includes("finance") || deptName.includes("hr")) return true;
+
   return canManageSystem(user) || canManagePayroll(user);
 }

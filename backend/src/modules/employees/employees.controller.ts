@@ -36,10 +36,8 @@ export class EmployeesController {
   }
 
   @Get()
-  // @Roles("manage:employee", "manage:system", "manage:payroll") // Các role được xem danh sách
-  findAll() {
-    // Service đã được update để lấy cả department, position, phone, address
-    return this.svc.findAll();
+  findAll(@Req() req: any) {
+    return this.svc.findAll(req.user);
   }
 
   /**
@@ -60,44 +58,44 @@ export class EmployeesController {
   }
 
   @Get("search")
-  search(@Query("q") q: string) {
+  search(@Query("q") q: string, @Req() req: any) {
     if (!q || q.trim().length < 2) return [];
-    return this.svc.search(q.trim());
+    return this.svc.search(q.trim(), req.user);
   }
 
   @Get(":id")
-  // @Roles("manage:employee", "manage:system")
-  findOne(@Param("id", ParseIntPipe) id: number) {
-    return this.svc.findOne(id);
+  findOne(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
+    return this.svc.findOne(id, req.user);
   }
 
   @Patch(":id/offboard")
   offboard(
     @Param("id", ParseIntPipe) id: number,
-    @Body() dto: UpdateEmployeeDto
+    @Body() dto: UpdateEmployeeDto,
+    @Req() req: any,
   ) {
-    return this.svc.update(id, dto);
+    return this.svc.update(id, dto, req.user);
   }
 
   @Patch(":id/onboard")
   onboard(
-    @Param("id", ParseIntPipe) id: number
+    @Param("id", ParseIntPipe) id: number,
+    @Req() req: any,
   ) {
-    return this.svc.onboard(id);
+    return this.svc.onboard(id, req.user);
   }
 
   @Patch(":id")
   update(
     @Param("id", ParseIntPipe) id: number,
-    @Body() dto: UpdateEmployeeDto // DTO này phải có field bank_info như Bước 1
+    @Body() dto: UpdateEmployeeDto,
+    @Req() req: any,
   ) {
-    // Service sẽ xử lý việc tách bank_info ra để lưu vào bảng riêng
-    return this.svc.update(id, dto);
+    return this.svc.update(id, dto, req.user);
   }
 
   @Delete(":id")
-  // @Roles("manage:employee")
-  remove(@Param("id", ParseIntPipe) id: number) {
-    return this.svc.remove(id);
+  remove(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
+    return this.svc.remove(id, req.user);
   }
 }

@@ -5,6 +5,7 @@ import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./jwt.strategy";
 import { RolesGuard } from "./roles.guard";
+import { DataScopeService } from "./data-scope.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Employee } from "../../entities/employee.entity";
 import { Position } from "../../entities/position.entity";
@@ -28,7 +29,7 @@ import { Department } from "@/entities/department.entity";
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, RolesGuard],
-  exports: [AuthService, RolesGuard],
+  providers: [AuthService, JwtStrategy, RolesGuard, DataScopeService],
+  exports: [AuthService, RolesGuard, DataScopeService],
 })
 export class AuthModule {}

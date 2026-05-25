@@ -138,8 +138,8 @@ const nextConfig = {
         source: "/api/:path*",
         // QUAN TRỌNG: Bắt buộc dùng 127.0.0.1:3001 để đi đường nội bộ.
         // Tuyệt đối không dùng IP Public ở dòng này.
-        // destination: "http://backend:3000/api/:path*",
-        destination: "http://localhost:3001/api/:path*",
+        destination: "http://backend:3000/api/:path*",
+        // destination: "http://localhost:3001/api/:path*",
       },
     ];
   },

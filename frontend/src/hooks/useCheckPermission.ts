@@ -6,13 +6,12 @@ export function useCheckPermission() {
   const checkPermission = (method: string, apiPath: string): boolean => {
     if (!user) return false;
 
-    const positionName = user.role || "";
-    // Admin Bypass
+    const positionName = user.role || user.position?.position_name || "";
+    const roleLower = positionName.toLowerCase();
+    // Admin / System Admin Bypass (matches backend EndpointPermissionsGuard)
     if (
-      positionName === "Admin" ||
-      positionName === "System Admin" ||
-      positionName === "Director" ||
-      positionName.toLowerCase() === "admin" ||
+      roleLower === "admin" ||
+      roleLower === "system admin" ||
       user.email === "admin@example.com"
     ) {
       return true;

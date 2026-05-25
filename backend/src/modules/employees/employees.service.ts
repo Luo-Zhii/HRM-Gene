@@ -13,6 +13,7 @@ import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
 import { NotificationsService } from "../notifications/notifications.service";
 import { NotificationType } from "../../entities/notification.entity";
+import { DataScopeService, RequestUser } from "../auth/data-scope.service";
 
 @Injectable()
 export class EmployeesService {
@@ -23,8 +24,9 @@ export class EmployeesService {
     private deptRepo: Repository<Department>,
     @InjectRepository(Position)
     private posRepo: Repository<Position>,
-    private dataSource: DataSource, // Inject DataSource để lấy lương
-    private notificationsService: NotificationsService
+    private dataSource: DataSource,
+    private notificationsService: NotificationsService,
+    private dataScope: DataScopeService,
   ) { }
 
   async create(dto: CreateEmployeeDto) {
@@ -72,9 +74,10 @@ export class EmployeesService {
   }
 
   // CẬP NHẬT QUAN TRỌNG NHẤT Ở ĐÂY: Hàm này giờ sẽ "cõng" thêm lương trả về cho Frontend
-  async findAll() {
+  async findAll(user: RequestUser) {
+    const scope = this.dataScope.getScopeWhere(user, "Employee");
     const employees = await this.employeeRepo.find({
-      where: { deleted_at: IsNull() },
+      where: { ...scope, deleted_at: IsNull() },
       relations: ["department", "position"],
       order: { first_name: "ASC" },
     });
@@ -103,19 +106,24 @@ export class EmployeesService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, user?: RequestUser) {
+    const scope = user ? this.dataScope.getScopeWhere(user, "Employee") : {};
     const emp = await this.employeeRepo.findOne({
-      where: { employee_id: id } as any,
+      where: { employee_id: id, ...scope } as any,
       relations: ["department", "position", "bankInfo", "contracts"],
     });
     if (!emp) throw new NotFoundException("Employee not found");
     return emp;
   }
 
-  async update(id: number, dto: UpdateEmployeeDto & { bank_info?: any }) {
-    // 1. Load employee kèm theo bankInfo để có thể update đè lên hoặc tạo mới
+  async update(
+    id: number,
+    dto: UpdateEmployeeDto & { bank_info?: any },
+    user?: RequestUser,
+  ) {
+    const scope = user ? this.dataScope.getScopeWhere(user, "Employee") : {};
     const emp = await this.employeeRepo.findOne({
-      where: { employee_id: id } as any,
+      where: { employee_id: id, ...scope } as any,
       relations: ["bankInfo"],
     });
 
@@ -188,13 +196,13 @@ export class EmployeesService {
 
     await this.employeeRepo.save(emp as any);
 
-    // Trả về data mới nhất
-    return this.findOne(id);
+    return this.findOne(id, user);
   }
 
-  async onboard(id: number) {
+  async onboard(id: number, user?: RequestUser) {
+    const scope = user ? this.dataScope.getScopeWhere(user, "Employee") : {};
     const emp = await this.employeeRepo.findOne({
-      where: { employee_id: id } as any,
+      where: { employee_id: id, ...scope } as any,
     });
     if (!emp) throw new NotFoundException("Employee not found");
 
@@ -211,12 +219,13 @@ export class EmployeesService {
       [id]
     );
 
-    return this.findOne(id);
+    return this.findOne(id, user);
   }
 
-  async remove(id: number) {
+  async remove(id: number, user?: RequestUser) {
+    const scope = user ? this.dataScope.getScopeWhere(user, "Employee") : {};
     const emp = await this.employeeRepo.findOne({
-      where: { employee_id: id } as any,
+      where: { employee_id: id, ...scope } as any,
     });
     if (!emp) throw new NotFoundException("Employee not found");
 
@@ -233,13 +242,14 @@ export class EmployeesService {
     return { deleted: true };
   }
 
-  async search(keyword: string) {
+  async search(keyword: string, user?: RequestUser) {
     const term = `%${keyword}%`;
+    const scope = user ? this.dataScope.getScopeWhere(user, "Employee") : {};
     const results = await this.employeeRepo.find({
       where: [
-        { first_name: ILike(term), deleted_at: IsNull() } as any,
-        { last_name: ILike(term), deleted_at: IsNull() } as any,
-        { email: ILike(term), deleted_at: IsNull() } as any,
+        { ...scope, first_name: ILike(term), deleted_at: IsNull() } as any,
+        { ...scope, last_name: ILike(term), deleted_at: IsNull() } as any,
+        { ...scope, email: ILike(term), deleted_at: IsNull() } as any,
       ],
       take: 5,
       order: { first_name: "ASC" },

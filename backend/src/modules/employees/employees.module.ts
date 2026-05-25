@@ -7,11 +7,13 @@ import { Employee } from "../../entities/employee.entity";
 import { Department } from "../../entities/department.entity";
 import { Position } from "../../entities/position.entity";
 import { NotificationsModule } from "../notifications/notifications.module";
+import { AuthModule } from "../auth/auth.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Employee, Department, Position]),
     NotificationsModule,
+    AuthModule,
   ],
   providers: [EmployeesService],
   controllers: [EmployeesController, StaffDirectoryController],
