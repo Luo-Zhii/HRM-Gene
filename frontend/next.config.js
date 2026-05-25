@@ -127,7 +127,8 @@ const nextConfig = {
   env: {
     // Nếu bạn dùng Nginx/Cloudflare thì đổi thành domain, còn hiện tại cứ để IP Public port 3000
     // NEXT_PUBLIC_API_URL: "https://hrm.luo.io.vn/api",
-    NEXT_PUBLIC_API_URL: "/api"
+
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "/api",
   },
 
   // 2. Cấu hình cho SERVER (Next.js Proxy)
@@ -138,7 +139,8 @@ const nextConfig = {
         source: "/api/:path*",
         // QUAN TRỌNG: Bắt buộc dùng 127.0.0.1:3001 để đi đường nội bộ..
         // Tuyệt đối không dùng IP Public ở dòng này.
-        destination: "http://backend:3000/api/:path*",
+        destination: `${process.env.INTERNAL_API_URL || "http://localhost:3001"}/api/:path*`,
+        //destination: "http://backend:3000/api/:path*",
         // destination: "http://localhost:3001/api/:path*",
       },
     ];
