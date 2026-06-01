@@ -1,8 +1,6 @@
 version: "3.8"
 
 services:
-  # --- BỎ SERVICE DB ---
-
   # --- BACKEND (NestJS) ---
   backend:
     build:
@@ -12,24 +10,19 @@ services:
     restart: always
     ports:
       - "3001:3000"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    # QUAN TRỌNG: Thêm đoạn này để container nhìn thấy IP của máy chủ (Host)
+    # XÓA BỎ HOẶC COMMENT ĐOẠN VOLUMES NÀY
+    # volumes:
+    #   - ./backend:/app
+    #   - /app/node_modules
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-    - DB_HOST=host.docker.internal
-    - DB_PORT=5432
-    - DB_USER=${DB_USER}
-    - DB_USERNAME=${DB_USER}
-    - DB_PASSWORD=${DB_PASSWORD}
-    - DB_NAME=${DB_NAME}
-    - DB_DATABASE=${DB_NAME}
-    - PORT=3000
-    # Bỏ depends_on vì không còn service db trong file này
-    # depends_on:
-    #   - db 
+      - DB_HOST=host.docker.internal
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - PORT=3000
     networks:
       - hrm-network
 
@@ -42,19 +35,16 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
+    # XÓA BỎ HOẶC COMMENT ĐOẠN VOLUMES NÀY
+    # volumes:
+    #   - ./frontend:/app
+    #   - /app/node_modules
+    #   - /app/.next
     environment:
       - NEXT_PUBLIC_API_URL=/api
       - INTERNAL_API_URL=http://backend:3000
     networks:
       - hrm-network
-
-# Bỏ volumes pgdata vì data đang nằm ở container cũ.
-# volumes:
-#   pgdata:
 
 networks:
   hrm-network:

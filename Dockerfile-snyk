@@ -1,0 +1,13 @@
+FROM node:18-alpine
+RUN npm install -g snyk snyk-to-html
+WORKDIR /app
+COPY . .
+ARG SNYK_AUTH_TOKEN
+ARG OUTPUT_FILENAME
+ENV SNYK_TOKEN=$SNYK_AUTH_TOKEN
+
+# BƯỚC 1: Quét lỗ hổng và lưu ra file nháp JSON (Dùng dấu > thay vì |)
+RUN snyk test --all-projects --json > snyk-result.json || true
+
+# BƯỚC 2: Gọi công cụ snyk-to-html đọc file nháp đó để tạo ra giao diện Web
+RUN snyk-to-html -i snyk-result.json -o ${OUTPUT_FILENAME}.html || true

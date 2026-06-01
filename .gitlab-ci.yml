@@ -1,0 +1,130 @@
+variables:
+  USER_PROJECT: "ubuntu"
+  CODECLIMATE_REPORT: "codeclimate_analysis_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
+  SNYKSCAN_REPORT: "snyk_scan_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
+  TRIVYFS_REPORT: "trivyfs_scan_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
+  ARACHNI_WEBSITE_REPORT: "security_scan_website_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
+  K6_PERFORMACE_TEST_REPORT: "performace_test_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
+
+stages:
+  - test source code
+  - deploy
+  - security scan website
+  - performace testing
+
+# ==========================================
+# STAGE 1: SAST - TÌM LỖ HỔNG & QUÉT CODE
+# ==========================================
+codeclimate_analyze:
+  stage: test source code
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - docker run --rm --env DOCKER_API_VERSION=1.41 --env CODECLIMATE_CODE="$PWD" --volume "$PWD":/code --volume /var/run/docker.sock:/var/run/docker.sock --volume /tmp/cc:/tmp/cc codeclimate/codeclimate analyze -f html > $CODECLIMATE_REPORT.html || true
+  after_script:
+    - sudo chown -R gitlab-runner $(pwd)
+  tags:
+    - shared-runner-dev-shell
+  only:
+    - main
+  artifacts:
+    paths:
+      - $CODECLIMATE_REPORT.html
+    expire_in: 1 day
+
+trivyfs_scan:
+  stage: test source code
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - docker run --rm -v $PWD:/${CI_PROJECT_NAME} -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy fs /${CI_PROJECT_NAME} --severity HIGH,CRITICAL --format template --template "@contrib/html.tpl" --output /${CI_PROJECT_NAME}/$TRIVYFS_REPORT.html || true
+  after_script:
+    - sudo chown -R gitlab-runner $(pwd)
+  tags:
+    - shared-runner-dev-shell
+  only:
+    - main
+  artifacts:
+    paths:
+      - $TRIVYFS_REPORT.html
+    expire_in: 1 day
+
+snyk_scan:
+  stage: test source code
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - docker build --rm --network host --build-arg SNYK_AUTH_TOKEN=$SNYK_TOKEN --build-arg OUTPUT_FILENAME=$SNYKSCAN_REPORT -t $SNYKSCAN_REPORT -f Dockerfile-snyk . || true
+    - docker create --name $SNYKSCAN_REPORT $SNYKSCAN_REPORT || true
+    - docker cp $SNYKSCAN_REPORT:/app/${SNYKSCAN_REPORT}.html . || true
+    - docker rm -f $SNYKSCAN_REPORT || true
+  after_script:
+    - sudo chown -R gitlab-runner $(pwd)
+  tags:
+    - shared-runner-dev-shell
+  only:
+    - main
+  artifacts:
+    paths:
+      - ${SNYKSCAN_REPORT}.html
+    expire_in: 1 day
+
+# ==========================================
+# STAGE 2: DEPLOY DỰ ÁN MONOREPO
+# ==========================================
+deploy_monorepo:
+  stage: deploy
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - echo "Khởi động quy trình dọn dẹp và triển khai..."
+    - docker-compose down || true
+    # Dùng system prune và thêm cờ --volumes để quét sạch ổ cứng ảo
+    - docker system prune -a --volumes -f || true
+    - docker-compose up -d --build
+  tags:
+    - shared-runner-dev-shell
+  only:
+    - main
+
+# ==========================================
+# STAGE 3 & 4: DAST VÀ PERFORMANCE
+# ==========================================
+security_scan_website:
+  stage: security scan website
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker run --rm -v /tmp/:/tmp/ devopseduvn/arachni:v1.4-0.5.10 bin/arachni --output-verbose --scope-include-subdomains $ADDRESS_FRONTEND --report-save-path=/tmp/$ARACHNI_WEBSITE_REPORT.afr > /dev/null 2>&1 || true
+    - docker run --rm -v /tmp/:/tmp/ devopseduvn/arachni:v1.4-0.5.10 bin/arachni_reporter /tmp/$ARACHNI_WEBSITE_REPORT.afr --reporter=html:outfile=/tmp/$ARACHNI_WEBSITE_REPORT.html.zip || true
+    - sudo chmod 777 /tmp/$ARACHNI_WEBSITE_REPORT.html.zip || true
+    - cp /tmp/$ARACHNI_WEBSITE_REPORT.html.zip . || true
+  after_script:
+    - sudo chown -R gitlab-runner $(pwd)
+  tags:
+    - shared-runner-dev-shell
+  only:
+    - main
+  artifacts:
+    paths:
+      - $ARACHNI_WEBSITE_REPORT.html.zip
+    expire_in: 1 day
+
+performace_testing:
+  stage: performace testing
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - chmod -R 777 ./performace_testing_script/ || true
+    - docker run --rm -v $(pwd)/performace_testing_script:/performace_testing_script loadimpact/k6 run -e RESULTS_PATH=/performace_testing_script --summary-export=/performace_testing_script/summary_perf.json /performace_testing_script/smoke-test.js || true
+    - cat ./performace_testing_script/summary_perf.json | jq -r '["metric", "avg", "min", "med", "max", "p(90)", "p(95)"], (.metrics | to_entries[] | [.key, .value.avg, .value.min, .value.med, .value.max, .value["p(90)"], .value["p(95)"]]) | @csv' > $K6_PERFORMACE_TEST_REPORT.csv || true
+  after_script:
+    - sudo chown -R gitlab-runner $(pwd)
+  tags:
+    - shared-runner-dev-shell
+  only:
+    - main
+  artifacts:
+    paths:
+      - $K6_PERFORMACE_TEST_REPORT.csv
+    expire_in: 1 day

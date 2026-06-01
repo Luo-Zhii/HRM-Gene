@@ -1,0 +1,15 @@
+version: "2"
+plugins:
+  duplication:
+    enabled: true
+    config:
+      languages:
+        - javascript
+        - typescript
+
+exclude_patterns:
+  - "**/node_modules/"
+  - "**/dist/"
+  - "**/.next/"
+  - "**/e2e/"
+  - "**/performace_testing_script/"
