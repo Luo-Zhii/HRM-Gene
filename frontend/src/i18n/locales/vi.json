@@ -382,7 +382,10 @@
     "userNotFound": "Không tìm thấy người dùng",
     "validationError": "Họ, tên và email là các trường bắt buộc.",
     "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
-    "maxLengthError": "Một hoặc nhiều trường vượt quá giới hạn độ dài (Họ/Tên: 50, Email: 100, SĐT: 20, Địa chỉ: 200, Tiểu sử: 500)."
+    "maxLengthError": "Một hoặc nhiều trường vượt quá giới hạn độ dài (Họ/Tên: 50, Email: 100, Địa chỉ: 200, Tiểu sử: 500).",
+    "invalidPhone": "Số điện thoại không hợp lệ (7–15 chữ số, có thể bắt đầu bằng +).",
+    "invalidBankAccount": "Số tài khoản chỉ gồm chữ số (6–20 ký tự).",
+    "fieldErrorsExist": "Vui lòng kiểm tra lại các trường có lỗi."
   },
   "accounting": {
     "title": "Bảng điều khiển kế toán",

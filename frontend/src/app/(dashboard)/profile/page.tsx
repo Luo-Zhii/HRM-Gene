@@ -55,6 +55,7 @@ function ProfileContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ phone_number?: string; account_number?: string }>({});
 
   const [departments, setDepartments] = useState<any[]>([]);
   const [positions, setPositions] = useState<any[]>([]);
@@ -142,6 +143,10 @@ function ProfileContent() {
     } catch (e) { toast({ variant: "destructive", title: t("common.error"), description: "Upload failed. Check backend Multer config." }); } finally { setIsSaving(false); }
   };
 
+  // Regex patterns
+  const PHONE_REGEX = /^\+?[0-9][0-9\s\-]{6,17}[0-9]$|^\+?[0-9]{7,}$/;
+  const BANK_ACCOUNT_REGEX = /^[0-9]{6,20}$/;
+
   const handleSaveAll = async () => {
     if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.email.trim()) {
       toast({
@@ -166,7 +171,6 @@ function ProfileContent() {
       formData.first_name.trim().length > 50 ||
       formData.last_name.trim().length > 50 ||
       formData.email.trim().length > 100 ||
-      (formData.phone_number && formData.phone_number.length > 20) ||
       (formData.address && formData.address.length > 200) ||
       (formData.description && formData.description.length > 500)
     ) {
@@ -177,6 +181,30 @@ function ProfileContent() {
       });
       return;
     }
+
+    // Validate phone number
+    const newErrors: { phone_number?: string; account_number?: string } = {};
+    if (formData.phone_number && formData.phone_number.trim()) {
+      if (!PHONE_REGEX.test(formData.phone_number.trim())) {
+        newErrors.phone_number = "profile.invalidPhone";
+      }
+    }
+    // Validate bank account number
+    if (bankFormData.account_number && bankFormData.account_number.trim()) {
+      if (!BANK_ACCOUNT_REGEX.test(bankFormData.account_number.trim())) {
+        newErrors.account_number = "profile.invalidBankAccount";
+      }
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("profile.fieldErrorsExist"),
+      });
+      return;
+    }
+    setFieldErrors({});
 
     setIsSaving(true);
     try {
@@ -249,7 +277,22 @@ function ProfileContent() {
                 <FormInput label={t("profile.firstName")} name="first_name" value={formData.first_name} onChange={(e: any) => setFormData({ ...formData, first_name: e.target.value })} disabled={!isEditing} maxLength={50} />
                 <FormInput label={t("profile.lastName")} name="last_name" value={formData.last_name} onChange={(e: any) => setFormData({ ...formData, last_name: e.target.value })} disabled={!isEditing} maxLength={50} />
                 <FormInput label={t("profile.email")} name="email" value={formData.email} onChange={(e: any) => setFormData({ ...formData, email: e.target.value })} disabled={!isEditing} maxLength={100} />
-                <FormInput label={t("profile.phone")} name="phone_number" value={formData.phone_number} onChange={(e: any) => setFormData({ ...formData, phone_number: e.target.value })} disabled={!isEditing} maxLength={20} />
+                <FormInput
+                  label={t("profile.phone")}
+                  name="phone_number"
+                  value={formData.phone_number}
+                  onChange={(e: any) => {
+                    // Chỉ cho nhập số, +, -, dấu cách
+                    const filtered = e.target.value.replace(/[^0-9+\-\s]/g, "");
+                    setFormData({ ...formData, phone_number: filtered });
+                    if (fieldErrors.phone_number) setFieldErrors(prev => ({ ...prev, phone_number: undefined }));
+                  }}
+                  disabled={!isEditing}
+                  maxLength={20}
+                  error={fieldErrors.phone_number}
+                  placeholder="VD: 0901234567 hoặc +84901234567"
+                  tFn={t}
+                />
                 <FormInput label={t("profile.address")} name="address" value={formData.address} onChange={(e: any) => setFormData({ ...formData, address: e.target.value })} disabled={!isEditing} maxLength={200} />
                 
                 {/* Department Edit */}
@@ -327,7 +370,21 @@ function ProfileContent() {
           <h2 className="text-lg font-bold flex items-center gap-3 mb-6"><CreditCard className="text-blue-500" /> {t("profile.bankInfo")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <BankField label={t("profile.bankName")} value={bankFormData.bank_name} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, bank_name: v })} />
-            <BankField label={t("profile.accountNumber")} value={bankFormData.account_number} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, account_number: v })} mono />
+            <BankField
+              label={t("profile.accountNumber")}
+              value={bankFormData.account_number}
+              isEditing={isEditing}
+              onChange={(v: string) => {
+                // Chỉ cho nhập số
+                const filtered = v.replace(/[^0-9]/g, "");
+                setBankFormData({ ...bankFormData, account_number: filtered });
+                if (fieldErrors.account_number) setFieldErrors(prev => ({ ...prev, account_number: undefined }));
+              }}
+              mono
+              error={fieldErrors.account_number}
+              placeholder="VD: 0123456789"
+              tFn={t}
+            />
             <BankField label={t("profile.accountHolder")} value={bankFormData.account_holder_name} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, account_holder_name: v })} uppercase />
           </div>
         </Card>
@@ -335,7 +392,7 @@ function ProfileContent() {
         {/* SAVE / DISCARD BUTTONS */}
         {isEditing && (
           <div className="flex justify-end gap-4 pt-6 border-t">
-            <Button onClick={() => setIsEditing(false)} variant="outline" className="bg-red-50 text-red-500 border-none hover:bg-red-100 px-10">{t("profile.discard")}</Button>
+            <Button onClick={() => { setIsEditing(false); setFieldErrors({}); }} variant="outline" className="bg-red-50 text-red-500 border-none hover:bg-red-100 px-10">{t("profile.discard")}</Button>
             <Button onClick={handleSaveAll} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 px-10">{isSaving ? t("profile.saving") : t("profile.saveChanges")}</Button>
           </div>
         )}
@@ -512,14 +569,51 @@ function ProfileContent() {
   );
 }
 
-function FormInput({ label, value, onChange, disabled, name, maxLength }: any) {
-  return (<div className="space-y-1.5"><Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</Label><Input name={name} value={value || ""} onChange={onChange} disabled={disabled} maxLength={maxLength} className="bg-slate-50 border-none h-11 focus-visible:ring-blue-500 disabled:opacity-100 disabled:text-slate-500" /></div>);
+function FormInput({ label, value, onChange, disabled, name, maxLength, error, placeholder, tFn }: any) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</Label>
+      <Input
+        name={name}
+        value={value || ""}
+        onChange={onChange}
+        disabled={disabled}
+        maxLength={maxLength}
+        placeholder={!disabled ? placeholder : undefined}
+        className={`bg-slate-50 border h-11 focus-visible:ring-blue-500 disabled:opacity-100 disabled:text-slate-500 ${
+          error ? "border-red-400 focus-visible:ring-red-400 bg-red-50" : "border-transparent"
+        }`}
+      />
+      {error && <p className="text-xs text-red-500 mt-1">{tFn ? tFn(error) : error}</p>}
+    </div>
+  );
 }
 function ToggleRow({ title, checked, onChange, disabled }: any) {
   return (<div className="flex items-center justify-between py-1"><span className="text-sm text-slate-600">{title}</span><CustomToggle checked={checked} onChange={onChange} disabled={disabled} /></div>);
 }
-function BankField({ label, value, isEditing, onChange, mono, uppercase }: any) {
-  return (<div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">{label}</Label>{isEditing ? <Input value={value} onChange={(e) => onChange(e.target.value)} className="bg-slate-50 border-none focus-visible:ring-blue-500" /> : <p className={`font-bold ${mono ? 'font-mono' : ''} ${uppercase ? 'uppercase' : ''}`}>{value || "Not provided"}</p>}</div>);
+function BankField({ label, value, isEditing, onChange, mono, uppercase, error, placeholder, tFn }: any) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] font-bold text-slate-400 uppercase">{label}</Label>
+      {isEditing ? (
+        <div>
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className={`bg-slate-50 border focus-visible:ring-blue-500 ${
+              error ? "border-red-400 focus-visible:ring-red-400 bg-red-50" : "border-transparent"
+            }`}
+          />
+          {error && <p className="text-xs text-red-500 mt-1">{tFn ? tFn(error) : error}</p>}
+        </div>
+      ) : (
+        <p className={`font-bold ${mono ? "font-mono" : ""} ${uppercase ? "uppercase" : ""}`}>
+          {value || "Not provided"}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export default function ProfilePage() { return (<Suspense fallback={<div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">Loading...</div>}><ProfileContent /></Suspense>); }

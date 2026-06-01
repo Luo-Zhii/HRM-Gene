@@ -382,7 +382,10 @@
     "userNotFound": "User not found",
     "validationError": "First name, last name, and email are required fields.",
     "invalidEmail": "Please enter a valid email address.",
-    "maxLengthError": "One or more fields exceed the allowed length limit (First/Last name: 50, Email: 100, Phone: 20, Address: 200, Bio: 500)."
+    "maxLengthError": "One or more fields exceed the allowed length limit (First/Last name: 50, Email: 100, Address: 200, Bio: 500).",
+    "invalidPhone": "Invalid phone number (7–15 digits, may start with +).",
+    "invalidBankAccount": "Account number must contain digits only (6–20 characters).",
+    "fieldErrorsExist": "Please review the fields with errors."
   },
   "accounting": {
     "title": "Accounting Dashboard",
