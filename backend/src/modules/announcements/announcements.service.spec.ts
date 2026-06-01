@@ -52,7 +52,7 @@ describe('AnnouncementsService', () => {
     });
 
     it('should create and send notifications to all employees if requested', async () => {
-      const dto = { title: 'News', target_audience: 'all', delivery_methods: ['in_app'] };
+      const dto = { title: 'News', target_audience: 'all', delivery_methods: ['in_app'], status: 'Active' };
       mockAnnouncementRepo.create.mockReturnValue(dto);
       mockAnnouncementRepo.save.mockResolvedValue(dto);
       mockEmployeeRepo.find.mockResolvedValue([{ employee_id: 1 }]);
@@ -71,7 +71,7 @@ describe('AnnouncementsService', () => {
     });
 
     it('should create and send notifications to specific department', async () => {
-      const dto = { title: 'Dept News', target_audience: 'dept_5', delivery_methods: ['in_app'] };
+      const dto = { title: 'Dept News', target_audience: 'dept_5', delivery_methods: ['in_app'], status: 'Active' };
       mockAnnouncementRepo.create.mockReturnValue(dto);
       mockAnnouncementRepo.save.mockResolvedValue(dto);
       mockEmployeeRepo.find.mockResolvedValue([{ employee_id: 2 }]);

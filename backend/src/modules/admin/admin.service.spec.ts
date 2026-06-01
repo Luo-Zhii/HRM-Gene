@@ -24,6 +24,11 @@ describe('AdminService', () => {
     save: jest.fn(),
     remove: jest.fn(),
     count: jest.fn(),
+    createQueryBuilder: jest.fn().mockReturnValue({
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(null),
+    }),
   });
 
   let settingsRepo: any, deptRepo: any, positionRepo: any, permissionRepo: any, posPermRepo: any, employeeRepo: any, contractRepo: any, salaryHistoryRepo: any, payslipRepo: any, payrollPeriodRepo: any, salaryConfigRepo: any;

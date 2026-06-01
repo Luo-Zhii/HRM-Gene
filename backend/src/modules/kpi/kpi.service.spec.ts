@@ -5,6 +5,7 @@ import { KpiLibrary } from '../../entities/kpi-library.entity';
 import { KpiPeriod } from '../../entities/kpi-period.entity';
 import { KpiAssignment, KpiAssignmentStatus } from '../../entities/kpi-assignment.entity';
 import { Employee } from '../../entities/employee.entity';
+import { SalaryConfig } from '../../entities/salary-config.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { DataSource } from 'typeorm';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
@@ -51,6 +52,7 @@ describe('KpiService', () => {
         { provide: getRepositoryToken(KpiPeriod), useValue: mockRepo },
         { provide: getRepositoryToken(KpiAssignment), useValue: mockRepo },
         { provide: getRepositoryToken(Employee), useValue: mockRepo },
+        { provide: getRepositoryToken(SalaryConfig), useValue: mockRepo },
         { provide: NotificationsService, useValue: notificationMock },
         { provide: DataSource, useValue: dataSourceMock },
       ],
@@ -102,7 +104,7 @@ describe('KpiService', () => {
 
   describe('updateActual', () => {
     it('should correctly filter implicit overrides isolating valid data types ensuring fallback mechanisms seamlessly mapping outputs predictably', async () => {
-      assignmentRepo.findOne.mockResolvedValue({ actual_value: 0 });
+      assignmentRepo.findOne.mockResolvedValue({ actual_value: 0, employee: { employee_id: 1 }, period: { id: 1 } });
       assignmentRepo.save.mockImplementation((a: any) => a);
       
       const res = await service.updateActual(1, NaN);

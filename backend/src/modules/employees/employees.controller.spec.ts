@@ -37,7 +37,7 @@ describe('EmployeesController', () => {
   describe('findAll', () => {
     it('should return employees', async () => {
       mockSvc.findAll.mockResolvedValue([]);
-      expect(await controller.findAll()).toEqual([]);
+      expect(await controller.findAll({} as any)).toEqual([]);
     });
   });
 
@@ -50,34 +50,34 @@ describe('EmployeesController', () => {
 
   describe('search', () => {
     it('should return empty array if query < 2 chars', async () => {
-      expect(await controller.search('a')).toEqual([]);
+      expect(await controller.search('a', {} as any)).toEqual([]);
     });
 
     it('should call search service', async () => {
       mockSvc.search.mockResolvedValue([]);
-      expect(await controller.search('abc')).toEqual([]);
-      expect(mockSvc.search).toHaveBeenCalledWith('abc');
+      expect(await controller.search('abc', {} as any)).toEqual([]);
+      expect(mockSvc.search).toHaveBeenCalledWith('abc', ({} as any).user);
     });
   });
 
   describe('findOne', () => {
     it('should return one employee', async () => {
       mockSvc.findOne.mockResolvedValue({ id: 1 });
-      expect(await controller.findOne(1)).toEqual({ id: 1 });
+      expect(await controller.findOne(1, {} as any)).toEqual({ id: 1 });
     });
   });
 
   describe('update', () => {
     it('should cascade updates to service', async () => {
       mockSvc.update.mockResolvedValue({ id: 1 });
-      expect(await controller.update(1, { first_name: 'f' })).toEqual({ id: 1 });
+      expect(await controller.update(1, { first_name: 'f' }, {} as any)).toEqual({ id: 1 });
     });
   });
 
   describe('remove', () => {
     it('should remove employee', async () => {
       mockSvc.remove.mockResolvedValue({ deleted: true });
-      expect(await controller.remove(1)).toEqual({ deleted: true });
+      expect(await controller.remove(1, {} as any)).toEqual({ deleted: true });
     });
   });
 });

@@ -7,6 +7,7 @@ import { SalaryHistory } from '../../entities/salary-history.entity';
 import { SalaryConfig } from '../../entities/salary-config.entity';
 import { DataSource } from 'typeorm';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('ContractsService', () => {
   let service: ContractsService;
@@ -49,6 +50,7 @@ describe('ContractsService', () => {
         { provide: getRepositoryToken(SalaryHistory), useFactory: repoMockFactory },
         { provide: getRepositoryToken(SalaryConfig), useFactory: repoMockFactory },
         { provide: DataSource, useValue: {} },
+        { provide: NotificationsService, useValue: { createNotification: jest.fn() } },
       ],
     }).compile();
 
@@ -138,7 +140,7 @@ describe('ContractsService', () => {
 
   describe('remove', () => {
     it('should bridge lookup constraints to deletion framework transparently avoiding retention', async () => {
-      contractRepo.findOne.mockResolvedValue({ contract_id: 1 });
+      contractRepo.findOne.mockResolvedValue({ contract_id: 1, employee: { employee_id: 1 }, contract_number: 'C1' });
       contractRepo.remove.mockResolvedValue({});
       expect(await service.remove(1)).toEqual({ message: 'Contract deleted successfully' });
       expect(contractRepo.remove).toHaveBeenCalled();

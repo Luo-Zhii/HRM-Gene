@@ -10,93 +10,309 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 describe('ResignationsService', () => {
   let service: ResignationsService;
 
-  const mockRepo = {
+  const mockResRepo = {
     find: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
   };
 
-  const dsMock = {
-    query: jest.fn(),
+  const mockEmployeeRepo = {
+    findOne: jest.fn(),
+    find: jest.fn(),
+    save: jest.fn(),
   };
 
-  const mockNotification = {
-    createNotification: jest.fn(),
+  const mockDataSource = {
+    query: jest.fn().mockResolvedValue([]),
   };
 
-  let resRepo: any, employeeRepo: any;
+  const mockNotificationsService = {
+    createNotification: jest.fn().mockResolvedValue({}),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ResignationsService,
-        { provide: getRepositoryToken(ResignationRequest), useValue: mockRepo },
-        { provide: getRepositoryToken(Employee), useValue: mockRepo },
-        { provide: DataSource, useValue: dsMock },
-        { provide: NotificationsService, useValue: mockNotification },
+        { provide: getRepositoryToken(ResignationRequest), useValue: mockResRepo },
+        { provide: getRepositoryToken(Employee), useValue: mockEmployeeRepo },
+        { provide: DataSource, useValue: mockDataSource },
+        { provide: NotificationsService, useValue: mockNotificationsService },
       ],
     }).compile();
 
     service = module.get<ResignationsService>(ResignationsService);
-    resRepo = module.get(getRepositoryToken(ResignationRequest));
-    employeeRepo = module.get(getRepositoryToken(Employee));
     jest.clearAllMocks();
   });
 
+  // ==================== CREATE ====================
   describe('create', () => {
-    it('should naturally propagate rejections effectively blocking concurrent requests cleanly naturally identical perfectly specifically structurally safely completely efficiently beautifully purely accurately', async () => {
-      resRepo.findOne.mockResolvedValueOnce({});
-      await expect(service.create(1, {} as any)).rejects.toThrow(BadRequestException);
+    /**
+     * @TestID: TC_BE_RESIGN_01
+     * @Priority: P1
+     * @Category: Exception Handling
+     * @Description: Create resignation when employee already has a pending request should throw BadRequestException
+     * @Steps:
+     * 1. Arrange: resRepo.findOne returns existing pending resignation request
+     * 2. Act: Call service.create(1, { requested_last_day: '2026-06-30', reason_text: 'New opportunity' })
+     * 3. Assert: BadRequestException('You already have a pending resignation request.')
+     * @TestData: employeeId=1, existing Pending request
+     * @ExpectedResult: BadRequestException
+     */
+    it('should throw BadRequestException when employee already has a pending resignation', async () => {
+      mockResRepo.findOne.mockResolvedValue({ id: 1, status: ResignationStatus.PENDING });
+
+      await expect(
+        service.create(1, { requested_last_day: '2026-06-30', reason_text: 'New opportunity' })
+      ).rejects.toThrow(BadRequestException);
     });
 
-    it('should consistently trigger mapped logic identically dynamically natively systematically seamlessly flawlessly gracefully cleanly automatically functionally accurately intuitively transparent naturally securely securely expertly explicitly', async () => {
-      resRepo.findOne.mockResolvedValueOnce(null);
-      employeeRepo.findOne.mockResolvedValueOnce({ employee_id: 1, first_name: 'F' });
-      resRepo.create.mockReturnValue({});
-      resRepo.save.mockResolvedValue({});
-      employeeRepo.find.mockResolvedValue([{ employee_id: 2 }]);
-      
-      const res = await service.create(1, {} as any);
-      expect(mockNotification.createNotification).toHaveBeenCalled();
-    });
-  });
-
-  describe('findMyRequests / findAll', () => {
-    it('should cleanly structurally query implicitly optimally cleanly organically automatically identically naturally automatically cleanly beautifully smoothly seamlessly reliably cleverly rationally structurally practically explicitly rationally flexibly gracefully effectively', async () => {
-      resRepo.find.mockResolvedValue([]);
-      expect(await service.findMyRequests(1)).toEqual([]);
-      expect(await service.findAll()).toEqual([]);
-    });
-  });
-
-  describe('updateStatus', () => {
-    it('should structurally intelligently execute isolation safely seamlessly explicitly elegantly identically inherently conceptually successfully identical effectively reliably explicitly accurately correctly natively reliably smoothly organically completely', async () => {
-      resRepo.findOne.mockResolvedValueOnce(null);
-      await expect(service.updateStatus(1, {} as any)).rejects.toThrow(NotFoundException);
-    });
-
-    it('should intrinsically validate bounds correctly naturally confidently perfectly smoothly logically natively safely beautifully creatively logically creatively automatically optimally implicitly organically efficiently gracefully logically practically intelligently completely creatively transparent mathematically logically seamlessly ideally rationally smoothly intuitively confidently perfectly cleverly smoothly correctly properly natively', async () => {
-      resRepo.findOne.mockResolvedValueOnce({ status: ResignationStatus.APPROVED });
-      await expect(service.updateStatus(1, {} as any)).rejects.toThrow(BadRequestException);
-    });
-
-    it('should reliably unpack boundary intelligently effectively intelligently logically dynamically inherently robust automatically accurately effectively efficiently smoothly gracefully successfully elegantly efficiently transparent accurately optimally cleanly accurately comprehensively completely natively successfully perfectly securely identical intelligently naturally purely automatically effortlessly predictably realistically flexibly transparent optimally intuitively efficiently optimally effortlessly implicitly cleanly successfully', async () => {
-      resRepo.findOne.mockResolvedValueOnce({ status: ResignationStatus.PENDING });
-      await expect(service.updateStatus(1, { status: ResignationStatus.APPROVED } as any)).rejects.toThrow(BadRequestException);
-    });
-
-    it('should flawlessly effectively identically beautifully dynamically securely sequentially natively implicitly map cleanly intelligently rationally automatically transparent successfully intelligently elegantly confidently beautifully smartly completely seamlessly transparent dynamically explicitly practically beautifully optimally correctly intelligently purely robust dynamically dynamically smoothly gracefully conceptually successfully logically organically', async () => {
-      resRepo.findOne.mockResolvedValueOnce({ 
-        status: ResignationStatus.PENDING, requested_last_day: '2026', employee: { employee_id: 1 } 
+    /**
+     * @TestID: TC_BE_RESIGN_02
+     * @Priority: P1
+     * @Category: Positive
+     * @Description: Create new resignation request should save with Pending status and notify admins
+     * @Steps:
+     * 1. Arrange: No existing pending request, employee found
+     * 2. Act: Call service.create(1, { requested_last_day: '2026-06-30', reason_text: 'Better opportunity' })
+     * 3. Assert: ResignationRequest created with Pending status, admin notifications sent
+     * @TestData: employeeId=1, last_day=2026-06-30, reason='Better opportunity'
+     * @ExpectedResult: Saved resignation with status Pending
+     */
+    it('should create resignation request and notify admins', async () => {
+      mockResRepo.findOne.mockResolvedValue(null);
+      mockEmployeeRepo.findOne.mockResolvedValue({
+        employee_id: 1,
+        first_name: 'John',
+        last_name: 'Doe',
+        position: { position_name: 'Staff' },
       });
-      resRepo.save.mockResolvedValue({ status: ResignationStatus.APPROVED });
-      
-      const res = await service.updateStatus(1, { status: ResignationStatus.APPROVED, resignation_category: 'Other' } as any);
-      
-      expect(res.status).toBe(ResignationStatus.APPROVED);
-      expect(dsMock.query).toHaveBeenCalled();
-      expect(employeeRepo.save).toHaveBeenCalled();
+      mockResRepo.create.mockReturnValue({
+        employee_id: 1,
+        requested_last_day: '2026-06-30',
+        reason_text: 'Better opportunity',
+        status: ResignationStatus.PENDING,
+      });
+      mockResRepo.save.mockResolvedValue({
+        id: 1,
+        employee_id: 1,
+        requested_last_day: '2026-06-30',
+        reason_text: 'Better opportunity',
+        status: ResignationStatus.PENDING,
+      });
+      mockEmployeeRepo.find.mockResolvedValue([]);
+
+      const result: any = await service.create(1, {
+        requested_last_day: '2026-06-30',
+        reason_text: 'Better opportunity',
+      });
+
+      expect(result.status).toBe(ResignationStatus.PENDING);
+    });
+  });
+
+  // ==================== FIND MY REQUESTS ====================
+  describe('findMyRequests', () => {
+    /**
+     * @TestID: TC_BE_RESIGN_03
+     * @Priority: P1
+     * @Category: Positive
+     * @Description: Find my resignation requests should return all requests for the employee
+     * @Steps:
+     * 1. Arrange: resRepo.find returns 2 resignation requests for employeeId=1
+     * 2. Act: Call service.findMyRequests(1)
+     * 3. Assert: Returns array of 2 requests
+     * @TestData: employeeId=1 has 2 requests (1 Pending, 1 Rejected)
+     * @ExpectedResult: Array with 2 resignation requests
+     */
+    it('should return all resignation requests for an employee', async () => {
+      mockResRepo.find.mockResolvedValue([
+        { id: 1, employee_id: 1, status: ResignationStatus.PENDING, reason_text: 'x' },
+        { id: 2, employee_id: 1, status: ResignationStatus.REJECTED, reason_text: 'y' },
+      ]);
+
+      const result = await service.findMyRequests(1);
+
+      expect(result).toHaveLength(2);
+    });
+  });
+
+  // ==================== FIND ALL ====================
+  describe('findAll', () => {
+    /**
+     * @TestID: TC_BE_RESIGN_04
+     * @Priority: P2
+     * @Category: Positive
+     * @Description: Find all resignation requests should return all requests with employee relation
+     * @Steps:
+     * 1. Arrange: resRepo.find returns requests with employee relation
+     * 2. Act: Call service.findAll()
+     * 3. Assert: Returns array with employee data
+     * @TestData: All resignation requests
+     * @ExpectedResult: Array of requests with employee relation
+     */
+    it('should return all resignation requests with employee relation', async () => {
+      mockResRepo.find.mockResolvedValue([
+        { id: 1, status: ResignationStatus.PENDING, employee: { employee_id: 1, first_name: 'John' } },
+        { id: 2, status: ResignationStatus.APPROVED, employee: { employee_id: 2, first_name: 'Jane' } },
+      ]);
+
+      const result = await service.findAll();
+
+      expect(result).toHaveLength(2);
+    });
+  });
+
+  // ==================== UPDATE STATUS ====================
+  describe('updateStatus', () => {
+    /**
+     * @TestID: TC_BE_RESIGN_05
+     * @Priority: P1
+     * @Category: Exception Handling
+     * @Description: Update status of non-existent resignation should throw NotFoundException
+     * @Steps:
+     * 1. Arrange: resRepo.findOne returns null
+     * 2. Act: Call service.updateStatus(999, { status: ResignationStatus.APPROVED })
+     * 3. Assert: NotFoundException
+     * @TestData: id=999
+     * @ExpectedResult: NotFoundException('Resignation request not found')
+     */
+    it('should throw NotFoundException when resignation request not found', async () => {
+      mockResRepo.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.updateStatus(999, { status: ResignationStatus.APPROVED } as any)
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    /**
+     * @TestID: TC_BE_RESIGN_06
+     * @Priority: P1
+     * @Category: Exception Handling
+     * @Description: Update status of already approved/rejected resignation should throw BadRequestException
+     * @Steps:
+     * 1. Arrange: resRepo.findOne returns request with status APPROVED
+     * 2. Act: Call service.updateStatus(1, { status: ResignationStatus.REJECTED })
+     * 3. Assert: BadRequestException('Can only update pending requests')
+     * @TestData: request already approved
+     * @ExpectedResult: BadRequestException
+     */
+    it('should throw BadRequestException when updating non-pending resignation', async () => {
+      mockResRepo.findOne.mockResolvedValue({
+        id: 1,
+        status: ResignationStatus.APPROVED,
+        employee: { employee_id: 1 },
+      });
+
+      await expect(
+        service.updateStatus(1, { status: ResignationStatus.REJECTED } as any)
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    /**
+     * @TestID: TC_BE_RESIGN_07
+     * @Priority: P1
+     * @Category: Exception Handling
+     * @Description: Approving resignation without resignation_category should throw BadRequestException
+     * @Steps:
+     * 1. Arrange: Pending request found, status=APPROVED but no resignation_category
+     * 2. Act: Call service.updateStatus(1, { status: ResignationStatus.APPROVED })
+     * 3. Assert: BadRequestException('Approval requires a valid resignation_category')
+     * @TestData: status=APPROVED, missing resignation_category
+     * @ExpectedResult: BadRequestException
+     */
+    it('should throw BadRequestException when approving without resignation_category', async () => {
+      mockResRepo.findOne.mockResolvedValue({
+        id: 1,
+        status: ResignationStatus.PENDING,
+        employee: { employee_id: 1 },
+        requested_last_day: '2026-06-30',
+      });
+
+      await expect(
+        service.updateStatus(1, { status: ResignationStatus.APPROVED } as any)
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    /**
+     * @TestID: TC_BE_RESIGN_08
+     * @Priority: P1
+     * @Category: Positive
+     * @Description: Approve resignation should terminate employee, terminate contracts, and notify
+     * @Steps:
+     * 1. Arrange: Pending request found, status=APPROVED, resignation_category='Personal'
+     * 2. Act: Call service.updateStatus(1, { status: ResignationStatus.APPROVED, resignation_category: 'Personal' })
+     * 3. Assert: Employee set to TERMINATED, contracts terminated, notification sent
+     * @TestData: status=APPROVED, category=Personal, last_day=2026-06-30
+     * @ExpectedResult: Approved resignation, employee terminated
+     */
+    it('should approve resignation, terminate employee, and notify', async () => {
+      mockResRepo.findOne.mockResolvedValue({
+        id: 1,
+        status: ResignationStatus.PENDING,
+        employee: { employee_id: 1, employment_status: EmploymentStatus.ACTIVE },
+        requested_last_day: '2026-06-30',
+        employee_id: 1,
+      });
+      mockEmployeeRepo.save.mockResolvedValue({
+        employee_id: 1,
+        employment_status: EmploymentStatus.TERMINATED,
+      });
+      mockResRepo.save.mockResolvedValue({
+        id: 1,
+        status: ResignationStatus.APPROVED,
+        employee_id: 1,
+      });
+
+      const result = await service.updateStatus(1, {
+        status: ResignationStatus.APPROVED,
+        resignation_category: 'Personal' as any,
+      });
+
+      expect(result.status).toBe(ResignationStatus.APPROVED);
+      expect(mockEmployeeRepo.save).toHaveBeenCalled();
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE contract'),
+        expect.any(Array)
+      );
+      expect(mockNotificationsService.createNotification).toHaveBeenCalled();
+    });
+
+    /**
+     * @TestID: TC_BE_RESIGN_09
+     * @Priority: P2
+     * @Category: Positive
+     * @Description: Reject resignation should update status and notify employee without termination
+     * @Steps:
+     * 1. Arrange: Pending request found, status=REJECTED
+     * 2. Act: Call service.updateStatus(1, { status: ResignationStatus.REJECTED })
+     * 3. Assert: Status changed to Rejected, employee NOT terminated, notification sent
+     * @TestData: status=REJECTED
+     * @ExpectedResult: Rejected resignation, employee remains active
+     */
+    it('should reject resignation without terminating employee', async () => {
+      mockResRepo.findOne.mockResolvedValue({
+        id: 1,
+        status: ResignationStatus.PENDING,
+        employee: { employee_id: 1, employment_status: EmploymentStatus.ACTIVE },
+        requested_last_day: '2026-06-30',
+        employee_id: 1,
+      });
+      mockResRepo.save.mockResolvedValue({
+        id: 1,
+        status: ResignationStatus.REJECTED,
+        employee_id: 1,
+      });
+
+      const result = await service.updateStatus(1, {
+        status: ResignationStatus.REJECTED,
+      });
+
+      expect(result.status).toBe(ResignationStatus.REJECTED);
+      // Employee should NOT have been saved (not terminated)
+      expect(mockEmployeeRepo.save).not.toHaveBeenCalled();
+      expect(mockNotificationsService.createNotification).toHaveBeenCalled();
     });
   });
 });

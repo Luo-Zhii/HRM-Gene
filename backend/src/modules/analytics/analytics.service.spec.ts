@@ -6,6 +6,10 @@ import { Payslip } from '../../entities/payslip.entity';
 import { KpiAssignment } from '../../entities/kpi-assignment.entity';
 import { Department } from '../../entities/department.entity';
 import { Employee, ResignationReason } from '../../entities/employee.entity';
+import { Announcement } from '../../entities/announcement.entity';
+import { LeaveRequest } from '../../entities/leave-request.entity';
+import { TimeKeeping } from '../../entities/timekeeping.entity';
+import { ResignationRequest } from '../../entities/resignation-request.entity';
 
 describe('AnalyticsService', () => {
   let service: AnalyticsService;
@@ -40,6 +44,10 @@ describe('AnalyticsService', () => {
         { provide: getRepositoryToken(KpiAssignment), useFactory: repoMock },
         { provide: getRepositoryToken(Department), useFactory: repoMock },
         { provide: getRepositoryToken(Employee), useFactory: repoMock },
+        { provide: getRepositoryToken(Announcement), useFactory: repoMock },
+        { provide: getRepositoryToken(LeaveRequest), useFactory: repoMock },
+        { provide: getRepositoryToken(TimeKeeping), useFactory: repoMock },
+        { provide: getRepositoryToken(ResignationRequest), useFactory: repoMock },
       ],
     }).compile();
 

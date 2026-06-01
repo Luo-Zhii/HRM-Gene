@@ -1,5 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
+  maxWorkers: 4,
+  collectCoverage: true,
   testEnvironment: 'node',
   rootDir: '.',
   testRegex: 'src/.*\\.spec\\.ts$',

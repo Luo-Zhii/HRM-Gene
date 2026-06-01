@@ -83,9 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         console.error("Logout error", err);
       }
 
-      // Xóa sạch storage
+      // Xoá auth-related storage (không xoá hết để giữ cài đặt user như theme, language, remember-me...)
       if (typeof window !== "undefined") {
-        localStorage.clear();
         sessionStorage.clear();
         // Clear all cookies (best effort)
         document.cookie.split(";").forEach((c) => {

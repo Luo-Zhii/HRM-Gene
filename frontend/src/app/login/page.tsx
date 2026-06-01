@@ -1,85 +1,131 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
+const REMEMBER_KEY = "hrm_remembered_credentials";
+
+function tryLoadCredentials(): { email: string; password: string } | null {
+  try {
+    const raw = localStorage.getItem(REMEMBER_KEY);
+    if (!raw) return null;
+    const decoded = JSON.parse(atob(raw));
+    if (decoded.email && decoded.password) {
+      return { email: decoded.email, password: decoded.password };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function persistCredentials(email: string, password: string) {
+  try {
+    const encoded = btoa(JSON.stringify({ email, password }));
+    localStorage.setItem(REMEMBER_KEY, encoded);
+  } catch { /* quota exceeded – silently skip */ }
+}
+
+function forgetCredentials() {
+  try {
+    localStorage.removeItem(REMEMBER_KEY);
+  } catch { /* noop */ }
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  // Track whether we've already auto-filled from localStorage
+  const hydrated = useRef(false);
 
-    // ==========================================
-    // 1. FRONTEND VALIDATION (Xử lý các TC LOGIN_02, 03, 04)
-    // ==========================================
-    if (!email && !password) {
-      setError("Vui lòng nhập tài khoản và mật khẩu."); // LOGIN_02
-      setLoading(false);
-      return;
+  useEffect(() => {
+    if (hydrated.current) return;
+    const saved = tryLoadCredentials();
+    if (saved) {
+      setEmail(saved.email);
+      setPassword(saved.password);
+      setRemember(true);
     }
-    if (!email) {
-      setError("Vui lòng nhập tài khoản."); // LOGIN_04
-      setLoading(false);
-      return;
-    }
-    if (!password) {
-      setError("Vui lòng nhập mật khẩu."); // LOGIN_03
-      setLoading(false);
-      return;
-    }
+    hydrated.current = true;
+  }, []);
 
-    // ==========================================
-    // 2. CALL API & BACKEND ERROR MAPPING
-    // ==========================================
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
-      const json = await res.json();
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setLoading(true);
+      setError(null);
 
-      if (res.ok && json.success) {
-        window.location.href = "/dashboard";
-      } else {
-        // Phân loại lỗi dựa trên HTTP Status Code từ NestJS trả về
-        let customErrorMsg = json.message || "Đăng nhập thất bại. Vui lòng thử lại.";
-
-        switch (res.status) {
-          case 404:
-            customErrorMsg = "Email không tồn tại trong hệ thống."; // LOGIN_08
-            break;
-          case 401:
-            // Tuỳ thuộc vào backend NestJS của bạn trả về string gì trong json.message
-            if (json.message?.toLowerCase().includes("password")) {
-              customErrorMsg = "Sai mật khẩu."; // LOGIN_05
-            } else if (json.message?.toLowerCase().includes("lock") || json.message?.toLowerCase().includes("quá 5 lần")) {
-              customErrorMsg = "Tài khoản đã bị khóa do nhập sai quá 5 lần."; // LOGIN_09
-            } else {
-              customErrorMsg = "Sai tài khoản hoặc mật khẩu."; // LOGIN_06, LOGIN_07
-            }
-            break;
-          case 403:
-            customErrorMsg = "Tài khoản nhân viên đã bị vô hiệu hóa (Nghỉ việc)."; // LOGIN_10
-            break;
-        }
-        setError(customErrorMsg);
+      if (!email && !password) {
+        setError("Vui lòng nhập tài khoản và mật khẩu.");
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      setError("Hệ thống đang bận. Vui lòng thử lại sau.");
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (!email) {
+        setError("Vui lòng nhập tài khoản.");
+        setLoading(false);
+        return;
+      }
+      if (!password) {
+        setError("Vui lòng nhập mật khẩu.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+          credentials: "include",
+        });
+        const json = await res.json();
+
+        if (res.ok && json.success) {
+          if (remember) {
+            persistCredentials(email, password);
+          } else {
+            forgetCredentials();
+          }
+          window.location.href = "/dashboard";
+        } else {
+          // Login failed — if the credentials were wrong, forget to avoid dead-loop
+          if (res.status === 401 || res.status === 404) {
+            forgetCredentials();
+          }
+
+          let customErrorMsg = json.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+          switch (res.status) {
+            case 404:
+              customErrorMsg = "Email không tồn tại trong hệ thống.";
+              break;
+            case 401:
+              if (json.message?.toLowerCase().includes("password")) {
+                customErrorMsg = "Sai mật khẩu.";
+              } else if (json.message?.toLowerCase().includes("lock") || json.message?.toLowerCase().includes("quá 5 lần")) {
+                customErrorMsg = "Tài khoản đã bị khóa do nhập sai quá 5 lần.";
+              } else {
+                customErrorMsg = "Sai tài khoản hoặc mật khẩu.";
+              }
+              break;
+            case 403:
+              customErrorMsg = "Tài khoản nhân viên đã bị vô hiệu hóa (Nghỉ việc).";
+              break;
+          }
+          setError(customErrorMsg);
+        }
+      } catch (err) {
+        setError("Hệ thống đang bận. Vui lòng thử lại sau.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [email, password, remember]
+  );
 
   return (
     <div
@@ -105,7 +151,6 @@ export default function LoginPage() {
             <Label htmlFor="email" className="text-sm font-medium text-gray-600">
               Email address:
             </Label>
-            {/* Đã bỏ thuộc tính `required` ở đây để React tự handle */}
             <Input
               id="email"
               type="email"
@@ -121,11 +166,7 @@ export default function LoginPage() {
               <Label htmlFor="password" className="text-sm font-medium text-gray-600">
                 Password
               </Label>
-              <a href="#" className="text-sm text-gray-500 hover:text-blue-600 transition-colors">
-                Forget Password?
-              </a>
             </div>
-            {/* Đã bỏ thuộc tính `required` ở đây để React tự handle */}
             <Input
               id="password"
               type="password"
@@ -140,6 +181,8 @@ export default function LoginPage() {
             <input
               type="checkbox"
               id="remember"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
               className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500 cursor-pointer"
             />
             <Label htmlFor="remember" className="text-sm text-gray-500 font-normal cursor-pointer">
@@ -154,6 +197,9 @@ export default function LoginPage() {
           >
             {loading ? "Signing in..." : "Sign In"}
           </Button>
+          <text className="text-sm text-gray-500 font-normal cursor-pointer blur-[0.5px] mt-8 pt-8 pl-8 text-center items-center justify-center">
+            admin@example.com / admin
+          </text>
         </form>
       </div>
     </div>

@@ -1,0 +1,8 @@
+{
+    "name": "hrm-gene-root",
+    "version": "1.0.0",
+    "scripts": {
+        "test:cov": "npm run test:cov --prefix backend && npm run test:cov --prefix frontend",
+        "test:report": "npm run test:report --prefix backend && npm run test:report --prefix frontend"
+    }
+}
