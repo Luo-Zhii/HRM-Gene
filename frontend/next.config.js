@@ -151,7 +151,7 @@ const nextConfig = {
     return [];
   },
   typescript: { tsconfigPath: "./tsconfig.json" },
-  eslint: { dirs: ["src", "app"] },
+  eslint: { dirs: ["src"] },
 };
 
 module.exports = nextConfig;

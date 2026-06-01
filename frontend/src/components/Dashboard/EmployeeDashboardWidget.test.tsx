@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import EmployeeDashboardWidget from './EmployeeDashboardWidget';
-import { useAuth } from '@/src/hooks/useAuth';
+import { useAuth } from "@/hooks/useAuth";
 
-jest.mock('@/src/hooks/useAuth', () => ({
+jest.mock('@/hooks/useAuth', () => ({
   useAuth: jest.fn(),
 }));
 

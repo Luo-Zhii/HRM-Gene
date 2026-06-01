@@ -1,0 +1,816 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { canManageLeave } from "@/lib/adminAccess";
+import { Calendar, Clock, FileText, User as UserIcon, Building2, Briefcase, Mail, LayoutGrid, List as ListIcon, CheckCircle2, XCircle, X, MessageSquare } from "lucide-react";
+import ContextualChat from "@/components/ContextualChat";
+import { useTranslation } from "react-i18next";
+
+interface LeaveRequest {
+  request_id: number;
+  employee_id?: number;
+  employee_email?: string;
+  employee_name?: string;
+  employee_avatar?: string;
+  employee_department?: string;
+  employee_position?: string;
+  leave_type_name: string;
+  start_date: string;
+  end_date: string;
+  reason?: string;
+  status: string;
+  manager_approver?: string;
+  remaining_leave_days?: number;
+}
+
+interface StatusMessage {
+  type: "success" | "error" | "info";
+  text: string;
+}
+
+const getInitials = (name?: string) => {
+  if (!name) return "U";
+  const parts = name.trim().split(" ");
+  if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  return name[0].toUpperCase();
+};
+
+const calculateWorkingDays = (startDate: string, endDate: string): number => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  if (end < start) return 0;
+
+  let days = 0;
+  const current = new Date(start);
+  while (current <= end) {
+    const dayOfWeek = current.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0=Sun, 6=Sat
+      days++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  if (days === 0) {
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    days = diffDays + 1;
+  }
+  return days;
+};
+
+export default function LeaveApprovalsPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
+
+  const [requests, setRequests] = useState<LeaveRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(null);
+
+  const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean, action: 'Approve' | 'Reject' | 'Revoke' | null, requestId: number | null }>({ isOpen: false, action: null, requestId: null });
+  const [actionReason, setActionReason] = useState("");
+
+  const [activeRequest, setActiveRequest] = useState<LeaveRequest | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'split'>('split');
+  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+  const [statusFilter, setStatusFilter] = useState('Pending');
+
+  // Search and date filters
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+
+  const filteredRequests = useMemo(() => {
+    return requests.filter(req => {
+      // Status Filter
+      const matchesStatus = req.status === statusFilter ||
+        (statusFilter === 'Pending' && req.status === 'Approved_By_Manager');
+      if (!matchesStatus) return false;
+
+      // Search Filter
+      if (searchTerm.trim() !== "") {
+        const term = searchTerm.toLowerCase();
+        const name = req.employee_name?.toLowerCase() || "";
+        const email = req.employee_email?.toLowerCase() || "";
+        if (!name.includes(term) && !email.includes(term)) {
+          return false;
+        }
+      }
+
+      // Date Range Filter (Overlapping range)
+      if (filterStartDate && req.end_date < filterStartDate) {
+        return false;
+      }
+      if (filterEndDate && req.start_date > filterEndDate) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [requests, statusFilter, searchTerm, filterStartDate, filterEndDate]);
+
+  const computedStats = useMemo(() => {
+    let total = 0;
+    let pending = 0;
+    let approved = 0;
+    let rejected = 0;
+
+    requests.forEach((req) => {
+      // Search Filter
+      if (searchTerm.trim() !== "") {
+        const term = searchTerm.toLowerCase();
+        const name = req.employee_name?.toLowerCase() || "";
+        const email = req.employee_email?.toLowerCase() || "";
+        if (!name.includes(term) && !email.includes(term)) {
+          return;
+        }
+      }
+
+      // Date Range Filter (Overlapping range)
+      if (filterStartDate && req.end_date < filterStartDate) {
+        return;
+      }
+      if (filterEndDate && req.start_date > filterEndDate) {
+        return;
+      }
+
+      total++;
+      if (req.status === "Pending" || req.status === "Approved_By_Manager") {
+        pending++;
+      } else if (req.status === "Approved") {
+        approved++;
+      } else if (req.status === "Rejected") {
+        rejected++;
+      }
+    });
+
+    return { total, pending, approved, rejected };
+  }, [requests, searchTerm, filterStartDate, filterEndDate]);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (!canManageLeave(user)) {
+        setStatusMessage({
+          type: "error",
+          text: t("leaveApprovals.noPermission"),
+        });
+        setTimeout(() => router.push("/dashboard"), 2000);
+      }
+    }
+  }, [authLoading, user, router, t]);
+
+  // Helper: check if current user can manage leave
+  const hasLeavePermission = () => {
+    return canManageLeave(user);
+  };
+
+  const loadRequests = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/leave/pending-requests", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(t("leaveApprovals.errLoad"));
+      }
+
+      const data = await response.json();
+      const loadedRequests = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
+      setRequests(loadedRequests);
+
+      if (data.stats) {
+        setStats(data.stats);
+      }
+
+      // Auto-select first if none selected, but scope it to the first of the newly filtered array
+      if (activeRequest) {
+        const updatedActive = loadedRequests.find((r: LeaveRequest) => r.request_id === activeRequest.request_id);
+        if (updatedActive) {
+          setActiveRequest(updatedActive);
+        } else {
+          setActiveRequest(null);
+        }
+      } else {
+        const defaultFiltered = loadedRequests.filter((req: LeaveRequest) =>
+          req.status === statusFilter ||
+          (statusFilter === 'Pending' && req.status === 'Approved_By_Manager')
+        );
+        if (defaultFiltered.length > 0) {
+          setActiveRequest(defaultFiltered[0]);
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t("leaveApprovals.errLoad");
+      setStatusMessage({ type: "error", text: message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && hasLeavePermission()) {
+      loadRequests();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (statusMessage) {
+      const timer = setTimeout(() => setStatusMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
+
+  const executeAction = async () => {
+    if (!confirmModal.requestId || !confirmModal.action) return;
+
+    const { requestId, action } = confirmModal;
+    const isApproving = action === 'Approve';
+    const backendStatus = isApproving ? "Approved" : "Rejected";
+
+    try {
+      setProcessingIds((prev) => new Set(prev).add(requestId));
+      const response = await fetch(`/api/leave/request/${requestId}/approve`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: backendStatus, reason: actionReason }),
+      });
+
+      if (!response.ok) {
+        const json = await response.json();
+        throw new Error(json?.message || t("leaveApprovals.errProcess"));
+      }
+
+      const statusLocal = isApproving ? t("leaveApprovals.tabApproved").toLowerCase() : t("leaveApprovals.tabRejected").toLowerCase();
+      setStatusMessage({ type: "success", text: t("leaveApprovals.msgSuccess", { status: statusLocal }) });
+      setConfirmModal({ isOpen: false, action: null, requestId: null });
+      setActionReason("");
+      await loadRequests();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t("leaveApprovals.errProcess");
+      setStatusMessage({ type: "error", text: message });
+    } finally {
+      setProcessingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(requestId);
+        return newSet;
+      });
+    }
+  };
+
+  const getTranslatedTab = (status: string) => {
+    if (status === "Pending") return t("leaveApprovals.tabPending");
+    if (status === "Approved") return t("leaveApprovals.tabApproved");
+    if (status === "Rejected") return t("leaveApprovals.tabRejected");
+    return status;
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">{t("leaveApprovals.loading")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !hasLeavePermission()) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow p-6 max-w-md">
+          <h1 className="text-xl font-bold text-red-600 mb-2">{t("leaveApprovals.accessDenied")}</h1>
+          <p className="text-gray-600">{t("leaveApprovals.noPermission")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate days for active request
+  let totalDays = 0;
+  if (activeRequest) {
+    totalDays = calculateWorkingDays(activeRequest.start_date, activeRequest.end_date);
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto h-full flex flex-col">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{t("leaveApprovals.title")}</h1>
+            <p className="text-gray-600 mt-2">{t("leaveApprovals.subtitle")}</p>
+          </div>
+          {statusMessage && (
+            <div className={`px-4 py-2 rounded-lg font-medium text-sm animate-fade-in ${statusMessage.type === "success" ? "bg-green-100 text-green-800" :
+              statusMessage.type === "error" ? "bg-red-100 text-red-800" :
+                "bg-blue-100 text-blue-800"
+              }`}>
+              {statusMessage.text}
+            </div>
+          )}
+        </div>
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsTotal")}</p>
+              <h3 className="text-2xl font-bold text-gray-900">{computedStats.total}</h3>
+            </div>
+            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center"><FileText className="w-6 h-6 text-blue-600" /></div>
+          </div>
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsPending")}</p>
+              <h3 className="text-2xl font-bold text-yellow-600">{computedStats.pending}</h3>
+            </div>
+            <div className="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div>
+          </div>
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsApproved")}</p>
+              <h3 className="text-2xl font-bold text-green-600">{computedStats.approved}</h3>
+            </div>
+            <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center"><CheckCircle2 className="w-6 h-6 text-green-600" /></div>
+          </div>
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium mb-1">{t("leaveApprovals.statsRejected")}</p>
+              <h3 className="text-2xl font-bold text-red-600">{computedStats.rejected}</h3>
+            </div>
+            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center"><XCircle className="w-6 h-6 text-red-600" /></div>
+          </div>
+        </div>
+
+        {/* Modern Filter Bar */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div>
+            <Label htmlFor="search-emp" className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+              Search Employee
+            </Label>
+            <input
+              id="search-emp"
+              type="text"
+              placeholder="Name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
+          <div>
+            <Label htmlFor="filter-start" className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+              From Date
+            </Label>
+            <input
+              id="filter-start"
+              type="date"
+              value={filterStartDate}
+              onChange={(e) => setFilterStartDate(e.target.value)}
+              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
+          <div>
+            <Label htmlFor="filter-end" className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+              To Date
+            </Label>
+            <input
+              id="filter-end"
+              type="date"
+              value={filterEndDate}
+              onChange={(e) => setFilterEndDate(e.target.value)}
+              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
+          <div>
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setFilterStartDate("");
+                setFilterEndDate("");
+              }}
+              className="w-full h-10 px-4 text-sm font-bold text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex justify-end mb-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-1 inline-flex shadow-sm">
+            <button
+              onClick={() => setViewMode('split')}
+              className={`px-4 py-2 rounded-md text-sm font-medium flex items-center transition-all ${viewMode === 'split'
+                ? 'bg-blue-50 text-blue-700 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+            >
+              <LayoutGrid className="w-4 h-4 mr-2" /> {t("leaveApprovals.btnSplit")}
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 py-2 rounded-md text-sm font-medium flex items-center transition-all ${viewMode === 'list'
+                ? 'bg-blue-50 text-blue-700 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+            >
+              <ListIcon className="w-4 h-4 mr-2" /> {t("leaveApprovals.btnList")}
+            </button>
+          </div>
+        </div>
+
+        {viewMode === 'list' ? (
+          /* LIST VIEW: Table */
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 mb-6">
+            <div className="overflow-x-auto h-full max-h-[calc(100vh-320px)]">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colEmp")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colType")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Remaining Balance</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colStart")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colEnd")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colDays")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colReason")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colStatus")}</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t("leaveApprovals.colActions")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {loading && filteredRequests.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-6 py-8 text-center text-gray-500">{t("leaveApprovals.loadingReqs")}</td>
+                    </tr>
+                  ) : filteredRequests.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-6 py-8 text-center text-gray-500">{t("leaveApprovals.noReqsStat", { status: getTranslatedTab(statusFilter).toLowerCase() })}</td>
+                    </tr>
+                  ) : (
+                    filteredRequests.map((request) => {
+                      const days = calculateWorkingDays(request.start_date, request.end_date);
+                      const isProcessing = processingIds.has(request.request_id);
+                      const displayName = request.employee_name || request.employee_email || `Employee #${request.employee_id || request.request_id}`;
+
+                      return (
+                        <tr key={request.request_id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                                {request.employee_avatar ? (
+                                  <img src={request.employee_avatar} alt={displayName} className="w-full h-full object-cover" />
+                                ) : (
+                                  getInitials(displayName)
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900 text-sm">{displayName}</div>
+                                <div className="text-xs text-gray-500">{request.employee_department || "-"}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700 font-medium">{request.leave_type_name}</td>
+                          <td className={`px-6 py-4 text-sm font-semibold ${request.remaining_leave_days !== undefined && request.remaining_leave_days < 0 ? "text-red-600 font-bold" : "text-gray-900"}`}>
+                            {request.remaining_leave_days !== undefined ? `${request.remaining_leave_days} days` : "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{new Date(request.start_date).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{new Date(request.end_date).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 text-sm text-gray-900 font-medium">{days}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600 max-w-[200px] truncate" title={request.reason}>{request.reason || "-"}</td>
+                          <td className="px-6 py-4">
+                            <Badge variant="outline" className={`text-[11px] uppercase tracking-wider font-semibold ${request.status === "Pending" ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+                              request.status === "Approved_By_Manager" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                                "bg-gray-50 text-gray-700"
+                              }`}>
+                              {getTranslatedTab(request.status)}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-2">
+                              {(request.status === "Pending" || request.status === "Approved_By_Manager" || request.status === "Rejected") && (
+                                <button
+                                  onClick={() => setConfirmModal({ isOpen: true, action: 'Approve', requestId: request.request_id })}
+                                  disabled={isProcessing}
+                                  className="bg-green-600 hover:bg-green-700 text-white h-8 px-3 text-xs rounded-md font-medium transition-colors disabled:opacity-50"
+                                >
+                                  {isProcessing ? "..." : t("leaveApprovals.btnApprove")}
+                                </button>
+                              )}
+                              {(request.status === "Pending" || request.status === "Approved_By_Manager" || request.status === "Approved") && (
+                                <button
+                                  onClick={() => { setActiveRequest(request); setConfirmModal({ isOpen: true, action: request.status === 'Approved' ? 'Revoke' : 'Reject', requestId: request.request_id }); }}
+                                  disabled={isProcessing}
+                                  className="border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 h-8 px-3 text-xs rounded-md font-medium transition-colors disabled:opacity-50"
+                                >
+                                  {isProcessing ? "..." : (request.status === "Approved" ? t("leaveApprovals.btnRevoke") : t("leaveApprovals.btnReject"))}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          /* SPLIT VIEW */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 h-[calc(100vh-320px)] min-h-[500px] mb-6">
+
+            {/* LEFT COLUMN: Request List */}
+            <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col gap-3 shrink-0">
+                <div className="flex justify-between items-center">
+                  <h2 className="font-semibold text-gray-800">{getTranslatedTab(statusFilter)}</h2>
+                  <Badge variant="secondary" className="bg-white text-gray-700 font-bold">{filteredRequests.length}</Badge>
+                </div>
+                <div className="flex bg-gray-200/50 p-1 rounded-lg">
+                  {['Pending', 'Approved', 'Rejected'].map(status => (
+                    <button
+                      key={status}
+                      onClick={() => { setStatusFilter(status); setActiveRequest(null); }}
+                      className={`flex-1 text-xs py-1.5 font-medium rounded-md transition-all ${statusFilter === status ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                      {getTranslatedTab(status)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto">
+                {loading && filteredRequests.length === 0 ? (
+                  <div className="p-6 space-y-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="flex gap-3 items-center animate-pulse">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full shrink-0"></div>
+                        <div className="space-y-2 flex-1"><div className="h-4 bg-gray-200 rounded w-3/4"></div><div className="h-3 bg-gray-200 rounded w-1/2"></div></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredRequests.length === 0 ? (
+                  <div className="p-10 text-center flex flex-col items-center justify-center h-full">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                      <Calendar className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <p className="text-gray-500 font-medium">{t("leaveApprovals.noRequests", { status: getTranslatedTab(statusFilter).toLowerCase() })}</p>
+                    <p className="text-sm text-gray-400 mt-1">{t("leaveApprovals.allCaughtUp")}</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {filteredRequests.map((request) => {
+                      const isActive = activeRequest?.request_id === request.request_id;
+                      const displayName = request.employee_name || request.employee_email || `Employee #${request.employee_id || request.request_id}`;
+
+                      return (
+                        <div
+                          key={request.request_id}
+                          onClick={() => setActiveRequest(request)}
+                          className={`p-4 cursor-pointer transition-all flex items-start gap-3 hover:bg-gray-50 ${isActive ? "bg-blue-50/50 border-l-4 border-l-blue-600" : "border-l-4 border-l-transparent"
+                            }`}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden border border-blue-200">
+                            {request.employee_avatar ? (
+                              <img src={request.employee_avatar} alt={displayName} className="w-full h-full object-cover" />
+                            ) : (
+                              getInitials(displayName)
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start mb-1">
+                              <h3 className={`font-semibold text-sm truncate pr-2 ${isActive ? "text-blue-900" : "text-gray-900"}`}>
+                                {displayName}
+                              </h3>
+                              <span className="text-[11px] text-gray-500 shrink-0 mt-0.5">
+                                {new Date(request.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-600 mb-2 truncate font-medium">{request.leave_type_name}</p>
+                            <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider ${request.status === "Pending" ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+                              request.status === "Approved_By_Manager" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                                "bg-gray-50 text-gray-700"
+                              }`}>
+                              {getTranslatedTab(request.status)}
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: Detail View */}
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 h-full flex flex-col overflow-hidden relative">
+              {!activeRequest ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                  <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                    <FileText className="w-10 h-10 text-gray-300" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-700">{t("leaveApprovals.selectReq")}</h2>
+                  <p className="text-gray-500 mt-2 max-w-sm">
+                    {t("leaveApprovals.selectReqSub")}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="p-6 border-b border-gray-100 flex-none bg-white z-10">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold text-gray-900">{t("leaveApprovals.reqDetails")}</h2>
+                      <Badge className={
+                        activeRequest.status === "Pending" ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" :
+                          activeRequest.status === "Approved_By_Manager" ? "bg-blue-100 text-blue-800 hover:bg-blue-100" :
+                            "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                      }>
+                        {getTranslatedTab(activeRequest.status)}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                    {/* Section 1: Employee Information */}
+                    <section>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center">
+                        <UserIcon className="w-4 h-4 mr-2" /> {t("leaveApprovals.empInfo")}
+                      </h3>
+                      <div className="bg-gray-50/50 rounded-xl border border-gray-100 p-5 flex flex-col md:flex-row gap-6 items-start md:items-center">
+                        <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl shrink-0 overflow-hidden shadow-sm border border-white">
+                          {activeRequest.employee_avatar ? (
+                            <img src={activeRequest.employee_avatar} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                            getInitials(activeRequest.employee_name || activeRequest.employee_email)
+                          )}
+                        </div>
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                          <div>
+                            <p className="text-sm text-gray-500 mb-1">{t("leaveApprovals.lblFullName")}</p>
+                            <p className="font-semibold text-gray-900">{activeRequest.employee_name || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 mb-1 flex items-center"><Mail className="w-3.5 h-3.5 mr-1" /> {t("leaveApprovals.lblEmail")}</p>
+                            <p className="font-medium text-gray-800">{activeRequest.employee_email || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 mb-1 flex items-center"><Building2 className="w-3.5 h-3.5 mr-1" /> {t("leaveApprovals.lblDept")}</p>
+                            <p className="font-medium text-gray-800">{activeRequest.employee_department || t("leaveApprovals.notAssigned")}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 mb-1 flex items-center"><Briefcase className="w-3.5 h-3.5 mr-1" /> {t("leaveApprovals.lblPos")}</p>
+                            <p className="font-medium text-gray-800">{activeRequest.employee_position || t("leaveApprovals.notAssigned")}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Section 2: Leave Information */}
+                    <section>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center">
+                        <FileText className="w-4 h-4 mr-2" /> {t("leaveApprovals.leaveInfo")}
+                      </h3>
+                      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <div className="grid grid-cols-2 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-gray-100 border-b border-gray-100">
+                          <div className="p-4 bg-gray-50/30">
+                            <p className="text-xs text-gray-500 mb-1 font-medium">{t("leaveApprovals.colType")}</p>
+                            <p className="font-semibold text-gray-900">{activeRequest.leave_type_name}</p>
+                          </div>
+                          <div className="p-4 bg-gray-50/30">
+                            <p className="text-xs text-gray-500 mb-1 font-medium">Remaining Balance</p>
+                            <p className={`font-semibold ${activeRequest.remaining_leave_days !== undefined && activeRequest.remaining_leave_days < 0 ? "text-red-600 font-bold" : "text-gray-900"}`}>
+                              {activeRequest.remaining_leave_days !== undefined ? `${activeRequest.remaining_leave_days} days` : "-"}
+                            </p>
+                          </div>
+                          <div className="p-4 bg-gray-50/30">
+                            <p className="text-xs text-gray-500 mb-1 font-medium flex items-center"><Calendar className="w-3 h-3 mr-1" /> {t("leaveApprovals.lblFrom")}</p>
+                            <p className="font-semibold text-gray-900">{new Date(activeRequest.start_date).toLocaleDateString()}</p>
+                          </div>
+                          <div className="p-4 bg-gray-50/30">
+                            <p className="text-xs text-gray-500 mb-1 font-medium flex items-center"><Calendar className="w-3 h-3 mr-1" /> {t("leaveApprovals.lblTo")}</p>
+                            <p className="font-semibold text-gray-900">{new Date(activeRequest.end_date).toLocaleDateString()}</p>
+                          </div>
+                          <div className="p-4 bg-gray-50/30">
+                            <p className="text-xs text-gray-500 mb-1 font-medium flex items-center"><Clock className="w-3 h-3 mr-1" /> {t("leaveApprovals.lblDuration")}</p>
+                            <p className="font-semibold text-blue-700">{totalDays} {totalDays !== 1 ? t("leaveApprovals.lblDays") : t("leaveApprovals.lblDay")}</p>
+                          </div>
+                        </div>
+                        <div className="p-5">
+                          <p className="text-sm font-medium text-gray-500 mb-2">{t("leaveApprovals.lblReasonLeave")}</p>
+                          <div className="bg-gray-50 p-4 rounded-lg text-gray-700 text-sm leading-relaxed border border-gray-100 min-h-[80px]">
+                            {activeRequest.reason ? (
+                              <span className="whitespace-pre-wrap">{activeRequest.reason}</span>
+                            ) : (
+                              <span className="italic text-gray-400">{t("leaveApprovals.noReason")}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Section 3: Contextual Discussion */}
+                    <section className="pb-6">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center">
+                        <MessageSquare className="w-4 h-4 mr-2" /> {t("leaveApprovals.discNotes")}
+                      </h3>
+                      <ContextualChat 
+                        entityType="LEAVE_REQUEST" 
+                        entityId={activeRequest.request_id.toString()} 
+                      />
+                    </section>
+                  </div>
+
+                  {/* Actions Footer */}
+                  <div className="p-6 border-t border-gray-100 bg-gray-50/80 mt-auto shrink-0 flex items-center justify-between">
+                    <div className="text-sm text-gray-500">
+                      <span className="font-medium inline-flex items-center gap-1.5"><Clock className="w-4 h-4" /> {t("leaveApprovals.lblReqId")}</span> #{activeRequest.request_id}
+                    </div>
+                    <div className="flex gap-3">
+                      {(activeRequest.status === "Pending" || activeRequest.status === "Approved_By_Manager" || activeRequest.status === "Approved") && (
+                        <button
+                          onClick={() => setConfirmModal({ isOpen: true, action: activeRequest.status === 'Approved' ? 'Revoke' : 'Reject', requestId: activeRequest.request_id })}
+                          disabled={processingIds.has(activeRequest.request_id)}
+                          className="border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-semibold px-6 py-2 rounded-md transition-colors disabled:opacity-50"
+                        >
+                          {processingIds.has(activeRequest.request_id) ? "..." : (activeRequest.status === "Approved" ? t("leaveApprovals.btnRevokeReject") : t("leaveApprovals.btnReject"))}
+                        </button>
+                      )}
+                      {(activeRequest.status === "Pending" || activeRequest.status === "Approved_By_Manager" || activeRequest.status === "Rejected") && (
+                        <button
+                          onClick={() => setConfirmModal({ isOpen: true, action: 'Approve', requestId: activeRequest.request_id })}
+                          disabled={processingIds.has(activeRequest.request_id)}
+                          className="bg-green-600 hover:bg-green-700 text-white font-semibold shadow-sm px-6 py-2 rounded-md transition-colors disabled:opacity-50"
+                        >
+                          {processingIds.has(activeRequest.request_id) ? t("leaveApprovals.btnProcessing") : t("leaveApprovals.btnApproveLeave")}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Hand-coded Confirmation Modal */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center mb-4">
+              <h3 className={`text-lg font-bold ${confirmModal.action === 'Approve' ? 'text-green-600' : 'text-red-600'}`}>
+                {t("leaveApprovals.confirmTitle", { action: confirmModal.action })}
+              </h3>
+              <button onClick={() => setConfirmModal({ isOpen: false, action: null, requestId: null })} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="mb-6">
+              <p className="text-gray-600 mb-4">
+                {t("leaveApprovals.confirmDesc", { action: confirmModal.action?.toLowerCase() })}
+              </p>
+
+              <Label htmlFor="action-reason" className="mb-2 block text-gray-700 font-medium">{t("leaveApprovals.lblNote")}</Label>
+              <Textarea
+                id="action-reason"
+                value={actionReason}
+                onChange={(e) => setActionReason(e.target.value)}
+                placeholder={t("leaveApprovals.placeholderNote", { action: confirmModal.action === 'Approve' ? 'approved' : 'denied' })}
+                className="resize-none"
+                rows={4}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setConfirmModal({ isOpen: false, action: null, requestId: null })} className="px-4 py-2 text-gray-600 font-medium bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                {t("leaveApprovals.btnCancel")}
+              </button>
+              <button
+                onClick={executeAction}
+                disabled={processingIds.has(confirmModal.requestId!)}
+                className={`px-4 py-2 text-white font-medium rounded-lg transition-colors disabled:opacity-50 ${confirmModal.action === 'Approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                  }`}
+              >
+                {processingIds.has(confirmModal.requestId!) ? t("leaveApprovals.btnProcessing") : t("leaveApprovals.btnConfirm", { action: confirmModal.action })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

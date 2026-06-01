@@ -1,4 +1,4 @@
-import { useAuth } from "@/src/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 export function useCheckPermission() {
   const { user } = useAuth();

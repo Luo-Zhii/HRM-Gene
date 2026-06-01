@@ -1,0 +1,432 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
+import { canManageSystem, canManageLeave } from "@/lib/adminAccess";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+type AttendanceRecord = {
+  timekeeping_id: number;
+  work_date: string;
+  check_in_time: string | null;
+  check_out_time: string | null;
+  hours_worked: number;
+  status: string;
+  ip_address?: string | null;
+  id?: number;
+  location?: string;
+  employee: {
+    employee_id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+};
+
+type AttendanceStats = {
+  totalEmployees: number;
+  present: number;
+  late: number;
+  absent: number;
+};
+
+type AttendanceResponse = {
+  data: AttendanceRecord[];
+  stats: AttendanceStats;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+export default function AttendanceHistoryPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [stats, setStats] = useState<AttendanceStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 29);
+    return getLocalDateString(d);
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return getLocalDateString(new Date());
+  });
+  const [searchEmployee, setSearchEmployee] = useState("");
+  const [appliedStartDate, setAppliedStartDate] = useState<string | null>(null);
+  const [appliedEndDate, setAppliedEndDate] = useState<string | null>(null);
+  const [appliedSearch, setAppliedSearch] = useState<string | null>(null);
+
+  const canViewAttendance = canManageSystem(user) || canManageLeave(user);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [authLoading, user, router]);
+
+  const loadAttendance = async (
+    pageToLoad: number,
+    start?: string | null,
+    end?: string | null,
+    search?: string | null
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const base = apiBase.replace(/\/api$|\/$/, "");
+
+      const params = new URLSearchParams({
+        page: String(pageToLoad),
+        limit: "50",
+      });
+
+      if (start) params.append("startDate", start);
+      if (end) params.append("endDate", end);
+      if (search) params.append("search", search);
+
+      const res = await fetch(`${base}/api/attendance/admin/all?${params.toString()}`, {
+        credentials: "include",
+      });
+
+      if (res.status === 403) {
+        setAccessDenied(true);
+        setRecords([]);
+        return;
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(
+          errorData.message ||
+            `Failed to load attendance records (${res.status})`
+        );
+      }
+
+      const json: AttendanceResponse = await res.json();
+      setRecords(json.data || []);
+      setStats(json.stats || null);
+      setPage(json.page || pageToLoad);
+      setTotalPages(json.totalPages || 1);
+      setAppliedStartDate(start || null);
+      setAppliedEndDate(end || null);
+      setAppliedSearch(search || null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Error loading attendance records"
+      );
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!authLoading && user && canViewAttendance) {
+      loadAttendance(1, startDate || null, endDate || null, searchEmployee || null);
+    }
+  }, [authLoading, user]);
+
+  const applyFilter = () => {
+    loadAttendance(1, startDate || null, endDate || null, searchEmployee || null);
+  };
+
+  const formatDateTime = (value: string | null) => {
+    if (!value) return "-";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "-";
+    return d.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatDate = (value: string) => {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const getEmployeeName = (rec: AttendanceRecord) =>
+    `${rec.employee.first_name} ${rec.employee.last_name}`.trim();
+
+  const currentRangeLabel = () => {
+    if (!appliedStartDate && !appliedEndDate) {
+      return t("attendance.lblRangeDefault");
+    }
+    if (appliedStartDate && appliedEndDate) {
+      return t("attendance.lblRangeBoth", { start: formatDate(appliedStartDate), end: formatDate(appliedEndDate) });
+    }
+    if (appliedStartDate) {
+      return t("attendance.lblRangeStart", { start: formatDate(appliedStartDate) });
+    }
+    return t("attendance.lblRangeAll");
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-300">
+          {t("attendance.loadingRecords")}
+        </p>
+      </div>
+    );
+  }
+
+  if (!user || !canViewAttendance || accessDenied) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 max-w-md">
+          <h1 className="text-xl font-bold text-red-600 mb-2">
+            {t("attendance.accessDenied")}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            {t("attendance.noPermission")}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="mb-2">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+            {t("attendance.title")}
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
+            {t("attendance.subtitle")}
+          </p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
+        <Card className="shadow-md border-none">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row md:items-end md:space-x-4 space-y-3 md:space-y-0">
+              <div className="flex flex-col space-y-1">
+                <label className="text-sm text-slate-600">{t("attendance.lblStartDate")}</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="border rounded px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label className="text-sm text-slate-600">{t("attendance.lblEndDate")}</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="border rounded px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex flex-col space-y-1 w-full md:w-64">
+                <label className="text-sm text-slate-600">{t("attendance.lblSearchEmp")}</label>
+                <input
+                  type="text"
+                  placeholder={t("attendance.placeholderSearchEmp")}
+                  value={searchEmployee}
+                  onChange={(e) => setSearchEmployee(e.target.value)}
+                  className="border rounded px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={applyFilter}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+                >
+                  {t("attendance.btnFilter")}
+                </button>
+                <button
+                  onClick={() => {
+                    const defaultStart = new Date();
+                    defaultStart.setDate(defaultStart.getDate() - 29);
+                    const startStr = getLocalDateString(defaultStart);
+                    const endStr = getLocalDateString(new Date());
+                    setStartDate(startStr);
+                    setEndDate(endStr);
+                    setSearchEmployee("");
+                    loadAttendance(1, startStr, endStr, null);
+                  }}
+                  className="text-sm px-3 py-2 rounded border"
+                >
+                  {t("attendance.btnReset")}
+                </button>
+              </div>
+              <div className="flex-1 text-sm text-slate-600 md:text-right">
+                {currentRangeLabel()}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t("attendance.statsTotalEmp")}</p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{stats.totalEmployees}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t("attendance.statsPresent")}</p>
+                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{stats.present}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t("attendance.statsLate")}</p>
+                <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-2">{stats.late}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm border-none bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t("attendance.statsAbsent")}</p>
+                <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-2">{stats.absent}</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <Card className="shadow-md border-none">
+          <CardHeader>
+            <CardTitle className="text-slate-800 dark:text-slate-100">
+              {t("attendance.targetTitle")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {records.length === 0 ? (
+              <div className="py-10 text-center text-slate-500 dark:text-slate-400">
+                {t("attendance.noRecords")}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("attendance.colId")}</TableHead>
+                      <TableHead>{t("attendance.colDate")}</TableHead>
+                      <TableHead>{t("attendance.colEmployee")}</TableHead>
+                      <TableHead>{t("attendance.colCheckIn")}</TableHead>
+                      <TableHead>{t("attendance.colCheckOut")}</TableHead>
+                      <TableHead className="text-right">
+                        {t("attendance.colHours")}
+                      </TableHead>
+                      <TableHead>{t("attendance.colStatus")}</TableHead>
+                      <TableHead>{t("attendance.colLocation")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {records.map((rec) => (
+                      <TableRow key={rec.timekeeping_id}>
+                        <TableCell className="font-medium text-slate-500">#{rec.id || rec.employee.employee_id}</TableCell>
+                        <TableCell>{formatDate(rec.work_date)}</TableCell>
+                        <TableCell>{getEmployeeName(rec)}</TableCell>
+                        <TableCell>{formatDateTime(rec.check_in_time)}</TableCell>
+                        <TableCell>
+                          {formatDateTime(rec.check_out_time)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {rec.hours_worked?.toFixed(2) ?? "0.00"}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              rec.status === "Present"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                : rec.status === "Late"
+                                ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
+                                : rec.status === "Half-day"
+                                ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            }`}
+                          >
+                            {rec.status === "Present" ? t("attendance.statusPresent") :
+                             rec.status === "Late" ? t("attendance.statusLate") :
+                             rec.status === "Half-day" ? t("attendance.statusHalfDay") :
+                             t("attendance.statusAbsent")}
+                          </span>
+                        </TableCell>
+                        <TableCell>{rec.location || rec.ip_address || "-"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {/* Simple pagination controls */}
+            <div className="flex items-center justify-between mt-4 text-sm text-slate-600 dark:text-slate-300">
+              <span>
+                {t("attendance.lblPage", { page, total: totalPages })}
+              </span>
+              <div className="space-x-2">
+                <button
+                  className="px-3 py-1 rounded border bg-white dark:bg-slate-800 disabled:opacity-50"
+                  disabled={page <= 1}
+                  onClick={() =>
+                    page > 1 &&
+                    loadAttendance(page - 1, appliedStartDate, appliedEndDate, appliedSearch)
+                  }
+                >
+                  {t("attendance.btnPrev")}
+                </button>
+                <button
+                  className="px-3 py-1 rounded border bg-white dark:bg-slate-800 disabled:opacity-50"
+                  disabled={page >= totalPages}
+                  onClick={() =>
+                    page < totalPages &&
+                    loadAttendance(page + 1, appliedStartDate, appliedEndDate, appliedSearch)
+                  }
+                >
+                  {t("attendance.btnNext")}
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

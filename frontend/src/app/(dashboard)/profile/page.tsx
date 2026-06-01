@@ -1,0 +1,525 @@
+"use client";
+
+import React, { useEffect, useState, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Edit2, Save, X, Mail, Phone, Briefcase, DollarSign, FileText, AlertTriangle, CreditCard, Camera, Lock, ShieldCheck } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
+
+// ==========================================
+// INTERFACES
+// ==========================================
+interface BankInfo { bank_info_id?: number; bank_name: string; account_number: string; account_holder_name: string; }
+interface ProfileData {
+  employee_id: number; first_name: string; last_name: string; email: string; phone_number?: string; address?: string; avatar_url?: string;
+  description?: string; dark_mode?: boolean; email_notifications?: boolean; task_reminders?: boolean; announcements?: boolean; daily_reports?: boolean;
+  two_factor_auth?: boolean; push_notifications?: boolean; position?: { position_id: number; position_name: string; }; department?: { department_id: number; department_name: string; }; bankInfo?: BankInfo;
+}
+
+// ==========================================
+// CUSTOM TOGGLE
+// ==========================================
+function CustomToggle({ checked, onChange, disabled }: { checked: boolean, onChange: (c: boolean) => void, disabled?: boolean }) {
+  return (
+    <div
+      onClick={() => !disabled && onChange(!checked)}
+      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${checked ? 'bg-blue-600' : 'bg-slate-200'}`}
+    >
+      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-1'}`} />
+    </div>
+  );
+}
+
+function ProfileContent() {
+  const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  const employeeId = searchParams.get("id");
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [hrData, setHrData] = useState({ contracts: [], violations: [], salary: [] });
+  const [payslips, setPayslips] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [positions, setPositions] = useState<any[]>([]);
+
+  const [formData, setFormData] = useState({ first_name: "", last_name: "", email: "", phone_number: "", address: "", description: "", department_id: "", position_id: "" });
+  const [bankFormData, setBankFormData] = useState({ bank_name: "", account_number: "", account_holder_name: "" });
+  const [settings, setSettings] = useState({ email_notifications: true, task_reminders: true, announcements: true, daily_reports: false, dark_mode: false, two_factor_auth: false, push_notifications: true });
+
+  const viewingOwnProfile = !employeeId || parseInt(employeeId) === user?.employee_id;
+
+  const syncState = (data: ProfileData) => {
+    setFormData({ first_name: data.first_name || "", last_name: data.last_name || "", email: data.email || "", phone_number: data.phone_number || "", address: data.address || "", description: data.description || "", department_id: data.department?.department_id?.toString() || "", position_id: data.position?.position_id?.toString() || "" });
+    if (data.bankInfo) setBankFormData({ bank_name: data.bankInfo.bank_name || "", account_number: data.bankInfo.account_number || "", account_holder_name: data.bankInfo.account_holder_name || "" });
+    setSettings({
+      email_notifications: data.email_notifications ?? true, task_reminders: data.task_reminders ?? true, announcements: data.announcements ?? true,
+      daily_reports: data.daily_reports ?? false, dark_mode: data.dark_mode ?? false, two_factor_auth: data.two_factor_auth ?? false, push_notifications: data.push_notifications ?? true
+    });
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (authLoading || (!user && !employeeId)) return;
+      setLoading(true);
+      try {
+        const targetId = employeeId || user?.employee_id;
+        const [profRes, contRes, violRes, salRes] = await Promise.all([
+          fetch(employeeId ? `/api/employees/${employeeId}` : "/api/auth/profile", { credentials: "include" }),
+          fetch(`/api/contracts?employeeId=${targetId}`, { credentials: "include" }),
+          fetch(`/api/violations?employeeId=${targetId}`, { credentials: "include" }),
+          (viewingOwnProfile || user?.permissions?.includes("manage:payroll")) ? fetch(`/api/salary-history?employeeId=${targetId}`, { credentials: "include" }) : Promise.resolve({ json: () => [] })
+        ]);
+
+        if (profRes.ok) {
+          const d = await profRes.json();
+          setProfileData(d);
+          syncState(d);
+        }
+
+        const [c, v, s] = await Promise.all([contRes.json(), violRes.json(), salRes.json()]);
+        setHrData({
+          contracts: Array.isArray(c) ? c : (c.data && Array.isArray(c.data)) ? c.data : [],
+          violations: Array.isArray(v) ? v : (v.records || []),
+          salary: Array.isArray(s) ? s : (s.data && Array.isArray(s.data)) ? s.data : []
+        });
+      } catch (e) {
+        console.error(e);
+        setHrData({ contracts: [], violations: [], salary: [] });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [authLoading, user, employeeId]);
+
+  useEffect(() => {
+    if (!user || !viewingOwnProfile) return;
+    fetch("/api/payroll/my-payslips", { credentials: "include" })
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setPayslips(Array.isArray(d) ? d : []))
+      .catch(() => setPayslips([]));
+  }, [user, viewingOwnProfile]);
+
+  useEffect(() => {
+    if (isEditing && (user?.permissions?.includes("manage:employee") || user?.role === "Admin")) {
+      fetch("/api/admin/departments", { credentials: "include" }).then(r => r.json()).then(d => setDepartments(d || []));
+      fetch("/api/admin/positions", { credentials: "include" }).then(r => r.json()).then(d => setPositions(d || []));
+    }
+  }, [isEditing, user]);
+
+  const handleAvatarClick = () => fileInputRef.current?.click();
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const uploadForm = new FormData();
+    uploadForm.append('file', file);
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/auth/profile/avatar", { method: "POST", credentials: "include", body: uploadForm });
+      if (res.ok) {
+        const data = await res.json();
+        setProfileData(prev => prev ? ({ ...prev, avatar_url: data.avatar_url }) : null);
+        toast({ title: t("common.success"), description: "Avatar updated! Syncing with header..." });
+        setTimeout(() => window.location.reload(), 800);
+      } else { throw new Error(); }
+    } catch (e) { toast({ variant: "destructive", title: t("common.error"), description: "Upload failed. Check backend Multer config." }); } finally { setIsSaving(false); }
+  };
+
+  const handleSaveAll = async () => {
+    if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.email.trim()) {
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("profile.validationError"),
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("profile.invalidEmail"),
+      });
+      return;
+    }
+
+    if (
+      formData.first_name.trim().length > 50 ||
+      formData.last_name.trim().length > 50 ||
+      formData.email.trim().length > 100 ||
+      (formData.phone_number && formData.phone_number.length > 20) ||
+      (formData.address && formData.address.length > 200) ||
+      (formData.description && formData.description.length > 500)
+    ) {
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("profile.maxLengthError"),
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const payload: any = {
+        ...formData,
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        email: formData.email.trim(),
+        ...settings,
+        bank_info: bankFormData
+      };
+      if (formData.department_id) payload.department_id = parseInt(formData.department_id, 10);
+      if (formData.position_id) payload.position_id = parseInt(formData.position_id, 10);
+
+      const response = await fetch(`/api/auth/profile/update${employeeId ? `?id=${employeeId}` : ''}`, {
+        method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        const updated = await response.json();
+        setProfileData(updated);
+        syncState(updated);
+        toast({ title: t("common.success"), description: "All settings saved successfully!" });
+        setIsEditing(false);
+      } else { throw new Error(); }
+    } catch (error) { toast({ variant: "destructive", title: t("common.error"), description: "Failed to save. Ensure database columns exist!" }); } finally { setIsSaving(false); }
+  };
+
+  if (loading || authLoading) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-medium">{t("profile.loadingProfile")}</div>;
+  if (!profileData) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">{t("profile.userNotFound")}</div>;
+
+  const initials = `${profileData.first_name?.[0]?.toUpperCase() || ""}${profileData.last_name?.[0]?.toUpperCase() || ""}`;
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-10">
+      <div className="max-w-[1100px] mx-auto space-y-8">
+        <h1 className="text-2xl font-bold text-slate-900">{t("profile.title")}</h1>
+
+        {/* PERSONAL INFO CARD */}
+        <Card className="rounded-2xl border-none shadow-sm overflow-hidden bg-white">
+          <div className="grid grid-cols-1 md:grid-cols-12">
+            {/* Avatar column */}
+            <div className="md:col-span-4 p-10 flex flex-col items-center justify-center border-r border-slate-50">
+              <div className="relative group">
+                <div className="w-32 h-32 rounded-full bg-slate-100 flex items-center justify-center border-4 border-white shadow-md overflow-hidden text-slate-400 text-4xl font-bold">
+                  {profileData.avatar_url ? (
+                    <img src={profileData.avatar_url} className="w-full h-full object-cover" key={profileData.avatar_url} />
+                  ) : initials}
+                </div>
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+              </div>
+              <button
+                onClick={handleAvatarClick}
+                disabled={isSaving || !viewingOwnProfile}
+                className="mt-4 text-blue-600 font-semibold text-sm hover:underline disabled:opacity-50"
+              >
+                {isSaving ? t("profile.uploading") : t("profile.uploadAvatar")}
+              </button>
+            </div>
+
+            {/* Form column */}
+            <div className="md:col-span-8 p-10 relative">
+              {!isEditing && viewingOwnProfile && (
+                <Button onClick={() => setIsEditing(true)} variant="ghost" className="absolute top-6 right-6 text-slate-400 hover:text-blue-600">
+                  <Edit2 size={18} />
+                </Button>
+              )}
+              <h2 className="text-lg font-bold mb-8">{t("profile.personalInfo")}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <FormInput label={t("profile.firstName")} name="first_name" value={formData.first_name} onChange={(e: any) => setFormData({ ...formData, first_name: e.target.value })} disabled={!isEditing} maxLength={50} />
+                <FormInput label={t("profile.lastName")} name="last_name" value={formData.last_name} onChange={(e: any) => setFormData({ ...formData, last_name: e.target.value })} disabled={!isEditing} maxLength={50} />
+                <FormInput label={t("profile.email")} name="email" value={formData.email} onChange={(e: any) => setFormData({ ...formData, email: e.target.value })} disabled={!isEditing} maxLength={100} />
+                <FormInput label={t("profile.phone")} name="phone_number" value={formData.phone_number} onChange={(e: any) => setFormData({ ...formData, phone_number: e.target.value })} disabled={!isEditing} maxLength={20} />
+                <FormInput label={t("profile.address")} name="address" value={formData.address} onChange={(e: any) => setFormData({ ...formData, address: e.target.value })} disabled={!isEditing} maxLength={200} />
+                
+                {/* Department Edit */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Department</Label>
+                  {isEditing && (user?.permissions?.includes("manage:employee") || user?.role === "Admin") ? (
+                    <select value={formData.department_id} onChange={(e) => setFormData({ ...formData, department_id: e.target.value })} className="w-full bg-slate-50 border-none h-11 px-3 text-sm rounded-md focus:ring-blue-500">
+                      <option value="">Select Department</option>
+                      {departments.map(d => <option key={d.department_id} value={d.department_id}>{d.department_name}</option>)}
+                    </select>
+                  ) : (
+                    <Input value={profileData.department?.department_name || "N/A"} disabled={true} className="bg-slate-50 border-none h-11 disabled:opacity-100 disabled:text-slate-500" />
+                  )}
+                </div>
+
+                {/* Position Edit */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Position</Label>
+                  {isEditing && (user?.permissions?.includes("manage:employee") || user?.role === "Admin") ? (
+                    <select value={formData.position_id} onChange={(e) => setFormData({ ...formData, position_id: e.target.value })} className="w-full bg-slate-50 border-none h-11 px-3 text-sm rounded-md focus:ring-blue-500">
+                      <option value="">Select Position</option>
+                      {positions.map(p => <option key={p.position_id} value={p.position_id}>{p.position_name}</option>)}
+                    </select>
+                  ) : (
+                    <Input value={profileData.position?.position_name || "N/A"} disabled={true} className="bg-slate-50 border-none h-11 disabled:opacity-100 disabled:text-slate-500" />
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("profile.descriptionBio")}</Label>
+                  <Textarea name="description" value={formData.description} onChange={(e: any) => setFormData({ ...formData, description: e.target.value })} disabled={!isEditing} maxLength={500} className="bg-slate-50 border-none resize-none h-24 mt-1.5 focus-visible:ring-blue-500" placeholder={t("profile.descriptionPlaceholder")} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* SETTINGS AREA */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="space-y-6">
+            <h3 className="font-bold border-b pb-2">{t("profile.notifications")}</h3>
+            <ToggleRow title={t("profile.emailMessages")} checked={settings.email_notifications} onChange={(v: any) => setSettings({ ...settings, email_notifications: v })} disabled={!isEditing} />
+            <h3 className="font-bold border-b pb-2 mt-4">{t("profile.appearance")}</h3>
+            <ToggleRow title={t("profile.darkMode")} checked={settings.dark_mode} onChange={(v: any) => setSettings({ ...settings, dark_mode: v })} disabled={!isEditing} />
+          </div>
+          <div className="space-y-4">
+            <h3 className="font-bold border-b pb-2">{t("profile.security")}</h3>
+            <div className="bg-slate-50 p-4 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-3"><ShieldCheck className="text-blue-600 w-5 h-5" /><span className="text-sm font-bold">{t("profile.enable2fa")}</span></div>
+              <CustomToggle checked={settings.two_factor_auth} onChange={(v) => setSettings({ ...settings, two_factor_auth: v })} disabled={!isEditing} />
+            </div>
+            {viewingOwnProfile && (
+              <Button
+                onClick={() => setShowPasswordDialog(true)}
+                variant="outline"
+                className="w-full border-slate-200 hover:bg-slate-50 text-slate-700"
+              >
+                <Lock className="w-4 h-4 mr-2" />
+                {t("profile.changePassword")}
+              </Button>
+            )}
+          </div>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b pb-2"><h3 className="font-bold">{t("profile.pushNotifications")}</h3><CustomToggle checked={settings.push_notifications} onChange={(v) => setSettings({ ...settings, push_notifications: v })} disabled={!isEditing} /></div>
+            <div className={`space-y-4 ${!settings.push_notifications && 'opacity-30 pointer-events-none'}`}>
+              <ToggleRow title={t("profile.taskReminders")} checked={settings.task_reminders} onChange={(v: any) => setSettings({ ...settings, task_reminders: v })} disabled={!isEditing} />
+              <ToggleRow title={t("profile.announcements")} checked={settings.announcements} onChange={(v: any) => setSettings({ ...settings, announcements: v })} disabled={!isEditing} />
+              <ToggleRow title={t("profile.dailyReports")} checked={settings.daily_reports} onChange={(v: any) => setSettings({ ...settings, daily_reports: v })} disabled={!isEditing} />
+            </div>
+          </div>
+        </div>
+
+        {/* BANK ACCOUNT */}
+        <Card className="rounded-2xl border-none shadow-sm bg-white p-8">
+          <h2 className="text-lg font-bold flex items-center gap-3 mb-6"><CreditCard className="text-blue-500" /> {t("profile.bankInfo")}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <BankField label={t("profile.bankName")} value={bankFormData.bank_name} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, bank_name: v })} />
+            <BankField label={t("profile.accountNumber")} value={bankFormData.account_number} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, account_number: v })} mono />
+            <BankField label={t("profile.accountHolder")} value={bankFormData.account_holder_name} isEditing={isEditing} onChange={(v: any) => setBankFormData({ ...bankFormData, account_holder_name: v })} uppercase />
+          </div>
+        </Card>
+
+        {/* SAVE / DISCARD BUTTONS */}
+        {isEditing && (
+          <div className="flex justify-end gap-4 pt-6 border-t">
+            <Button onClick={() => setIsEditing(false)} variant="outline" className="bg-red-50 text-red-500 border-none hover:bg-red-100 px-10">{t("profile.discard")}</Button>
+            <Button onClick={handleSaveAll} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 px-10">{isSaving ? t("profile.saving") : t("profile.saveChanges")}</Button>
+          </div>
+        )}
+
+        {/* HR RECORDS */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-slate-800">{t("profile.hrRecords")}</h2>
+          <Accordion type="single" collapsible className="w-full space-y-3">
+            {/* CONTRACTS */}
+            <AccordionItem value="contracts" className="bg-white rounded-xl px-6 border-none shadow-sm">
+              <AccordionTrigger className="hover:no-underline font-bold text-slate-700">{t("profile.laborContracts")} ({hrData.contracts.length})</AccordionTrigger>
+              <AccordionContent className="pt-4 pb-6 space-y-6">
+                {(() => {
+                  const activeContract = hrData.contracts.find((c: any) => c.status === 'Active');
+                  const historyContracts = hrData.contracts.filter((c: any) => c.status !== 'Active');
+                  return (
+                    <div className="space-y-6">
+                      {activeContract ? (
+                        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 relative overflow-hidden">
+                          <div className="absolute top-0 right-0 bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">{t("profile.activeContract")}</div>
+                          <div className="flex flex-col md:flex-row justify-between gap-4">
+                            <div className="space-y-3">
+                              <div>
+                                <h4 className="font-bold text-slate-900 text-lg flex items-center gap-2">{(activeContract as any).contract_number}</h4>
+                                <p className="text-sm text-slate-500">{(activeContract as any).contract_type}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                                <div>
+                                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">{t("profile.duration")}</span>
+                                  <span className="font-medium text-slate-700">{new Date((activeContract as any).start_date).toLocaleDateString()} - {(activeContract as any).end_date ? new Date((activeContract as any).end_date).toLocaleDateString() : t("profile.indefinite")}</span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">{t("profile.salaryRate")}</span>
+                                  <span className="font-bold text-slate-900">${parseFloat((activeContract as any).salary_rate).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-end">
+                              {(activeContract as any).file_url && (
+                                <Button onClick={() => window.open((activeContract as any).file_url, "_blank")} className="bg-white hover:bg-slate-50 text-blue-600 border border-blue-200 shadow-sm w-full md:w-auto">
+                                  <FileText className="w-4 h-4 mr-2" /> {t("profile.viewDocument")}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">{t("profile.noActiveContract")}</div>
+                      )}
+                      {historyContracts.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{t("profile.contractHistory")}</h4>
+                          <div className="border border-slate-100 rounded-xl overflow-hidden">
+                            <Table>
+                              <TableHeader className="bg-slate-50">
+                                <TableRow>
+                                  <TableHead className="text-xs font-semibold">{t("profile.colContractNo")}</TableHead>
+                                  <TableHead className="text-xs font-semibold">{t("profile.colType")}</TableHead>
+                                  <TableHead className="text-xs font-semibold">{t("profile.colDates")}</TableHead>
+                                  <TableHead className="text-xs font-semibold">{t("profile.colStatus")}</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {historyContracts.map((c: any) => (
+                                  <TableRow key={c.contract_id} className="text-sm">
+                                    <TableCell className="font-medium">{c.contract_number}</TableCell>
+                                    <TableCell>{c.contract_type}</TableCell>
+                                    <TableCell className="text-slate-500">{new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : t("profile.na")}</TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline" className={c.status === 'Expired' ? 'text-slate-500 border-slate-200 bg-slate-50' : 'text-red-500 border-red-200 bg-red-50'}>{c.status}</Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* SALARY */}
+            <AccordionItem value="salary" className="bg-white rounded-xl px-6 border-none shadow-sm">
+              <AccordionTrigger className="hover:no-underline font-bold text-slate-700">
+                {t("profile.salaryHistory")} ({payslips.length})
+              </AccordionTrigger>
+              <AccordionContent className="pt-4 pb-6">
+                {payslips.length > 0 ? (
+                  <div className="border border-slate-100 rounded-xl overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow>
+                          <TableHead className="text-xs font-semibold">{t("profile.colPayPeriod")}</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">{t("profile.colWorkDays")}</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">{t("profile.colGrossSalary")}</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">{t("profile.colDeductions")}</TableHead>
+                          <TableHead className="text-xs font-semibold text-right">{t("profile.colNetSalary")}</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colStatus")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {payslips.map((p: any) => {
+                          const period = p.pay_period || (p.payroll_period ? `${String(p.payroll_period.month).padStart(2,"0")}/${p.payroll_period.year}` : "—");
+                          const fmtVND = (v: any) => new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND",minimumFractionDigits:0}).format(parseFloat(v)||0);
+                          const statusMap: Record<string,string> = { Pending: "bg-amber-100 text-amber-700", Approved: "bg-blue-100 text-blue-700", Paid: "bg-emerald-100 text-emerald-700" };
+                          return (
+                            <TableRow key={p.payslip_id} className="text-sm">
+                              <TableCell className="font-medium">{period}</TableCell>
+                              <TableCell className="text-right text-slate-500">{p.actual_work_days ?? "—"}</TableCell>
+                              <TableCell className="text-right text-slate-700">{fmtVND(p.gross_salary)}</TableCell>
+                              <TableCell className="text-right text-red-500">-{fmtVND(p.deductions)}</TableCell>
+                              <TableCell className="text-right font-bold text-slate-900">{fmtVND(p.net_salary)}</TableCell>
+                              <TableCell>
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusMap[p.status] ?? "bg-slate-100 text-slate-600"}`}>{p.status}</span>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 rounded-xl p-5 text-center text-slate-500 text-sm">{t("profile.noSalaryHistory")}</div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* DISCIPLINE */}
+            <AccordionItem value="discipline" className="bg-white rounded-xl px-6 border-none shadow-sm">
+              <AccordionTrigger className="hover:no-underline font-bold text-slate-700">{t("profile.disciplineRecords")} ({hrData.violations?.length || 0})</AccordionTrigger>
+              <AccordionContent className="pt-4 pb-6">
+                {hrData.violations && hrData.violations.length > 0 ? (
+                  <div className="border border-slate-100 rounded-xl overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow>
+                          <TableHead className="text-xs font-semibold">{t("profile.colDate")}</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colViolationType")}</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colSeverity")}</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colDeduction")}</TableHead>
+                          <TableHead className="text-xs font-semibold">{t("profile.colStatus")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {hrData.violations.map((v: any) => (
+                          <TableRow key={v.violation_id} className="text-sm">
+                            <TableCell className="text-slate-500">{new Date(v.violation_date).toLocaleDateString()}</TableCell>
+                            <TableCell className="font-medium text-slate-800">{v.violation_type}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={v.severity === 'High' ? 'text-red-500 border-red-200 bg-red-50' : v.severity === 'Normal' ? 'text-blue-500 border-blue-200 bg-blue-50' : 'text-slate-500 border-slate-200 bg-slate-50'}>{v.severity}</Badge>
+                            </TableCell>
+                            <TableCell className="font-bold text-red-600">${parseFloat(v.deduction_amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={v.status === 'Resolved' ? 'text-green-500 border-green-200 bg-green-50' : 'text-orange-500 border-orange-200 bg-orange-50'}>{v.status}</Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 rounded-xl p-5 mt-2 text-center text-slate-500 text-sm">{t("profile.noDisciplineRecords")}</div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+        <ChangePasswordDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog} />
+      </div>
+    </div>
+  );
+}
+
+function FormInput({ label, value, onChange, disabled, name, maxLength }: any) {
+  return (<div className="space-y-1.5"><Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</Label><Input name={name} value={value || ""} onChange={onChange} disabled={disabled} maxLength={maxLength} className="bg-slate-50 border-none h-11 focus-visible:ring-blue-500 disabled:opacity-100 disabled:text-slate-500" /></div>);
+}
+function ToggleRow({ title, checked, onChange, disabled }: any) {
+  return (<div className="flex items-center justify-between py-1"><span className="text-sm text-slate-600">{title}</span><CustomToggle checked={checked} onChange={onChange} disabled={disabled} /></div>);
+}
+function BankField({ label, value, isEditing, onChange, mono, uppercase }: any) {
+  return (<div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">{label}</Label>{isEditing ? <Input value={value} onChange={(e) => onChange(e.target.value)} className="bg-slate-50 border-none focus-visible:ring-blue-500" /> : <p className={`font-bold ${mono ? 'font-mono' : ''} ${uppercase ? 'uppercase' : ''}`}>{value || "Not provided"}</p>}</div>);
+}
+
+export default function ProfilePage() { return (<Suspense fallback={<div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">Loading...</div>}><ProfileContent /></Suspense>); }

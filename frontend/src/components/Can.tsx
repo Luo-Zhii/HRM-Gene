@@ -1,5 +1,5 @@
 import React from "react";
-import { useCheckPermission } from "@/src/hooks/useCheckPermission";
+import { useCheckPermission } from "@/hooks/useCheckPermission";
 
 interface CanProps {
   method: string;

@@ -10,7 +10,7 @@ import {
   Award
 } from "lucide-react";
 import Link from "next/link";
-import { useAuth } from "@/src/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 interface EmployeeData {
   userStats: {
