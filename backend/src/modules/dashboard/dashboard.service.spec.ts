@@ -40,6 +40,7 @@ describe('DashboardService', () => {
   });
 
   describe('getEmployeeData', () => {
+    // [TC_BE_DASHBO_129]
     it('should return employee dashboard data accurately and find correct user id', async () => {
       announcementsService.getFeed.mockResolvedValue([{ title: 'News 1' }, { title: 'News 2' }]);
       leaveBalanceRepo.findOne.mockResolvedValue({ remaining_days: 10 });
@@ -52,6 +53,7 @@ describe('DashboardService', () => {
       expect(result.nextHoliday).toBeDefined();
     });
 
+    // [TC_BE_DASHBO_130]
     it('should handle zero PTO balance when no record is found', async () => {
       announcementsService.getFeed.mockResolvedValue([]);
       leaveBalanceRepo.findOne.mockResolvedValue(null);
@@ -65,6 +67,7 @@ describe('DashboardService', () => {
   });
 
   describe('getAdminData', () => {
+    // [TC_BE_DASHBO_131]
     it('should return admin statistics accurately', async () => {
       leaveRepo.count.mockResolvedValue(5);
       resignationRepo.count.mockResolvedValue(2);
@@ -77,6 +80,7 @@ describe('DashboardService', () => {
   });
 
   describe('getHolidayList', () => {
+    // [TC_BE_DASHBO_132]
     it('should return sorted holidays array', () => {
       const result = service.getHolidayList();
       expect(result.length).toBeGreaterThan(0);
@@ -86,6 +90,7 @@ describe('DashboardService', () => {
   });
 
   describe('getNextHoliday', () => {
+    // [TC_BE_DASHBO_133]
     it('should return the next holiday or the first array entry if all are past', () => {
       const result = (service as any).getNextHoliday();
       expect(result).toHaveProperty('name');

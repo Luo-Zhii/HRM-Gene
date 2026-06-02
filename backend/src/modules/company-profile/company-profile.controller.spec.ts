@@ -25,6 +25,7 @@ describe('CompanyProfileController', () => {
   });
 
   describe('getProfile', () => {
+    // [TC_BE_COMPAN_095]
     it('should return company profile via service', async () => {
       mockService.getProfile.mockResolvedValue({ id: 1 });
       expect(await controller.getProfile()).toEqual({ id: 1 });
@@ -32,6 +33,7 @@ describe('CompanyProfileController', () => {
   });
 
   describe('updateProfile', () => {
+    // [TC_BE_COMPAN_096]
     it('should load current profile and update it', async () => {
       mockService.getProfile.mockResolvedValue({ id: 1 });
       mockService.updateProfile.mockResolvedValue({ id: 1, name: 'T' });
@@ -44,10 +46,12 @@ describe('CompanyProfileController', () => {
   });
 
   describe('uploadLogo', () => {
+    // [TC_BE_COMPAN_097]
     it('should throw BadRequestException if file is intrinsically missing', async () => {
       await expect(controller.uploadLogo(null as any)).rejects.toThrow(BadRequestException);
     });
 
+    // [TC_BE_COMPAN_098]
     it('should update profile logo URL', async () => {
       mockService.getProfile.mockResolvedValue({ id: 1 });
       mockService.updateLogo.mockResolvedValue({ id: 1, logo_url: 'u' });

@@ -28,14 +28,16 @@ describe('ContractsController', () => {
   });
 
   describe('create', () => {
-    it('should create a contract based strictly on inputs mapped to service', async () => {
+    // [TC_BE_CONTRA_103]
+    it('Tạo hợp đồng mới: Proxy DTO sang service.create', async () => {
       mockService.create.mockResolvedValue({ id: 1 });
       expect(await controller.create({} as any)).toEqual({ id: 1 });
     });
   });
 
   describe('findAll', () => {
-    it('should respect admin access to see all or specific targeted profiles without overriding', async () => {
+    // [TC_BE_CONTRA_104]
+    it('findAll: Admin với manage:system xem tất cả hợp đồng', async () => {
       mockService.findAll.mockResolvedValue({ data: [] });
       const req = { user: { permissions: ['manage:system'], employee_id: 1 } };
       
@@ -43,7 +45,8 @@ describe('ContractsController', () => {
       expect(mockService.findAll).toHaveBeenCalledWith(2, 1, 10, undefined, undefined, undefined);
     });
 
-    it('should restrict unprivileged users to only scan their personal data scope', async () => {
+    // [TC_BE_CONTRA_105]
+    it('findAll: Employee thường chỉ xem hợp đồng của chính mình', async () => {
       mockService.findAll.mockResolvedValue({ data: [] });
       const req = { user: { permissions: [], employee_id: 3 } };
       
@@ -53,18 +56,21 @@ describe('ContractsController', () => {
   });
 
   describe('findByEmployee', () => {
-    it('should throw exception for non-admin attempting to access other employees data completely', async () => {
+    // [TC_BE_CONTRA_106]
+    it('findByEmployee: Từ chối non-admin xem hợp đồng của nhân viên khác', async () => {
       const req = { user: { permissions: [], employee_id: 1 } };
       await expect(controller.findByEmployee(2, req)).rejects.toThrow(ForbiddenException);
     });
 
-    it('should correctly allow user accessing own relational data', async () => {
+    // [TC_BE_CONTRA_107]
+    it('findByEmployee: User xem được hợp đồng của chính mình', async () => {
       const req = { user: { permissions: [], employee_id: 2 } };
       mockService.findByEmployee.mockResolvedValue([]);
       expect(await controller.findByEmployee(2, req)).toEqual([]);
     });
 
-    it('should provide full clearance proxy for system admin or hr accessing others data array', async () => {
+    // [TC_BE_CONTRA_108]
+    it('findByEmployee: Admin với manage:system xem hợp đồng của nhân viên bất kỳ', async () => {
       const req = { user: { permissions: ['manage:system'], employee_id: 1 } };
       mockService.findByEmployee.mockResolvedValue([]);
       expect(await controller.findByEmployee(3, req)).toEqual([]);
@@ -72,7 +78,8 @@ describe('ContractsController', () => {
   });
 
   describe('findOne', () => {
-    it('should strictly limit findOne context for standard users down to their individual matching id', async () => {
+    // [TC_BE_CONTRA_109]
+    it('findOne: Employee thường bị giới hạn chỉ xem hợp đồng của chính mình', async () => {
       const req = { user: { permissions: [], employee_id: 3 } };
       mockService.findOne.mockResolvedValue({});
       await controller.findOne(10, req);
@@ -81,20 +88,23 @@ describe('ContractsController', () => {
   });
 
   describe('update / updatePut', () => {
-    it('should map partial contract update identically to service execution', async () => {
+    // [TC_BE_CONTRA_110]
+    it('update: Proxy cập nhật hợp đồng sang service.update', async () => {
       mockService.update.mockResolvedValue({ id: 1 });
       expect(await controller.update(1, {} as any)).toEqual({ id: 1 });
       expect(mockService.update).toHaveBeenCalledWith(1, {});
     });
 
-    it('should map put execution effectively sharing update endpoint behavior', async () => {
+    // [TC_BE_CONTRA_111]
+    it('updatePut: PUT request hoạt động giống update', async () => {
       mockService.update.mockResolvedValue({ id: 1 });
       expect(await controller.updatePut(1, {} as any)).toEqual({ id: 1 });
     });
   });
 
   describe('remove', () => {
-    it('should accurately bridge remove sequence straight through to repository boundary via service', async () => {
+    // [TC_BE_CONTRA_112]
+    it('remove: Proxy yêu cầu xóa hợp đồng sang service.remove', async () => {
       mockService.remove.mockResolvedValue({ message: 'Deleted' });
       expect(await controller.remove(1)).toEqual({ message: 'Deleted' });
     });

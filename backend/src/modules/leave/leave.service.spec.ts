@@ -88,6 +88,7 @@ describe('LeaveService', () => {
      * @TestData: Annual Leave(12 days), Sick Leave(5 days), Unpaid Leave(0 days) with duplicate Annual Leave
      * @ExpectedResult: Array of 3 unique leave types
      */
+    // [TC_BE_LEAVE_197]
     it('should return deduplicated leave types', async () => {
       mockLeaveTypeRepo.find.mockResolvedValue([
         { leave_type_id: 1, name: 'Annual Leave', default_days_allocated: 12, is_paid: true },
@@ -119,6 +120,7 @@ describe('LeaveService', () => {
      * @TestData: employeeId=1, Annual Leave remaining=12, Sick Leave remaining=5
      * @ExpectedResult: Array of 2 balance objects
      */
+    // [TC_BE_LEAVE_198]
     it('should return leave balances with type names for an employee', async () => {
       mockBalanceRepo.find.mockResolvedValue([
         { balance_id: 1, leave_type: { name: 'Annual Leave' }, remaining_days: 12 },
@@ -145,6 +147,7 @@ describe('LeaveService', () => {
      * @TestData: employeeId=999 (new employee without balance records)
      * @ExpectedResult: []
      */
+    // [TC_BE_LEAVE_199]
     it('should return empty array for employee with no balance records', async () => {
       mockBalanceRepo.find.mockResolvedValue([]);
 
@@ -168,6 +171,7 @@ describe('LeaveService', () => {
      * @TestData: employeeId=1, one pending Annual Leave request for 2026-06-15 to 2026-06-17
      * @ExpectedResult: Array of 1 leave request with all fields mapped
      */
+    // [TC_BE_LEAVE_200]
     it('should return employee leave requests with all mapped fields', async () => {
       mockLeaveReqRepo.find.mockResolvedValue([
         {
@@ -213,6 +217,7 @@ describe('LeaveService', () => {
      * @TestData: leaveTypeId=999 (non-existent)
      * @ExpectedResult: BadRequestException('Leave type not found')
      */
+    // [TC_BE_LEAVE_201]
     it('should throw BadRequestException when leave type not found', async () => {
       mockLeaveTypeRepo.findOne.mockResolvedValue(null);
 
@@ -233,6 +238,7 @@ describe('LeaveService', () => {
      * @TestData: employeeId=999 (non-existent)
      * @ExpectedResult: BadRequestException('Employee not found')
      */
+    // [TC_BE_LEAVE_202]
     it('should throw BadRequestException when employee not found', async () => {
       mockLeaveTypeRepo.findOne.mockResolvedValue({ leave_type_id: 1, name: 'Annual Leave', default_days_allocated: 12, is_paid: true });
       mockEmployeeRepo.findOne.mockResolvedValue(null);
@@ -254,6 +260,7 @@ describe('LeaveService', () => {
      * @TestData: Existing approved request 2026-06-10 to 2026-06-20, new request 2026-06-15 to 2026-06-17
      * @ExpectedResult: BadRequestException with overlapping period message
      */
+    // [TC_BE_LEAVE_203]
     it('should throw BadRequestException when overlapping approved request exists', async () => {
       mockLeaveTypeRepo.findOne.mockResolvedValue({ leave_type_id: 1, name: 'Annual Leave', default_days_allocated: 12, is_paid: true });
       mockEmployeeRepo.findOne.mockResolvedValue({
@@ -286,6 +293,7 @@ describe('LeaveService', () => {
      * @TestData: employeeId=1, leaveTypeId=1 (Annual Leave), 2026-06-15 to 2026-06-17, reason='Family vacation'
      * @ExpectedResult: { request_id: 100, status: 'Pending', message: 'Leave request submitted successfully' }
      */
+    // [TC_BE_LEAVE_204]
     it('should submit leave request successfully when all validations pass', async () => {
       mockLeaveTypeRepo.findOne.mockResolvedValue({
         leave_type_id: 1, name: 'Annual Leave', default_days_allocated: 12, is_paid: true,
@@ -341,6 +349,7 @@ describe('LeaveService', () => {
      * @TestData: status='Invalid'
      * @ExpectedResult: BadRequestException
      */
+    // [TC_BE_LEAVE_205]
     it('should throw BadRequestException for invalid approval status', async () => {
       await expect(
         service.approveLeaveRequest(1, 'Invalid', 2)
@@ -359,6 +368,7 @@ describe('LeaveService', () => {
      * @TestData: requestId=999 (non-existent)
      * @ExpectedResult: BadRequestException('Leave request not found')
      */
+    // [TC_BE_LEAVE_206]
     it('should throw BadRequestException when leave request not found', async () => {
       mockLeaveReqRepo.findOne.mockResolvedValue(null);
 
@@ -379,6 +389,7 @@ describe('LeaveService', () => {
      * @TestData: Annual Leave, 2026-06-15 (Mon) to 2026-06-17 (Wed), start balance=12
      * @ExpectedResult: Balance reduced by 3 working days, status='Approved'
      */
+    // [TC_BE_LEAVE_207]
     it('should approve leave request and deduct working days from balance', async () => {
       mockLeaveReqRepo.findOne.mockResolvedValue({
         request_id: 1,
@@ -419,6 +430,7 @@ describe('LeaveService', () => {
      * @TestData: Pending request for Annual Leave on Mon-Tue (2 working days)
      * @ExpectedResult: Status='Rejected', no balance modification
      */
+    // [TC_BE_LEAVE_208]
     it('should reject leave request without deducting balance', async () => {
       mockLeaveReqRepo.findOne.mockResolvedValue({
         request_id: 1,
@@ -452,6 +464,7 @@ describe('LeaveService', () => {
      * @TestData: Previous status Approved (deducted from 12 to 9), restore back to max 12
      * @ExpectedResult: Balance restored to min(12, 9+working_days)
      */
+    // [TC_BE_LEAVE_209]
     it('should restore leave balance when rejecting a previously approved request', async () => {
       mockLeaveReqRepo.findOne.mockResolvedValue({
         request_id: 1,
@@ -498,6 +511,7 @@ describe('LeaveService', () => {
      * @TestData: adminNote='Approved by HR Director after review'
      * @ExpectedResult: Status='Approved', notification includes admin note
      */
+    // [TC_BE_LEAVE_210]
     it('should save admin note when approving with a note', async () => {
       mockLeaveReqRepo.findOne.mockResolvedValue({
         request_id: 1,
@@ -542,6 +556,7 @@ describe('LeaveService', () => {
      * @TestData: Unpaid Leave type (is_paid=false), 2 working days
      * @ExpectedResult: Status='Approved', balance unchanged for deduction logic
      */
+    // [TC_BE_LEAVE_211]
     it('should not deduct balance for unpaid leave types', async () => {
       mockLeaveReqRepo.findOne.mockResolvedValue({
         request_id: 1,

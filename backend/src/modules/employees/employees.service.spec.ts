@@ -82,6 +82,7 @@ describe('EmployeesService', () => {
      * @TestData: email=admin@example.com (already exists)
      * @ExpectedResult: BadRequestException('Email already exists')
      */
+    // [TC_BE_EMPLOY_156]
     it('should throw BadRequestException when email already exists', async () => {
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1, email: 'admin@example.com' });
 
@@ -102,6 +103,7 @@ describe('EmployeesService', () => {
      * @TestData: email=user1@company.com, password=password123, department=Engineering(1), position=Manager(2)
      * @ExpectedResult: Employee saved with hashed password and relations
      */
+    // [TC_BE_EMPLOY_157]
     it('should hash password and create employee with department/position', async () => {
       employeeRepo.findOne.mockResolvedValue(null);
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_password');
@@ -151,6 +153,7 @@ describe('EmployeesService', () => {
      * @TestData: 2 employees, only one has salary config
      * @ExpectedResult: Array of employees with base_salary field
      */
+    // [TC_BE_EMPLOY_158]
     it('should return employees with attached salary info', async () => {
       employeeRepo.find.mockResolvedValue([
         { employee_id: 1, first_name: 'Admin', last_name: 'User', email: 'admin@example.com' },
@@ -177,6 +180,7 @@ describe('EmployeesService', () => {
      * @TestData: DB error on salary query
      * @ExpectedResult: Employee list returned normally
      */
+    // [TC_BE_EMPLOY_159]
     it('should fallback safely when salary query fails', async () => {
       employeeRepo.find.mockResolvedValue([
         { employee_id: 1, first_name: 'Admin' },
@@ -204,6 +208,7 @@ describe('EmployeesService', () => {
      * @TestData: employeeId=1 (Admin user)
      * @ExpectedResult: Employee object with relations
      */
+    // [TC_BE_EMPLOY_160]
     it('should return employee when found by ID', async () => {
       const employee = {
         employee_id: 1,
@@ -235,6 +240,7 @@ describe('EmployeesService', () => {
      * @TestData: employeeId=999 (non-existent)
      * @ExpectedResult: NotFoundException('Employee not found')
      */
+    // [TC_BE_EMPLOY_161]
     it('should throw NotFoundException when employee not found', async () => {
       employeeRepo.findOne.mockResolvedValue(null);
 
@@ -256,6 +262,7 @@ describe('EmployeesService', () => {
      * @TestData: employeeId=999
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_EMPLOY_162]
     it('should throw NotFoundException when employee not found for update', async () => {
       employeeRepo.findOne.mockResolvedValue(null);
 
@@ -274,6 +281,7 @@ describe('EmployeesService', () => {
      * @TestData: password=old -> newpass, first_name=Admin -> Updated, dept change, position change, bank info set
      * @ExpectedResult: Employee saved with updated fields
      */
+    // [TC_BE_EMPLOY_163]
     it('should update password, details, department, position, and bank info', async () => {
       employeeRepo.findOne
         .mockResolvedValueOnce({ employee_id: 1, bankInfo: {} }) // first call
@@ -311,6 +319,7 @@ describe('EmployeesService', () => {
      * @TestData: employment_status=TERMINATED
      * @ExpectedResult: Contract termination SQL query executed
      */
+    // [TC_BE_EMPLOY_164]
     it('should terminate contracts when employee status set to Terminated', async () => {
       employeeRepo.findOne
         .mockResolvedValueOnce({ employee_id: 1 }) // first call
@@ -340,6 +349,7 @@ describe('EmployeesService', () => {
      * @TestData: employeeId=999
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_EMPLOY_165]
     it('should throw NotFoundException when employee not found for onboard', async () => {
       employeeRepo.findOne.mockResolvedValue(null);
 
@@ -358,6 +368,7 @@ describe('EmployeesService', () => {
      * @TestData: employeeId=1, previously Terminated
      * @ExpectedResult: Employee reactivated with Active status, contracts reactivated
      */
+    // [TC_BE_EMPLOY_166]
     it('should reactivate terminated employee and restore contracts', async () => {
       employeeRepo.findOne
         .mockResolvedValueOnce({ employee_id: 1, employment_status: EmploymentStatus.TERMINATED }) // first
@@ -395,6 +406,7 @@ describe('EmployeesService', () => {
      * @TestData: employeeId=999
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_EMPLOY_167]
     it('should throw NotFoundException when employee not found for remove', async () => {
       employeeRepo.findOne.mockResolvedValue(null);
 
@@ -413,6 +425,7 @@ describe('EmployeesService', () => {
      * @TestData: employeeId=1 is department manager
      * @ExpectedResult: { deleted: true }
      */
+    // [TC_BE_EMPLOY_168]
     it('should unassign manager role and remove employee', async () => {
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
       deptRepo.findOne.mockResolvedValue({ department_id: 1, manager: { employee_id: 1 } });
@@ -440,6 +453,7 @@ describe('EmployeesService', () => {
      * @TestData: keyword='John'
      * @ExpectedResult: Array with mapped employee result
      */
+    // [TC_BE_EMPLOY_169]
     it('should search employees by keyword and return mapped results', async () => {
       employeeRepo.find.mockResolvedValue([
         { employee_id: 2, first_name: 'John', last_name: 'Doe', email: 'jdoe@example.com' },
@@ -468,6 +482,7 @@ describe('EmployeesService', () => {
      * @TestData: keyword='NonExistent'
      * @ExpectedResult: []
      */
+    // [TC_BE_EMPLOY_170]
     it('should return empty array when no employees match search keyword', async () => {
       employeeRepo.find.mockResolvedValue([]);
 
@@ -491,6 +506,7 @@ describe('EmployeesService', () => {
      * @TestData: employee with phone_number='0123456789', address='123 Street'
      * @ExpectedResult: Public fields only, sensitive fields excluded
      */
+    // [TC_BE_EMPLOY_171]
     it('should strip sensitive fields and return only public data', async () => {
       employeeRepo.find.mockResolvedValue([
         {
@@ -534,6 +550,7 @@ describe('EmployeesService', () => {
      * @TestData: user without department
      * @ExpectedResult: Empty array (no employees visible)
      */
+    // [TC_BE_EMPLOY_172]
     it('should hide all employees when user has no department', async () => {
       employeeRepo.find.mockResolvedValue([]);
 

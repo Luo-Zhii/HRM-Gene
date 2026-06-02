@@ -43,6 +43,16 @@ describe('CompanyContext', () => {
    * @TestData: fetch returns {company_name:'Acme Corp', base_currency:'USD'}
    * @ExpectedResult: screen shows 'Acme Corp' and 'USD'
    */
+  // [TC_FE_CONTEXT_026]
+  // [TC_FE_CONTEXT_026]
+  // [TC_FE_CONTEXT_026]
+  // [TC_FE_CONTEXT_026]
+  // [TC_FE_CONTEXT_026]
+  // [TC_FE_CONTEXT_026]
+  // [TC_FE_CONTEXT_026]
+  // [TC_FE_CONTEXT_026]
+  // [TC_FE_CONTEXT_026]
+  // [TC_FE_CONTEXT_026]
   it('should fetch and display company settings (name and base currency)', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -75,6 +85,16 @@ describe('CompanyContext', () => {
    * @TestData: Initial logo_url='', updateLogo('/logos/new.png')
    * @ExpectedResult: logo-url shows '/logos/new.png', company-name unchanged
    */
+  // [TC_FE_CONTEXT_027]
+  // [TC_FE_CONTEXT_027]
+  // [TC_FE_CONTEXT_027]
+  // [TC_FE_CONTEXT_027]
+  // [TC_FE_CONTEXT_027]
+  // [TC_FE_CONTEXT_027]
+  // [TC_FE_CONTEXT_027]
+  // [TC_FE_CONTEXT_027]
+  // [TC_FE_CONTEXT_027]
+  // [TC_FE_CONTEXT_027]
   it('should update logo_url via updateLogo while preserving other settings', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -113,6 +133,16 @@ describe('CompanyContext', () => {
    * @TestData: fetch returns {ok:false}
    * @ExpectedResult: company name shows 'none'
    */
+  // [TC_FE_CONTEXT_028]
+  // [TC_FE_CONTEXT_028]
+  // [TC_FE_CONTEXT_028]
+  // [TC_FE_CONTEXT_028]
+  // [TC_FE_CONTEXT_028]
+  // [TC_FE_CONTEXT_028]
+  // [TC_FE_CONTEXT_028]
+  // [TC_FE_CONTEXT_028]
+  // [TC_FE_CONTEXT_028]
+  // [TC_FE_CONTEXT_028]
   it('should handle non-ok fetch response (settings remains null)', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -144,6 +174,16 @@ describe('CompanyContext', () => {
    * @TestData: No CompanyProvider wrapper
    * @ExpectedResult: Error: 'useCompany must be used within a CompanyProvider'
    */
+  // [TC_FE_CONTEXT_029]
+  // [TC_FE_CONTEXT_029]
+  // [TC_FE_CONTEXT_029]
+  // [TC_FE_CONTEXT_029]
+  // [TC_FE_CONTEXT_029]
+  // [TC_FE_CONTEXT_029]
+  // [TC_FE_CONTEXT_029]
+  // [TC_FE_CONTEXT_029]
+  // [TC_FE_CONTEXT_029]
+  // [TC_FE_CONTEXT_029]
   it('should throw error when useCompany is used without CompanyProvider', () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<TestComponent />)).toThrow(
@@ -164,6 +204,16 @@ describe('CompanyContext', () => {
    * @TestData: First fetch: 'Acme Corp', Second fetch: 'Renamed Corp'
    * @ExpectedResult: company-name changes to 'Renamed Corp'
    */
+  // [TC_FE_CONTEXT_030]
+  // [TC_FE_CONTEXT_030]
+  // [TC_FE_CONTEXT_030]
+  // [TC_FE_CONTEXT_030]
+  // [TC_FE_CONTEXT_030]
+  // [TC_FE_CONTEXT_030]
+  // [TC_FE_CONTEXT_030]
+  // [TC_FE_CONTEXT_030]
+  // [TC_FE_CONTEXT_030]
+  // [TC_FE_CONTEXT_030]
   it('should refresh settings with new data on refreshSettings call', async () => {
     global.fetch = jest
       .fn()
@@ -208,6 +258,16 @@ describe('CompanyContext', () => {
    * @TestData: fetch fails, updateLogo('/logos/test.png')
    * @ExpectedResult: logo-url remains 'N/A'
    */
+  // [TC_FE_CONTEXT_031]
+  // [TC_FE_CONTEXT_031]
+  // [TC_FE_CONTEXT_031]
+  // [TC_FE_CONTEXT_031]
+  // [TC_FE_CONTEXT_031]
+  // [TC_FE_CONTEXT_031]
+  // [TC_FE_CONTEXT_031]
+  // [TC_FE_CONTEXT_031]
+  // [TC_FE_CONTEXT_031]
+  // [TC_FE_CONTEXT_031]
   it('should not crash calling updateLogo when settings is null', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({ ok: false, status: 500 }),

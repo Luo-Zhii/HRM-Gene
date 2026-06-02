@@ -23,13 +23,15 @@ describe('ReportsController', () => {
   });
 
   describe('payrollSummary', () => {
-    it('should flawlessly intercept map transformations automatically decoding input parameters correctly explicitly systematically', async () => {
+    // [TC_BE_REPORT_288]
+    it('payrollSummary controller: Gọi service với tham số đã parse (string → number)',
       mockService.payrollSummary.mockResolvedValue({});
       expect(await controller.payrollSummary('2', '2026')).toEqual({});
       expect(mockService.payrollSummary).toHaveBeenCalledWith(2, 2026);
     });
 
-    it('should deploy accurate fallback variables natively completely isolating implicit conversions reliably', async () => {
+    // [TC_BE_REPORT_289]
+    it('payrollSummary: Xử lý fallback khi month và year là chuỗi rỗng', async () => {
       mockService.payrollSummary.mockResolvedValue({});
       await controller.payrollSummary('', '');
       // month, year parsing fallbacks will execute
@@ -38,7 +40,8 @@ describe('ReportsController', () => {
   });
 
   describe('getDashboard', () => {
-    it('should completely transparent proxy mapping identically correctly perfectly explicitly', async () => {
+    // [TC_BE_REPORT_290]
+    it('getDashboard: Proxy request đến service.getDashboardData', async () => {
       mockService.getDashboardData.mockResolvedValue({});
       expect(await controller.getDashboard()).toEqual({});
     });

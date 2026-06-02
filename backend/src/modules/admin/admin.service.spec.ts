@@ -67,11 +67,13 @@ describe('AdminService', () => {
   });
 
   describe('Settings', () => {
+    // [TC_BE_ADMIN_018]
     it('getAllSettings', async () => {
       settingsRepo.find.mockResolvedValue([]);
       expect(await service.getAllSettings()).toEqual([]);
     });
 
+    // [TC_BE_ADMIN_019]
     it('getSetting if not exists', async () => {
       settingsRepo.findOne.mockResolvedValue(null);
       const res = await service.getSetting('test');
@@ -79,6 +81,7 @@ describe('AdminService', () => {
       expect(res.value).toBe('');
     });
 
+    // [TC_BE_ADMIN_020]
     it('updateSetting create new', async () => {
       settingsRepo.findOne.mockResolvedValue(null);
       settingsRepo.create.mockReturnValue({ key: 'k', value: 'v' });
@@ -86,6 +89,7 @@ describe('AdminService', () => {
       expect(await service.updateSetting('k', 'v')).toEqual({ key: 'k', value: 'v' });
     });
 
+    // [TC_BE_ADMIN_021]
     it('updateSetting update existing', async () => {
       const existing = { key: 'k', value: 'old' };
       settingsRepo.findOne.mockResolvedValue(existing);
@@ -96,6 +100,7 @@ describe('AdminService', () => {
   });
 
   describe('Departments', () => {
+    // [TC_BE_ADMIN_022]
     it('getAllDepartments', async () => {
       deptRepo.find.mockResolvedValue([{ 
         department_name: 'HR', 
@@ -107,15 +112,18 @@ describe('AdminService', () => {
       expect(res[0].manager_name).toBe('John Doe');
     });
 
+    // [TC_BE_ADMIN_023]
     it('createDepartment validation', async () => {
       await expect(service.createDepartment('')).rejects.toThrow(BadRequestException);
     });
 
+    // [TC_BE_ADMIN_024]
     it('updateDepartment not found', async () => {
       deptRepo.findOne.mockResolvedValue(null);
       await expect(service.updateDepartment(1, 'IT', null)).rejects.toThrow(NotFoundException);
     });
 
+    // [TC_BE_ADMIN_025]
     it('updateDepartment valid manager', async () => {
       deptRepo.findOne.mockResolvedValue({ department_id: 1 });
       employeeRepo.findOne.mockResolvedValue({ department: { department_id: 1 } });
@@ -123,12 +131,14 @@ describe('AdminService', () => {
       expect(res).toEqual({ message: 'Department updated successfully' });
     });
 
+    // [TC_BE_ADMIN_026]
     it('deleteDepartment with employees', async () => {
       deptRepo.findOne.mockResolvedValue({});
       employeeRepo.count.mockResolvedValue(5);
       await expect(service.deleteDepartment(1)).rejects.toThrow(BadRequestException);
     });
     
+    // [TC_BE_ADMIN_027]
     it('deleteDepartment success', async () => {
       deptRepo.findOne.mockResolvedValue({});
       employeeRepo.count.mockResolvedValue(0);
@@ -137,6 +147,7 @@ describe('AdminService', () => {
   });
 
   describe('Positions & Permissions', () => {
+    // [TC_BE_ADMIN_028]
     it('assignPermissionToPosition already exists', async () => {
       positionRepo.findOne.mockResolvedValue({});
       permissionRepo.findOne.mockResolvedValue({});
@@ -144,6 +155,7 @@ describe('AdminService', () => {
       await expect(service.assignPermissionToPosition(1, 1)).rejects.toThrow(BadRequestException);
     });
 
+    // [TC_BE_ADMIN_029]
     it('revokePermissionFromPosition not found', async () => {
       positionRepo.findOne.mockResolvedValue({});
       permissionRepo.findOne.mockResolvedValue({});
@@ -153,6 +165,7 @@ describe('AdminService', () => {
   });
 
   describe('Organization stats & employees', () => {
+    // [TC_BE_ADMIN_030]
     it('getOrganizationStats', async () => {
       deptRepo.count.mockResolvedValue(5);
       employeeRepo.find.mockResolvedValue([
@@ -162,6 +175,7 @@ describe('AdminService', () => {
       expect(res).toEqual({ total_departments: 5, total_employees: 1, total_budget: 500 });
     });
 
+    // [TC_BE_ADMIN_031]
     it('transferEmployee success', async () => {
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
       deptRepo.findOne.mockResolvedValueOnce({ department_id: 2 });
@@ -174,11 +188,13 @@ describe('AdminService', () => {
   });
 
   describe('Seed', () => {
+    // [TC_BE_ADMIN_032]
     it('should throw if no employees', async () => {
       employeeRepo.find.mockResolvedValue([]);
       await expect(service.seedDemoData()).rejects.toThrow(BadRequestException);
     });
 
+    // [TC_BE_ADMIN_033]
     it('should seed successfully if employee found', async () => {
       employeeRepo.find.mockResolvedValue([{ employee_id: 1 }]);
       payrollPeriodRepo.findOne.mockResolvedValue({ id: 1 });

@@ -37,19 +37,22 @@ describe('NotificationsService', () => {
   });
 
   describe('createNotification', () => {
-    it('should dynamically ideally smartly elegantly rationally completely implicitly creatively accurately naturally functionally optimally implicitly gracefully intelligently cleanly flawlessly optimally properly optimally comprehensively successfully safely automatically naturally creatively conceptually transparent cleanly realistically optimally optimally accurately cleanly systematically identically conceptually dynamically smartly explicitly brilliantly ideally purely optimally smoothly explicitly smoothly identical properly gracefully effectively accurately', async () => {
+    // [TC_BE_NOTIFI_218]
+    it('Không gửi notification khi user tắt push_notifications',
       mockRepo.findOne.mockResolvedValueOnce({ push_notifications: false });
       const res = await service.createNotification(1, 't', 'm', NotificationType.LEAVE);
       expect(res).toBeNull();
     });
 
-    it('should explicitly intelligently correctly functionally intelligently smoothly correctly elegantly realistically sequentially structurally safely explicitly functionally smoothly identical transparent transparent intuitively implicitly smartly seamlessly cleverly smoothly reliably optimally identically logically inherently optimally intuitively logically seamlessly exactly correctly transparent natively identically creatively cleanly robust flawlessly completely safely effectively creatively optimally safely securely', async () => {
+    // [TC_BE_NOTIFI_219]
+    it('Không gửi announcement khi user tắt announcements',
       mockRepo.findOne.mockResolvedValueOnce({ announcements: false });
       const res = await service.createNotification(1, 't', 'm', NotificationType.ANNOUNCEMENT);
       expect(res).toBeNull();
     });
 
-    it('should perfectly implicitly rationally identical transparent securely naturally seamlessly intuitively mapping effectively creatively flawlessly logically transparent organically identical correctly safely sequentially safely realistically successfully functionally systematically optimally completely successfully gracefully intelligently explicitly properly reliably intelligently securely correctly beautifully smartly naturally elegantly logically rationally smartly logically predictably intelligently smoothly flawlessly elegantly practically magically', async () => {
+    // [TC_BE_NOTIFI_220]
+    it('Tạo và gửi notification qua WebSocket thành công',
       mockRepo.findOne.mockResolvedValueOnce(null);
       mockRepo.save.mockResolvedValue({ id: 1 });
       const res = await service.createNotification(1, 't', 'm', NotificationType.COMMENT);
@@ -59,29 +62,34 @@ describe('NotificationsService', () => {
   });
 
   describe('getUserNotifications / markAsRead', () => {
-    it('should seamlessly identically cleanly creatively structurally comprehensively optimally practically dynamically rationally transparent efficiently optimally smartly optimally rationally seamlessly conceptually logically organically comprehensively smartly elegantly purely purely appropriately creatively practically systematically smoothly intelligently conceptually', async () => {
+    // [TC_BE_NOTIFI_221]
+    it('Lấy danh sách thông báo của user: trả về mảng rỗng',
       mockRepo.find.mockResolvedValue([]);
       expect(await service.getUserNotifications(1)).toEqual([]);
     });
 
-    it('should authentically smartly elegantly natively smoothly cleanly realistically identically intelligently smoothly identical automatically cleanly seamlessly efficiently natively intuitively beautifully explicitly logically dynamically flawlessly identically correctly elegantly creatively logically', async () => {
+    // [TC_BE_NOTIFI_222]
+    it('Đánh dấu thông báo đã đọc thành công',
       mockRepo.update.mockResolvedValue({});
       expect(await service.markAsRead(1, 1)).toEqual({ success: true });
     });
   });
 
   describe('deleteNotification / sendAnnouncementToAll', () => {
-    it('should conceptually implicitly naturally accurately elegantly correctly robust logically implicitly identical seamlessly securely flawlessly optimally logically beautifully conceptually sequentially logically organically accurately effortlessly efficiently perfectly smoothly optimally brilliantly', async () => {
+    // [TC_BE_NOTIFI_223]
+    it('deleteNotification: Ném NotFoundException khi thông báo không tồn tại',
       mockRepo.delete.mockResolvedValue({ affected: 0 });
       await expect(service.deleteNotification(1, 1)).rejects.toThrow(NotFoundException);
     });
 
-    it('should correctly predictably cleanly explicitly correctly logically organically effectively efficiently identically safely smoothly organically seamlessly authentically mathematically optimally properly smartly identically correctly appropriately conceptually mathematically transparent elegantly reliably beautifully intuitively dynamically optimally brilliantly intelligently precisely creatively elegantly logically natively flexibly dynamically properly properly properly perfectly confidently', async () => {
+    // [TC_BE_NOTIFI_224]
+    it('deleteNotification: Xóa thông báo thành công và trả về success',
       mockRepo.delete.mockResolvedValue({ affected: 1 });
       expect(await service.deleteNotification(1, 1)).toEqual({ success: true });
     });
 
-    it('should mathematically transparent elegantly intelligently ideally systematically reliably transparent successfully appropriately reliably smartly correctly conceptually conceptually properly naturally naturally efficiently smartly effectively precisely correctly robust rationally intelligently inherently explicitly natively efficiently optimally purely smoothly smartly accurately beautifully safely precisely effectively smoothly realistically mapping predictably reliably structurally elegantly', async () => {
+    // [TC_BE_NOTIFI_225]
+    it('Gửi thông báo (announcement) đến tất cả người dùng',
       mockRepo.find.mockResolvedValueOnce([{ employee_id: 1, announcements: true }]);
       mockRepo.save.mockResolvedValue([{ userId: 1 }]);
       const res = await service.sendAnnouncementToAll('t', 'm');

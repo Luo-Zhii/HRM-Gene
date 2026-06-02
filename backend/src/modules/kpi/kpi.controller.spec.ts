@@ -32,7 +32,8 @@ describe('KpiController', () => {
   });
 
   describe('createLibrary', () => {
-    it('should dispatch creation passing implicitly extracted identity from guard token inherently', async () => {
+    // [TC_BE_KPI_173]
+    it('createLibrary: Tạo library KPI với employee_id từ token', async () => {
       mockService.createLibrary.mockResolvedValue({ id: 1 });
       const res = await controller.createLibrary({} as any, { user: { employee_id: 2 } });
       expect(res).toEqual({ id: 1 });
@@ -41,14 +42,16 @@ describe('KpiController', () => {
   });
 
   describe('getLibrary', () => {
-    it('should structurally relay response unmutated array mapping', async () => {
+    // [TC_BE_KPI_174]
+    it('getLibrary: Trả về danh sách KPI library', async () => {
       mockService.getLibrary.mockResolvedValue([]);
       expect(await controller.getLibrary()).toEqual([]);
     });
   });
 
   describe('deleteAssignment', () => {
-    it('should properly proxy deletion sequence matching ID strictly', async () => {
+    // [TC_BE_KPI_175]
+    it('deleteAssignment: Xóa KPI assignment theo ID', async () => {
       mockService.deleteAssignment.mockResolvedValue({ success: true });
       expect(await controller.deleteAssignment(1)).toEqual({ success: true });
       expect(mockService.deleteAssignment).toHaveBeenCalledWith(1);
@@ -56,31 +59,36 @@ describe('KpiController', () => {
   });
 
   describe('createPeriod / getPeriods', () => {
-    it('should trigger period mapping strictly without interference', async () => {
+    // [TC_BE_KPI_176]
+    it('createPeriod: Tạo kỳ đánh giá KPI mới', async () => {
       mockService.createPeriod.mockResolvedValue({ id: 1 });
       expect(await controller.createPeriod({} as any)).toEqual({ id: 1 });
     });
-    it('should sequentially retrieve bound collections directly globally', async () => {
+    // [TC_BE_KPI_177]
+    it('getPeriods: Lấy danh sách kỳ đánh giá KPI', async () => {
       mockService.getPeriods.mockResolvedValue([]);
       expect(await controller.getPeriods()).toEqual([]);
     });
   });
 
   describe('assignKpis', () => {
-    it('should proxy batch creation assignment operations structurally onto service map', async () => {
+    // [TC_BE_KPI_178]
+    it('assignKpis: Gán hàng loạt KPI cho nhân viên', async () => {
       mockService.assignKpis.mockResolvedValue([]);
       expect(await controller.assignKpis({} as any)).toEqual([]);
     });
   });
 
   describe('updateActual / gradeAssignment', () => {
-    it('should exclusively isolate precise numeric field extraction mapping transparently avoiding payload collision', async () => {
+    // [TC_BE_KPI_179]
+    it('updateActual: Parse actual_value từ DTO và gọi service.updateActual', async () => {
       mockService.updateActual.mockResolvedValue({});
       expect(await controller.updateActual(1, { actual_value: 50 } as any)).toEqual({});
       expect(mockService.updateActual).toHaveBeenCalledWith(1, 50);
     });
 
-    it('should independently proxy mapping isolation targeting strictly manager bounds effectively', async () => {
+    // [TC_BE_KPI_180]
+    it('gradeAssignment: Manager chấm điểm KPI cho nhân viên', async () => {
       mockService.gradeAssignment.mockResolvedValue({});
       expect(await controller.gradeAssignment(1, { manager_score: 80 } as any)).toEqual({});
       expect(mockService.gradeAssignment).toHaveBeenCalledWith(1, 80);
@@ -88,17 +96,20 @@ describe('KpiController', () => {
   });
 
   describe('getEmployeeAssignments / getMyPerformance / calculateScore', () => {
-    it('should structurally retrieve relational components independently binding parameters identically purely', async () => {
+    // [TC_BE_KPI_181]
+    it('getEmployeeAssignments: Lấy danh sách KPI assignment của nhân viên',
       await controller.getEmployeeAssignments(1, 2);
       expect(mockService.getEmployeeAssignments).toHaveBeenCalledWith(1, 2);
     });
     
-    it('should intercept contextual parameters effectively overriding endpoint semantics seamlessly', async () => {
+    // [TC_BE_KPI_182]
+    it('getMyPerformance: Lấy KPI của chính mình (không cần employee_id trên URL)', async () => {
       await controller.getMyPerformance({ user: { employee_id: 1 } }, 2);
       expect(mockService.getEmployeeAssignments).toHaveBeenCalledWith(1, 2);
     });
     
-    it('should successfully orchestrate cumulative compilation request isolating score natively purely', async () => {
+    // [TC_BE_KPI_183]
+    it('calculateScore: Gọi service.calculateFinalKpiScore với employee_id và period_id', async () => {
       await controller.calculateScore(1, 2);
       expect(mockService.calculateFinalKpiScore).toHaveBeenCalledWith(1, 2);
     });

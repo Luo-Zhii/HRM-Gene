@@ -25,7 +25,8 @@ describe('NotificationsController', () => {
   });
 
   describe('endpoints', () => {
-    it('should optimally logically gracefully flexibly elegantly smartly optimally rationally precisely purely conceptually mathematically flexibly beautifully transparent beautifully reliably predictably rationally functionally smartly effectively identically natively smoothly properly seamlessly correctly gracefully intuitively correctly seamlessly correctly predictably smoothly logically smoothly purely gracefully flawlessly implicitly', async () => {
+    // [TC_BE_NOTIFI_212]
+    it('Kiểm tra toàn bộ endpoint notifications: getUserNotifications, markAsRead, deleteNotification, createAnnouncement',
       const mockUser = { user: { employee_id: 1, position: { position_name: 'Admin' } } };
       
       mockService.getUserNotifications.mockResolvedValue([]);

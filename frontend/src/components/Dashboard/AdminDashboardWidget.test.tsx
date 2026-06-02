@@ -49,6 +49,16 @@ describe('AdminDashboardWidget', () => {
    * @TestData: defaultAdminData fixture
    * @ExpectedResult: All four KPI values rendered
    */
+  // [TC_FE_COMPON_007]
+  // [TC_FE_COMPON_007]
+  // [TC_FE_COMPON_007]
+  // [TC_FE_COMPON_007]
+  // [TC_FE_COMPON_007]
+  // [TC_FE_COMPON_007]
+  // [TC_FE_COMPON_007]
+  // [TC_FE_COMPON_007]
+  // [TC_FE_COMPON_007]
+  // [TC_FE_COMPON_007]
   it('should fetch and display all KPI cards with correct values', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -80,6 +90,16 @@ describe('AdminDashboardWidget', () => {
    * @TestData: leaveRequests=5, resignations=3
    * @ExpectedResult: Both request counts displayed
    */
+  // [TC_FE_COMPON_008]
+  // [TC_FE_COMPON_008]
+  // [TC_FE_COMPON_008]
+  // [TC_FE_COMPON_008]
+  // [TC_FE_COMPON_008]
+  // [TC_FE_COMPON_008]
+  // [TC_FE_COMPON_008]
+  // [TC_FE_COMPON_008]
+  // [TC_FE_COMPON_008]
+  // [TC_FE_COMPON_008]
   it('should display pending leave requests and resignation counts', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -108,6 +128,16 @@ describe('AdminDashboardWidget', () => {
    * @TestData: Any valid admin data
    * @ExpectedResult: Three quick action links rendered
    */
+  // [TC_FE_COMPON_009]
+  // [TC_FE_COMPON_009]
+  // [TC_FE_COMPON_009]
+  // [TC_FE_COMPON_009]
+  // [TC_FE_COMPON_009]
+  // [TC_FE_COMPON_009]
+  // [TC_FE_COMPON_009]
+  // [TC_FE_COMPON_009]
+  // [TC_FE_COMPON_009]
+  // [TC_FE_COMPON_009]
   it('should render Quick Actions links for admin tasks', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -137,6 +167,16 @@ describe('AdminDashboardWidget', () => {
    * @TestData: fetch rejects
    * @ExpectedResult: KPI cards show 0 values
    */
+  // [TC_FE_COMPON_010]
+  // [TC_FE_COMPON_010]
+  // [TC_FE_COMPON_010]
+  // [TC_FE_COMPON_010]
+  // [TC_FE_COMPON_010]
+  // [TC_FE_COMPON_010]
+  // [TC_FE_COMPON_010]
+  // [TC_FE_COMPON_010]
+  // [TC_FE_COMPON_010]
+  // [TC_FE_COMPON_010]
   it('should handle fetch failure and display zero KPI values', async () => {
     global.fetch = jest.fn(() => Promise.reject(new Error('Network error'))) as jest.Mock;
 
@@ -162,6 +202,16 @@ describe('AdminDashboardWidget', () => {
    * @TestData: defaultAdminData
    * @ExpectedResult: Date text containing year appears
    */
+  // [TC_FE_COMPON_011]
+  // [TC_FE_COMPON_011]
+  // [TC_FE_COMPON_011]
+  // [TC_FE_COMPON_011]
+  // [TC_FE_COMPON_011]
+  // [TC_FE_COMPON_011]
+  // [TC_FE_COMPON_011]
+  // [TC_FE_COMPON_011]
+  // [TC_FE_COMPON_011]
+  // [TC_FE_COMPON_011]
   it('should display the current date in the subheader', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -193,6 +243,16 @@ describe('AdminDashboardWidget', () => {
    * @TestData: defaultAdminData
    * @ExpectedResult: Anchor elements with correct href values
    */
+  // [TC_FE_COMPON_012]
+  // [TC_FE_COMPON_012]
+  // [TC_FE_COMPON_012]
+  // [TC_FE_COMPON_012]
+  // [TC_FE_COMPON_012]
+  // [TC_FE_COMPON_012]
+  // [TC_FE_COMPON_012]
+  // [TC_FE_COMPON_012]
+  // [TC_FE_COMPON_012]
+  // [TC_FE_COMPON_012]
   it('should render navigation links to leave approvals and resignation management', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({

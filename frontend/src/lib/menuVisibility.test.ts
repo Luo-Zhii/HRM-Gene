@@ -63,6 +63,16 @@ describe('checkMenuVisibility', () => {
    * @TestData: directorUser, payrollMenuItem
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_076]
+  // [TC_FE_LIB_076]
+  // [TC_FE_LIB_076]
+  // [TC_FE_LIB_076]
+  // [TC_FE_LIB_076]
+  // [TC_FE_LIB_076]
+  // [TC_FE_LIB_076]
+  // [TC_FE_LIB_076]
+  // [TC_FE_LIB_076]
+  // [TC_FE_LIB_076]
   it('should return true for Director bypassing all menu restrictions', () => {
     expect(checkMenuVisibility(directorUser, payrollMenuItem)).toBe(true);
   });
@@ -79,6 +89,16 @@ describe('checkMenuVisibility', () => {
    * @TestData: systemAdminUser, payrollMenuItem
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_077]
+  // [TC_FE_LIB_077]
+  // [TC_FE_LIB_077]
+  // [TC_FE_LIB_077]
+  // [TC_FE_LIB_077]
+  // [TC_FE_LIB_077]
+  // [TC_FE_LIB_077]
+  // [TC_FE_LIB_077]
+  // [TC_FE_LIB_077]
+  // [TC_FE_LIB_077]
   it('should return true for System Admin bypassing menu checks', () => {
     const sysAdmin = { role: 'System Admin', position: {}, department: { department_name: 'IT' } };
     expect(checkMenuVisibility(sysAdmin, payrollMenuItem)).toBe(true);
@@ -96,6 +116,16 @@ describe('checkMenuVisibility', () => {
    * @TestData: financeUser, payrollMenuItem
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_078]
+  // [TC_FE_LIB_078]
+  // [TC_FE_LIB_078]
+  // [TC_FE_LIB_078]
+  // [TC_FE_LIB_078]
+  // [TC_FE_LIB_078]
+  // [TC_FE_LIB_078]
+  // [TC_FE_LIB_078]
+  // [TC_FE_LIB_078]
+  // [TC_FE_LIB_078]
   it('should return true when user department matches the menu department restriction', () => {
     expect(checkMenuVisibility(financeUser, payrollMenuItem)).toBe(true);
   });
@@ -112,6 +142,16 @@ describe('checkMenuVisibility', () => {
    * @TestData: hrManagerUser, payrollMenuItem
    * @ExpectedResult: false
    */
+  // [TC_FE_LIB_079]
+  // [TC_FE_LIB_079]
+  // [TC_FE_LIB_079]
+  // [TC_FE_LIB_079]
+  // [TC_FE_LIB_079]
+  // [TC_FE_LIB_079]
+  // [TC_FE_LIB_079]
+  // [TC_FE_LIB_079]
+  // [TC_FE_LIB_079]
+  // [TC_FE_LIB_079]
   it('should return false when HR user tries to access Finance-only menu (functional segregation)', () => {
     expect(checkMenuVisibility(hrManagerUser, payrollMenuItem)).toBe(false);
   });
@@ -128,6 +168,16 @@ describe('checkMenuVisibility', () => {
    * @TestData: salesManagerUser, peopleMenuItem
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_080]
+  // [TC_FE_LIB_080]
+  // [TC_FE_LIB_080]
+  // [TC_FE_LIB_080]
+  // [TC_FE_LIB_080]
+  // [TC_FE_LIB_080]
+  // [TC_FE_LIB_080]
+  // [TC_FE_LIB_080]
+  // [TC_FE_LIB_080]
+  // [TC_FE_LIB_080]
   it('should return true for Sales Manager via role-based fallback (not department match)', () => {
     expect(checkMenuVisibility(salesManagerUser, peopleMenuItem)).toBe(true);
   });
@@ -144,6 +194,16 @@ describe('checkMenuVisibility', () => {
    * @TestData: user=null, payrollMenuItem
    * @ExpectedResult: false
    */
+  // [TC_FE_LIB_081]
+  // [TC_FE_LIB_081]
+  // [TC_FE_LIB_081]
+  // [TC_FE_LIB_081]
+  // [TC_FE_LIB_081]
+  // [TC_FE_LIB_081]
+  // [TC_FE_LIB_081]
+  // [TC_FE_LIB_081]
+  // [TC_FE_LIB_081]
+  // [TC_FE_LIB_081]
   it('should return false when user is null', () => {
     expect(checkMenuVisibility(null, payrollMenuItem)).toBe(false);
   });

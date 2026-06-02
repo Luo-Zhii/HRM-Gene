@@ -1,0 +1,434 @@
+﻿Module,Test ID,Priority,Category,Description,Steps,Expected Result
+Admin,TC_BE_ADMIN_001,P2,Positive,getAllSettings,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_002,P2,Positive,getSetting,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_003,P2,Positive,updateSetting,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_004,P2,Positive,getOrganizationStats,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_005,P2,Positive,getAllDepartments,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_006,P2,Positive,createDepartment,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_007,P2,Positive,updateDepartment,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_008,P2,Positive,getAllPositions,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_009,P2,Positive,createPosition,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_010,P2,Positive,getPermissionMatrix,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_011,P2,Positive,assignPermission,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_012,P2,Positive,revokePermission,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_013,P2,Positive,getAllEmployees,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_014,P2,Positive,getBasicEmployees,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_015,P2,Positive,transferEmployee,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_016,P3,Positive,seedDemoData without arg,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_017,P2,Positive,seedDemoData with arg,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Admin,TC_BE_ADMIN_018,P3,Negative,getAllSettings,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_019,P3,Negative,getSetting if not exists,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_020,P2,Positive,updateSetting create new,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_021,P2,Positive,updateSetting update existing,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_022,P1,Positive,getAllDepartments,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_023,P3,Negative,createDepartment validation,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_024,P2,Negative,updateDepartment not found,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_025,P2,Positive,updateDepartment valid manager,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_026,P2,Positive,deleteDepartment with employees,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_027,P2,Positive,deleteDepartment success,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_028,P2,Positive,assignPermissionToPosition already exists,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_029,P2,Negative,revokePermissionFromPosition not found,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_030,P2,Positive,getOrganizationStats,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_031,P2,Positive,transferEmployee success,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_032,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Admin,TC_BE_ADMIN_033,P1,Positive,Seed successfully if employee found,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Analytics,TC_BE_ANALYT_034,P2,Positive,Phân tích dữ liệu nhân sự,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { summary: {} }
+Analytics,TC_BE_ANALYT_035,P2,Positive,Phân tích dữ liệu nhân sự,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Analytics,TC_BE_ANALYT_036,P2,Positive,Phân tích dữ liệu nhân sự,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Announcements,TC_BE_ANNOUN_037,P2,Positive,Tạo mới thành công,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Announcements,TC_BE_ANNOUN_038,P2,Positive,Return all announcements,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Announcements,TC_BE_ANNOUN_039,P2,Positive,Return user feed,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp []
+Announcements,TC_BE_ANNOUN_040,P2,Positive,Xóa thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Announcements,TC_BE_ANNOUN_041,P2,Positive,Tạo mới thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Announcements,TC_BE_ANNOUN_042,P2,Positive,Gửi thông báo đến người dùng,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Announcements,TC_BE_ANNOUN_043,P2,Positive,Gửi thông báo đến người dùng,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Announcements,TC_BE_ANNOUN_044,P2,Positive,Return all announcements ordered by created_at,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Announcements,TC_BE_ANNOUN_045,P2,Positive,Return announcements matching target audience for user,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Announcements,TC_BE_ANNOUN_046,P2,Positive,Default to NONE_DEPT if user has no department,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Announcements,TC_BE_ANNOUN_047,P2,Positive,Xóa thành công,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_048,P1,Positive,Login successfully and return user with access token and set cookie,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_049,P1,Negative,Propagate NotFoundException when user email not found,▸ 1. Kiểm tra xử lý ngoại lệ; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_050,P1,Negative,Đăng nhập với sai thông tin: trả về lỗi Unauthorized,▸ 1. Kiểm tra xử lý ngoại lệ; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_051,P1,Negative,Đăng nhập vào tài khoản đã bị khóa: bị từ chối,▸ 1. Kiểm tra xử lý ngoại lệ; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_052,P2,Positive,Đăng xuất và vô hiệu hóa token hiện tại,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_053,P1,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_054,P3,Negative,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Giá trị là null
+Auth,TC_BE_AUTH_055,P2,Negative,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_056,P2,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_057,P2,Negative,Ném exception phù hợp,▸ 1. Kiểm tra xử lý ngoại lệ; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_058,P2,Positive,Construct avatar URL and call updateAvatarUrl,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_059,P2,Positive,Delegate to authService.changePassword,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_060,P3,Negative,Return main nav only and empty admin for non-admin user,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_061,P2,Positive,Return full admin nav for Director,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_062,P3,Negative,Trả về rỗng khi không có dữ liệu,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),"✓ Kết quả khớp { main: [], admin: [] }"
+Auth,TC_BE_AUTH_063,P1,Negative,Đăng ký tài khoản nhân viên mới thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_064,P1,Positive,Đăng ký tài khoản nhân viên mới thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_065,P1,Negative,Đăng ký tài khoản nhân viên mới thành công,▸ 1. Kiểm tra xử lý ngoại lệ; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_066,P2,Negative,Return user without password and with permissions on successful validation,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_067,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_068,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_069,P2,Negative,Increment failed_attempts on wrong password and throw UnauthorizedException,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_070,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_071,P1,Negative,"Đăng nhập với thông tin hợp lệ, nhận JWT token",▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_072,P2,Negative,Lock account on 5th consecutive wrong password attempt,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_073,P1,Positive,"Return access_token with correct JWT payload (sub, email, role)",▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_074,P1,Positive,Handle login with user having no position,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_075,P2,Positive,Thay đổi mật khẩu với xác thực mật khẩu cũ,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_076,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_077,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_078,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_079,P3,Negative,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_080,P3,Negative,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_081,P3,Negative,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_082,P1,Negative,Đăng ký tài khoản nhân viên mới thành công,▸ 1. Kiểm tra xử lý ngoại lệ; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_083,P1,Negative,Đăng ký tài khoản nhân viên mới thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_084,P1,Negative,Đăng ký tài khoản nhân viên mới thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_085,P1,Negative,Đăng ký tài khoản nhân viên mới thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Auth,TC_BE_AUTH_086,P1,Positive,Đăng ký tài khoản nhân viên mới thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Comments,TC_BE_COMMEN_087,P1,Positive,Extract author id from token and create a comment via service,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Comments,TC_BE_COMMEN_088,P2,Positive,Find comments by entity via service,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Comments,TC_BE_COMMEN_089,P2,Positive,Thêm bình luận mới,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Comments,TC_BE_COMMEN_090,P2,Positive,Thêm bình luận mới,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Comments,TC_BE_COMMEN_091,P2,Negative,Catch error quietly if notification fails,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Comments,TC_BE_COMMEN_092,P2,Positive,Find comments arranged by entity type and ID,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Comments,TC_BE_COMMEN_093,P2,Positive,Return comment if found,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: '1' }
+Comments,TC_BE_COMMEN_094,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Company Profile,TC_BE_COMPAN_095,P2,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Company Profile,TC_BE_COMPAN_096,P2,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Company Profile,TC_BE_COMPAN_097,P2,Negative,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Company Profile,TC_BE_COMPAN_098,P2,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Company Profile,TC_BE_COMPAN_099,P2,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),"✓ Kết quả khớp { id: 1, company_name: 'Existing' }"
+Company Profile,TC_BE_COMPAN_100,P2,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Mock Repository database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Company Profile,TC_BE_COMPAN_101,P2,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Mock Repository database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Company Profile,TC_BE_COMPAN_102,P2,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Mock Repository database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_103,P2,Positive,Tạo hợp đồng mới: Proxy DTO sang service.create,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Contracts,TC_BE_CONTRA_104,P2,Positive,findAll: Admin với manage:system xem tất cả hợp đồng,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_105,P2,Positive,findAll: Employee thường chỉ xem hợp đồng của chính mình,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_106,P2,Negative,findByEmployee: Từ chối non-admin xem hợp đồng của nhân viên khác,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra xử lý ngoại lệ; ▸ 3. Kiểm tra kết quả với expect(),✓ Promise bị reject
+Contracts,TC_BE_CONTRA_107,P2,Positive,findByEmployee: User xem được hợp đồng của chính mình,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_108,P2,Positive,findByEmployee: Admin với manage:system xem hợp đồng của nhân viên bất kỳ,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_109,P2,Positive,findOne: Employee thường bị giới hạn chỉ xem hợp đồng của chính mình,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_110,P2,Positive,update: Proxy cập nhật hợp đồng sang service.update,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Contracts,TC_BE_CONTRA_111,P2,Positive,updatePut: PUT request hoạt động giống update,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Contracts,TC_BE_CONTRA_112,P2,Positive,remove: Proxy yêu cầu xóa hợp đồng sang service.remove,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { message: 'Deleted' }
+Contracts,TC_BE_CONTRA_113,P2,Negative,create: Ném NotFoundException khi employee_id không tồn tại,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_114,P2,Negative,create: Ném BadRequestException khi contract_number đã tồn tại,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_115,P3,Negative,Tạo hợp đồng lao động mới cho nhân viên,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_116,P2,Positive,findAll: Cấu hình phân trang và filter với query builder,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hàm/Mock đã được gọi
+Contracts,TC_BE_CONTRA_117,P2,Positive,findByEmployee: Lấy danh sách hợp đồng của một nhân viên,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_118,P2,Negative,findOne: Ném NotFoundException khi không tìm thấy hợp đồng,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_119,P2,Positive,findOne: Trả về hợp đồng theo contract_id và employee_id,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { contract_id: 1 }
+Contracts,TC_BE_CONTRA_120,P2,Positive,"update: Cập nhật hợp đồng, tự động expire hợp đồng cũ và ghi lịch sử lương",▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_121,P2,Positive,remove: Xóa hợp đồng thành công và trả về message,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_122,P1,Positive,findAll: Admin với manage:system xem lịch sử lương theo employee_id query,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_123,P1,Positive,findAll: Employee thường chỉ xem lịch sử lương của chính mình,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_124,P1,Positive,findOne: Employee thường bị giới hạn chỉ xem lịch sử lương của chính mình,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contracts,TC_BE_CONTRA_125,P1,Negative,findOne: Ném NotFoundException khi không tìm thấy lịch sử lương,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Dashboard,TC_BE_DASHBO_126,P2,Positive,Lấy dữ liệu tổng quan cho Employee Dashboard,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Dashboard,TC_BE_DASHBO_127,P2,Positive,Lấy dữ liệu tổng quan cho Admin Dashboard,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Dashboard,TC_BE_DASHBO_128,P2,Positive,Gọi đúng callback với tham số,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Dashboard,TC_BE_DASHBO_129,P2,Positive,Lấy dữ liệu tổng quan cho Employee Dashboard,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Dashboard,TC_BE_DASHBO_130,P2,Positive,Lấy dữ liệu tổng quan cho Employee Dashboard,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Dashboard,TC_BE_DASHBO_131,P2,Positive,Lấy dữ liệu tổng quan cho Admin Dashboard,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Dashboard,TC_BE_DASHBO_132,P2,Positive,Return sorted holidays array,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Dashboard,TC_BE_DASHBO_133,P2,Positive,Return the next holiday or the first array entry if all are past,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Departments,TC_BE_DEPART_134,P2,Positive,Tạo mới thành công,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Departments,TC_BE_DEPART_135,P2,Positive,Return array of departments,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Departments,TC_BE_DEPART_136,P2,Positive,Return department,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Departments,TC_BE_DEPART_137,P2,Positive,Return updated department,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Departments,TC_BE_DEPART_138,P2,Positive,Xóa thành công,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { deleted: true }
+Departments,TC_BE_DEPART_139,P2,Positive,Tạo mới thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Departments,TC_BE_DEPART_140,P2,Positive,Return array of departments,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Departments,TC_BE_DEPART_141,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Departments,TC_BE_DEPART_142,P2,Positive,Return department,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Departments,TC_BE_DEPART_143,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Departments,TC_BE_DEPART_144,P2,Positive,Cập nhật thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Departments,TC_BE_DEPART_145,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Departments,TC_BE_DEPART_146,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Departments,TC_BE_DEPART_147,P2,Positive,Xóa thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_148,P2,Positive,Gọi đúng callback với tham số,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Employees,TC_BE_EMPLOY_149,P2,Positive,Return employees,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_150,P2,Positive,Return safe fields,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_151,P3,Negative,Trả về rỗng khi không có dữ liệu,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_152,P2,Positive,Gọi đúng callback với tham số,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),"✓ Được gọi với: 'abc', ({} as any).user"
+Employees,TC_BE_EMPLOY_153,P2,Positive,Return one employee,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Employees,TC_BE_EMPLOY_154,P2,Positive,Cascade updates to service,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Employees,TC_BE_EMPLOY_155,P2,Positive,Xóa thành công,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { deleted: true }
+Employees,TC_BE_EMPLOY_156,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_157,P1,Positive,Tạo mới hồ sơ nhân viên với đầy đủ thông tin,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_158,P1,Positive,Return employees with attached salary info,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_159,P1,Negative,Dùng giá trị dự phòng,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_160,P3,Negative,Return employee when found by ID,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_161,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_162,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_163,P2,Positive,Cập nhật thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_164,P2,Positive,Chấm dứt hợp đồng lao động,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_165,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_166,P2,Positive,Reactivate terminated employee and restore contracts,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_167,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_168,P2,Positive,Unassign manager role and remove employee,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_169,P2,Positive,Tìm kiếm nhân viên theo tiêu chí,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_170,P3,Negative,Trả về rỗng khi không có dữ liệu,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_171,P2,Positive,Strip sensitive fields and return only public data,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Employees,TC_BE_EMPLOY_172,P2,Positive,Hide all employees when user has no department,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_173,P1,Positive,createLibrary: Tạo library KPI với employee_id từ token,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_174,P2,Positive,getLibrary: Trả về danh sách KPI library,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_175,P2,Positive,deleteAssignment: Xóa KPI assignment theo ID,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { success: true }
+Kpi,TC_BE_KPI_176,P2,Positive,createPeriod: Tạo kỳ đánh giá KPI mới,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Kpi,TC_BE_KPI_177,P2,Positive,getPeriods: Lấy danh sách kỳ đánh giá KPI,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_178,P2,Positive,assignKpis: Gán hàng loạt KPI cho nhân viên,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_179,P2,Positive,updateActual: Parse actual_value từ DTO và gọi service.updateActual,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Kpi,TC_BE_KPI_180,P2,Positive,gradeAssignment: Manager chấm điểm KPI cho nhân viên,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Kpi,TC_BE_KPI_181,P2,Positive,getEmployeeAssignments: Lấy danh sách KPI assignment của nhân viên,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_182,P2,Positive,getMyPerformance: Lấy KPI của chính mình (không cần employee_id trên URL),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),"✓ Được gọi với: 1, 2"
+Kpi,TC_BE_KPI_183,P2,Positive,calculateScore: Gọi service.calculateFinalKpiScore với employee_id và period_id,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_184,P2,Negative,Ném NotFoundException khi người tạo KPI không tồn tại,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_185,P2,Positive,Tạo library KPI thành công và gán creator_id,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_186,P2,Negative,Ném BadRequestException khi tham số assignKpis không hợp lệ,▸ 1. Kiểm tra xử lý ngoại lệ; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_187,P2,Positive,Thiết lập chỉ tiêu KPI cho nhân viên,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_188,P2,Positive,updateActual: Giá trị NaN được giữ nguyên actual_value=0 và set status SUBMITTED,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_189,P3,Negative,Đánh giá kết quả KPI của nhân viên,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Kpi,TC_BE_KPI_190,P2,Positive,Đánh giá kết quả KPI của nhân viên,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_191,P2,Positive,getLeaveTypes: Lấy danh sách loại nghỉ phép,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_192,P1,Positive,getBalance: Lấy số dư ngày phép của user từ token,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp []
+Leave,TC_BE_LEAVE_193,P2,Positive,getMyRequests: Lấy danh sách đơn nghỉ phép của chính mình,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp []
+Leave,TC_BE_LEAVE_194,P2,Positive,submitLeaveRequest: Gửi đơn nghỉ phép với đầy đủ thông tin,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_195,P2,Positive,getPendingRequests: Lấy danh sách đơn nghỉ phép đang chờ duyệt,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_196,P1,Positive,approveLeaveRequest: Admin duyệt/từ chối đơn nghỉ phép với ghi chú,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_197,P2,Negative,Return deduplicated leave types,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_198,P2,Positive,Kiểm tra số ngày phép còn lại,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_199,P3,Negative,Trả về rỗng khi không có dữ liệu,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_200,P1,Positive,Return employee leave requests with all mapped fields,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_201,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_202,P3,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_203,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_204,P2,Positive,Gửi form thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_205,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_206,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_207,P1,Positive,Phê duyệt đơn xin nghỉ phép,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_208,P1,Negative,Từ chối đơn xin nghỉ phép,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_209,P1,Negative,Kiểm tra số ngày phép còn lại,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_210,P1,Positive,Save admin note when approving with a note,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Leave,TC_BE_LEAVE_211,P1,Negative,Xác minh hành vi KHÔNG xảy ra,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Notifications,TC_BE_NOTIFI_212,P2,Positive,"Kiểm tra toàn bộ endpoint notifications: getUserNotifications, markAsRead, deleteNotification, createAnnouncement",▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Notifications,TC_BE_NOTIFI_213,P1,Positive,Từ chối client không có auth token,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Notifications,TC_BE_NOTIFI_214,P1,Positive,Xác thực JWT token và gán userId vào client data,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Notifications,TC_BE_NOTIFI_215,P1,Negative,Ngắt kết nối khi JWT token không hợp lệ,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Notifications,TC_BE_NOTIFI_216,P2,Positive,Xóa socket khỏi userSockets map khi client ngắt kết nối,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Notifications,TC_BE_NOTIFI_217,P2,Positive,Emit notification đến đúng socket của user qua server.to(),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Được gọi với: '1'
+Notifications,TC_BE_NOTIFI_218,P2,Positive,Không gửi notification khi user tắt push_notifications,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Notifications,TC_BE_NOTIFI_219,P2,Positive,Không gửi announcement khi user tắt announcements,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Notifications,TC_BE_NOTIFI_220,P2,Positive,Tạo và gửi notification qua WebSocket thành công,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Notifications,TC_BE_NOTIFI_221,P2,Positive,Lấy danh sách thông báo của user: trả về mảng rỗng,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Notifications,TC_BE_NOTIFI_222,P2,Positive,Đánh dấu thông báo đã đọc thành công,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { success: true }
+Notifications,TC_BE_NOTIFI_223,P2,Negative,deleteNotification: Ném NotFoundException khi thông báo không tồn tại,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra xử lý ngoại lệ; ▸ 3. Kiểm tra kết quả với expect(),✓ Promise bị reject
+Notifications,TC_BE_NOTIFI_224,P2,Positive,deleteNotification: Xóa thông báo thành công và trả về success,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { success: true }
+Notifications,TC_BE_NOTIFI_225,P2,Positive,Gửi thông báo (announcement) đến tất cả người dùng,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Mock Repository database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_226,P2,Positive,"Return ""Không đồng"" for zero",▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Năm mươi nghìn đồng'
+Payroll,TC_BE_PAYROL_227,P2,Positive,Handle negative numbers by using absolute value,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Một đồng'
+Payroll,TC_BE_PAYROL_228,P2,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Mười đồng'
+Payroll,TC_BE_PAYROL_229,P2,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Hai mươi đồng'
+Payroll,TC_BE_PAYROL_230,P2,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Hai mươi mốt đồng'
+Payroll,TC_BE_PAYROL_231,P2,Positive,"Use special forms for unit digits after tens (1->mốt, 5->lăm)",▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Một trăm đồng'
+Payroll,TC_BE_PAYROL_232,P2,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Một trăm lẻ một đồng'
+Payroll,TC_BE_PAYROL_233,P2,Positive,"Use ""lẻ"" for hundreds with single digit remainder",▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Một trăm năm mươi đồng'
+Payroll,TC_BE_PAYROL_234,P2,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Một nghìn đồng'
+Payroll,TC_BE_PAYROL_235,P2,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),"✓ Trả về 'Một nghìn, hai trăm năm mươi đồng'"
+Payroll,TC_BE_PAYROL_236,P2,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Một triệu đồng'
+Payroll,TC_BE_PAYROL_237,P2,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ expect(numberToVietnameseWords(16157571)).toBe(
+Payroll,TC_BE_PAYROL_238,P2,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Một tỷ đồng'
+Payroll,TC_BE_PAYROL_239,P2,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_240,P2,Positive,Round decimal numbers before conversion,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Mười hai triệu đồng'
+Payroll,TC_BE_PAYROL_241,P1,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'Một trăm triệu đồng'
+Payroll,TC_BE_PAYROL_242,P1,Positive,Chuyển đổi dữ liệu thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_243,P1,Positive,Tạo phiếu lương cho nhân viên,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_244,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_245,P1,Positive,Generate single payslip for specified employee,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_246,P1,Positive,Liệt kê danh sách đầy đủ,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_247,P1,Positive,Return payslips for the authenticated employee,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_248,P1,Positive,Batch approve all payslips for a period,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_249,P1,Positive,Allow admin to view any payslip,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_250,P1,Positive,Forbid non-admin from viewing another employee payslip,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_251,P1,Positive,Allow employee to view their own payslip,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_252,P1,Positive,Approve payslip by id,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_253,P1,Positive,Mark payslip as paid,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_254,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_255,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_256,P1,Positive,Tạo mới thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_257,P1,Positive,Return payroll period info,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_258,P1,Positive,Return 0 tax for zero or negative taxable income,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_259,P1,Positive,Calculate 5% tax for first bracket (<= 5M),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_260,P1,Positive,Calculate progressive tax for bracket 2 (5M-10M),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_261,P1,Positive,Calculate progressive tax for bracket 3 (10M-18M),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_262,P1,Positive,Calculate progressive tax for bracket 4 (18M-32M),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_263,P1,Positive,Calculate progressive tax for bracket 5 (32M-52M),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_264,P1,Positive,Calculate progressive tax for bracket 6 (52M-80M),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_265,P1,Positive,Calculate progressive tax for bracket 7 (>80M),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_266,P1,Negative,Tạo mới thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_267,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Mock Repository database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_268,P1,Negative,Return detailed payslip with earnings and deduction breakdown,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_269,P1,Positive,Gửi thông báo đến người dùng,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_270,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_271,P1,Positive,Mark payslip as paid and notify employee,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_272,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_273,P1,Positive,Batch approve all pending payslips for a period,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Mock Repository database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_274,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_275,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_276,P1,Positive,Tạo mới thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Mock Repository database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_277,P1,Negative,Tạo mới thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Mock Repository database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_278,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ expect(
+Payroll,TC_BE_PAYROL_279,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_280,P1,Positive,Return salary config when employee has configuration,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_281,P1,Positive,Xóa thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Mock Repository database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Payroll,TC_BE_PAYROL_282,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Positions,TC_BE_POSITI_283,P2,Positive,Tạo chức vụ mới trong hệ thống,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Positions,TC_BE_POSITI_284,P2,Negative,findOne: Ném NotFoundException khi chức vụ không tồn tại,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Positions,TC_BE_POSITI_285,P2,Positive,update: Cập nhật tên chức vụ thành công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Positions,TC_BE_POSITI_286,P2,Negative,remove: Ném BadRequestException khi còn nhân viên thuộc chức vụ,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Positions,TC_BE_POSITI_287,P2,Positive,remove: Xóa chức vụ thành công khi không có nhân viên,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Reports,TC_BE_REPORT_288,P1,Positive,payrollSummary controller: Gọi service với tham số đã parse (string → number),▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Reports,TC_BE_REPORT_289,P1,Positive,payrollSummary: Xử lý fallback khi month và year là chuỗi rỗng,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Reports,TC_BE_REPORT_290,P2,Positive,getDashboard: Proxy request đến service.getDashboardData,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Reports,TC_BE_REPORT_291,P1,Positive,"payrollSummary service: Xử lý dataset rỗng, trả về employees_processed = 0",▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Reports,TC_BE_REPORT_292,P1,Positive,payrollSummary service: Tính toán tổng lương và lương theo phòng ban từ payslip,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Reports,TC_BE_REPORT_293,P1,Positive,"getDashboardData service: Tổng hợp dữ liệu dashboard (salary trend, headcount, turnover, personnel by dept)",▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_294,P2,Negative,Từ chối truy cập khi user không có quyền (chưa đăng nhập hoặc role thường),▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra xử lý ngoại lệ; ▸ 3. Kiểm tra kết quả với expect(),✓ expect(() => controller.findMyRequests({ user: {} } as any)).toThrow(ForbiddenException)
+Resignations,TC_BE_RESIGN_295,P2,Positive,Tạo đơn thôi việc và lấy danh sách đơn của user đã đăng nhập,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_296,P2,Positive,Lấy tất cả đơn thôi việc và cập nhật trạng thái (Admin/HR),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_297,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_298,P2,Positive,Tạo mới thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_299,P2,Negative,Return all resignation requests for an employee,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_300,P2,Positive,Return all resignation requests with employee relation,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_301,P2,Negative,Ném exception phù hợp,▸ 1. Kiểm tra xử lý ngoại lệ; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_302,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_303,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_304,P2,Positive,Phê duyệt đơn xin thôi việc,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Resignations,TC_BE_RESIGN_305,P2,Negative,Từ chối đơn xin thôi việc,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_306,P1,Negative,Parse page/limit từ string sang number và gọi service,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_307,P1,Negative,"Sử dụng giá trị mặc định (page=1, limit=50) khi tham số rỗng",▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_308,P2,Negative,getDynamicQr: Từ chối user không có thông tin (ForbiddenException),▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_309,P2,Positive,getDynamicQr: Trả về QR code khi user hợp lệ,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Timekeeping,TC_BE_TIMEKE_310,P2,Negative,Từ chối check-in QR và IP khi user không hợp lệ (ForbiddenException),▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra xử lý ngoại lệ; ▸ 3. Kiểm tra kết quả với expect(),✓ Promise bị reject
+Timekeeping,TC_BE_TIMEKE_311,P2,Positive,Check-in thành công qua QR và IP khi user hợp lệ,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_312,P1,Positive,Generate a dynamic QR token,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_313,P1,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_314,P1,Negative,Ném exception phù hợp,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_315,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_316,P2,Positive,Tạo mới thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_317,P2,Positive,Complete check-out on second scan of the day,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_318,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_319,P1,Positive,Consume token after single use,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_320,P2,Positive,Tạo mới thành công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_321,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Timekeeping,TC_BE_TIMEKE_322,P2,Positive,Return paginated timekeeping records with stats,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_323,P2,Positive,create: Tạo biên bản vi phạm mới qua DTO,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp { id: 1 }
+Violations,TC_BE_VIOLAT_324,P1,Positive,syncAttendance: Đồng bộ dữ liệu chấm công để phát hiện vi phạm,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp { success: true }
+Violations,TC_BE_VIOLAT_325,P2,Positive,findAll: Admin với manage:system xem tất cả vi phạm (không filter),▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_326,P2,Positive,findAll: Employee thường chỉ xem vi phạm của chính mình (filter theo employee_id),▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_327,P2,Positive,findAll: Parse query param employee_id từ string sang number,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_328,P2,Positive,findOne: Employee thường bị giới hạn chỉ xem vi phạm của chính mình,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_329,P2,Positive,findOne: Admin HR xem vi phạm bất kỳ (không filter employee_id),▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_330,P2,Positive,Cập nhật thông tin biên bản vi phạm,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Thực hiện thao tác database; ▸ 3. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Violations,TC_BE_VIOLAT_331,P2,Positive,Xóa biên bản vi phạm,▸ 1. Gọi phương thức nghiệp vụ cần kiểm thử; ▸ 2. Kiểm tra kết quả với expect(),✓ Kết quả khớp {}
+Violations,TC_BE_VIOLAT_332,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_333,P2,Positive,Tạo mới biên bản vi phạm cho nhân viên,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_334,P2,Positive,Return all violations with stats,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_335,P2,Positive,Lọc dữ liệu chính xác,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_336,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_337,P2,Positive,Return violation when found with employee scope,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_338,P2,Negative,Ném exception phù hợp,▸ 1. Kiểm tra xử lý ngoại lệ; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_339,P2,Positive,Cập nhật biên bản vi phạm,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_340,P2,Negative,Ném exception phù hợp,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_341,P2,Positive,Xóa biên bản vi phạm,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_342,P1,Positive,Lấy báo cáo chấm công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_343,P1,Positive,Lấy báo cáo chấm công,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Violations,TC_BE_VIOLAT_344,P1,Negative,Lấy báo cáo chấm công,▸ 1. Mock dữ liệu đầu vào; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_001,P2,Positive,useShowStatus: Kiểm tra trạng thái hiển thị,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_002,P2,Negative,useShowStatus: Kiểm tra trạng thái hiển thị,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_003,P2,Positive,useShowStatus: Kiểm tra trạng thái hiển thị,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_004,P2,Positive,useShowStatus: Kiểm tra trạng thái hiển thị,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_005,P3,Negative,useShowStatus: Kiểm tra trạng thái hiển thị,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_006,P2,Positive,useToast: Thêm toast mới (ADD_TOAST),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_007,P2,Positive,useToast: Giới hạn số toast (TOAST_LIMIT),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_008,P2,Positive,useToast: Cập nhật toast (UPDATE_TOAST),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_009,P2,Positive,useToast: Đóng toast (DISMISS_TOAST),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_010,P2,Positive,useToast: Xóa toast cụ thể (REMOVE_TOAST),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_011,P2,Positive,useToast: Xóa tất cả toast,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_012,P2,Positive,"useToast: Gọi toast() trực tiếp, trả về control object",▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_013,P2,Positive,useAuth: Trả về thông tin user (employee_id) từ AuthContext,▸ 1. Mock dữ liệu trả về cho dependency; ▸ 2. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_014,P1,Positive,useCheckPermission: Director bypass permission,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_015,P1,Positive,useCheckPermission: System Admin bypass,▸ 1. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_016,P1,Positive,useCheckPermission: Khớp string permission,▸ 1. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_017,P1,Positive,useCheckPermission: Từ chối khi thiếu permission,▸ 1. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_018,P1,Negative,useCheckPermission: Từ chối khi chưa đăng nhập,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_019,P1,Positive,useCheckPermission: Khớp permission dạng object,▸ 1. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_020,P1,Positive,"useCheckPermission: Nhận diện role ""admin"" (lowercase)",▸ 1. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_021,P1,Negative,useCheckPermission: System Admin bypass,▸ 1. Thiết lập spy/mock cho hàm phụ thuộc; ▸ 2. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_022,P2,Positive,Lấy danh sách thông báo chưa đọc,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_023,P2,Positive,useNotifications: Đánh dấu đã đọc,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_024,P2,Positive,useNotifications: Xóa thông báo,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Hooks,TC_FE_HOOKS_025,P2,Positive,useNotifications: Đánh dấu tất cả đã đọc,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+I,TC_FE_I18N_026,P2,Positive,i18n: Xác minh cấu hình đa ngôn ngữ được khởi tạo (import thành công),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_027,P3,Negative,getPositionName: Lấy tên chức vụ (lowercase),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_028,P2,Negative,getPositionName: Lấy tên chức vụ (lowercase),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về 'manager'
+Lib,TC_FE_LIB_029,P3,Negative,"getPositionName: Trả về """" khi user=null",▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_030,P1,Positive,isAdminBypassRole: Director → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về true
+Lib,TC_FE_LIB_031,P2,Positive,isAdminBypassRole: HR Manager → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về false
+Lib,TC_FE_LIB_032,P2,Positive,isAdminBypassRole: Employee → false,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_033,P1,Positive,canManageSystem: Director → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_034,P2,Positive,canManageSystem: Có permission → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về true
+Lib,TC_FE_LIB_035,P2,Positive,canManageSystem: User thường → false,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_036,P1,Negative,canManagePayroll: Finance → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về false
+Lib,TC_FE_LIB_037,P1,Positive,canManagePayroll: Finance → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_038,P3,Negative,canManagePermissions: Director → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về false
+Lib,TC_FE_LIB_039,P2,Negative,canManagePermissions: User thường → false,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_040,P2,Positive,canManageLeave: HR → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về false
+Lib,TC_FE_LIB_041,P2,Positive,canManageLeave: HR → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_042,P2,Positive,canManageEmployees: Director → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về true
+Lib,TC_FE_LIB_043,P2,Positive,canManageEmployees: HR → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về false
+Lib,TC_FE_LIB_044,P2,Positive,canManageEmployees: HR → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_045,P1,Positive,checkMenuVisibility: Director bypass,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_046,P1,Positive,checkMenuVisibility: System Admin bypass,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về true
+Lib,TC_FE_LIB_047,P1,Positive,checkMenuVisibility: Khớp phòng ban → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về false
+Lib,TC_FE_LIB_048,P2,Positive,checkMenuVisibility: HR bị chặn menu Finance,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về true
+Lib,TC_FE_LIB_049,P1,Negative,checkMenuVisibility: Khớp phòng ban → true,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về false
+Lib,TC_FE_LIB_050,P3,Negative,checkMenuVisibility: User null → false,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_051,P2,Positive,cn(): Gộp class name,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_052,P3,Negative,cn(): Giải quyết xung đột (twMerge),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_053,P3,Negative,cn(): Bỏ qua falsy,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_054,P3,Negative,"cn(): Không tham số → """"",▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Lib,TC_FE_LIB_055,P2,Positive,cn(): Xử lý object và mảng (clsx),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Chứa giá trị: 'base'
+Types,TC_FE_TYPES_056,P2,Positive,Kiểm tra chức năng chấm công (timekeeping),▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Utils,TC_FE_UTILS_057,P3,Negative,cleanParams: Loại bỏ null/undefined/empty string khỏi object params,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),"✓ Kết quả khớp { a: 1, e: 'hello' }"
+Utils,TC_FE_UTILS_058,P2,Positive,toQueryString: Chuyển object thành query string URL hợp lệ,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Trả về ''
+Components,TC_FE_COMPON_059,P2,Positive,ContextualChat: Render giao diện chat,▸ 1. Truy vấn phần tử DOM; ▸ 2. Kiểm tra kết quả với expect(),✓ Phần tử tồn tại trong DOM
+Components,TC_FE_COMPON_060,P2,Positive,ContextualChat: Tương tác khung chat,▸ 1. Truy vấn phần tử DOM; ▸ 2. Kiểm tra kết quả với expect(),✓ Phần tử tồn tại trong DOM
+Components,TC_FE_COMPON_061,P3,Negative,ContextualChat: Trạng thái không có tin nhắn,▸ 1. Truy vấn phần tử DOM; ▸ 2. Kiểm tra kết quả với expect(),✓ Phần tử tồn tại trong DOM
+Components,TC_FE_COMPON_062,P2,Negative,ContextualChat: Tương tác khung chat,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_063,P2,Positive,ContextualChat: Tương tác khung chat,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_064,P3,Negative,ContextualChat: Trạng thái không có tin nhắn,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_065,P2,Positive,Lấy dữ liệu tổng quan cho Admin Dashboard,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_066,P2,Positive,Lấy dữ liệu tổng quan cho Admin Dashboard,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_067,P2,Positive,Lấy dữ liệu tổng quan cho Admin Dashboard,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_068,P2,Negative,Lấy dữ liệu tổng quan cho Admin Dashboard,▸ 1. Truy vấn phần tử DOM; ▸ 2. Kiểm tra kết quả với expect(),✓ Phần tử tồn tại trong DOM
+Components,TC_FE_COMPON_069,P2,Positive,Lấy dữ liệu tổng quan cho Admin Dashboard,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_070,P2,Positive,Lấy dữ liệu tổng quan cho Admin Dashboard,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_071,P2,Positive,Lấy dữ liệu tổng quan cho Employee Dashboard,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_072,P2,Positive,Lấy dữ liệu tổng quan cho Employee Dashboard,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_073,P2,Positive,Lấy dữ liệu tổng quan cho Employee Dashboard,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_074,P3,Negative,Lấy dữ liệu tổng quan cho Employee Dashboard,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Components,TC_FE_COMPON_075,P2,Negative,Lấy dữ liệu tổng quan cho Employee Dashboard,▸ 1. Truy vấn phần tử DOM; ▸ 2. Kiểm tra kết quả với expect(),✓ Phần tử tồn tại trong DOM
+Components,TC_FE_COMPON_076,P2,Positive,Lấy dữ liệu tổng quan cho Employee Dashboard,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contexts,TC_FE_CONTEX_077,P2,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contexts,TC_FE_CONTEX_078,P3,Negative,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contexts,TC_FE_CONTEX_079,P2,Positive,Đăng xuất và vô hiệu hóa token hiện tại,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contexts,TC_FE_CONTEX_080,P3,Negative,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Truy vấn phần tử DOM; ▸ 2. Kiểm tra kết quả với expect(),✓ UI hiển thị: No User
+Contexts,TC_FE_CONTEX_081,P2,Positive,Lấy thông tin profile của người dùng đang đăng nhập,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contexts,TC_FE_CONTEX_082,P2,Negative,Đăng xuất và vô hiệu hóa token hiện tại,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contexts,TC_FE_CONTEX_083,P2,Negative,AuthContext: Quản lý trạng thái xác thực,▸ 1. Render component với mock context/props; ▸ 2. Kiểm tra xử lý ngoại lệ; ▸ 3. Kiểm tra kết quả với expect(),✓ expect(() => render(<DummyComponent />)).toThrow(
+Contexts,TC_FE_CONTEX_084,P2,Positive,CompanyContext: Lấy thông tin công ty từ API,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contexts,TC_FE_CONTEX_085,P2,Positive,CompanyContext: Cập nhật logo công ty,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contexts,TC_FE_CONTEX_086,P3,Negative,CompanyContext: Lấy thông tin công ty từ API,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contexts,TC_FE_CONTEX_087,P2,Negative,CompanyContext: Quản lý thông tin công ty,▸ 1. Render component với mock context/props; ▸ 2. Kiểm tra xử lý ngoại lệ; ▸ 3. Kiểm tra kết quả với expect(),✓ expect(() => render(<TestComponent />)).toThrow(
+Contexts,TC_FE_CONTEX_088,P2,Positive,CompanyContext: Làm mới thông tin,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi
+Contexts,TC_FE_CONTEX_089,P3,Negative,CompanyContext: Cập nhật logo công ty,▸ 1. Render component/hook; ▸ 2. Gọi hàm/phương thức cần test; ▸ 3. Kiểm tra kết quả với expect(),✓ Hoàn thành kiểm tra không lỗi

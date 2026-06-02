@@ -61,6 +61,7 @@ describe('AnalyticsService', () => {
   });
 
   describe('getDashboardData', () => {
+    // [TC_BE_ANALYT_035]
     it('should return structured dashboard analytics data', async () => {
       // Setup minimal mock returned data
       const contractQb = createQueryBuilderMock();
@@ -105,6 +106,7 @@ describe('AnalyticsService', () => {
       expect(result.topKpi[0].department).toBe('IT');
     });
 
+    // [TC_BE_ANALYT_036]
     it('should handle zero totals gracefully to avoid division by zero NaN outputs', async () => {
       const contractQb = createQueryBuilderMock();
       contractRepo.createQueryBuilder.mockReturnValue(contractQb);

@@ -13,6 +13,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amount=0
    * @ExpectedResult: "Không đồng"
    */
+  // [TC_BE_PAYROL_226]
   it('should return "Không đồng" for zero', () => {
     expect(numberToVietnameseWords(0)).toBe('Không đồng');
   });
@@ -29,6 +30,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amount=-50000
    * @ExpectedResult: "Năm mươi nghìn đồng"
    */
+  // [TC_BE_PAYROL_227]
   it('should handle negative numbers by using absolute value', () => {
     expect(numberToVietnameseWords(-50000)).toBe('Năm mươi nghìn đồng');
   });
@@ -47,6 +49,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amounts=1, 5, 9
    * @ExpectedResult: "Một đồng", "Năm đồng", "Chín đồng"
    */
+  // [TC_BE_PAYROL_228]
   it('should convert single digits (1-9) correctly', () => {
     expect(numberToVietnameseWords(1)).toBe('Một đồng');
     expect(numberToVietnameseWords(5)).toBe('Năm đồng');
@@ -67,6 +70,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amounts=10, 15, 19
    * @ExpectedResult: "Mười đồng", "Mười lăm đồng", "Mười chín đồng"
    */
+  // [TC_BE_PAYROL_229]
   it('should convert teen numbers (10-19) correctly', () => {
     expect(numberToVietnameseWords(10)).toBe('Mười đồng');
     expect(numberToVietnameseWords(15)).toBe('Mười lăm đồng');
@@ -87,6 +91,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amounts=20, 50, 90
    * @ExpectedResult: "Hai mươi đồng", "Năm mươi đồng", "Chín mươi đồng"
    */
+  // [TC_BE_PAYROL_230]
   it('should convert round tens (20, 50, 90) correctly', () => {
     expect(numberToVietnameseWords(20)).toBe('Hai mươi đồng');
     expect(numberToVietnameseWords(50)).toBe('Năm mươi đồng');
@@ -105,6 +110,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amounts=21, 55
    * @ExpectedResult: "Hai mươi mốt đồng", "Năm mươi lăm đồng"
    */
+  // [TC_BE_PAYROL_231]
   it('should use special forms for unit digits after tens (1->mốt, 5->lăm)', () => {
     expect(numberToVietnameseWords(21)).toBe('Hai mươi mốt đồng');
     expect(numberToVietnameseWords(55)).toBe('Năm mươi lăm đồng');
@@ -124,6 +130,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amounts=100, 200
    * @ExpectedResult: "Một trăm đồng", "Hai trăm đồng"
    */
+  // [TC_BE_PAYROL_232]
   it('should convert round hundreds (100, 200) correctly', () => {
     expect(numberToVietnameseWords(100)).toBe('Một trăm đồng');
     expect(numberToVietnameseWords(200)).toBe('Hai trăm đồng');
@@ -141,6 +148,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amounts=101, 105
    * @ExpectedResult: "Một trăm lẻ một đồng", "Một trăm lẻ năm đồng"
    */
+  // [TC_BE_PAYROL_233]
   it('should use "lẻ" for hundreds with single digit remainder', () => {
     expect(numberToVietnameseWords(101)).toBe('Một trăm lẻ một đồng');
     expect(numberToVietnameseWords(105)).toBe('Một trăm lẻ năm đồng');
@@ -158,6 +166,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amounts=150, 999
    * @ExpectedResult: "Một trăm năm mươi đồng", "Chín trăm chín mươi chín đồng"
    */
+  // [TC_BE_PAYROL_234]
   it('should convert full hundreds (150, 999) correctly', () => {
     expect(numberToVietnameseWords(150)).toBe('Một trăm năm mươi đồng');
     expect(numberToVietnameseWords(999)).toBe('Chín trăm chín mươi chín đồng');
@@ -177,6 +186,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amounts=1000, 5000
    * @ExpectedResult: "Một nghìn đồng", "Năm nghìn đồng"
    */
+  // [TC_BE_PAYROL_235]
   it('should convert simple thousands (1000, 5000) correctly', () => {
     expect(numberToVietnameseWords(1000)).toBe('Một nghìn đồng');
     expect(numberToVietnameseWords(5000)).toBe('Năm nghìn đồng');
@@ -194,6 +204,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amounts=1250, 999999
    * @ExpectedResult: "Một nghìn, hai trăm năm mươi đồng", "Chín trăm chín mươi chín nghìn, chín trăm chín mươi chín đồng"
    */
+  // [TC_BE_PAYROL_236]
   it('should convert thousands with hundreds (1250, 999999) correctly', () => {
     expect(numberToVietnameseWords(1250)).toBe('Một nghìn, hai trăm năm mươi đồng');
     expect(numberToVietnameseWords(999999)).toBe('Chín trăm chín mươi chín nghìn, chín trăm chín mươi chín đồng');
@@ -213,6 +224,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amounts=1000000, 5000000
    * @ExpectedResult: "Một triệu đồng", "Năm triệu đồng"
    */
+  // [TC_BE_PAYROL_237]
   it('should convert simple millions (1M, 5M) correctly', () => {
     expect(numberToVietnameseWords(1000000)).toBe('Một triệu đồng');
     expect(numberToVietnameseWords(5000000)).toBe('Năm triệu đồng');
@@ -230,6 +242,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amount=16157571
    * @ExpectedResult: "Mười sáu triệu, một trăm năm mươi bảy nghìn, năm trăm bảy mươi mốt đồng"
    */
+  // [TC_BE_PAYROL_238]
   it('should convert complex millions (16157571) correctly', () => {
     expect(numberToVietnameseWords(16157571)).toBe(
       'Mười sáu triệu, một trăm năm mươi bảy nghìn, năm trăm bảy mươi mốt đồng'
@@ -250,6 +263,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amount=1000000000
    * @ExpectedResult: "Một tỷ đồng"
    */
+  // [TC_BE_PAYROL_239]
   it('should convert billions (1B) correctly', () => {
     expect(numberToVietnameseWords(1000000000)).toBe('Một tỷ đồng');
   });
@@ -266,6 +280,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amount=123.7
    * @ExpectedResult: "Một trăm hai mươi bốn đồng" (rounded from 123.7)
    */
+  // [TC_BE_PAYROL_240]
   it('should round decimal numbers before conversion', () => {
     const result = numberToVietnameseWords(123.7);
     // 123.7 rounds to 124
@@ -284,6 +299,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amount=12000000
    * @ExpectedResult: "Mười hai triệu đồng"
    */
+  // [TC_BE_PAYROL_241]
   it('should convert 12-million salary (intern range) correctly', () => {
     expect(numberToVietnameseWords(12000000)).toBe('Mười hai triệu đồng');
   });
@@ -300,6 +316,7 @@ describe('numberToVietnameseWords', () => {
    * @TestData: amount=100000000
    * @ExpectedResult: "Một trăm triệu đồng"
    */
+  // [TC_BE_PAYROL_242]
   it('should convert 100-million salary (director range) correctly', () => {
     expect(numberToVietnameseWords(100000000)).toBe('Một trăm triệu đồng');
   });

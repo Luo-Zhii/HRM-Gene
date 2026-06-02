@@ -30,6 +30,16 @@ describe('toast reducer', () => {
    * @TestData: toast {id:'1', title:'Test'}
    * @ExpectedResult: toasts array contains toast with id='1'
    */
+  // [TC_FE_HOOK_037]
+  // [TC_FE_HOOK_037]
+  // [TC_FE_HOOK_037]
+  // [TC_FE_HOOK_037]
+  // [TC_FE_HOOK_037]
+  // [TC_FE_HOOK_037]
+  // [TC_FE_HOOK_037]
+  // [TC_FE_HOOK_037]
+  // [TC_FE_HOOK_037]
+  // [TC_FE_HOOK_037]
   it('should add a toast on ADD_TOAST action', () => {
     const initialState = { toasts: [] };
     const action = {
@@ -53,6 +63,16 @@ describe('toast reducer', () => {
    * @TestData: Two toast additions
    * @ExpectedResult: State.toasts.length === 1
    */
+  // [TC_FE_HOOK_038]
+  // [TC_FE_HOOK_038]
+  // [TC_FE_HOOK_038]
+  // [TC_FE_HOOK_038]
+  // [TC_FE_HOOK_038]
+  // [TC_FE_HOOK_038]
+  // [TC_FE_HOOK_038]
+  // [TC_FE_HOOK_038]
+  // [TC_FE_HOOK_038]
+  // [TC_FE_HOOK_038]
   it('should enforce TOAST_LIMIT (only 1 toast visible at a time)', () => {
     const initialState = { toasts: [{ id: '1', title: 'First', open: true }] };
     const action = {
@@ -76,6 +96,16 @@ describe('toast reducer', () => {
    * @TestData: Update title on toast id='1'
    * @ExpectedResult: Toast title changed to 'Updated'
    */
+  // [TC_FE_HOOK_039]
+  // [TC_FE_HOOK_039]
+  // [TC_FE_HOOK_039]
+  // [TC_FE_HOOK_039]
+  // [TC_FE_HOOK_039]
+  // [TC_FE_HOOK_039]
+  // [TC_FE_HOOK_039]
+  // [TC_FE_HOOK_039]
+  // [TC_FE_HOOK_039]
+  // [TC_FE_HOOK_039]
   it('should update an existing toast on UPDATE_TOAST', () => {
     const initialState = {
       toasts: [{ id: '1', title: 'Old', description: 'desc', open: true }],
@@ -101,6 +131,16 @@ describe('toast reducer', () => {
    * @TestData: DISMISS_TOAST toastId='1'
    * @ExpectedResult: toast.open = false
    */
+  // [TC_FE_HOOK_040]
+  // [TC_FE_HOOK_040]
+  // [TC_FE_HOOK_040]
+  // [TC_FE_HOOK_040]
+  // [TC_FE_HOOK_040]
+  // [TC_FE_HOOK_040]
+  // [TC_FE_HOOK_040]
+  // [TC_FE_HOOK_040]
+  // [TC_FE_HOOK_040]
+  // [TC_FE_HOOK_040]
   it('should set open to false on DISMISS_TOAST', () => {
     const initialState = {
       toasts: [{ id: '1', title: 'Dismiss me', open: true }],
@@ -122,6 +162,16 @@ describe('toast reducer', () => {
    * @TestData: REMOVE_TOAST toastId='1'
    * @ExpectedResult: toasts.length === 1, remaining id is '2'
    */
+  // [TC_FE_HOOK_041]
+  // [TC_FE_HOOK_041]
+  // [TC_FE_HOOK_041]
+  // [TC_FE_HOOK_041]
+  // [TC_FE_HOOK_041]
+  // [TC_FE_HOOK_041]
+  // [TC_FE_HOOK_041]
+  // [TC_FE_HOOK_041]
+  // [TC_FE_HOOK_041]
+  // [TC_FE_HOOK_041]
   it('should remove a toast on REMOVE_TOAST', () => {
     const initialState = {
       toasts: [
@@ -147,6 +197,16 @@ describe('toast reducer', () => {
    * @TestData: REMOVE_TOAST toastId=undefined
    * @ExpectedResult: toasts = []
    */
+  // [TC_FE_HOOK_042]
+  // [TC_FE_HOOK_042]
+  // [TC_FE_HOOK_042]
+  // [TC_FE_HOOK_042]
+  // [TC_FE_HOOK_042]
+  // [TC_FE_HOOK_042]
+  // [TC_FE_HOOK_042]
+  // [TC_FE_HOOK_042]
+  // [TC_FE_HOOK_042]
+  // [TC_FE_HOOK_042]
   it('should clear all toasts when REMOVE_TOAST has no toastId', () => {
     const initialState = {
       toasts: [
@@ -173,6 +233,16 @@ describe('toast function (imperative)', () => {
    * @TestData: toast({title:'Imperative'})
    * @ExpectedResult: State.toasts[0].title === 'Imperative'
    */
+  // [TC_FE_HOOK_043]
+  // [TC_FE_HOOK_043]
+  // [TC_FE_HOOK_043]
+  // [TC_FE_HOOK_043]
+  // [TC_FE_HOOK_043]
+  // [TC_FE_HOOK_043]
+  // [TC_FE_HOOK_043]
+  // [TC_FE_HOOK_043]
+  // [TC_FE_HOOK_043]
+  // [TC_FE_HOOK_043]
   it('should add a toast via imperative toast() and return control object', () => {
     const { result } = renderHook(() => useToast());
 

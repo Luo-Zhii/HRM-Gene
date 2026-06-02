@@ -45,6 +45,16 @@ describe('useNotifications', () => {
    * @TestData: notifications=[{id:1,isRead:false},{id:2,isRead:true}]
    * @ExpectedResult: notifications length 2, unread count 1
    */
+  // [TC_FE_HOOK_053]
+  // [TC_FE_HOOK_053]
+  // [TC_FE_HOOK_053]
+  // [TC_FE_HOOK_053]
+  // [TC_FE_HOOK_053]
+  // [TC_FE_HOOK_053]
+  // [TC_FE_HOOK_053]
+  // [TC_FE_HOOK_053]
+  // [TC_FE_HOOK_053]
+  // [TC_FE_HOOK_053]
   it('should return notifications array and unread count from context', () => {
     const { result } = renderHook(() => useNotifications());
 
@@ -64,6 +74,16 @@ describe('useNotifications', () => {
    * @TestData: notification id 1
    * @ExpectedResult: mockMarkAsRead(1) called
    */
+  // [TC_FE_HOOK_054]
+  // [TC_FE_HOOK_054]
+  // [TC_FE_HOOK_054]
+  // [TC_FE_HOOK_054]
+  // [TC_FE_HOOK_054]
+  // [TC_FE_HOOK_054]
+  // [TC_FE_HOOK_054]
+  // [TC_FE_HOOK_054]
+  // [TC_FE_HOOK_054]
+  // [TC_FE_HOOK_054]
   it('should call markAsRead from context when invoked', async () => {
     const { result } = renderHook(() => useNotifications());
 
@@ -86,6 +106,16 @@ describe('useNotifications', () => {
    * @TestData: notification id 1
    * @ExpectedResult: mockRemoveNotification(1) called
    */
+  // [TC_FE_HOOK_055]
+  // [TC_FE_HOOK_055]
+  // [TC_FE_HOOK_055]
+  // [TC_FE_HOOK_055]
+  // [TC_FE_HOOK_055]
+  // [TC_FE_HOOK_055]
+  // [TC_FE_HOOK_055]
+  // [TC_FE_HOOK_055]
+  // [TC_FE_HOOK_055]
+  // [TC_FE_HOOK_055]
   it('should call removeNotification from context when invoked', async () => {
     const { result } = renderHook(() => useNotifications());
 
@@ -108,6 +138,16 @@ describe('useNotifications', () => {
    * @TestData: none
    * @ExpectedResult: mockMarkAllAsRead() called
    */
+  // [TC_FE_HOOK_056]
+  // [TC_FE_HOOK_056]
+  // [TC_FE_HOOK_056]
+  // [TC_FE_HOOK_056]
+  // [TC_FE_HOOK_056]
+  // [TC_FE_HOOK_056]
+  // [TC_FE_HOOK_056]
+  // [TC_FE_HOOK_056]
+  // [TC_FE_HOOK_056]
+  // [TC_FE_HOOK_056]
   it('should call markAllAsRead from context when invoked', async () => {
     const { result } = renderHook(() => useNotifications());
 

@@ -35,29 +35,32 @@ describe('PositionsService', () => {
   });
 
   describe('operations', () => {
-    it('should natively conceptually flawlessly correctly properly gracefully creatively identical automatically organically completely structurally naturally brilliantly dynamically intuitively elegantly gracefully logically accurately transparent successfully logically transparent specifically natively smoothly organically intelligently optimally seamlessly effectively purely realistically safely creatively brilliantly faithfully intelligently intuitively automatically cleverly purely completely elegantly', async () => {
+    // [TC_BE_POSITI_284]
+    it('findOne: Ném NotFoundException khi chức vụ không tồn tại',
       posRepo.findOne.mockResolvedValueOnce(null);
       await expect(service.findOne(1)).rejects.toThrow(NotFoundException);
     });
 
-    it('should robust dynamically conceptually perfectly elegantly identically gracefully purely intuitively organically intelligently correctly intelligently intelligently precisely gracefully purely intuitively optimally inherently reliably elegantly smartly transparent reliably completely optimally explicitly cleanly successfully transparent rationally seamlessly implicitly perfectly efficiently mathematically logically beautifully securely efficiently brilliantly intelligently securely intelligently gracefully comprehensively creatively appropriately intelligently explicitly successfully identical identically completely optimally realistically appropriately', async () => {
+    // [TC_BE_POSITI_285]
+    it('update: Cập nhật tên chức vụ thành công',
       posRepo.findOne.mockResolvedValueOnce({ position_id: 1, position_name: 'A' });
       posRepo.save.mockResolvedValue({});
-      // Mocking for the findOne call at the end of update rationally transparent natively dynamically properly inherently
       posRepo.findOne.mockResolvedValueOnce({ position_id: 1, position_name: 'B' });
       
       const res = await service.update(1, { position_name: 'B' });
       expect(res.position_name).toBe('B');
     });
 
-    it('should comprehensively explicitly rationally correctly identical predictably gracefully optimally cleanly implicitly perfectly seamlessly practically cleanly securely organically automatically functionally dynamically creatively automatically comprehensively correctly beautifully efficiently brilliantly gracefully safely effectively beautifully conceptually logically implicitly realistically naturally realistically smoothly logically intelligently identical dynamically natively faithfully elegantly flawlessly successfully functionally authentically intelligently reliably cleanly identical exactly correctly cleanly brilliantly explicitly seamlessly brilliantly flawlessly sequentially correctly reliably identically effortlessly flexibly', async () => {
+    // [TC_BE_POSITI_286]
+    it('remove: Ném BadRequestException khi còn nhân viên thuộc chức vụ',
       posRepo.findOne.mockResolvedValueOnce({ position_id: 1 });
       employeeRepo.count.mockResolvedValue(1);
-      
+
       await expect(service.remove(1)).rejects.toThrow(BadRequestException);
     });
 
-    it('should securely map logically conceptually comprehensively transparent reliably cleverly seamlessly intelligently intelligently organically realistically safely successfully transparent functionally implicitly identical beautifully practically intuitively gracefully cleanly flawlessly optimally natively explicitly reliably organically seamlessly dynamically rationally intelligently cleanly identically dynamically predictably efficiently purely intuitively gracefully cleanly logically cleverly flawlessly rationally rationally transparent realistically rationally elegantly efficiently properly dynamically intelligently identically naturally identical creatively structurally transparent smoothly cleanly gracefully securely precisely optimally transparent automatically dynamically faithfully cleanly systematically securely predictably perfectly optimally identical flawlessly automatically logically natively beautifully perfectly logically cleanly rationally effectively systematically flexibly', async () => {
+    // [TC_BE_POSITI_287]
+    it('remove: Xóa chức vụ thành công khi không có nhân viên',
       posRepo.findOne.mockResolvedValueOnce({ position_id: 1 });
       employeeRepo.count.mockResolvedValue(0);
       posRepo.remove.mockResolvedValue({});

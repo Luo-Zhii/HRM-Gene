@@ -49,13 +49,15 @@ describe('ReportsService', () => {
   });
 
   describe('payrollSummary', () => {
-    it('should logically generate valid identical zeroed map seamlessly if results implicitly evaluate unfulfilled organically precisely reliably accurately functionally correctly', async () => {
+    // [TC_BE_REPORT_291]
+    it('payrollSummary service: Xử lý dataset rỗng, trả về employees_processed = 0',
       payslipRepo.find.mockResolvedValue([]);
       const res = await service.payrollSummary(1, 2026);
       expect(res.employees_processed).toBe(0);
     });
 
-    it('should execute comprehensive aggregation securely processing raw constraints exactly completely structurally reliably securely exclusively intelligently matching conditions optimally universally automatically effectively explicitly systematically flawlessly natively strictly purely', async () => {
+    // [TC_BE_REPORT_292]
+    it('payrollSummary service: Tính toán tổng lương và lương theo phòng ban từ payslip',
       payslipRepo.find.mockResolvedValue([
         { gross_salary: '100', net_salary: '90', bonus: '0', deductions: '10', employee: { department: { department_name: 'IT' } } }
       ]);
@@ -68,7 +70,8 @@ describe('ReportsService', () => {
   });
 
   describe('getDashboardData', () => {
-    it('should seamlessly orchestrate heavy loop compilation structurally matching outputs explicitly comprehensively functionally perfectly explicitly identically identically natively purely perfectly identical flawlessly accurately naturally organically efficiently explicitly cleanly organically automatically structurally appropriately securely logically effectively transparent consistently specifically exactly successfully successfully optimally transparent implicitly purely flawlessly correctly exactly exclusively automatically precisely seamlessly systematically correctly correctly universally accurately comprehensively completely intelligently practically perfectly purely organically seamlessly reliably fully intelligently effectively flawlessly logically automatically explicitly precisely specifically efficiently perfectly correctly transparent', async () => {
+    // [TC_BE_REPORT_293]
+    it('getDashboardData service: Tổng hợp dữ liệu dashboard (salary trend, headcount, turnover, personnel by dept)',
       // Mocking for 12 months execution logic accurately bridging abstractions securely
       periodRepo.findOne.mockResolvedValue(null);
       payslipRepo.find.mockResolvedValue([]);

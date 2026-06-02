@@ -26,6 +26,7 @@ describe('DepartmentsController', () => {
   });
 
   describe('create', () => {
+    // [TC_BE_DEPART_134]
     it('should create and return department', async () => {
       mockSvc.create.mockResolvedValue({ id: 1 });
       expect(await controller.create({ department_name: 'HR' })).toEqual({ id: 1 });
@@ -34,6 +35,7 @@ describe('DepartmentsController', () => {
   });
 
   describe('findAll', () => {
+    // [TC_BE_DEPART_135]
     it('should return array of departments', async () => {
       mockSvc.findAll.mockResolvedValue([]);
       expect(await controller.findAll()).toEqual([]);
@@ -41,6 +43,7 @@ describe('DepartmentsController', () => {
   });
 
   describe('findOne', () => {
+    // [TC_BE_DEPART_136]
     it('should return department', async () => {
       mockSvc.findOne.mockResolvedValue({ id: 1 });
       expect(await controller.findOne(1)).toEqual({ id: 1 });
@@ -49,6 +52,7 @@ describe('DepartmentsController', () => {
   });
 
   describe('update', () => {
+    // [TC_BE_DEPART_137]
     it('should return updated department', async () => {
       mockSvc.update.mockResolvedValue({ id: 1 });
       expect(await controller.update(1, { department_name: 'IT' })).toEqual({ id: 1 });
@@ -57,6 +61,7 @@ describe('DepartmentsController', () => {
   });
 
   describe('remove', () => {
+    // [TC_BE_DEPART_138]
     it('should remove department', async () => {
       mockSvc.remove.mockResolvedValue({ deleted: true });
       expect(await controller.remove(1)).toEqual({ deleted: true });

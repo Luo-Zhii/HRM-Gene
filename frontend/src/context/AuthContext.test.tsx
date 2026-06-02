@@ -55,6 +55,16 @@ describe('AuthContext', () => {
    * @TestData: profile fetch returns {email:'admin@example.com'}
    * @ExpectedResult: User renders admin@example.com after loading, fetch called with credentials:'include'
    */
+  // [TC_FE_CONTEXT_019]
+  // [TC_FE_CONTEXT_019]
+  // [TC_FE_CONTEXT_019]
+  // [TC_FE_CONTEXT_019]
+  // [TC_FE_CONTEXT_019]
+  // [TC_FE_CONTEXT_019]
+  // [TC_FE_CONTEXT_019]
+  // [TC_FE_CONTEXT_019]
+  // [TC_FE_CONTEXT_019]
+  // [TC_FE_CONTEXT_019]
   it('should show loading state then display fetched user profile (admin@example.com)', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -87,6 +97,16 @@ describe('AuthContext', () => {
    * @TestData: fetch returns {ok:false, status:401}
    * @ExpectedResult: screen shows 'No User'
    */
+  // [TC_FE_CONTEXT_020]
+  // [TC_FE_CONTEXT_020]
+  // [TC_FE_CONTEXT_020]
+  // [TC_FE_CONTEXT_020]
+  // [TC_FE_CONTEXT_020]
+  // [TC_FE_CONTEXT_020]
+  // [TC_FE_CONTEXT_020]
+  // [TC_FE_CONTEXT_020]
+  // [TC_FE_CONTEXT_020]
+  // [TC_FE_CONTEXT_020]
   it('should set user to null when profile fetch returns non-ok response', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
@@ -113,6 +133,16 @@ describe('AuthContext', () => {
    * @TestData: user {email:'admin@example.com'}, mock logout API success
    * @ExpectedResult: sessionStorage.clear() invoked
    */
+  // [TC_FE_CONTEXT_021]
+  // [TC_FE_CONTEXT_021]
+  // [TC_FE_CONTEXT_021]
+  // [TC_FE_CONTEXT_021]
+  // [TC_FE_CONTEXT_021]
+  // [TC_FE_CONTEXT_021]
+  // [TC_FE_CONTEXT_021]
+  // [TC_FE_CONTEXT_021]
+  // [TC_FE_CONTEXT_021]
+  // [TC_FE_CONTEXT_021]
   it('should clear session storage on logout', async () => {
     mockFetch
       .mockResolvedValueOnce({
@@ -152,6 +182,16 @@ describe('AuthContext', () => {
    * @TestData: fetch rejects with Error('Network failure')
    * @ExpectedResult: 'No User' displayed
    */
+  // [TC_FE_CONTEXT_022]
+  // [TC_FE_CONTEXT_022]
+  // [TC_FE_CONTEXT_022]
+  // [TC_FE_CONTEXT_022]
+  // [TC_FE_CONTEXT_022]
+  // [TC_FE_CONTEXT_022]
+  // [TC_FE_CONTEXT_022]
+  // [TC_FE_CONTEXT_022]
+  // [TC_FE_CONTEXT_022]
+  // [TC_FE_CONTEXT_022]
   it('should set user to null when profile fetch throws a network error', async () => {
     mockFetch.mockRejectedValueOnce(new Error('Network failure'));
 
@@ -174,6 +214,16 @@ describe('AuthContext', () => {
    * @TestData: First: {email:'admin@example.com'}, Refresh: {email:'admin-updated@example.com'}
    * @ExpectedResult: User email updates after refresh
    */
+  // [TC_FE_CONTEXT_023]
+  // [TC_FE_CONTEXT_023]
+  // [TC_FE_CONTEXT_023]
+  // [TC_FE_CONTEXT_023]
+  // [TC_FE_CONTEXT_023]
+  // [TC_FE_CONTEXT_023]
+  // [TC_FE_CONTEXT_023]
+  // [TC_FE_CONTEXT_023]
+  // [TC_FE_CONTEXT_023]
+  // [TC_FE_CONTEXT_023]
   it('should refresh user profile when refresh button is clicked', async () => {
     mockFetch
       .mockResolvedValueOnce({
@@ -212,6 +262,16 @@ describe('AuthContext', () => {
    * @TestData: 401 response on /api/secure (not /auth/profile or /auth/login)
    * @ExpectedResult: sessionStorage.clear() invoked
    */
+  // [TC_FE_CONTEXT_024]
+  // [TC_FE_CONTEXT_024]
+  // [TC_FE_CONTEXT_024]
+  // [TC_FE_CONTEXT_024]
+  // [TC_FE_CONTEXT_024]
+  // [TC_FE_CONTEXT_024]
+  // [TC_FE_CONTEXT_024]
+  // [TC_FE_CONTEXT_024]
+  // [TC_FE_CONTEXT_024]
+  // [TC_FE_CONTEXT_024]
   it('should not intercept 401 for /auth/profile endpoint (prevents logout loop)', async () => {
     // Verify that 401 on /auth/profile does NOT trigger the interceptor's logout
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -251,6 +311,16 @@ describe('AuthContext', () => {
    * @TestData: No AuthProvider wrapping DummyComponent
    * @ExpectedResult: Error thrown with expected message
    */
+  // [TC_FE_CONTEXT_025]
+  // [TC_FE_CONTEXT_025]
+  // [TC_FE_CONTEXT_025]
+  // [TC_FE_CONTEXT_025]
+  // [TC_FE_CONTEXT_025]
+  // [TC_FE_CONTEXT_025]
+  // [TC_FE_CONTEXT_025]
+  // [TC_FE_CONTEXT_025]
+  // [TC_FE_CONTEXT_025]
+  // [TC_FE_CONTEXT_025]
   it('should throw error when useAuthContext is used without AuthProvider', () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<DummyComponent />)).toThrow(

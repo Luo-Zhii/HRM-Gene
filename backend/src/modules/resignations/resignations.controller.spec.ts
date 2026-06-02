@@ -26,12 +26,14 @@ describe('ResignationsController', () => {
   });
 
   describe('create / findMyRequests', () => {
-    it('should dynamically intercept correctly identifying unauthorized flows correctly automatically implicitly identically natively creatively smartly explicitly elegantly correctly creatively organically gracefully smoothly structurally brilliantly', async () => {
+    // [TC_BE_RESIGN_294]
+    it('Từ chối truy cập khi user không có quyền (chưa đăng nhập hoặc role thường)',
       expect(() => controller.create({ user: {} } as any, {} as any)).toThrow(ForbiddenException);
       expect(() => controller.findMyRequests({ user: {} } as any)).toThrow(ForbiddenException);
     });
 
-    it('should properly intelligently transparent creatively rationally inherently identically dynamically explicitly logically completely securely beautifully ideally perfectly predictably correctly intuitively ideally smoothly explicitly ideally elegantly perfectly logically conceptually reliably identically seamlessly effectively structurally cleanly brilliantly smoothly explicitly identically seamlessly explicitly smartly automatically realistically gracefully conceptually functionally effectively natively optimally confidently', async () => {
+    // [TC_BE_RESIGN_295]
+    it('Tạo đơn thôi việc và lấy danh sách đơn của user đã đăng nhập',
       mockService.create.mockResolvedValue({});
       mockService.findMyRequests.mockResolvedValue([]);
       
@@ -41,7 +43,8 @@ describe('ResignationsController', () => {
   });
 
   describe('findAll / updateStatus', () => {
-    it('should functionally comprehensively securely intelligently transparent effectively reliably identical seamlessly optimally explicitly smoothly purely conceptually rationally cleanly gracefully creatively dynamically completely optimally creatively effectively optimally explicitly accurately accurately identically naturally transparent ideally correctly purely automatically precisely creatively seamlessly accurately perfectly automatically correctly elegantly explicitly inherently accurately intelligently successfully identical beautifully effectively smoothly transparent optimally gracefully reliably purely safely', async () => {
+    // [TC_BE_RESIGN_296]
+    it('Lấy tất cả đơn thôi việc và cập nhật trạng thái (Admin/HR)',
       mockService.findAll.mockResolvedValue([]);
       mockService.updateStatus.mockResolvedValue({});
       

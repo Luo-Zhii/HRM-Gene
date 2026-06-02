@@ -43,6 +43,7 @@ describe('CommentsService', () => {
   });
 
   describe('create', () => {
+    // [TC_BE_COMMEN_089]
     it('should create comment and notify admin for LeaveRequest if an employee comments', async () => {
       commentRepo.create.mockReturnValue({ authorId: 2 });
       commentRepo.save.mockResolvedValue({ id: '1' });
@@ -60,6 +61,7 @@ describe('CommentsService', () => {
       );
     });
 
+    // [TC_BE_COMMEN_090]
     it('should create comment and notify employee for Resignation if admin comments', async () => {
       commentRepo.create.mockReturnValue({ authorId: 1 });
       commentRepo.save.mockResolvedValue({ id: '1' });
@@ -77,6 +79,7 @@ describe('CommentsService', () => {
       );
     });
 
+    // [TC_BE_COMMEN_091]
     it('should catch error quietly if notification fails', async () => {
       commentRepo.create.mockReturnValue({ authorId: 1 });
       commentRepo.save.mockResolvedValue({ id: '1' });
@@ -93,6 +96,7 @@ describe('CommentsService', () => {
   });
 
   describe('findByEntity', () => {
+    // [TC_BE_COMMEN_092]
     it('should find comments arranged by entity type and ID', async () => {
       commentRepo.find.mockResolvedValue([]);
       expect(await service.findByEntity('T', 'E')).toEqual([]);
@@ -105,11 +109,13 @@ describe('CommentsService', () => {
   });
 
   describe('findOne', () => {
+    // [TC_BE_COMMEN_093]
     it('should return comment if found', async () => {
       commentRepo.findOne.mockResolvedValue({ id: '1' });
       expect(await service.findOne('1')).toEqual({ id: '1' });
     });
 
+    // [TC_BE_COMMEN_094]
     it('should throw NotFoundException if comment is not found', async () => {
       commentRepo.findOne.mockResolvedValue(null);
       await expect(service.findOne('1')).rejects.toThrow(NotFoundException);

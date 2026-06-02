@@ -39,6 +39,7 @@ describe('DepartmentsService', () => {
   });
 
   describe('create', () => {
+    // [TC_BE_DEPART_139]
     it('should create and save a new department', async () => {
       mockDeptRepo.create.mockReturnValue({ department_name: 'IT' });
       mockDeptRepo.save.mockResolvedValue({ id: 1, department_name: 'IT' });
@@ -50,6 +51,7 @@ describe('DepartmentsService', () => {
   });
 
   describe('findAll', () => {
+    // [TC_BE_DEPART_140]
     it('should return array of departments', async () => {
       mockDeptRepo.find.mockResolvedValue([{ id: 1 }]);
       const result = await service.findAll();
@@ -58,11 +60,13 @@ describe('DepartmentsService', () => {
   });
 
   describe('findOne', () => {
+    // [TC_BE_DEPART_141]
     it('should throw NotFoundException if not found', async () => {
       mockDeptRepo.findOne.mockResolvedValue(null);
       await expect(service.findOne(1)).rejects.toThrow(NotFoundException);
     });
 
+    // [TC_BE_DEPART_142]
     it('should return department', async () => {
       mockDeptRepo.findOne.mockResolvedValue({ id: 1 });
       const result = await service.findOne(1);
@@ -71,11 +75,13 @@ describe('DepartmentsService', () => {
   });
 
   describe('update', () => {
+    // [TC_BE_DEPART_143]
     it('should throw NotFoundException if not found', async () => {
       mockDeptRepo.findOne.mockResolvedValue(null);
       await expect(service.update(1, {})).rejects.toThrow(NotFoundException);
     });
 
+    // [TC_BE_DEPART_144]
     it('should update department name correctly', async () => {
       const dept = { department_id: 1, department_name: 'Old' };
       mockDeptRepo.findOne.mockResolvedValue(dept);
@@ -87,11 +93,13 @@ describe('DepartmentsService', () => {
   });
 
   describe('remove', () => {
+    // [TC_BE_DEPART_145]
     it('should throw NotFoundException if not found', async () => {
       mockDeptRepo.findOne.mockResolvedValue(null);
       await expect(service.remove(1)).rejects.toThrow(NotFoundException);
     });
 
+    // [TC_BE_DEPART_146]
     it('should throw BadRequestException if employees are assigned', async () => {
       mockDeptRepo.findOne.mockResolvedValue({ department_id: 1 });
       mockEmployeeRepo.count.mockResolvedValue(1);
@@ -99,6 +107,7 @@ describe('DepartmentsService', () => {
       await expect(service.remove(1)).rejects.toThrow(BadRequestException);
     });
 
+    // [TC_BE_DEPART_147]
     it('should remove department and return deleted: true', async () => {
       mockDeptRepo.findOne.mockResolvedValue({ department_id: 1 });
       mockEmployeeRepo.count.mockResolvedValue(0);

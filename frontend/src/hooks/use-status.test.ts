@@ -26,6 +26,16 @@ describe('useShowStatus', () => {
    * @TestData: type='success', text='Operation completed'
    * @ExpectedResult: toast({variant:'default', title:'Success', description:'Operation completed', className containing 'bg-green-600'})
    */
+  // [TC_FE_HOOK_032]
+  // [TC_FE_HOOK_032]
+  // [TC_FE_HOOK_032]
+  // [TC_FE_HOOK_032]
+  // [TC_FE_HOOK_032]
+  // [TC_FE_HOOK_032]
+  // [TC_FE_HOOK_032]
+  // [TC_FE_HOOK_032]
+  // [TC_FE_HOOK_032]
+  // [TC_FE_HOOK_032]
   it('should call toast with success variant and green styling', () => {
     const { result } = renderHook(() => useShowStatus());
     const showStatus = result.current;
@@ -56,6 +66,16 @@ describe('useShowStatus', () => {
    * @TestData: type='error', text='Something went wrong'
    * @ExpectedResult: toast({variant:'destructive', title:'Error', description:'Something went wrong'})
    */
+  // [TC_FE_HOOK_033]
+  // [TC_FE_HOOK_033]
+  // [TC_FE_HOOK_033]
+  // [TC_FE_HOOK_033]
+  // [TC_FE_HOOK_033]
+  // [TC_FE_HOOK_033]
+  // [TC_FE_HOOK_033]
+  // [TC_FE_HOOK_033]
+  // [TC_FE_HOOK_033]
+  // [TC_FE_HOOK_033]
   it('should call toast with destructive variant for errors', () => {
     const { result } = renderHook(() => useShowStatus());
     const showStatus = result.current;
@@ -85,6 +105,16 @@ describe('useShowStatus', () => {
    * @TestData: type='warning', text='Proceed with caution'
    * @ExpectedResult: toast({title:'Warning', className containing 'bg-yellow-500'})
    */
+  // [TC_FE_HOOK_034]
+  // [TC_FE_HOOK_034]
+  // [TC_FE_HOOK_034]
+  // [TC_FE_HOOK_034]
+  // [TC_FE_HOOK_034]
+  // [TC_FE_HOOK_034]
+  // [TC_FE_HOOK_034]
+  // [TC_FE_HOOK_034]
+  // [TC_FE_HOOK_034]
+  // [TC_FE_HOOK_034]
   it('should call toast with yellow styling for warnings', () => {
     const { result } = renderHook(() => useShowStatus());
     const showStatus = result.current;
@@ -115,6 +145,16 @@ describe('useShowStatus', () => {
    * @TestData: type='info', text='System update available'
    * @ExpectedResult: toast({title:'Info', className containing 'bg-blue-500'})
    */
+  // [TC_FE_HOOK_035]
+  // [TC_FE_HOOK_035]
+  // [TC_FE_HOOK_035]
+  // [TC_FE_HOOK_035]
+  // [TC_FE_HOOK_035]
+  // [TC_FE_HOOK_035]
+  // [TC_FE_HOOK_035]
+  // [TC_FE_HOOK_035]
+  // [TC_FE_HOOK_035]
+  // [TC_FE_HOOK_035]
   it('should call toast with blue styling for info messages', () => {
     const { result } = renderHook(() => useShowStatus());
     const showStatus = result.current;
@@ -145,6 +185,16 @@ describe('useShowStatus', () => {
    * @TestData: type='info', text='test'
    * @ExpectedResult: undefined
    */
+  // [TC_FE_HOOK_036]
+  // [TC_FE_HOOK_036]
+  // [TC_FE_HOOK_036]
+  // [TC_FE_HOOK_036]
+  // [TC_FE_HOOK_036]
+  // [TC_FE_HOOK_036]
+  // [TC_FE_HOOK_036]
+  // [TC_FE_HOOK_036]
+  // [TC_FE_HOOK_036]
+  // [TC_FE_HOOK_036]
   it('should return undefined (void) from showStatus', () => {
     const { result } = renderHook(() => useShowStatus());
     const showStatus = result.current;

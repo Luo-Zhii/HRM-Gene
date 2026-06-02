@@ -81,6 +81,7 @@ describe('TimeKeepingService', () => {
      * @TestData: None
      * @ExpectedResult: Object with token property being a non-empty string
      */
+    // [TC_BE_TIMEKE_312]
     it('should generate a dynamic QR token', async () => {
       const result = await service.generateDynamicQr();
 
@@ -104,6 +105,7 @@ describe('TimeKeepingService', () => {
      * @TestData: employeeId=1, token='invalid_token_xyz'
      * @ExpectedResult: BadRequestException
      */
+    // [TC_BE_TIMEKE_313]
     it('should throw BadRequestException for invalid QR token', async () => {
       await expect(
         service.recordCheckInByDynamicQr(1, 'invalid_token_xyz')
@@ -122,6 +124,7 @@ describe('TimeKeepingService', () => {
      * @TestData: Token with past expiration
      * @ExpectedResult: BadRequestException
      */
+    // [TC_BE_TIMEKE_314]
     it('should throw BadRequestException for expired QR token', async () => {
       // First generate a token, then we manipulate its expiry via service internals
       const qrResult = await service.generateDynamicQr();
@@ -148,6 +151,7 @@ describe('TimeKeepingService', () => {
      * @TestData: employeeId=999
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_TIMEKE_315]
     it('should throw NotFoundException when employee not found for QR check-in', async () => {
       const qrResult = await service.generateDynamicQr();
       mockEmployeeRepo.findOne.mockResolvedValue(null);
@@ -169,6 +173,7 @@ describe('TimeKeepingService', () => {
      * @TestData: employeeId=1, first scan of the day
      * @ExpectedResult: CHECK_IN status, check-in time recorded
      */
+    // [TC_BE_TIMEKE_316]
     it('should create check-in record on first scan of the day', async () => {
       const qrResult = await service.generateDynamicQr();
       const token = qrResult.token;
@@ -217,6 +222,7 @@ describe('TimeKeepingService', () => {
      * @TestData: employeeId=1, second scan, hours_worked=8+
      * @ExpectedResult: CHECK_OUT status with duration
      */
+    // [TC_BE_TIMEKE_317]
     it('should complete check-out on second scan of the day', async () => {
       const qrResult = await service.generateDynamicQr();
       const token = qrResult.token;
@@ -267,6 +273,7 @@ describe('TimeKeepingService', () => {
      * @TestData: Last check_in action 10 seconds ago
      * @ExpectedResult: BadRequestException with remaining seconds
      */
+    // [TC_BE_TIMEKE_318]
     it('should throw BadRequestException on rapid debounce', async () => {
       const qrResult = await service.generateDynamicQr();
       const token = qrResult.token;
@@ -304,6 +311,7 @@ describe('TimeKeepingService', () => {
      * @TestData: Same token used twice
      * @ExpectedResult: Second attempt throws BadRequestException
      */
+    // [TC_BE_TIMEKE_319]
     it('should consume token after single use', async () => {
       const qrResult = await service.generateDynamicQr();
       const token = qrResult.token;
@@ -348,6 +356,7 @@ describe('TimeKeepingService', () => {
      * @TestData: employeeId=1, ip='192.168.1.100' (office network)
      * @ExpectedResult: CHECK_IN with IP address recorded
      */
+    // [TC_BE_TIMEKE_320]
     it('should create check-in record via IP with IP address stored', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         employee_id: 1,
@@ -389,6 +398,7 @@ describe('TimeKeepingService', () => {
      * @TestData: employeeId=999
      * @ExpectedResult: NotFoundException('Employee not found')
      */
+    // [TC_BE_TIMEKE_321]
     it('should throw NotFoundException for non-existent employee via IP', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue(null);
 
@@ -412,6 +422,7 @@ describe('TimeKeepingService', () => {
      * @TestData: page=1, limit=10, date range 2026-06-01 to 2026-06-10
      * @ExpectedResult: Paginated response with stats
      */
+    // [TC_BE_TIMEKE_322]
     it('should return paginated timekeeping records with stats', async () => {
       const qb: any = {
         leftJoinAndSelect: jest.fn().mockReturnThis(),

@@ -23,6 +23,7 @@ describe('CommentsController', () => {
   });
 
   describe('create', () => {
+    // [TC_BE_COMMEN_087]
     it('should extract author id from token and create a comment via service', async () => {
       mockService.create.mockResolvedValue({ id: '1' });
       const req = { user: { employee_id: 2 } };
@@ -36,6 +37,7 @@ describe('CommentsController', () => {
   });
 
   describe('findByEntity', () => {
+    // [TC_BE_COMMEN_088]
     it('should find comments by entity via service', async () => {
       mockService.findByEntity.mockResolvedValue([]);
       

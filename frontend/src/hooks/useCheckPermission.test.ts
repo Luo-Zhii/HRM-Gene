@@ -60,6 +60,16 @@ describe('useCheckPermission', () => {
    * @TestData: directorUser fixture, method='DELETE', apiPath='/api/anything'
    * @ExpectedResult: true (Director bypass)
    */
+  // [TC_FE_HOOK_045]
+  // [TC_FE_HOOK_045]
+  // [TC_FE_HOOK_045]
+  // [TC_FE_HOOK_045]
+  // [TC_FE_HOOK_045]
+  // [TC_FE_HOOK_045]
+  // [TC_FE_HOOK_045]
+  // [TC_FE_HOOK_045]
+  // [TC_FE_HOOK_045]
+  // [TC_FE_HOOK_045]
   it('should return true for Director using admin@example.com bypassing all checks', () => {
     mockUseAuth.mockReturnValue({ user: directorUser, loading: false, refresh: jest.fn(), logout: jest.fn() });
 
@@ -81,6 +91,16 @@ describe('useCheckPermission', () => {
    * @TestData: user fixture with role='System Admin'
    * @ExpectedResult: true
    */
+  // [TC_FE_HOOK_046]
+  // [TC_FE_HOOK_046]
+  // [TC_FE_HOOK_046]
+  // [TC_FE_HOOK_046]
+  // [TC_FE_HOOK_046]
+  // [TC_FE_HOOK_046]
+  // [TC_FE_HOOK_046]
+  // [TC_FE_HOOK_046]
+  // [TC_FE_HOOK_046]
+  // [TC_FE_HOOK_046]
   it('should return true for System Admin role bypass', () => {
     mockUseAuth.mockReturnValue({
       user: { role: 'System Admin', email: 'sysadmin@corp.com' },
@@ -105,6 +125,16 @@ describe('useCheckPermission', () => {
    * @TestData: managerWithPerms, method='GET', apiPath='/api/employees'
    * @ExpectedResult: true
    */
+  // [TC_FE_HOOK_047]
+  // [TC_FE_HOOK_047]
+  // [TC_FE_HOOK_047]
+  // [TC_FE_HOOK_047]
+  // [TC_FE_HOOK_047]
+  // [TC_FE_HOOK_047]
+  // [TC_FE_HOOK_047]
+  // [TC_FE_HOOK_047]
+  // [TC_FE_HOOK_047]
+  // [TC_FE_HOOK_047]
   it('should return true when user holds an exact string permission match', () => {
     mockUseAuth.mockReturnValue({
       user: managerWithPerms,
@@ -129,6 +159,16 @@ describe('useCheckPermission', () => {
    * @TestData: employeeWithPartialPerms, method='DELETE', apiPath='/api/employees'
    * @ExpectedResult: false
    */
+  // [TC_FE_HOOK_048]
+  // [TC_FE_HOOK_048]
+  // [TC_FE_HOOK_048]
+  // [TC_FE_HOOK_048]
+  // [TC_FE_HOOK_048]
+  // [TC_FE_HOOK_048]
+  // [TC_FE_HOOK_048]
+  // [TC_FE_HOOK_048]
+  // [TC_FE_HOOK_048]
+  // [TC_FE_HOOK_048]
   it('should return false when user lacks the required permission', () => {
     mockUseAuth.mockReturnValue({
       user: employeeWithPartialPerms,
@@ -153,6 +193,16 @@ describe('useCheckPermission', () => {
    * @TestData: user=null
    * @ExpectedResult: false
    */
+  // [TC_FE_HOOK_049]
+  // [TC_FE_HOOK_049]
+  // [TC_FE_HOOK_049]
+  // [TC_FE_HOOK_049]
+  // [TC_FE_HOOK_049]
+  // [TC_FE_HOOK_049]
+  // [TC_FE_HOOK_049]
+  // [TC_FE_HOOK_049]
+  // [TC_FE_HOOK_049]
+  // [TC_FE_HOOK_049]
   it('should return false when no user is logged in (null user)', () => {
     mockUseAuth.mockReturnValue({ user: null, loading: false, refresh: jest.fn(), logout: jest.fn() });
 
@@ -172,6 +222,16 @@ describe('useCheckPermission', () => {
    * @TestData: managerWithObjectPerms, method='GET', apiPath='/api/employees'
    * @ExpectedResult: true
    */
+  // [TC_FE_HOOK_050]
+  // [TC_FE_HOOK_050]
+  // [TC_FE_HOOK_050]
+  // [TC_FE_HOOK_050]
+  // [TC_FE_HOOK_050]
+  // [TC_FE_HOOK_050]
+  // [TC_FE_HOOK_050]
+  // [TC_FE_HOOK_050]
+  // [TC_FE_HOOK_050]
+  // [TC_FE_HOOK_050]
   it('should match object-format permissions (method and apiPath fields)', () => {
     mockUseAuth.mockReturnValue({
       user: managerWithObjectPerms,
@@ -196,6 +256,16 @@ describe('useCheckPermission', () => {
    * @TestData: user fixture with role='admin'
    * @ExpectedResult: true
    */
+  // [TC_FE_HOOK_051]
+  // [TC_FE_HOOK_051]
+  // [TC_FE_HOOK_051]
+  // [TC_FE_HOOK_051]
+  // [TC_FE_HOOK_051]
+  // [TC_FE_HOOK_051]
+  // [TC_FE_HOOK_051]
+  // [TC_FE_HOOK_051]
+  // [TC_FE_HOOK_051]
+  // [TC_FE_HOOK_051]
   it('should return true for user with role "admin" (lowercase keyword bypass)', () => {
     mockUseAuth.mockReturnValue({
       user: { role: 'admin', email: 'a@b.com', permissions: [] },
@@ -220,6 +290,16 @@ describe('useCheckPermission', () => {
    * @TestData: user.position.position_name = 'System Admin', email != admin@example.com
    * @ExpectedResult: true
    */
+  // [TC_FE_HOOK_052]
+  // [TC_FE_HOOK_052]
+  // [TC_FE_HOOK_052]
+  // [TC_FE_HOOK_052]
+  // [TC_FE_HOOK_052]
+  // [TC_FE_HOOK_052]
+  // [TC_FE_HOOK_052]
+  // [TC_FE_HOOK_052]
+  // [TC_FE_HOOK_052]
+  // [TC_FE_HOOK_052]
   it('should detect System Admin from position_name when role field is empty', () => {
     mockUseAuth.mockReturnValue({
       user: { position: { position_name: 'System Admin' }, email: 'sa@corp.com', permissions: [] },

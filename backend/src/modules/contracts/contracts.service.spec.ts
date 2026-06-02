@@ -63,18 +63,21 @@ describe('ContractsService', () => {
   });
 
   describe('create', () => {
-    it('should safely throw NotFoundException if linked employee does not exist', async () => {
+    // [TC_BE_CONTRA_113]
+    it('create: Ném NotFoundException khi employee_id không tồn tại', async () => {
       employeeRepo.findOne.mockResolvedValue(null);
       await expect(service.create({ employee_id: 1 } as any)).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException uniformly if targeted contract sequence already exists', async () => {
+    // [TC_BE_CONTRA_114]
+    it('create: Ném BadRequestException khi contract_number đã tồn tại', async () => {
       employeeRepo.findOne.mockResolvedValue({});
       contractRepo.findOne.mockResolvedValue({});
       await expect(service.create({ employee_id: 1, contract_number: 'C1' } as any)).rejects.toThrow(BadRequestException);
     });
 
-    it('should safely create contract, automatically de-activate other overlapping active states, and record subsequent salary transitions accurately', async () => {
+    // [TC_BE_CONTRA_115]
+    it('Tạo hợp đồng lao động mới cho nhân viên',
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
       contractRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({ contract_id: 10 }); 
       salaryConfigRepo.findOne.mockResolvedValue({ base_salary: '1000' });
@@ -92,7 +95,8 @@ describe('ContractsService', () => {
   });
 
   describe('findAll', () => {
-    it('should properly configure pagination constraints alongside query builder conditional constraints', async () => {
+    // [TC_BE_CONTRA_116]
+    it('findAll: Cấu hình phân trang và filter với query builder', async () => {
       const qb = contractRepo.createQueryBuilder();
       const result = await service.findAll(1, 1, 10, 'search', 'Active', 'Official');
       
@@ -103,19 +107,22 @@ describe('ContractsService', () => {
   });
 
   describe('findByEmployee', () => {
-    it('should locate and sort contract listing for an individual employee strictly', async () => {
+    // [TC_BE_CONTRA_117]
+    it('findByEmployee: Lấy danh sách hợp đồng của một nhân viên', async () => {
       contractRepo.find.mockResolvedValue([]);
       expect(await service.findByEmployee(1)).toEqual([]);
     });
   });
 
   describe('findOne', () => {
-    it('should natively catch internal rejection when entity fails to locate matching record pattern', async () => {
+    // [TC_BE_CONTRA_118]
+    it('findOne: Ném NotFoundException khi không tìm thấy hợp đồng', async () => {
       contractRepo.findOne.mockResolvedValue(null);
       await expect(service.findOne(1)).rejects.toThrow(NotFoundException);
     });
 
-    it('should structurally return single occurrence adhering directly to input query requirements', async () => {
+    // [TC_BE_CONTRA_119]
+    it('findOne: Trả về hợp đồng theo contract_id và employee_id', async () => {
       contractRepo.findOne.mockResolvedValue({ contract_id: 1 });
       expect(await service.findOne(1, 2)).toEqual({ contract_id: 1 });
       expect(contractRepo.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { contract_id: 1, employee: { employee_id: 2 } } }));
@@ -123,7 +130,8 @@ describe('ContractsService', () => {
   });
 
   describe('update', () => {
-    it('should dynamically map parameter shifts, auto-expire older configurations and record salary deltas implicitly', async () => {
+    // [TC_BE_CONTRA_120]
+    it('update: Cập nhật hợp đồng, tự động expire hợp đồng cũ và ghi lịch sử lương', async () => {
       const contract = { employee: { employee_id: 1 }, contract_id: 1, contract_number: 'C1', status: ContractStatus.EXPIRED, salary_rate: '1000' };
       contractRepo.findOne.mockResolvedValue(contract);
       contractRepo.save.mockResolvedValue(contract);
@@ -139,7 +147,8 @@ describe('ContractsService', () => {
   });
 
   describe('remove', () => {
-    it('should bridge lookup constraints to deletion framework transparently avoiding retention', async () => {
+    // [TC_BE_CONTRA_121]
+    it('remove: Xóa hợp đồng thành công và trả về message', async () => {
       contractRepo.findOne.mockResolvedValue({ contract_id: 1, employee: { employee_id: 1 }, contract_number: 'C1' });
       contractRepo.remove.mockResolvedValue({});
       expect(await service.remove(1)).toEqual({ message: 'Contract deleted successfully' });

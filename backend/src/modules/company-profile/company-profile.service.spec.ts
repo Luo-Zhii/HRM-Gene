@@ -26,11 +26,13 @@ describe('CompanyProfileService', () => {
   });
 
   describe('getProfile', () => {
+    // [TC_BE_COMPAN_099]
     it('should return existing profile', async () => {
       mockRepo.findOne.mockResolvedValue({ id: 1, company_name: 'Existing' });
       expect(await service.getProfile()).toEqual({ id: 1, company_name: 'Existing' });
     });
 
+    // [TC_BE_COMPAN_100]
     it('should create and return default profile if none exists on retrieval', async () => {
       mockRepo.findOne.mockResolvedValue(null);
       mockRepo.create.mockReturnValue({ company_name: 'Gene HRM' });
@@ -44,6 +46,7 @@ describe('CompanyProfileService', () => {
   });
 
   describe('updateProfile', () => {
+    // [TC_BE_COMPAN_101]
     it('should update profile by id and fetch again to return updated active profile', async () => {
       mockRepo.update.mockResolvedValue({});
       mockRepo.findOne.mockResolvedValue({ id: 1, company_name: 'New Name' });
@@ -55,6 +58,7 @@ describe('CompanyProfileService', () => {
   });
 
   describe('updateLogo', () => {
+    // [TC_BE_COMPAN_102]
     it('should update strictly logo_url and return modified profile', async () => {
       mockRepo.update.mockResolvedValue({});
       mockRepo.findOne.mockResolvedValue({ id: 1, logo_url: 'specific_url' });

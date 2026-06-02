@@ -25,7 +25,8 @@ describe('SalaryHistoryController', () => {
   });
 
   describe('findAll', () => {
-    it('should respect admin access explicitly to evaluate all targeting filters', async () => {
+    // [TC_BE_CONTRA_122]
+    it('findAll: Admin với manage:system xem lịch sử lương theo employee_id query', async () => {
       mockRepo.find.mockResolvedValue([]);
       const req = { user: { permissions: ['manage:system'], employee_id: 1 } };
       
@@ -39,7 +40,8 @@ describe('SalaryHistoryController', () => {
       expect(result).toEqual([]);
     });
 
-    it('should strictly limit non-privileged interactions uniformly onto owned segments purely', async () => {
+    // [TC_BE_CONTRA_123]
+    it('findAll: Employee thường chỉ xem lịch sử lương của chính mình', async () => {
       mockRepo.find.mockResolvedValue([]);
       const req = { user: { permissions: [], employee_id: 3 } };
       
@@ -54,7 +56,8 @@ describe('SalaryHistoryController', () => {
   });
 
   describe('findOne', () => {
-    it('should match precise query masking conditions restricting isolation explicitly for active constraints', async () => {
+    // [TC_BE_CONTRA_124]
+    it('findOne: Employee thường bị giới hạn chỉ xem lịch sử lương của chính mình', async () => {
       mockRepo.findOne.mockResolvedValue({ history_id: 10 });
       const req = { user: { permissions: [], employee_id: 3 } };
       
@@ -67,7 +70,8 @@ describe('SalaryHistoryController', () => {
       expect(result).toEqual({ history_id: 10 });
     });
 
-    it('should dynamically relay exceptions intercepting unfulfilled history lookups inherently', async () => {
+    // [TC_BE_CONTRA_125]
+    it('findOne: Ném NotFoundException khi không tìm thấy lịch sử lương', async () => {
       mockRepo.findOne.mockResolvedValue(null);
       const req = { user: { permissions: ['manage:system'], employee_id: 1 } };
       

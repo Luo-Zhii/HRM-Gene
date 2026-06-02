@@ -53,6 +53,7 @@ describe('AuthService', () => {
      * @TestData: email=admin@example.com, password=admin
      * @ExpectedResult: User object without password, permissions=[]
      */
+    // [TC_BE_AUTH_066]
     it('should return user without password and with permissions on successful validation', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         employee_id: 1,
@@ -86,6 +87,7 @@ describe('AuthService', () => {
      * @TestData: email=nonexistent@example.com
      * @ExpectedResult: NotFoundException thrown with Vietnamese error message
      */
+    // [TC_BE_AUTH_067]
     it('should throw NotFoundException when email is not found', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue(null);
 
@@ -105,6 +107,7 @@ describe('AuthService', () => {
      * @TestData: failed_attempts=5
      * @ExpectedResult: UnauthorizedException thrown
      */
+    // [TC_BE_AUTH_068]
     it('should throw UnauthorizedException when account is locked (failed_attempts >= 5)', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         email: 'user@example.com',
@@ -128,6 +131,7 @@ describe('AuthService', () => {
      * @TestData: failed_attempts=0, wrong password
      * @ExpectedResult: UnauthorizedException, employeeRepo.save called with failed_attempts=1
      */
+    // [TC_BE_AUTH_069]
     it('should increment failed_attempts on wrong password and throw UnauthorizedException', async () => {
       const user = {
         employee_id: 2,
@@ -160,6 +164,7 @@ describe('AuthService', () => {
      * @TestData: employment_status=Terminated, resignation_date=2020-01-01
      * @ExpectedResult: ForbiddenException thrown
      */
+    // [TC_BE_AUTH_070]
     it('should throw ForbiddenException for terminated employee past resignation date', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         email: 'terminated@example.com',
@@ -187,6 +192,7 @@ describe('AuthService', () => {
      * @TestData: failed_attempts=3 before login
      * @ExpectedResult: employeeRepo.save called with failed_attempts=0
      */
+    // [TC_BE_AUTH_071]
     it('should reset failed_attempts to 0 on successful login', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         employee_id: 1,
@@ -218,6 +224,7 @@ describe('AuthService', () => {
      * @TestData: failed_attempts=4, then incremented to 5
      * @ExpectedResult: UnauthorizedException thrown with lockout message
      */
+    // [TC_BE_AUTH_072]
     it('should lock account on 5th consecutive wrong password attempt', async () => {
       const user = {
         employee_id: 2,
@@ -248,6 +255,7 @@ describe('AuthService', () => {
      * @TestData: employee_id=1, email=admin@example.com, role=Director
      * @ExpectedResult: { access_token: 'jwt_token_xyz' }
      */
+    // [TC_BE_AUTH_073]
     it('should return access_token with correct JWT payload (sub, email, role)', async () => {
       mockJwtService.sign.mockReturnValue('jwt_token_xyz');
 
@@ -277,6 +285,7 @@ describe('AuthService', () => {
      * @TestData: employee without position
      * @ExpectedResult: JWT payload has undefined role
      */
+    // [TC_BE_AUTH_074]
     it('should handle login with user having no position', async () => {
       mockJwtService.sign.mockReturnValue('token_no_role');
 
@@ -306,6 +315,7 @@ describe('AuthService', () => {
      * @TestData: employeeId=1, current=old, new=newpass123
      * @ExpectedResult: { message: 'Password changed successfully' }
      */
+    // [TC_BE_AUTH_075]
     it('should change password successfully with correct current password', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         employee_id: 1,
@@ -333,6 +343,7 @@ describe('AuthService', () => {
      * @TestData: wrong current password
      * @ExpectedResult: BadRequestException('Current password is incorrect')
      */
+    // [TC_BE_AUTH_076]
     it('should throw BadRequestException when current password is wrong', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         employee_id: 1,
@@ -356,6 +367,7 @@ describe('AuthService', () => {
      * @TestData: newPassword=12345 (5 chars)
      * @ExpectedResult: BadRequestException('New password must be at least 6 characters')
      */
+    // [TC_BE_AUTH_077]
     it('should throw BadRequestException when new password is too short (< 6 chars)', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         employee_id: 1,
@@ -379,6 +391,7 @@ describe('AuthService', () => {
      * @TestData: employeeId=999 (non-existent)
      * @ExpectedResult: NotFoundException('User not found')
      */
+    // [TC_BE_AUTH_078]
     it('should throw NotFoundException when user not found', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue(null);
 
@@ -401,6 +414,7 @@ describe('AuthService', () => {
      * @TestData: employeeId=1
      * @ExpectedResult: Profile object without password field, with permissions
      */
+    // [TC_BE_AUTH_079]
     it('should return user profile without password and with permissions', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         employee_id: 1,
@@ -435,6 +449,7 @@ describe('AuthService', () => {
      * @TestData: employeeId=999
      * @ExpectedResult: NotFoundException('User not found')
      */
+    // [TC_BE_AUTH_080]
     it('should throw NotFoundException when user not found', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue(null);
 
@@ -453,6 +468,7 @@ describe('AuthService', () => {
      * @TestData: employee without position
      * @ExpectedResult: Profile with permissions=[]
      */
+    // [TC_BE_AUTH_081]
     it('should return empty permissions when employee has no position', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         employee_id: 5,
@@ -498,6 +514,7 @@ describe('AuthService', () => {
      * @TestData: secretKey=wrong
      * @ExpectedResult: UnauthorizedException('Invalid system secret key')
      */
+    // [TC_BE_AUTH_082]
     it('should throw UnauthorizedException when secret key is wrong', async () => {
       await expect(
         service.registerAdminUser({ ...validData, secretKey: 'wrong_key' })
@@ -516,6 +533,7 @@ describe('AuthService', () => {
      * @TestData: email already exists
      * @ExpectedResult: BadRequestException('Email already exists')
      */
+    // [TC_BE_AUTH_083]
     it('should throw BadRequestException when email already exists', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
 
@@ -535,6 +553,7 @@ describe('AuthService', () => {
      * @TestData: position_id=999 (non-existent)
      * @ExpectedResult: BadRequestException('Position not found (Invalid ID)')
      */
+    // [TC_BE_AUTH_084]
     it('should throw BadRequestException when position not found', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue(null); // no duplicate
       mockPositionRepo.findOne.mockResolvedValue(null); // position not found
@@ -555,6 +574,7 @@ describe('AuthService', () => {
      * @TestData: department_id=999 (non-existent)
      * @ExpectedResult: BadRequestException('Department not found (Invalid ID)')
      */
+    // [TC_BE_AUTH_085]
     it('should throw BadRequestException when department not found', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue(null);
       mockPositionRepo.findOne.mockResolvedValue({ position_id: 1, position_name: 'Director' });
@@ -576,6 +596,7 @@ describe('AuthService', () => {
      * @TestData: email=newadmin@example.com, password=admin123, position=Director, department=Engineering
      * @ExpectedResult: { message: 'Account created successfully', id: 100 }
      */
+    // [TC_BE_AUTH_086]
     it('should create admin user successfully with all valid data', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue(null); // no duplicate
       mockPositionRepo.findOne.mockResolvedValue({ position_id: 1, position_name: 'Director' });

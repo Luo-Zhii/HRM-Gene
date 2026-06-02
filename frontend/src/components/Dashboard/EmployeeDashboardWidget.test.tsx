@@ -70,6 +70,16 @@ describe('EmployeeDashboardWidget', () => {
    * @TestData: user.first_name='John', defaultEmployeeData
    * @ExpectedResult: Welcome message with first name visible
    */
+  // [TC_FE_COMPON_013]
+  // [TC_FE_COMPON_013]
+  // [TC_FE_COMPON_013]
+  // [TC_FE_COMPON_013]
+  // [TC_FE_COMPON_013]
+  // [TC_FE_COMPON_013]
+  // [TC_FE_COMPON_013]
+  // [TC_FE_COMPON_013]
+  // [TC_FE_COMPON_013]
+  // [TC_FE_COMPON_013]
   it('should render personalized welcome message with user first name', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -97,6 +107,16 @@ describe('EmployeeDashboardWidget', () => {
    * @TestData: ptoBalance=12, daysWorkedThisMonth=15
    * @ExpectedResult: PTO=12, Days Worked=15 rendered
    */
+  // [TC_FE_COMPON_014]
+  // [TC_FE_COMPON_014]
+  // [TC_FE_COMPON_014]
+  // [TC_FE_COMPON_014]
+  // [TC_FE_COMPON_014]
+  // [TC_FE_COMPON_014]
+  // [TC_FE_COMPON_014]
+  // [TC_FE_COMPON_014]
+  // [TC_FE_COMPON_014]
+  // [TC_FE_COMPON_014]
   it('should display PTO balance and days worked this month', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -125,6 +145,16 @@ describe('EmployeeDashboardWidget', () => {
    * @TestData: defaultEmployeeData announcements
    * @ExpectedResult: 'Office Closed on Friday', 'New Benefits Package', 'High' badge
    */
+  // [TC_FE_COMPON_015]
+  // [TC_FE_COMPON_015]
+  // [TC_FE_COMPON_015]
+  // [TC_FE_COMPON_015]
+  // [TC_FE_COMPON_015]
+  // [TC_FE_COMPON_015]
+  // [TC_FE_COMPON_015]
+  // [TC_FE_COMPON_015]
+  // [TC_FE_COMPON_015]
+  // [TC_FE_COMPON_015]
   it('should render recent announcements with titles and priority badges', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -155,6 +185,16 @@ describe('EmployeeDashboardWidget', () => {
    * @TestData: recentAnnouncements=[]
    * @ExpectedResult: 'No recent announcements found.' text visible
    */
+  // [TC_FE_COMPON_016]
+  // [TC_FE_COMPON_016]
+  // [TC_FE_COMPON_016]
+  // [TC_FE_COMPON_016]
+  // [TC_FE_COMPON_016]
+  // [TC_FE_COMPON_016]
+  // [TC_FE_COMPON_016]
+  // [TC_FE_COMPON_016]
+  // [TC_FE_COMPON_016]
+  // [TC_FE_COMPON_016]
   it('should show empty state when no announcements exist', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -186,6 +226,16 @@ describe('EmployeeDashboardWidget', () => {
    * @TestData: fetch rejects
    * @ExpectedResult: Component renders without crashing
    */
+  // [TC_FE_COMPON_017]
+  // [TC_FE_COMPON_017]
+  // [TC_FE_COMPON_017]
+  // [TC_FE_COMPON_017]
+  // [TC_FE_COMPON_017]
+  // [TC_FE_COMPON_017]
+  // [TC_FE_COMPON_017]
+  // [TC_FE_COMPON_017]
+  // [TC_FE_COMPON_017]
+  // [TC_FE_COMPON_017]
   it('should handle fetch failure gracefully without crashing', async () => {
     global.fetch = jest.fn(() => Promise.reject(new Error('Network error'))) as jest.Mock;
 
@@ -208,6 +258,16 @@ describe('EmployeeDashboardWidget', () => {
    * @TestData: defaultEmployeeData
    * @ExpectedResult: Two navigation links rendered
    */
+  // [TC_FE_COMPON_018]
+  // [TC_FE_COMPON_018]
+  // [TC_FE_COMPON_018]
+  // [TC_FE_COMPON_018]
+  // [TC_FE_COMPON_018]
+  // [TC_FE_COMPON_018]
+  // [TC_FE_COMPON_018]
+  // [TC_FE_COMPON_018]
+  // [TC_FE_COMPON_018]
+  // [TC_FE_COMPON_018]
   it('should render navigation links for leave request and timekeeping', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({

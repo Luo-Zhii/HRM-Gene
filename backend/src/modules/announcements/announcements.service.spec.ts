@@ -40,6 +40,7 @@ describe('AnnouncementsService', () => {
   });
 
   describe('create', () => {
+    // [TC_BE_ANNOUN_041]
     it('should create without sending notifications if delivery method is not in_app', async () => {
       const dto = { title: 'Test', target_audience: 'all', delivery_methods: [] };
       mockAnnouncementRepo.create.mockReturnValue(dto);
@@ -51,6 +52,7 @@ describe('AnnouncementsService', () => {
       expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
     });
 
+    // [TC_BE_ANNOUN_042]
     it('should create and send notifications to all employees if requested', async () => {
       const dto = { title: 'News', target_audience: 'all', delivery_methods: ['in_app'], status: 'Active' };
       mockAnnouncementRepo.create.mockReturnValue(dto);
@@ -70,6 +72,7 @@ describe('AnnouncementsService', () => {
       );
     });
 
+    // [TC_BE_ANNOUN_043]
     it('should create and send notifications to specific department', async () => {
       const dto = { title: 'Dept News', target_audience: 'dept_5', delivery_methods: ['in_app'], status: 'Active' };
       mockAnnouncementRepo.create.mockReturnValue(dto);
@@ -87,6 +90,7 @@ describe('AnnouncementsService', () => {
   });
 
   describe('findAll', () => {
+    // [TC_BE_ANNOUN_044]
     it('should return all announcements ordered by created_at', async () => {
       mockAnnouncementRepo.find.mockResolvedValue([]);
       const result = await service.findAll();
@@ -96,6 +100,7 @@ describe('AnnouncementsService', () => {
   });
 
   describe('getFeed', () => {
+    // [TC_BE_ANNOUN_045]
     it('should return announcements matching target audience for user', async () => {
       const queryBuilder = {
         where: jest.fn().mockReturnThis(),
@@ -115,6 +120,7 @@ describe('AnnouncementsService', () => {
       );
     });
 
+    // [TC_BE_ANNOUN_046]
     it('should default to NONE_DEPT if user has no department', async () => {
       const queryBuilder = {
         where: jest.fn().mockReturnThis(),
@@ -134,6 +140,7 @@ describe('AnnouncementsService', () => {
   });
 
   describe('delete', () => {
+    // [TC_BE_ANNOUN_047]
     it('should delete an announcement by id', async () => {
       mockAnnouncementRepo.delete.mockResolvedValue({});
       await service.delete(1);

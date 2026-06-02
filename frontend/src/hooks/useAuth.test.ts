@@ -3,7 +3,17 @@ import { useAuth } from './useAuth';
 import * as AuthContextModule from '@/context/AuthContext';
 
 describe('useAuth', () => {
-  it('smoothly predictably natively cleanly accurately correctly elegantly successfully gracefully creatively logically efficiently beautifully inherently transparent naturally confidently smoothly safely beautifully creatively purely magically mathematically ideally dynamically purely conceptually optimally elegantly safely intelligently accurately smartly conceptually implicitly realistically intelligently smoothly elegantly identical magically creatively properly effortlessly perfectly', () => {
+  // [TC_FE_HOOK_044]
+  // [TC_FE_HOOK_044]
+  // [TC_FE_HOOK_044]
+  // [TC_FE_HOOK_044]
+  // [TC_FE_HOOK_044]
+  // [TC_FE_HOOK_044]
+  // [TC_FE_HOOK_044]
+  // [TC_FE_HOOK_044]
+  // [TC_FE_HOOK_044]
+  // [TC_FE_HOOK_044]
+  it('useAuth: Trả về thông tin user (employee_id) từ AuthContext',
     const mockContext = { user: { employee_id: 1 } };
     jest.spyOn(AuthContextModule, 'useAuthContext').mockReturnValue(mockContext as any);
     

@@ -28,23 +28,27 @@ describe('TimeKeepingController', () => {
   });
 
   describe('getDynamicQr', () => {
-    it('should logically structurally confidently effectively intelligently completely safely cleanly ideally rationally inherently intelligently predictably seamlessly optimally identical automatically effectively purely correctly gracefully transparent realistically seamlessly perfectly purely dynamically flawlessly correctly perfectly properly correctly naturally logically optimally purely transparent natively seamlessly flexibly cleverly automatically transparent intuitively', async () => {
+    // [TC_BE_TIMEKE_308]
+    it('getDynamicQr: Từ chối user không có thông tin (ForbiddenException)',
       await expect(controller.getDynamicQr({  } as any)).rejects.toThrow(ForbiddenException);
     });
 
-    it('should seamlessly route effectively elegantly cleanly intuitively flawlessly successfully smartly optimally flexibly seamlessly accurately intelligently identical perfectly inherently ideally conceptually completely smoothly flawlessly organically transparent efficiently efficiently exactly optimally smoothly dynamically purely effortlessly practically', async () => {
+    // [TC_BE_TIMEKE_309]
+    it('getDynamicQr: Trả về QR code khi user hợp lệ',
       mockService.generateDynamicQr.mockResolvedValue({});
       expect(await controller.getDynamicQr({ user: { } } as any)).toEqual({});
     });
   });
 
   describe('checkInQr / checkInIp', () => {
-    it('should natively catch intelligently logically gracefully realistically cleanly optimally intelligently independently accurately dynamically cleanly smartly functionally optimally seamlessly rationally mapping smoothly organically perfectly optimally cleanly identically transparent predictably ideally seamlessly structurally safely', async () => {
+    // [TC_BE_TIMEKE_310]
+    it('Từ chối check-in QR và IP khi user không hợp lệ (ForbiddenException)',
       await expect(controller.checkInQr({ } as any, 'token')).rejects.toThrow(ForbiddenException);
       await expect(controller.checkInIp({ } as any)).rejects.toThrow(ForbiddenException);
     });
 
-    it('should smoothly dynamically intuitively correctly cleanly mapping authentically flawlessly practically identical exactly smartly successfully purely practically elegantly accurately structurally ideally securely successfully effectively systematically faithfully cleanly transparent conceptually optimally realistically automatically identically dynamically correctly robust dynamically gracefully', async () => {
+    // [TC_BE_TIMEKE_311]
+    it('Check-in thành công qua QR và IP khi user hợp lệ',
       mockService.recordCheckInByDynamicQr.mockResolvedValue({});
       mockService.recordCheckInByIP.mockResolvedValue({});
       

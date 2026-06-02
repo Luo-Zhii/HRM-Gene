@@ -61,6 +61,16 @@ describe('ContextualChat', () => {
    * @TestData: entityType='task', entityId='1'
    * @ExpectedResult: Discussion header rendered, textarea placeholder present
    */
+  // [TC_FE_COMPON_001]
+  // [TC_FE_COMPON_001]
+  // [TC_FE_COMPON_001]
+  // [TC_FE_COMPON_001]
+  // [TC_FE_COMPON_001]
+  // [TC_FE_COMPON_001]
+  // [TC_FE_COMPON_001]
+  // [TC_FE_COMPON_001]
+  // [TC_FE_COMPON_001]
+  // [TC_FE_COMPON_001]
   it('should render Discussion header and reply input', async () => {
     render(<ContextualChat entityId="1" entityType="task" />);
 
@@ -83,6 +93,16 @@ describe('ContextualChat', () => {
    * @TestData: message='Hello team', entityType='task', entityId='1'
    * @ExpectedResult: fetch POST to /api/comments with content, entityType, entityId
    */
+  // [TC_FE_COMPON_002]
+  // [TC_FE_COMPON_002]
+  // [TC_FE_COMPON_002]
+  // [TC_FE_COMPON_002]
+  // [TC_FE_COMPON_002]
+  // [TC_FE_COMPON_002]
+  // [TC_FE_COMPON_002]
+  // [TC_FE_COMPON_002]
+  // [TC_FE_COMPON_002]
+  // [TC_FE_COMPON_002]
   it('should type a message and trigger POST to /api/comments on submit', async () => {
     render(<ContextualChat entityId="1" entityType="task" />);
 
@@ -120,6 +140,16 @@ describe('ContextualChat', () => {
    * @TestData: content = '' (empty)
    * @ExpectedResult: button has disabled attribute
    */
+  // [TC_FE_COMPON_003]
+  // [TC_FE_COMPON_003]
+  // [TC_FE_COMPON_003]
+  // [TC_FE_COMPON_003]
+  // [TC_FE_COMPON_003]
+  // [TC_FE_COMPON_003]
+  // [TC_FE_COMPON_003]
+  // [TC_FE_COMPON_003]
+  // [TC_FE_COMPON_003]
+  // [TC_FE_COMPON_003]
   it('should disable the submit button when textarea is empty', async () => {
     render(<ContextualChat entityId="1" entityType="task" />);
 
@@ -143,6 +173,16 @@ describe('ContextualChat', () => {
    * @TestData: POST fetch returns {ok:false}
    * @ExpectedResult: No visible comment in the list
    */
+  // [TC_FE_COMPON_004]
+  // [TC_FE_COMPON_004]
+  // [TC_FE_COMPON_004]
+  // [TC_FE_COMPON_004]
+  // [TC_FE_COMPON_004]
+  // [TC_FE_COMPON_004]
+  // [TC_FE_COMPON_004]
+  // [TC_FE_COMPON_004]
+  // [TC_FE_COMPON_004]
+  // [TC_FE_COMPON_004]
   it('should rollback optimistic comment when POST fetch fails', async () => {
     const fetchMock = global.fetch as jest.Mock;
     // First call (GET) succeeds, second call (POST) fails
@@ -193,6 +233,16 @@ describe('ContextualChat', () => {
    * @TestData: entityType='task', entityId='42'
    * @ExpectedResult: GET /api/comments/task/42 called, comments visible
    */
+  // [TC_FE_COMPON_005]
+  // [TC_FE_COMPON_005]
+  // [TC_FE_COMPON_005]
+  // [TC_FE_COMPON_005]
+  // [TC_FE_COMPON_005]
+  // [TC_FE_COMPON_005]
+  // [TC_FE_COMPON_005]
+  // [TC_FE_COMPON_005]
+  // [TC_FE_COMPON_005]
+  // [TC_FE_COMPON_005]
   it('should fetch and display comments for the given entity', async () => {
     const comments = [
       {
@@ -243,6 +293,16 @@ describe('ContextualChat', () => {
    * @TestData: comments = []
    * @ExpectedResult: 'No messages yet' text visible
    */
+  // [TC_FE_COMPON_006]
+  // [TC_FE_COMPON_006]
+  // [TC_FE_COMPON_006]
+  // [TC_FE_COMPON_006]
+  // [TC_FE_COMPON_006]
+  // [TC_FE_COMPON_006]
+  // [TC_FE_COMPON_006]
+  // [TC_FE_COMPON_006]
+  // [TC_FE_COMPON_006]
+  // [TC_FE_COMPON_006]
   it('should show empty state when no comments exist', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({

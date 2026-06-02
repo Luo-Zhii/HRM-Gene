@@ -24,6 +24,7 @@ describe('DashboardController', () => {
   });
 
   describe('getEmployeeData', () => {
+    // [TC_BE_DASHBO_126]
     it('should call getEmployeeData on the service and return result', async () => {
       mockDashboardService.getEmployeeData.mockResolvedValue({ stats: {} });
       const req = { user: { employee_id: 1 } };
@@ -36,6 +37,7 @@ describe('DashboardController', () => {
   });
 
   describe('getAdminData', () => {
+    // [TC_BE_DASHBO_127]
     it('should call getAdminData on the service and return result', async () => {
       mockDashboardService.getAdminData.mockResolvedValue({ attendance: {} });
       
@@ -47,6 +49,7 @@ describe('DashboardController', () => {
   });
 
   describe('getHolidays', () => {
+    // [TC_BE_DASHBO_128]
     it('should call getHolidayList on the service', async () => {
       mockDashboardService.getHolidayList.mockReturnValue([]);
       

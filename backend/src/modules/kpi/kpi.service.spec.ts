@@ -67,12 +67,14 @@ describe('KpiService', () => {
   });
 
   describe('createLibrary', () => {
-    it('should throw smoothly isolating mismatch constraints dynamically if creator is functionally unlocatable', async () => {
+    // [TC_BE_KPI_184]
+    it('Ném NotFoundException khi người tạo KPI không tồn tại', async () => {
       employeeRepo.findOne.mockResolvedValue(null);
       await expect(service.createLibrary({} as any, 1)).rejects.toThrow(NotFoundException);
     });
 
-    it('should explicitly aggregate operational constructs seamlessly matching creation binding directly onto corresponding creator identity precisely', async () => {
+    // [TC_BE_KPI_185]
+    it('Tạo library KPI thành công và gán creator_id', async () => {
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
       kpiLibRepo.create.mockReturnValue({ name: 'name', created_by: { employee_id: 1 } });
       kpiLibRepo.save.mockResolvedValue({ id: 1 });
@@ -84,12 +86,14 @@ describe('KpiService', () => {
   });
 
   describe('assignKpis', () => {
-    it('should assert rejection logic intrinsically isolating invalid parameters matching structural constraint strictly mapping boundary failure inherently', async () => {
+    // [TC_BE_KPI_186]
+    it('Ném BadRequestException khi tham số assignKpis không hợp lệ', async () => {
       await expect(service.assignKpis({ assignments: [{ weight: 50 }] } as any))
         .rejects.toThrow(BadRequestException);
     });
 
-    it('should flawlessly intercept and coordinate comprehensive transaction mapping matching assignment logic precisely onto multiple bounds sequentially distributing completion inherently', async () => {
+    // [TC_BE_KPI_187]
+    it('Thiết lập chỉ tiêu KPI cho nhân viên',
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
       kpiPeriodRepo.findOne.mockResolvedValue({ id: 1, name: 'P' });
       
@@ -103,10 +107,11 @@ describe('KpiService', () => {
   });
 
   describe('updateActual', () => {
-    it('should correctly filter implicit overrides isolating valid data types ensuring fallback mechanisms seamlessly mapping outputs predictably', async () => {
+    // [TC_BE_KPI_188]
+    it('updateActual: Giá trị NaN được giữ nguyên actual_value=0 và set status SUBMITTED',
       assignmentRepo.findOne.mockResolvedValue({ actual_value: 0, employee: { employee_id: 1 }, period: { id: 1 } });
       assignmentRepo.save.mockImplementation((a: any) => a);
-      
+
       const res = await service.updateActual(1, NaN);
       expect(res.actual_value).toBe(0);
       expect(res.status).toBe(KpiAssignmentStatus.SUBMITTED);
@@ -114,7 +119,8 @@ describe('KpiService', () => {
   });
 
   describe('calculateFinalKpiScore', () => {
-    it('should automatically compute valid aggregations implicitly isolating limits inherently restricting over-saturation matching structural performance precisely boundaries effectively', async () => {
+    // [TC_BE_KPI_189]
+    it('Đánh giá kết quả KPI của nhân viên',
       assignmentRepo.find.mockResolvedValue([
         { weight: 50, manager_score: 60, target_value: 50 }, // 120% completion (bounded)
         { weight: 50, actual_value: 40, target_value: 50 }, // 80% completion (fallback to actual since manager_score null)
@@ -125,7 +131,8 @@ describe('KpiService', () => {
       expect(res).toBe(100);
     });
 
-    it('should universally block extraneous processing isolating missing entries smoothly resulting functionally onto implicit fallback identical conditions', async () => {
+    // [TC_BE_KPI_190]
+    it('Đánh giá kết quả KPI của nhân viên',
       assignmentRepo.find.mockResolvedValue([]);
       expect(await service.calculateFinalKpiScore(1, 1)).toBe(0);
     });

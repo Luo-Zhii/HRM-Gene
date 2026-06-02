@@ -13,6 +13,16 @@ describe('cn (className utility)', () => {
    * @TestData: 'bg-red-500', 'text-white'
    * @ExpectedResult: string containing both class names
    */
+  // [TC_FE_LIB_082]
+  // [TC_FE_LIB_082]
+  // [TC_FE_LIB_082]
+  // [TC_FE_LIB_082]
+  // [TC_FE_LIB_082]
+  // [TC_FE_LIB_082]
+  // [TC_FE_LIB_082]
+  // [TC_FE_LIB_082]
+  // [TC_FE_LIB_082]
+  // [TC_FE_LIB_082]
   it('should merge multiple string class names', () => {
     const result = cn('bg-red-500', 'text-white');
     expect(result).toContain('bg-red-500');
@@ -31,6 +41,16 @@ describe('cn (className utility)', () => {
    * @TestData: 'm-2', 'm-4'
    * @ExpectedResult: string containing 'm-4' but not 'm-2'
    */
+  // [TC_FE_LIB_083]
+  // [TC_FE_LIB_083]
+  // [TC_FE_LIB_083]
+  // [TC_FE_LIB_083]
+  // [TC_FE_LIB_083]
+  // [TC_FE_LIB_083]
+  // [TC_FE_LIB_083]
+  // [TC_FE_LIB_083]
+  // [TC_FE_LIB_083]
+  // [TC_FE_LIB_083]
   it('should resolve Tailwind class conflicts with twMerge (later wins)', () => {
     const result = cn('m-2', 'm-4');
     expect(result).toContain('m-4');
@@ -49,6 +69,16 @@ describe('cn (className utility)', () => {
    * @TestData: false, undefined, 'visible'
    * @ExpectedResult: 'visible'
    */
+  // [TC_FE_LIB_084]
+  // [TC_FE_LIB_084]
+  // [TC_FE_LIB_084]
+  // [TC_FE_LIB_084]
+  // [TC_FE_LIB_084]
+  // [TC_FE_LIB_084]
+  // [TC_FE_LIB_084]
+  // [TC_FE_LIB_084]
+  // [TC_FE_LIB_084]
+  // [TC_FE_LIB_084]
   it('should ignore falsy values (false, undefined, null)', () => {
     const result = cn(false, undefined, null, 'visible');
     expect(result).toBe('visible');
@@ -66,6 +96,16 @@ describe('cn (className utility)', () => {
    * @TestData: none
    * @ExpectedResult: ''
    */
+  // [TC_FE_LIB_085]
+  // [TC_FE_LIB_085]
+  // [TC_FE_LIB_085]
+  // [TC_FE_LIB_085]
+  // [TC_FE_LIB_085]
+  // [TC_FE_LIB_085]
+  // [TC_FE_LIB_085]
+  // [TC_FE_LIB_085]
+  // [TC_FE_LIB_085]
+  // [TC_FE_LIB_085]
   it('should return empty string when called with no arguments', () => {
     const result = cn();
     expect(result).toBe('');
@@ -83,6 +123,16 @@ describe('cn (className utility)', () => {
    * @TestData: 'base', {active:true, inactive:false}, ['nested']
    * @ExpectedResult: string containing 'base', 'active', 'nested' but not 'inactive'
    */
+  // [TC_FE_LIB_086]
+  // [TC_FE_LIB_086]
+  // [TC_FE_LIB_086]
+  // [TC_FE_LIB_086]
+  // [TC_FE_LIB_086]
+  // [TC_FE_LIB_086]
+  // [TC_FE_LIB_086]
+  // [TC_FE_LIB_086]
+  // [TC_FE_LIB_086]
+  // [TC_FE_LIB_086]
   it('should process conditional objects and arrays via clsx', () => {
     const result = cn('base', { active: true, inactive: false }, ['nested']);
     expect(result).toContain('base');

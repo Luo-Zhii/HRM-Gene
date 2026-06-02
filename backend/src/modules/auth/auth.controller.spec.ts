@@ -50,6 +50,7 @@ describe('AuthController', () => {
      * @TestData: email=admin@example.com, password=admin
      * @ExpectedResult: { success: true, user: {...}, access_token: 'token' }
      */
+    // [TC_BE_AUTH_048]
     it('should login successfully and return user with access token and set cookie', async () => {
       const user = { employee_id: 1, email: 'admin@example.com', first_name: 'Admin' };
       mockAuthService.validateUser.mockResolvedValue(user);
@@ -84,6 +85,7 @@ describe('AuthController', () => {
      * @TestData: email=notfound@example.com
      * @ExpectedResult: NotFoundException thrown
      */
+    // [TC_BE_AUTH_049]
     it('should propagate NotFoundException when user email not found', async () => {
       mockAuthService.validateUser.mockRejectedValue(
         new NotFoundException('Email khong ton tai trong he thong.')
@@ -106,6 +108,7 @@ describe('AuthController', () => {
      * @TestData: wrong password
      * @ExpectedResult: UnauthorizedException thrown
      */
+    // [TC_BE_AUTH_050]
     it('should propagate UnauthorizedException when password is wrong', async () => {
       mockAuthService.validateUser.mockRejectedValue(
         new UnauthorizedException('Sai mat khau.')
@@ -128,6 +131,7 @@ describe('AuthController', () => {
      * @TestData: account locked (failed_attempts >= 5)
      * @ExpectedResult: UnauthorizedException thrown
      */
+    // [TC_BE_AUTH_051]
     it('should propagate UnauthorizedException when account is locked', async () => {
       mockAuthService.validateUser.mockRejectedValue(
         new UnauthorizedException('Tai khoan da bi khoa do nhap sai qua 5 lan.')
@@ -153,6 +157,7 @@ describe('AuthController', () => {
      * @TestData: none
      * @ExpectedResult: { success: true }
      */
+    // [TC_BE_AUTH_052]
     it('should clear cookie and return success on logout', async () => {
       const result = await controller.logout(mockResponse);
 
@@ -178,6 +183,7 @@ describe('AuthController', () => {
      * @TestData: employee_id=1
      * @ExpectedResult: Profile object
      */
+    // [TC_BE_AUTH_053]
     it('should return user profile for authenticated user', async () => {
       const profile = { employee_id: 1, email: 'admin@example.com', first_name: 'Admin' };
       mockAuthService.getProfile.mockResolvedValue(profile);
@@ -203,6 +209,7 @@ describe('AuthController', () => {
      * @TestData: empty user object
      * @ExpectedResult: null
      */
+    // [TC_BE_AUTH_054]
     it('should return null when user has no employee_id', async () => {
       const result = await controller.getProfile({ user: {} }, mockResponse);
       expect(result).toBeNull();
@@ -221,6 +228,7 @@ describe('AuthController', () => {
      * @TestData: user.id=5
      * @ExpectedResult: getProfile called with 5
      */
+    // [TC_BE_AUTH_055]
     it('should use user.id as fallback when employee_id is missing', async () => {
       const profile = { employee_id: 5, email: 'user@example.com' };
       mockAuthService.getProfile.mockResolvedValue(profile);
@@ -249,6 +257,7 @@ describe('AuthController', () => {
      * @TestData: update first_name to 'New'
      * @ExpectedResult: Updated profile returned
      */
+    // [TC_BE_AUTH_056]
     it('should update profile and return result', async () => {
       mockAuthService.updateContactInfo.mockResolvedValue({
         employee_id: 1, first_name: 'New', email: 'a@a.com',
@@ -278,6 +287,7 @@ describe('AuthController', () => {
      * @TestData: no file
      * @ExpectedResult: BadRequestException('File is required or invalid format')
      */
+    // [TC_BE_AUTH_057]
     it('should throw BadRequestException when no file is provided', async () => {
       await expect(
         controller.uploadAvatar({ user: { id: 1 } }, null as any),
@@ -296,6 +306,7 @@ describe('AuthController', () => {
      * @TestData: file.filename='avatar-123.png', protocol=http, host=localhost:3001
      * @ExpectedResult: updateAvatarUrl called with http://localhost:3001/uploads/avatars/avatar-123.png
      */
+    // [TC_BE_AUTH_058]
     it('should construct avatar URL and call updateAvatarUrl', async () => {
       mockAuthService.updateAvatarUrl.mockResolvedValue({ avatar_url: 'http://localhost:3001/uploads/avatars/avatar.png' });
       const req = {
@@ -328,6 +339,7 @@ describe('AuthController', () => {
      * @TestData: current=old, new=new123
      * @ExpectedResult: { message: 'Password changed successfully' }
      */
+    // [TC_BE_AUTH_059]
     it('should delegate to authService.changePassword', async () => {
       const msg = { message: 'Password changed successfully' };
       mockAuthService.changePassword.mockResolvedValue(msg);
@@ -356,6 +368,7 @@ describe('AuthController', () => {
      * @TestData: position=Staff
      * @ExpectedResult: { main: [...], admin: [] }
      */
+    // [TC_BE_AUTH_060]
     it('should return main nav only and empty admin for non-admin user', async () => {
       mockAuthService.getProfile.mockResolvedValue({
         position: { position_name: 'Staff' },
@@ -380,6 +393,7 @@ describe('AuthController', () => {
      * @TestData: position=Director
      * @ExpectedResult: { main: [...], admin: [...] }
      */
+    // [TC_BE_AUTH_061]
     it('should return full admin nav for Director', async () => {
       mockAuthService.getProfile.mockResolvedValue({
         position: { position_name: 'Director' },
@@ -403,6 +417,7 @@ describe('AuthController', () => {
      * @TestData: empty user
      * @ExpectedResult: { main: [], admin: [] }
      */
+    // [TC_BE_AUTH_062]
     it('should return empty navigation when no user id', async () => {
       const result = await controller.navigation({ user: {} }, mockResponse);
       expect(result).toEqual({ main: [], admin: [] });
@@ -433,6 +448,7 @@ describe('AuthController', () => {
      * @TestData: empty body
      * @ExpectedResult: BadRequestException('All fields are required')
      */
+    // [TC_BE_AUTH_063]
     it('should throw BadRequestException when required fields are missing', async () => {
       await expect(controller.adminRegister({} as any)).rejects.toThrow(BadRequestException);
     });
@@ -449,6 +465,7 @@ describe('AuthController', () => {
      * @TestData: valid admin registration data
      * @ExpectedResult: { message: 'Account created successfully', id: 100 }
      */
+    // [TC_BE_AUTH_064]
     it('should delegate to registerAdminUser and return result on success', async () => {
       mockAuthService.registerAdminUser.mockResolvedValue({
         message: 'Account created successfully',
@@ -473,6 +490,7 @@ describe('AuthController', () => {
      * @TestData: secretKey=wrong_secret
      * @ExpectedResult: UnauthorizedException thrown
      */
+    // [TC_BE_AUTH_065]
     it('should propagate UnauthorizedException from wrong secret key', async () => {
       mockAuthService.registerAdminUser.mockRejectedValue(
         new UnauthorizedException('Invalid system secret key')

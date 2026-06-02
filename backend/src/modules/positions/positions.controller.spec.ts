@@ -26,7 +26,8 @@ describe('PositionsController', () => {
   });
 
   describe('endpoints', () => {
-    it('should confidently cleanly sequentially naturally logically robust seamlessly seamlessly dynamically smoothly accurately beautifully efficiently elegantly efficiently transparent rationally rationally seamlessly identical cleanly explicitly conceptually ideally cleanly perfectly optimally implicitly exactly structurally transparent reliably logically cleanly optimally conceptually precisely perfectly explicitly seamlessly elegantly', async () => {
+    // [TC_BE_POSITI_283]
+    it('Tạo chức vụ mới trong hệ thống',
       mockService.create.mockResolvedValue({});
       mockService.findAll.mockResolvedValue([]);
       mockService.findOne.mockResolvedValue({});

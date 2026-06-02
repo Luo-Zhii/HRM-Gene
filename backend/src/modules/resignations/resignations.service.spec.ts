@@ -60,6 +60,7 @@ describe('ResignationsService', () => {
      * @TestData: employeeId=1, existing Pending request
      * @ExpectedResult: BadRequestException
      */
+    // [TC_BE_RESIGN_297]
     it('should throw BadRequestException when employee already has a pending resignation', async () => {
       mockResRepo.findOne.mockResolvedValue({ id: 1, status: ResignationStatus.PENDING });
 
@@ -80,6 +81,7 @@ describe('ResignationsService', () => {
      * @TestData: employeeId=1, last_day=2026-06-30, reason='Better opportunity'
      * @ExpectedResult: Saved resignation with status Pending
      */
+    // [TC_BE_RESIGN_298]
     it('should create resignation request and notify admins', async () => {
       mockResRepo.findOne.mockResolvedValue(null);
       mockEmployeeRepo.findOne.mockResolvedValue({
@@ -126,6 +128,7 @@ describe('ResignationsService', () => {
      * @TestData: employeeId=1 has 2 requests (1 Pending, 1 Rejected)
      * @ExpectedResult: Array with 2 resignation requests
      */
+    // [TC_BE_RESIGN_299]
     it('should return all resignation requests for an employee', async () => {
       mockResRepo.find.mockResolvedValue([
         { id: 1, employee_id: 1, status: ResignationStatus.PENDING, reason_text: 'x' },
@@ -152,6 +155,7 @@ describe('ResignationsService', () => {
      * @TestData: All resignation requests
      * @ExpectedResult: Array of requests with employee relation
      */
+    // [TC_BE_RESIGN_300]
     it('should return all resignation requests with employee relation', async () => {
       mockResRepo.find.mockResolvedValue([
         { id: 1, status: ResignationStatus.PENDING, employee: { employee_id: 1, first_name: 'John' } },
@@ -178,6 +182,7 @@ describe('ResignationsService', () => {
      * @TestData: id=999
      * @ExpectedResult: NotFoundException('Resignation request not found')
      */
+    // [TC_BE_RESIGN_301]
     it('should throw NotFoundException when resignation request not found', async () => {
       mockResRepo.findOne.mockResolvedValue(null);
 
@@ -198,6 +203,7 @@ describe('ResignationsService', () => {
      * @TestData: request already approved
      * @ExpectedResult: BadRequestException
      */
+    // [TC_BE_RESIGN_302]
     it('should throw BadRequestException when updating non-pending resignation', async () => {
       mockResRepo.findOne.mockResolvedValue({
         id: 1,
@@ -222,6 +228,7 @@ describe('ResignationsService', () => {
      * @TestData: status=APPROVED, missing resignation_category
      * @ExpectedResult: BadRequestException
      */
+    // [TC_BE_RESIGN_303]
     it('should throw BadRequestException when approving without resignation_category', async () => {
       mockResRepo.findOne.mockResolvedValue({
         id: 1,
@@ -247,6 +254,7 @@ describe('ResignationsService', () => {
      * @TestData: status=APPROVED, category=Personal, last_day=2026-06-30
      * @ExpectedResult: Approved resignation, employee terminated
      */
+    // [TC_BE_RESIGN_304]
     it('should approve resignation, terminate employee, and notify', async () => {
       mockResRepo.findOne.mockResolvedValue({
         id: 1,
@@ -291,6 +299,7 @@ describe('ResignationsService', () => {
      * @TestData: status=REJECTED
      * @ExpectedResult: Rejected resignation, employee remains active
      */
+    // [TC_BE_RESIGN_305]
     it('should reject resignation without terminating employee', async () => {
       mockResRepo.findOne.mockResolvedValue({
         id: 1,

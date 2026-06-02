@@ -22,6 +22,7 @@ describe('AnalyticsController', () => {
   });
 
   describe('getDashboardData', () => {
+    // [TC_BE_ANALYT_034]
     it('should return dashboard data', async () => {
       mockService.getDashboardData.mockResolvedValue({ summary: {} });
       expect(await controller.getDashboardData()).toEqual({ summary: {} });

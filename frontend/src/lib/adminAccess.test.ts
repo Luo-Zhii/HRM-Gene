@@ -95,6 +95,16 @@ describe('getPositionName', () => {
    * @TestData: directorUser
    * @ExpectedResult: 'director'
    */
+  // [TC_FE_LIB_058]
+  // [TC_FE_LIB_058]
+  // [TC_FE_LIB_058]
+  // [TC_FE_LIB_058]
+  // [TC_FE_LIB_058]
+  // [TC_FE_LIB_058]
+  // [TC_FE_LIB_058]
+  // [TC_FE_LIB_058]
+  // [TC_FE_LIB_058]
+  // [TC_FE_LIB_058]
   it('should return lowercased position_name from position object', () => {
     expect(getPositionName(directorUser)).toBe('director');
   });
@@ -111,6 +121,16 @@ describe('getPositionName', () => {
    * @TestData: user with role only
    * @ExpectedResult: 'manager'
    */
+  // [TC_FE_LIB_059]
+  // [TC_FE_LIB_059]
+  // [TC_FE_LIB_059]
+  // [TC_FE_LIB_059]
+  // [TC_FE_LIB_059]
+  // [TC_FE_LIB_059]
+  // [TC_FE_LIB_059]
+  // [TC_FE_LIB_059]
+  // [TC_FE_LIB_059]
+  // [TC_FE_LIB_059]
   it('should fall back to role when position_name is missing', () => {
     const user = { role: 'Manager', position: undefined };
     expect(getPositionName(user)).toBe('manager');
@@ -128,6 +148,16 @@ describe('getPositionName', () => {
    * @TestData: null
    * @ExpectedResult: ''
    */
+  // [TC_FE_LIB_060]
+  // [TC_FE_LIB_060]
+  // [TC_FE_LIB_060]
+  // [TC_FE_LIB_060]
+  // [TC_FE_LIB_060]
+  // [TC_FE_LIB_060]
+  // [TC_FE_LIB_060]
+  // [TC_FE_LIB_060]
+  // [TC_FE_LIB_060]
+  // [TC_FE_LIB_060]
   it('should return empty string for null user', () => {
     expect(getPositionName(null)).toBe('');
   });
@@ -146,6 +176,16 @@ describe('isAdminBypassRole', () => {
    * @TestData: directorUser
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_061]
+  // [TC_FE_LIB_061]
+  // [TC_FE_LIB_061]
+  // [TC_FE_LIB_061]
+  // [TC_FE_LIB_061]
+  // [TC_FE_LIB_061]
+  // [TC_FE_LIB_061]
+  // [TC_FE_LIB_061]
+  // [TC_FE_LIB_061]
+  // [TC_FE_LIB_061]
   it('should return true for Director role', () => {
     expect(isAdminBypassRole(directorUser)).toBe(true);
   });
@@ -162,6 +202,16 @@ describe('isAdminBypassRole', () => {
    * @TestData: hrManagerUser
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_062]
+  // [TC_FE_LIB_062]
+  // [TC_FE_LIB_062]
+  // [TC_FE_LIB_062]
+  // [TC_FE_LIB_062]
+  // [TC_FE_LIB_062]
+  // [TC_FE_LIB_062]
+  // [TC_FE_LIB_062]
+  // [TC_FE_LIB_062]
+  // [TC_FE_LIB_062]
   it('should return true for HR Manager (includes hr in bypass list)', () => {
     expect(isAdminBypassRole(hrManagerUser)).toBe(true);
   });
@@ -178,6 +228,16 @@ describe('isAdminBypassRole', () => {
    * @TestData: employeeWithSystemPerm (Employee role)
    * @ExpectedResult: false
    */
+  // [TC_FE_LIB_063]
+  // [TC_FE_LIB_063]
+  // [TC_FE_LIB_063]
+  // [TC_FE_LIB_063]
+  // [TC_FE_LIB_063]
+  // [TC_FE_LIB_063]
+  // [TC_FE_LIB_063]
+  // [TC_FE_LIB_063]
+  // [TC_FE_LIB_063]
+  // [TC_FE_LIB_063]
   it('should return false for regular Employee', () => {
     expect(isAdminBypassRole(employeeWithSystemPerm)).toBe(false);
   });
@@ -196,6 +256,16 @@ describe('canManageSystem', () => {
    * @TestData: directorUser
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_064]
+  // [TC_FE_LIB_064]
+  // [TC_FE_LIB_064]
+  // [TC_FE_LIB_064]
+  // [TC_FE_LIB_064]
+  // [TC_FE_LIB_064]
+  // [TC_FE_LIB_064]
+  // [TC_FE_LIB_064]
+  // [TC_FE_LIB_064]
+  // [TC_FE_LIB_064]
   it('should return true for Director via admin bypass role', () => {
     expect(canManageSystem(directorUser)).toBe(true);
   });
@@ -212,6 +282,16 @@ describe('canManageSystem', () => {
    * @TestData: hrManagerUser (has manage:system)
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_065]
+  // [TC_FE_LIB_065]
+  // [TC_FE_LIB_065]
+  // [TC_FE_LIB_065]
+  // [TC_FE_LIB_065]
+  // [TC_FE_LIB_065]
+  // [TC_FE_LIB_065]
+  // [TC_FE_LIB_065]
+  // [TC_FE_LIB_065]
+  // [TC_FE_LIB_065]
   it('should return true for HR Manager with manage:system permission', () => {
     // HR Manager is a bypass role in the list ("hr", "hr manager"),
     // but our hrManagerUser has position_name='HR Manager'.
@@ -233,6 +313,16 @@ describe('canManageSystem', () => {
    * @TestData: emptyUser
    * @ExpectedResult: false
    */
+  // [TC_FE_LIB_066]
+  // [TC_FE_LIB_066]
+  // [TC_FE_LIB_066]
+  // [TC_FE_LIB_066]
+  // [TC_FE_LIB_066]
+  // [TC_FE_LIB_066]
+  // [TC_FE_LIB_066]
+  // [TC_FE_LIB_066]
+  // [TC_FE_LIB_066]
+  // [TC_FE_LIB_066]
   it('should return false for user without system permissions', () => {
     expect(canManageSystem(emptyUser)).toBe(false);
   });
@@ -251,6 +341,16 @@ describe('canManagePayroll', () => {
    * @TestData: financeUser
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_067]
+  // [TC_FE_LIB_067]
+  // [TC_FE_LIB_067]
+  // [TC_FE_LIB_067]
+  // [TC_FE_LIB_067]
+  // [TC_FE_LIB_067]
+  // [TC_FE_LIB_067]
+  // [TC_FE_LIB_067]
+  // [TC_FE_LIB_067]
+  // [TC_FE_LIB_067]
   it('should return true for Finance department user', () => {
     expect(canManagePayroll(financeUser)).toBe(true);
   });
@@ -267,6 +367,16 @@ describe('canManagePayroll', () => {
    * @TestData: emptyUser
    * @ExpectedResult: false
    */
+  // [TC_FE_LIB_068]
+  // [TC_FE_LIB_068]
+  // [TC_FE_LIB_068]
+  // [TC_FE_LIB_068]
+  // [TC_FE_LIB_068]
+  // [TC_FE_LIB_068]
+  // [TC_FE_LIB_068]
+  // [TC_FE_LIB_068]
+  // [TC_FE_LIB_068]
+  // [TC_FE_LIB_068]
   it('should return false for non-finance, non-admin user', () => {
     expect(canManagePayroll(emptyUser)).toBe(false);
   });
@@ -285,6 +395,16 @@ describe('canManagePermissions', () => {
    * @TestData: directorUser
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_069]
+  // [TC_FE_LIB_069]
+  // [TC_FE_LIB_069]
+  // [TC_FE_LIB_069]
+  // [TC_FE_LIB_069]
+  // [TC_FE_LIB_069]
+  // [TC_FE_LIB_069]
+  // [TC_FE_LIB_069]
+  // [TC_FE_LIB_069]
+  // [TC_FE_LIB_069]
   it('should return true for Director', () => {
     expect(canManagePermissions(directorUser)).toBe(true);
   });
@@ -301,6 +421,16 @@ describe('canManagePermissions', () => {
    * @TestData: emptyUser
    * @ExpectedResult: false
    */
+  // [TC_FE_LIB_070]
+  // [TC_FE_LIB_070]
+  // [TC_FE_LIB_070]
+  // [TC_FE_LIB_070]
+  // [TC_FE_LIB_070]
+  // [TC_FE_LIB_070]
+  // [TC_FE_LIB_070]
+  // [TC_FE_LIB_070]
+  // [TC_FE_LIB_070]
+  // [TC_FE_LIB_070]
   it('should return false for regular user without permissions', () => {
     expect(canManagePermissions(emptyUser)).toBe(false);
   });
@@ -319,6 +449,16 @@ describe('canManageLeave', () => {
    * @TestData: hrManagerUser (department=HR)
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_071]
+  // [TC_FE_LIB_071]
+  // [TC_FE_LIB_071]
+  // [TC_FE_LIB_071]
+  // [TC_FE_LIB_071]
+  // [TC_FE_LIB_071]
+  // [TC_FE_LIB_071]
+  // [TC_FE_LIB_071]
+  // [TC_FE_LIB_071]
+  // [TC_FE_LIB_071]
   it('should return true for HR department user', () => {
     // HR Manager is bypass role AND HR department
     expect(canManageLeave(hrManagerUser)).toBe(true);
@@ -336,6 +476,16 @@ describe('canManageLeave', () => {
    * @TestData: financeUser
    * @ExpectedResult: false
    */
+  // [TC_FE_LIB_072]
+  // [TC_FE_LIB_072]
+  // [TC_FE_LIB_072]
+  // [TC_FE_LIB_072]
+  // [TC_FE_LIB_072]
+  // [TC_FE_LIB_072]
+  // [TC_FE_LIB_072]
+  // [TC_FE_LIB_072]
+  // [TC_FE_LIB_072]
+  // [TC_FE_LIB_072]
   it('should return false for non-HR non-admin user', () => {
     expect(canManageLeave(financeUser)).toBe(false);
   });
@@ -354,6 +504,16 @@ describe('canManageEmployees', () => {
    * @TestData: directorUser
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_073]
+  // [TC_FE_LIB_073]
+  // [TC_FE_LIB_073]
+  // [TC_FE_LIB_073]
+  // [TC_FE_LIB_073]
+  // [TC_FE_LIB_073]
+  // [TC_FE_LIB_073]
+  // [TC_FE_LIB_073]
+  // [TC_FE_LIB_073]
+  // [TC_FE_LIB_073]
   it('should return true for Director', () => {
     expect(canManageEmployees(directorUser)).toBe(true);
   });
@@ -370,6 +530,16 @@ describe('canManageEmployees', () => {
    * @TestData: hrManagerUser
    * @ExpectedResult: true
    */
+  // [TC_FE_LIB_074]
+  // [TC_FE_LIB_074]
+  // [TC_FE_LIB_074]
+  // [TC_FE_LIB_074]
+  // [TC_FE_LIB_074]
+  // [TC_FE_LIB_074]
+  // [TC_FE_LIB_074]
+  // [TC_FE_LIB_074]
+  // [TC_FE_LIB_074]
+  // [TC_FE_LIB_074]
   it('should return true for HR department user', () => {
     expect(canManageEmployees(hrManagerUser)).toBe(true);
   });
@@ -386,6 +556,16 @@ describe('canManageEmployees', () => {
    * @TestData: financeUser
    * @ExpectedResult: false
    */
+  // [TC_FE_LIB_075]
+  // [TC_FE_LIB_075]
+  // [TC_FE_LIB_075]
+  // [TC_FE_LIB_075]
+  // [TC_FE_LIB_075]
+  // [TC_FE_LIB_075]
+  // [TC_FE_LIB_075]
+  // [TC_FE_LIB_075]
+  // [TC_FE_LIB_075]
+  // [TC_FE_LIB_075]
   it('should return false for non-HR user', () => {
     expect(canManageEmployees(financeUser)).toBe(false);
   });

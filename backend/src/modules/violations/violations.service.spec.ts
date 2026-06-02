@@ -60,6 +60,7 @@ describe('ViolationsService', () => {
      * @TestData: employee_id=999 (non-existent)
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_VIOLAT_332]
     it('should throw NotFoundException when employee not found', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue(null);
 
@@ -85,6 +86,7 @@ describe('ViolationsService', () => {
      * @TestData: Late violation for employee 1 on 2026-06-01, deduction=50000, severity=Normal
      * @ExpectedResult: Saved violation with correct fields, notification sent
      */
+    // [TC_BE_VIOLAT_333]
     it('should create violation and send notification', async () => {
       mockEmployeeRepo.findOne.mockResolvedValue({
         employee_id: 1,
@@ -138,6 +140,7 @@ describe('ViolationsService', () => {
      * @TestData: 3 violations, 1 resolved
      * @ExpectedResult: Records array and correct stats
      */
+    // [TC_BE_VIOLAT_334]
     it('should return all violations with stats', async () => {
       mockViolationRepo.find.mockResolvedValue([
         { violation_id: 1, status: ViolationStatus.RESOLVED },
@@ -163,6 +166,7 @@ describe('ViolationsService', () => {
      * @TestData: employeeId=1
      * @ExpectedResult: Filtered array with correct stats
      */
+    // [TC_BE_VIOLAT_335]
     it('should filter violations by employee ID', async () => {
       mockViolationRepo.find.mockResolvedValue([
         { violation_id: 1, status: ViolationStatus.PENDING },
@@ -190,6 +194,7 @@ describe('ViolationsService', () => {
      * @TestData: violation_id=999
      * @ExpectedResult: NotFoundException('Violation not found')
      */
+    // [TC_BE_VIOLAT_336]
     it('should throw NotFoundException when violation not found', async () => {
       mockViolationRepo.findOne.mockResolvedValue(null);
 
@@ -208,6 +213,7 @@ describe('ViolationsService', () => {
      * @TestData: violation_id=1, scoped to employee_id=2
      * @ExpectedResult: Violation object
      */
+    // [TC_BE_VIOLAT_337]
     it('should return violation when found with employee scope', async () => {
       const violation = {
         violation_id: 1,
@@ -236,6 +242,7 @@ describe('ViolationsService', () => {
      * @TestData: violation_id=999
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_VIOLAT_338]
     it('should throw NotFoundException when violation not found for update', async () => {
       mockViolationRepo.findOne.mockResolvedValue(null);
 
@@ -256,6 +263,7 @@ describe('ViolationsService', () => {
      * @TestData: status Pending->Resolved, severity Normal->High, deduction 0->100000
      * @ExpectedResult: Updated violation, notification sent
      */
+    // [TC_BE_VIOLAT_339]
     it('should update violation status, severity, and deduction', async () => {
       mockViolationRepo.findOne.mockResolvedValue({
         violation_id: 1,
@@ -303,6 +311,7 @@ describe('ViolationsService', () => {
      * @TestData: violation_id=999
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_VIOLAT_340]
     it('should throw NotFoundException when violation not found for remove', async () => {
       mockViolationRepo.findOne.mockResolvedValue(null);
 
@@ -321,6 +330,7 @@ describe('ViolationsService', () => {
      * @TestData: violation_id=1
      * @ExpectedResult: { message: 'Violation deleted successfully' }
      */
+    // [TC_BE_VIOLAT_341]
     it('should delete violation and return success message', async () => {
       mockViolationRepo.findOne.mockResolvedValue({ violation_id: 1 });
       mockViolationRepo.remove.mockResolvedValue({});
@@ -346,6 +356,7 @@ describe('ViolationsService', () => {
      * @TestData: 1 incomplete shift record
      * @ExpectedResult: { message: 'Sync complete', createdCount: 1 }
      */
+    // [TC_BE_VIOLAT_342]
     it('should create violations for incomplete shifts and notify admins', async () => {
       mockTimeKeepingRepo.find.mockResolvedValue([
         {
@@ -381,6 +392,7 @@ describe('ViolationsService', () => {
      * @TestData: No incomplete shifts
      * @ExpectedResult: { message: 'Sync complete', createdCount: 0 }
      */
+    // [TC_BE_VIOLAT_343]
     it('should return createdCount 0 when no incomplete shifts found', async () => {
       mockTimeKeepingRepo.find.mockResolvedValue([]);
 
@@ -401,6 +413,7 @@ describe('ViolationsService', () => {
      * @TestData: Record with null employee
      * @ExpectedResult: createdCount=0
      */
+    // [TC_BE_VIOLAT_344]
     it('should skip records with null employee reference', async () => {
       mockTimeKeepingRepo.find.mockResolvedValue([
         { hours_worked: 5, work_date: '2026-06-01', employee: null },

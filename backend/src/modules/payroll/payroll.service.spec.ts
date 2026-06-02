@@ -122,6 +122,7 @@ describe('PayrollService', () => {
      * @TestData: taxableIncome=0
      * @ExpectedResult: 0
      */
+    // [TC_BE_PAYROL_258]
     it('should return 0 tax for zero or negative taxable income', () => {
       const pit = (service as any).calculatePIT(0);
       expect(pit).toBe(0);
@@ -139,6 +140,7 @@ describe('PayrollService', () => {
      * @TestData: taxableIncome=4,000,000 (Bracket 1)
      * @ExpectedResult: 200000
      */
+    // [TC_BE_PAYROL_259]
     it('should calculate 5% tax for first bracket (<= 5M)', () => {
       const pit = (service as any).calculatePIT(4000000);
       expect(pit).toBe(200000);
@@ -156,6 +158,7 @@ describe('PayrollService', () => {
      * @TestData: taxableIncome=8,000,000 (Bracket 2)
      * @ExpectedResult: 550000
      */
+    // [TC_BE_PAYROL_260]
     it('should calculate progressive tax for bracket 2 (5M-10M)', () => {
       const pit = (service as any).calculatePIT(8000000);
       // 5M * 0.05 = 250k, 3M * 0.10 = 300k, total = 550k
@@ -174,6 +177,7 @@ describe('PayrollService', () => {
      * @TestData: taxableIncome=15,000,000 (Bracket 3)
      * @ExpectedResult: 1500000
      */
+    // [TC_BE_PAYROL_261]
     it('should calculate progressive tax for bracket 3 (10M-18M)', () => {
       const pit = (service as any).calculatePIT(15000000);
       expect(pit).toBe(1500000);
@@ -191,6 +195,7 @@ describe('PayrollService', () => {
      * @TestData: taxableIncome=25,000,000 (Bracket 4)
      * @ExpectedResult: 3350000
      */
+    // [TC_BE_PAYROL_262]
     it('should calculate progressive tax for bracket 4 (18M-32M)', () => {
       const pit = (service as any).calculatePIT(25000000);
       expect(pit).toBe(3350000);
@@ -208,6 +213,7 @@ describe('PayrollService', () => {
      * @TestData: taxableIncome=45,000,000 (Bracket 5)
      * @ExpectedResult: 8000000
      */
+    // [TC_BE_PAYROL_263]
     it('should calculate progressive tax for bracket 5 (32M-52M)', () => {
       const pit = (service as any).calculatePIT(45000000);
       expect(pit).toBe(8000000);
@@ -225,6 +231,7 @@ describe('PayrollService', () => {
      * @TestData: taxableIncome=65,000,000 (Bracket 6)
      * @ExpectedResult: 13650000
      */
+    // [TC_BE_PAYROL_264]
     it('should calculate progressive tax for bracket 6 (52M-80M)', () => {
       const pit = (service as any).calculatePIT(65000000);
       expect(pit).toBe(13650000);
@@ -242,6 +249,7 @@ describe('PayrollService', () => {
      * @TestData: taxableIncome=100,000,000 (Bracket 7)
      * @ExpectedResult: 25150000
      */
+    // [TC_BE_PAYROL_265]
     it('should calculate progressive tax for bracket 7 (>80M)', () => {
       const pit = (service as any).calculatePIT(100000000);
       expect(pit).toBe(25150000);
@@ -262,6 +270,7 @@ describe('PayrollService', () => {
      * @TestData: month=6, year=2026, no existing period
      * @ExpectedResult: Summary with period_id and generated count
      */
+    // [TC_BE_PAYROL_266]
     it('should create payroll period if it does not exist and return summary', async () => {
       mockRepo.findOne.mockResolvedValueOnce(null); // no period
       mockRepo.create.mockReturnValue({
@@ -303,6 +312,7 @@ describe('PayrollService', () => {
      * @TestData: payslip_id=999
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_PAYROL_267]
     it('should throw NotFoundException when payslip not found', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
@@ -321,6 +331,7 @@ describe('PayrollService', () => {
      * @TestData: payslip_id=1 with Gross=12000000
      * @ExpectedResult: Detailed payslip with earnings, deductions, Vietnamese words
      */
+    // [TC_BE_PAYROL_268]
     it('should return detailed payslip with earnings and deduction breakdown', async () => {
       mockRepo.findOne.mockResolvedValueOnce({
         payslip_id: 1,
@@ -386,6 +397,7 @@ describe('PayrollService', () => {
      * @TestData: payslip_id=1
      * @ExpectedResult: Approved payslip, notification created
      */
+    // [TC_BE_PAYROL_269]
     it('should approve payslip and send notification', async () => {
       mockRepo.findOne.mockResolvedValue({
         payslip_id: 1,
@@ -417,6 +429,7 @@ describe('PayrollService', () => {
      * @TestData: payslip_id=999
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_PAYROL_270]
     it('should throw NotFoundException when payslip not found for approval', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
@@ -438,6 +451,7 @@ describe('PayrollService', () => {
      * @TestData: payslip_id=1, net_salary=10740000
      * @ExpectedResult: Paid payslip, notification sent
      */
+    // [TC_BE_PAYROL_271]
     it('should mark payslip as paid and notify employee', async () => {
       mockRepo.findOne.mockResolvedValue({
         payslip_id: 1,
@@ -469,6 +483,7 @@ describe('PayrollService', () => {
      * @TestData: payslip_id=999
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_PAYROL_272]
     it('should throw NotFoundException when payslip not found for mark paid', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
@@ -490,6 +505,7 @@ describe('PayrollService', () => {
      * @TestData: month=6, year=2026, 3 pending payslips
      * @ExpectedResult: { approved: 3 }
      */
+    // [TC_BE_PAYROL_273]
     it('should batch approve all pending payslips for a period', async () => {
       mockRepo.findOne.mockResolvedValue({ id: 1, month: 6, year: 2026 });
       mockRepo.find.mockResolvedValue([
@@ -516,6 +532,7 @@ describe('PayrollService', () => {
      * @TestData: month=13 (invalid)
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_PAYROL_274]
     it('should throw NotFoundException when payroll period not found', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
@@ -538,6 +555,7 @@ describe('PayrollService', () => {
      * @TestData: employee_id=999
      * @ExpectedResult: NotFoundException('Employee #999 not found')
      */
+    // [TC_BE_PAYROL_275]
     it('should throw NotFoundException when employee not found for adjustment', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
@@ -563,6 +581,7 @@ describe('PayrollService', () => {
      * @TestData: Bonus 2,000,000 VND for employee 1, month 06/2026, reason='Performance'
      * @ExpectedResult: Saved adjustment with Pending status
      */
+    // [TC_BE_PAYROL_276]
     it('should create bonus adjustment with notification', async () => {
       mockRepo.findOne.mockResolvedValue({ employee_id: 1 });
       mockRepo.create.mockReturnValue({
@@ -606,6 +625,7 @@ describe('PayrollService', () => {
      * @TestData: Penalty 500,000 VND, reason='Unauthorized absence'
      * @ExpectedResult: Saved penalty adjustment
      */
+    // [TC_BE_PAYROL_277]
     it('should create penalty adjustment', async () => {
       mockRepo.findOne.mockResolvedValue({ employee_id: 1 });
       mockRepo.create.mockReturnValue({
@@ -650,6 +670,7 @@ describe('PayrollService', () => {
      * @TestData: employeeId=NaN
      * @ExpectedResult: BadRequestException
      */
+    // [TC_BE_PAYROL_278]
     it('should throw BadRequestException for NaN employee ID', async () => {
       await expect(
         service.getSalaryConfigByEmployeeId(NaN)
@@ -668,6 +689,7 @@ describe('PayrollService', () => {
      * @TestData: employeeId=0
      * @ExpectedResult: BadRequestException
      */
+    // [TC_BE_PAYROL_279]
     it('should throw BadRequestException for zero or negative employee ID', async () => {
       await expect(
         service.getSalaryConfigByEmployeeId(0)
@@ -690,6 +712,7 @@ describe('PayrollService', () => {
      * @TestData: employeeId=1 with base_salary=60000000
      * @ExpectedResult: SalaryConfig with employee relation
      */
+    // [TC_BE_PAYROL_280]
     it('should return salary config when employee has configuration', async () => {
       const qb = {
         leftJoinAndSelect: jest.fn().mockReturnThis(),
@@ -725,6 +748,7 @@ describe('PayrollService', () => {
      * @TestData: adjustment_id=1
      * @ExpectedResult: { deleted: true, id: 1 }
      */
+    // [TC_BE_PAYROL_281]
     it('should delete adjustment and return success', async () => {
       mockRepo.findOne.mockResolvedValue({ id: 1 });
       mockRepo.remove.mockResolvedValue({});
@@ -749,6 +773,7 @@ describe('PayrollService', () => {
      * @TestData: employeeId=999
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_PAYROL_282]
     it('should throw NotFoundException when employee not found for single payslip', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 

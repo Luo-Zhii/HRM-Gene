@@ -25,6 +25,7 @@ describe('AnnouncementsController', () => {
   });
 
   describe('create', () => {
+    // [TC_BE_ANNOUN_037]
     it('should create an announcement', async () => {
       mockService.create.mockResolvedValue({ id: 1 });
       expect(await controller.create({ title: 'T', content: 'C', target_audience: 'all', delivery_methods: [] } as any)).toEqual({ id: 1 });
@@ -32,6 +33,7 @@ describe('AnnouncementsController', () => {
   });
 
   describe('findAll', () => {
+    // [TC_BE_ANNOUN_038]
     it('should return all announcements', async () => {
       mockService.findAll.mockResolvedValue([]);
       expect(await controller.findAll()).toEqual([]);
@@ -39,6 +41,7 @@ describe('AnnouncementsController', () => {
   });
 
   describe('getFeed', () => {
+    // [TC_BE_ANNOUN_039]
     it('should return user feed', async () => {
       mockService.getFeed.mockResolvedValue([]);
       const req = { user: { id: 1 } };
@@ -48,6 +51,7 @@ describe('AnnouncementsController', () => {
   });
 
   describe('delete', () => {
+    // [TC_BE_ANNOUN_040]
     it('should delete an announcement', async () => {
       mockService.delete.mockResolvedValue(undefined);
       expect(await controller.delete('1')).toBeUndefined();

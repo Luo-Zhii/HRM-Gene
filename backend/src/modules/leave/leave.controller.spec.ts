@@ -27,21 +27,24 @@ describe('LeaveController', () => {
   });
 
   describe('getLeaveTypes', () => {
-    it('should logically bridge service invocation returning generic collections intact', async () => {
+    // [TC_BE_LEAVE_191]
+    it('getLeaveTypes: Lấy danh sách loại nghỉ phép', async () => {
       mockService.getLeaveTypes.mockResolvedValue([]);
       expect(await controller.getLeaveTypes()).toEqual([]);
     });
   });
 
   describe('getBalance / getMyRequests', () => {
-    it('should consistently route authorization boundary dynamically mapping identity matching context automatically', async () => {
+    // [TC_BE_LEAVE_192]
+    it('getBalance: Lấy số dư ngày phép của user từ token', async () => {
       mockService.getBalance.mockResolvedValue([]);
       const req = { user: { employee_id: 1 } };
       expect(await controller.getBalance(req)).toEqual([]);
       expect(mockService.getBalance).toHaveBeenCalledWith(1);
     });
 
-    it('should structurally execute mapped payload implicitly proxying user restrictions faithfully', async () => {
+    // [TC_BE_LEAVE_193]
+    it('getMyRequests: Lấy danh sách đơn nghỉ phép của chính mình', async () => {
       mockService.getMyRequests.mockResolvedValue([]);
       const req = { user: { employee_id: 1 } };
       expect(await controller.getMyRequests(req)).toEqual([]);
@@ -50,7 +53,8 @@ describe('LeaveController', () => {
   });
 
   describe('submitLeaveRequest', () => {
-    it('should map request payload bridging internal bindings correctly isolating context efficiently', async () => {
+    // [TC_BE_LEAVE_194]
+    it('submitLeaveRequest: Gửi đơn nghỉ phép với đầy đủ thông tin', async () => {
       mockService.submitRequest.mockResolvedValue({ id: 1 });
       const req = { user: { employee_id: 1 } };
       const body = { leave_type_id: 2, start_date: '2026', end_date: '2026', reason: 'sick' };
@@ -61,14 +65,16 @@ describe('LeaveController', () => {
   });
 
   describe('getPendingRequests', () => {
-    it('should route unrestricted fetching sequences accurately matching manager privileges reliably', async () => {
+    // [TC_BE_LEAVE_195]
+    it('getPendingRequests: Lấy danh sách đơn nghỉ phép đang chờ duyệt', async () => {
       mockService.getPendingRequests.mockResolvedValue([]);
       expect(await controller.getPendingRequests()).toEqual([]);
     });
   });
 
   describe('approveLeaveRequest', () => {
-    it('should accurately decouple complex payload mapping routing admin interventions seamlessly ensuring correct structural updates conditionally', async () => {
+    // [TC_BE_LEAVE_196]
+    it('approveLeaveRequest: Admin duyệt/từ chối đơn nghỉ phép với ghi chú', async () => {
       mockService.approveLeaveRequest.mockResolvedValue({});
       const req = { user: { employee_id: 2 } };
       const body = { status: 'Approved', reason: 'note' };

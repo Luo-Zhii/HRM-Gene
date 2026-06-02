@@ -55,6 +55,7 @@ describe('PayrollController', () => {
      * @TestData: month=6, year=2026, employee_id=1
      * @ExpectedResult: Summary object returned
      */
+    // [TC_BE_PAYROL_243]
     it('should generate payslips for given period', async () => {
       mockService.generatePayslips.mockResolvedValue({ generated: 10, total_net: '50000000' });
 
@@ -82,6 +83,7 @@ describe('PayrollController', () => {
      * @TestData: employee_id=undefined
      * @ExpectedResult: BadRequestException('Employee ID is required')
      */
+    // [TC_BE_PAYROL_244]
     it('should throw BadRequestException when employee_id is missing', async () => {
       await expect(
         controller.generateSingle(
@@ -103,6 +105,7 @@ describe('PayrollController', () => {
      * @TestData: employee_id=2, month=6, year=2026
      * @ExpectedResult: Payslip detail returned
      */
+    // [TC_BE_PAYROL_245]
     it('should generate single payslip for specified employee', async () => {
       mockService.generateSinglePayslip.mockResolvedValue({ payslip_id: 1 });
 
@@ -130,6 +133,7 @@ describe('PayrollController', () => {
      * @TestData: month=6, year=2026
      * @ExpectedResult: Array of payslips
      */
+    // [TC_BE_PAYROL_246]
     it('should list payslips by period with correct month/year parsing', async () => {
       mockService.getPayslipsByPeriod.mockResolvedValue([{ payslip_id: 1 }]);
 
@@ -154,6 +158,7 @@ describe('PayrollController', () => {
      * @TestData: employee_id=1
      * @ExpectedResult: Employee payslips
      */
+    // [TC_BE_PAYROL_247]
     it('should return payslips for the authenticated employee', async () => {
       mockService.getEmployeePayslips.mockResolvedValue([{ payslip_id: 5 }]);
 
@@ -178,6 +183,7 @@ describe('PayrollController', () => {
      * @TestData: month=6, year=2026
      * @ExpectedResult: { approved: 5 }
      */
+    // [TC_BE_PAYROL_248]
     it('should batch approve all payslips for a period', async () => {
       mockService.approveAllPayslips.mockResolvedValue({ approved: 5 });
 
@@ -202,6 +208,7 @@ describe('PayrollController', () => {
      * @TestData: payslip of employee_id=5, viewer is admin
      * @ExpectedResult: Payslip detail returned
      */
+    // [TC_BE_PAYROL_249]
     it('should allow admin to view any payslip', async () => {
       mockService.getPayslipById.mockResolvedValue({
         payslip_id: 1,
@@ -233,6 +240,7 @@ describe('PayrollController', () => {
      * @TestData: payslip owner=5, viewer=1 (Staff)
      * @ExpectedResult: ForbiddenException('You are not authorized to view this payslip')
      */
+    // [TC_BE_PAYROL_250]
     it('should forbid non-admin from viewing another employee payslip', async () => {
       mockService.getPayslipById.mockResolvedValue({
         payslip_id: 1,
@@ -261,6 +269,7 @@ describe('PayrollController', () => {
      * @TestData: employee views own payslip
      * @ExpectedResult: Payslip detail returned
      */
+    // [TC_BE_PAYROL_251]
     it('should allow employee to view their own payslip', async () => {
       mockService.getPayslipById.mockResolvedValue({
         payslip_id: 1,
@@ -294,6 +303,7 @@ describe('PayrollController', () => {
      * @TestData: payslip_id=1
      * @ExpectedResult: Approved payslip
      */
+    // [TC_BE_PAYROL_252]
     it('should approve payslip by id', async () => {
       mockService.approvePayslip.mockResolvedValue({ payslip_id: 1, status: 'Approved' });
 
@@ -318,6 +328,7 @@ describe('PayrollController', () => {
      * @TestData: payslip_id=1
      * @ExpectedResult: Paid payslip
      */
+    // [TC_BE_PAYROL_253]
     it('should mark payslip as paid', async () => {
       mockService.markPayslipPaid.mockResolvedValue({ payslip_id: 1, status: 'Paid' });
 
@@ -342,6 +353,7 @@ describe('PayrollController', () => {
      * @TestData: employeeId=0
      * @ExpectedResult: BadRequestException
      */
+    // [TC_BE_PAYROL_254]
     it('should throw BadRequestException for invalid employee ID', async () => {
       await expect(controller.getSalaryConfig(0)).rejects.toThrow(BadRequestException);
     });
@@ -358,6 +370,7 @@ describe('PayrollController', () => {
      * @TestData: employeeId=1, no config exists
      * @ExpectedResult: NotFoundException
      */
+    // [TC_BE_PAYROL_255]
     it('should throw NotFoundException when salary config not found', async () => {
       mockService.getSalaryConfigByEmployeeId.mockResolvedValue(null);
 
@@ -379,6 +392,7 @@ describe('PayrollController', () => {
      * @TestData: employee_id=2, type=Bonus, amount=1000000, applied_month=06/2026
      * @ExpectedResult: Adjustment created with created_by_id=1
      */
+    // [TC_BE_PAYROL_256]
     it('should create salary adjustment with creator id from request', async () => {
       mockService.createAdjustment.mockResolvedValue({ id: 10 });
 
@@ -419,6 +433,7 @@ describe('PayrollController', () => {
      * @TestData: month=6, year=2026
      * @ExpectedResult: Period object or null
      */
+    // [TC_BE_PAYROL_257]
     it('should return payroll period info', async () => {
       const period = { id: 1, month: 6, year: 2026, status: 'Draft' };
       mockService.getPeriodByMonthYear.mockResolvedValue(period);
