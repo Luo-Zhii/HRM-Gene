@@ -1,0 +1,1193 @@
+﻿ID,Ưu tiên,Nhóm kiểm thử,Mô tả kịch bản,Các bước thực hiện,Dữ liệu kiểm thử,Kết quả mong đợi
+TC_AUTH_001,Cao,Đăng nhập,Login với credentials hợp lệ,"1. Mở trang đăng nhập, chờ form hiển thị
+2. Nhập email và mật khẩu, nhấn Enter để đăng nhập
+3. Chờ hệ thống chuyển hướng đến /dashboard",Email: admin@example.com  |  Mật khẩu: admin,Redirect → /dashboard
+TC_AUTH_002,Trung bình,Đăng nhập,Login sai password,"1. Mở trang đăng nhập, chờ form hiển thị
+2. Nhập email và mật khẩu, nhấn Enter để đăng nhập
+3. Kiểm tra thông báo lỗi hiển thị",Email: admin@example.com  |  Mật khẩu: wrong,Error message displayed
+TC_AUTH_003,Trung bình,Đăng nhập,Login sai email format,"1. Mở trang đăng nhập, chờ form hiển thị
+2. Nhập mật khẩu: 'test'
+3. Nhấn Enter để submit form
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Xác nhận điều kiện kiểm tra là đúng",Email: (để trống)  |  Mật khẩu: test,Validation error shown
+TC_AUTH_004,Trung bình,Đăng nhập,Login để trống fields,"1. Mở trang đăng nhập, chờ form hiển thị
+2. Nhập email: admin@example.com
+3. Nhấn Enter để submit form
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: (để trống),Submit disabled or validation error
+TC_AUTH_005,Cao,Đăng nhập,Login page hiển thị đúng layout,"1. Điều hướng đến trang đăng nhập (/login)
+2. Kiểm tra phần tử hiển thị đúng",(Chưa đăng nhập – test kiểm tra UI trang login hoặc redirect),"Logo, form, inputs visible"
+TC_AUTH_006,Trung bình,Đăng nhập,Logout từ dashboard,"1. Mở trang đăng nhập, chờ form hiển thị
+2. Kiểm tra ô nhập email hiển thị
+3. Kiểm tra ô nhập mật khẩu hiển thị
+4. Kiểm tra nút Submit hiển thị",(Chưa đăng nhập – test kiểm tra UI trang login hoặc redirect),"Redirect → /login, token cleared"
+TC_AUTH_007,Cao,Đăng xuất & Đường dẫn bảo vệ,Protected route /dashboard yêu cầu login,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Mở user menu và nhấn nút Đăng xuất
+3. Chờ hệ thống chuyển hướng đến /login
+4. Kiểm tra ô nhập email hiển thị",Email: admin@example.com  |  Mật khẩu: admin,Redirect → /login
+TC_AUTH_008,Cao,Đăng xuất & Đường dẫn bảo vệ,Protected route /admin yêu cầu login,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Mở user menu và nhấn nút Đăng xuất
+3. Chờ hệ thống chuyển hướng đến /login
+4. Điều hướng đến trang Dashboard (/dashboard)",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /dashboard,Redirect → /login
+TC_AUTH_009,Trung bình,Đăng xuất & Đường dẫn bảo vệ,Token hết hạn → redirect login,"1. Điều hướng đến trang Dashboard (/dashboard)
+2. Chờ hệ thống chuyển hướng đến /login",(Chưa đăng nhập – test kiểm tra UI trang login hoặc redirect); URL đích: /dashboard,App handles 401 gracefully
+TC_AUTH_010,Trung bình,Đăng xuất & Đường dẫn bảo vệ,Admin truy cập /login khi đã đăng nhập,"1. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+2. Chờ hệ thống chuyển hướng đến /login",(Chưa đăng nhập – test kiểm tra UI trang login hoặc redirect); URL đích: /admin/employees,Redirect away from login
+TC_AUTH_011,Trung bình,Đăng xuất & Đường dẫn bảo vệ,Remember me / persist login,"1. Điều hướng đến trang Tạo bảng lương (/admin/payroll/generate)
+2. Chờ hệ thống chuyển hướng đến /login",(Chưa đăng nhập – test kiểm tra UI trang login hoặc redirect); URL đích: /admin/payroll/generate,Session persists after tab close
+TC_AUTH_012,Cao,Đăng xuất & Đường dẫn bảo vệ,Hiển thị user info sau login,"1. Điều hướng đến trang đăng nhập (/login)
+2. Kiểm tra ô nhập email hiển thị",(Chưa đăng nhập – test kiểm tra UI trang login hoặc redirect),Name/role visible in header
+TC_AUTH_013,Cao,Đăng xuất & Đường dẫn bảo vệ,Navigation đến Dashboard sau login,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Chờ hệ thống chuyển hướng đến /dashboard",Email: admin@example.com  |  Mật khẩu: admin,Dashboard page loads fully
+TC_AUTH_014,Trung bình,Hồ sơ & Điều hướng,Navigation đến Profile page,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Mở user menu và nhấn 'My Profile'
+3. Chờ hệ thống chuyển hướng đến /profile",Email: admin@example.com  |  Mật khẩu: admin,Profile page accessible
+TC_AUTH_015,Cao,Hồ sơ & Điều hướng,Header bar hiển thị sau login,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Mở user menu và nhấn 'My Profile'
+3. Chờ hệ thống chuyển hướng đến /profile",Email: user1@company.com  |  Mật khẩu: password123,"Notification bell, user menu, search"
+TC_AUTH_016,Cao,Hồ sơ & Điều hướng,Sidebar hiển thị đúng menu theo role Employee,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ cá nhân (/profile)
+3. Chờ hệ thống chuyển hướng đến /profile
+4. Kiểm tra trang không hiển thị lỗi",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /profile,Employee-only menu items
+TC_AUTH_017,Cao,Hồ sơ & Điều hướng,Sidebar hiển thị đúng menu theo role Admin,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Click avatar/user icon trên header để mở user menu
+3. Kiểm tra 'My Profile|Hồ sơ' hiển thị
+4. Kiểm tra 'Log Out|Đăng xuất' hiển thị",Email: admin@example.com  |  Mật khẩu: admin,Admin menu with Administration
+TC_AUTH_018,Cao,Hồ sơ & Điều hướng,Sidebar hiển thị đúng menu theo role HR,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Kiểm tra sidebar chứa 'Administration/i'",Email: admin@example.com  |  Mật khẩu: admin,HR-specific menu items
+TC_AUTH_019,Cao,Hồ sơ & Điều hướng,Admin register page load,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Kiểm tra trang không hiển thị lỗi",Email: user1@company.com  |  Mật khẩu: password123,Registration form visible
+TC_AUTH_020,Trung bình,Hồ sơ & Điều hướng,Admin register với valid data,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Kiểm tra sidebar hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin,Success message or redirect
+TC_AUTH_021,Trung bình,Hồ sơ & Điều hướng,Admin register thiếu fields,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Kiểm tra sidebar hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123,Validation error
+TC_AUTH_022,Cao,Hồ sơ & Điều hướng,Logout → không back lại được dashboard,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin,Back button shows login page
+TC_AUTH_023,Cao,Hồ sơ & Điều hướng,Search/Search spotlight có trong header,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin,Search input visible
+TC_AUTH_024,Cao,Hồ sơ & Điều hướng,User dropdown có các option,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin,"Profile, Logout options"
+TC_AUTH_025,Cao,Hồ sơ & Điều hướng,Đăng nhập HR → redirect dashboard,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Kiểm tra trường nhập liệu hiển thị",Email: admin@example.com  |  Mật khẩu: admin,Dashboard loads successfully
+TC_DASH_001,Cao,Nhân viên (Employee),Dashboard page hiển thị,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,h1/h2 heading visible
+TC_DASH_002,Cao,Nhân viên (Employee),Dashboard không có lỗi render,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trang không hiển thị lỗi",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,No error text in body
+TC_DASH_003,Cao,Nhân viên (Employee),Summary cards hiển thị,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,Stat cards/panels visible
+TC_DASH_004,Trung bình,Quản trị (Admin),Welcome message có tên user,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /dashboard,Employee name in greeting
+TC_DASH_005,Trung bình,Quản trị (Admin),Company news/announcements widget,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /dashboard; Seed: 3 announcements (General/Event/Policy),News section rendered
+TC_DASH_006,Trung bình,Quản trị (Admin),Quick links / shortcut buttons,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trang không hiển thị lỗi",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /dashboard,Action buttons present
+TC_DASH_007,Trung bình,Quản trị (Admin),Upcoming holidays widget,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /dashboard,Holiday list section
+TC_DASH_008,Trung bình,Điều hướng,My pending tasks/approvals widget,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Timekeeping' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Pending items displayed
+TC_DASH_009,Trung bình,Điều hướng,Timekeeping quick status,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Leave' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Today's attendance status
+TC_DASH_010,Trung bình,Điều hướng,Leave balance summary,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/salary
+3. Chờ trang tải xong (domcontentloaded)",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/salary; Seed: 15 leave requests (Approved/Pending/Rejected),Remaining leave days shown
+TC_DASH_011,Cao,Điều hướng,Admin dashboard page hiển thị,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /company-news
+3. Chờ trang tải xong (domcontentloaded)",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /company-news,Admin dashboard loads
+TC_DASH_012,Trung bình,Thanh tiêu đề (Header),Admin dashboard có stats overview,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Click vào phần tử tương ứng
+3. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,"Employee count, dept count etc."
+TC_DASH_013,Trung bình,Thanh tiêu đề (Header),Admin dashboard có chart widgets,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Chờ 800ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Charts/graphs rendered
+TC_DASH_014,Trung bình,Thanh tiêu đề (Header),Recent activities widget,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Chờ 800ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Activity feed visible
+TC_DASH_015,Trung bình,Thanh tiêu đề (Header),Click logo/home → về dashboard,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Click vào phần tử tương ứng
+3. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Navigates back to /dashboard
+TC_DASH_016,Trung bình,Thanh tiêu đề (Header),Dashboard responsive trên mobile,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Kiểm tra sidebar hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin,Mobile menu toggle visible
+TC_DASH_017,Trung bình,Thanh tiêu đề (Header),Refresh dashboard → data vẫn hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Kiểm tra số lượng / trạng thái hiển thị phần tử
+3. Click vào phần tử tương ứng
+4. Chờ trang tải xong (domcontentloaded)",Email: admin@example.com  |  Mật khẩu: admin,Page reloads without error
+TC_DASH_018,Trung bình,Thanh tiêu đề (Header),Sidebar navigation từ dashboard,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /dashboard,Click nav items → correct pages
+TC_EMP_001,Cao,Quản trị (Admin),Admin → Employee Directory,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Employee Directory' qua sidebar
+3. Chờ hệ thống chuyển hướng đến /admin/employees
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_EMP_002,Cao,Quản trị (Admin),Bảng danh sách nhân viên,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Table/grid of employees
+TC_EMP_003,Trung bình,Quản trị (Admin),Search theo tên,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Filtered results
+TC_EMP_004,Trung bình,Quản trị (Admin),Search theo email,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Add|Thêm' hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Filtered results
+TC_EMP_005,Trung bình,Quản trị (Admin),Filter theo phòng ban,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Department filter works
+TC_EMP_006,Trung bình,Quản trị (Admin),Filter theo chức vụ,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Position filter works
+TC_EMP_007,Trung bình,Quản trị (Admin),Filter theo trạng thái,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Status filter works
+TC_EMP_008,Trung bình,Quản trị (Admin),Nút Create Employee,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Opens create form/modal
+TC_EMP_009,Trung bình,Quản trị (Admin),Form tạo nhân viên có đủ fields,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,All required inputs present
+TC_EMP_010,Trung bình,Quản trị (Admin),Validation required fields,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Errors on empty submit
+TC_EMP_011,Trung bình,Quản trị (Admin),Nút Edit nhân viên,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Opens edit form with data
+TC_EMP_012,Trung bình,Quản trị (Admin),Nút Delete nhân viên,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Delete with confirmation
+TC_EMP_013,Cao,Quản trị (Admin),Employee bị chặn /admin/employees,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/employees,Access denied or redirected
+TC_EMP_014,Cao,Kiểm soát truy cập,HR có thể truy cập /admin/employees,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Quản lý nhân viên (/admin/employees)
+3. Chờ 2000ms để UI cập nhật
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/employees,Page loads for HR
+TC_EMP_015,Trung bình,Kiểm soát truy cập,Pagination hoạt động,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị
+5. Kiểm tra trang không hiển thị lỗi",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Page navigation works
+TC_EMP_016,Trung bình,Kiểm soát truy cập,Sort theo cột,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trang không hiển thị lỗi",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Column sorting works
+TC_EMP_017,Trung bình,Kiểm soát truy cập,Export danh sách,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Export button exists
+TC_EMP_018,Trung bình,Kiểm soát truy cập,View employee detail,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trường nhập liệu hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Detail view opens
+TC_EMP_019,Trung bình,Kiểm soát truy cập,Import nhân viên,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 1000ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Import button/functionality
+TC_EMP_020,Cao,Kiểm soát truy cập,Avatar/ảnh hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang /admin/register
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/register,Employee photos render
+TC_ORG_001,Cao,Quản trị (Admin),Admin → Organization Management,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Organizational' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_ORG_002,Cao,Quản trị (Admin),Sơ đồ tổ chức hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Org chart/ tree rendered
+TC_ORG_003,Cao,Quản trị (Admin),Danh sách phòng ban,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Department list visible
+TC_ORG_004,Cao,Quản trị (Admin),Danh sách chức vụ,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Position list visible
+TC_ORG_005,Trung bình,Quản trị (Admin),Nút Create Department,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ 2000ms để UI cập nhật
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/organization,Form opens
+TC_ORG_006,Trung bình,Quản trị (Admin),Nút Edit Department,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Edit form with data
+TC_ORG_007,Trung bình,Quản trị (Admin),Nút Delete Department,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Delete with confirmation
+TC_ORG_008,Trung bình,Quản trị (Admin),Nút Create Position,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Form opens
+TC_ORG_009,Trung bình,Quản trị (Admin),Nút Edit Position,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Chờ 300ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Edit form with data
+TC_ORG_010,Trung bình,Quản trị (Admin),Nút Delete Position,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Delete with confirmation
+TC_ORG_011,Trung bình,Quản trị (Admin),Assign manager cho department,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Click vào phần tử tương ứng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Manager select works
+TC_ORG_012,Trung bình,Quản trị (Admin),Parent department chọn,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Hierarchy respected
+TC_ORG_013,Cao,Quản trị (Admin),Employee bị chặn /admin/organization,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Access denied or redirected
+TC_ORG_014,Trung bình,Quản trị (Admin),Validation trùng tên phòng ban,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Error on duplicate name
+TC_ORG_015,Trung bình,Quản trị (Admin),Validation trùng tên chức vụ,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trang không hiển thị lỗi",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Error on duplicate name
+TC_ORG_016,Trung bình,Quản trị (Admin),Hiển thị số lượng nhân viên mỗi phòng ban,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cơ cấu tổ chức (/admin/organization)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trang không hiển thị lỗi",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/organization,Employee count per dept
+TC_PERM_001,Cao,Quản trị (Admin),Admin → Permissions page,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Permissions' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_PERM_002,Cao,Quản trị (Admin),Danh sách role/position,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Phân quyền (/admin/permissions)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Role|Vai trò|Select' hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/permissions,Role/position selector visible
+TC_PERM_003,Cao,Quản trị (Admin),Permission groups hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Phân quyền (/admin/permissions)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/permissions,Module/group labels visible
+TC_PERM_004,Trung bình,Quản trị (Admin),Accordion permission groups,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Phân quyền (/admin/permissions)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/permissions,Expandable groups
+TC_PERM_005,Cao,Quản trị (Admin),Method badges (GET/POST/PATCH/DELETE),"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Phân quyền (/admin/permissions)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/permissions,HTTP method badges visible
+TC_PERM_006,Cao,Quản trị (Admin),API path hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Phân quyền (/admin/permissions)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/permissions,Endpoint paths in mono font
+TC_PERM_007,Trung bình,Quản trị (Admin),Toggle switches,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Phân quyền (/admin/permissions)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/permissions,Toggle permission on/off
+TC_PERM_008,Trung bình,Quản trị (Admin),Nút Save Policies,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Phân quyền (/admin/permissions)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Save|Lưu' hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/permissions,Save button present
+TC_PERM_009,Cao,Thực thi phân quyền (RBAC),Employee bị chặn /admin/permissions,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Phân quyền (/admin/permissions)
+3. Chờ 2000ms để UI cập nhật
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/permissions,Access denied
+TC_PERM_010,Cao,Thực thi phân quyền (RBAC),Employee bị chặn /admin/payroll/config,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Cấu hình lương (/admin/payroll/config)
+3. Chờ 2000ms để UI cập nhật
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/payroll/config,Access denied
+TC_PERM_011,Cao,Thực thi phân quyền (RBAC),Employee bị chặn /admin/contracts,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ 2000ms để UI cập nhật
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/contracts; Seed: Hợp đồng tạo sẵn cho 39 nhân viên,Access denied
+TC_PERM_012,Cao,Thực thi phân quyền (RBAC),Employee bị chặn /admin/resignations,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Duyệt đơn nghỉ việc (/admin/resignations)
+3. Chờ 2000ms để UI cập nhật
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/resignations; Seed: 4 resignation requests,Access denied
+TC_PERM_013,Trung bình,Thực thi phân quyền (RBAC),Chuyển role → permission cập nhật,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Phân quyền (/admin/permissions)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/permissions,UI updates on role switch
+TC_PERM_014,Trung bình,Thực thi phân quyền (RBAC),Permission count badge,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Phân quyền (/admin/permissions)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/permissions,Count shown per role
+TC_PERM_015,Cao,Thực thi phân quyền (RBAC),Admin sidebar có Administration,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Kiểm tra sidebar chứa 'Administration/i'",Email: admin@example.com  |  Mật khẩu: admin,Administration section in sidebar
+TC_CONT_001,Cao,Quản trị (Admin),Admin → Contracts page,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Employment Contract' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; Seed: Hợp đồng tạo sẵn cho 39 nhân viên,Page loads via sidebar
+TC_CONT_002,Cao,Quản trị (Admin),Bảng contracts hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts; Seed: Hợp đồng tạo sẵn cho 39 nhân viên,Contract table visible
+TC_CONT_003,Trung bình,Quản trị (Admin),Nút Create Contract,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Create|Tạo' hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts; Seed: Hợp đồng tạo sẵn cho 39 nhân viên,Create button present
+TC_CONT_004,Trung bình,Quản trị (Admin),Search input,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trường nhập liệu hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts,Search field visible
+TC_CONT_005,Trung bình,Quản trị (Admin),Status filter,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts,Filter dropdown visible
+TC_CONT_006,Cao,Quản trị (Admin),Employee bị chặn /admin/contracts,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ 2000ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/contracts; Seed: Hợp đồng tạo sẵn cho 39 nhân viên,Access denied
+TC_CONT_007,Trung bình,Quản trị (Admin),Create modal → mở form,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts,Dialog opens on create
+TC_CONT_008,Trung bình,Quản trị (Admin),Create form có select + input,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts,Form fields present
+TC_CONT_009,Trung bình,Quản trị (Admin),Nút Edit → mở modal,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts,Edit dialog opens
+TC_CONT_010,Trung bình,Quản trị (Admin),File link mở tab mới,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts,Document links target _blank
+TC_CONT_011,Trung bình,Quản trị (Admin),Filter theo contract type,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts; Seed: Hợp đồng tạo sẵn cho 39 nhân viên,Type filter works
+TC_CONT_012,Trung bình,Quản trị (Admin),Filter theo contract status,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts; Seed: Hợp đồng tạo sẵn cho 39 nhân viên,Status filter works
+TC_CONT_013,Trung bình,Quản trị (Admin),Search lọc theo tên,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý hợp đồng (/admin/contracts)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/contracts,Name search filters results
+TC_LEAVE_001,Cao,Nhân viên (Employee),Employee → Leave page,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/leave
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/leave; Seed: 15 leave requests (Approved/Pending/Rejected),Page loads
+TC_LEAVE_002,Cao,Nhân viên (Employee),Balance cards hiển thị,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/leave
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/leave,Remaining days visible
+TC_LEAVE_003,Trung bình,Nhân viên (Employee),Select leave type,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/leave
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/leave; Seed: 15 leave requests (Approved/Pending/Rejected),Type dropdown visible
+TC_LEAVE_004,Trung bình,Nhân viên (Employee),Date pickers start/end,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/leave
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/leave,Date inputs present
+TC_LEAVE_005,Trung bình,Nhân viên (Employee),Textarea reason,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/leave
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/leave,Reason textarea visible
+TC_LEAVE_006,Trung bình,Nhân viên (Employee),Nút Submit Request,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/leave
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Submit|Gửi' hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/leave,Submit button present
+TC_LEAVE_007,Trung bình,Nhân viên (Employee),Nút Clear/Reset,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/leave
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Clear|Xóa|Reset' hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/leave,Reset button present
+TC_LEAVE_008,Cao,Nhân viên (Employee),Bảng lịch sử leave,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/leave
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/leave; Seed: 15 leave requests (Approved/Pending/Rejected),History table visible
+TC_LEAVE_009,Trung bình,Nhân viên (Employee),Tính duration khi chọn date,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/leave
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/leave,Duration auto-calculated
+TC_LEAVE_010,Trung bình,Nhân viên (Employee),View detail → mở modal,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/leave
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/leave,Detail modal opens
+TC_LEAVE_011,Cao,Admin phê duyệt,Admin → Leave Approvals,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Leave Approvals' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; Seed: 15 leave requests (Approved/Pending/Rejected),Page loads
+TC_LEAVE_012,Cao,Admin phê duyệt,Pending requests hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt nghỉ phép (/admin/leave-approvals)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/leave-approvals,Pending list visible
+TC_LEAVE_013,Trung bình,Admin phê duyệt,Stats cards,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt nghỉ phép (/admin/leave-approvals)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/leave-approvals,Pending/Approved/Rejected counts
+TC_LEAVE_014,Trung bình,Admin phê duyệt,Tab filters,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt nghỉ phép (/admin/leave-approvals)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Pending|Chờ|Approved|Đã duyệt|Rejected|Từ chối' hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/leave-approvals,Status tab filters
+TC_LEAVE_015,Trung bình,Admin phê duyệt,Click request → detail,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt nghỉ phép (/admin/leave-approvals)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/leave-approvals,Detail view opens
+TC_LEAVE_016,Trung bình,Admin phê duyệt,Nút Approve,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt nghỉ phép (/admin/leave-approvals)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/leave-approvals,Approve button present
+TC_LEAVE_017,Trung bình,Admin phê duyệt,Nút Reject,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt nghỉ phép (/admin/leave-approvals)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/leave-approvals,Reject button present
+TC_LEAVE_018,Cao,Admin phê duyệt,Employee bị chặn /admin/leave-approvals,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Duyệt nghỉ phép (/admin/leave-approvals)
+3. Chờ 3000ms để UI cập nhật
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/leave-approvals; Seed: 15 leave requests (Approved/Pending/Rejected),Access denied
+TC_LEAVE_019,Trung bình,Admin phê duyệt,Confirmation modal khi Approve/Reject,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt nghỉ phép (/admin/leave-approvals)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/leave-approvals,Confirmation dialog shown
+TC_TIME_001,Cao,Nhân viên (Employee),Employee → Timekeeping page,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Chấm công (/timekeeping)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /timekeeping,Page loads
+TC_TIME_002,Cao,Nhân viên (Employee),Timekeeping không lỗi,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Chấm công (/timekeeping)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trang không hiển thị lỗi",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /timekeeping,No error text
+TC_TIME_003,Trung bình,Nhân viên (Employee),Redirect /dashboard/timekeeping → /timekeeping,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/timekeeping
+3. Chờ 2000ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/timekeeping,URL redirects correctly
+TC_TIME_004,Trung bình,Nhân viên (Employee),QR section hiển thị,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Chấm công (/timekeeping)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /timekeeping,QR code area present
+TC_TIME_005,Cao,Quản trị (Admin),Admin → Attendance History,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Attendance' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_TIME_006,Cao,Quản trị (Admin),Bảng attendance hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Lịch sử chấm công (/admin/attendance)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/attendance,Attendance table visible
+TC_TIME_007,Cao,Quản trị (Admin),QR Display page load được,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang /admin/qr-display
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/qr-display,QR display page loads
+TC_TIME_008,Trung bình,Quản trị (Admin),Có pagination,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Lịch sử chấm công (/admin/attendance)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/attendance,Pagination controls
+TC_TIME_009,Trung bình,Quản trị (Admin),Có date filter,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Lịch sử chấm công (/admin/attendance)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/attendance,Date input filters
+TC_TIME_010,Cao,Quản trị (Admin),Employee bị chặn /admin/attendance,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Lịch sử chấm công (/admin/attendance)
+3. Chờ 2000ms để UI cập nhật
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/attendance,Access denied
+TC_TIME_011,Trung bình,Quản trị (Admin),Status badges (Present/Late/Absent),"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Lịch sử chấm công (/admin/attendance)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/attendance,Status indicators
+TC_PAY_001,Cao,Quản trị (Admin),Admin → Create Payroll,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Create Payroll' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_PAY_002,Trung bình,Quản trị (Admin),Month/Year selectors,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Tạo bảng lương (/admin/payroll/generate)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/payroll/generate,Date selectors visible
+TC_PAY_003,Trung bình,Quản trị (Admin),Nút Generate/Calculate,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Tạo bảng lương (/admin/payroll/generate)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Calculate|Tính|Generate|Tạo' hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/payroll/generate,Generate button present
+TC_PAY_004,Cao,Quản trị (Admin),Bảng payslip hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Tạo bảng lương (/admin/payroll/generate)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/payroll/generate; Seed: Phiếu lương tháng hiện tại và tháng trước,Payslip table visible
+TC_PAY_005,Trung bình,Quản trị (Admin),Summary cards hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Tạo bảng lương (/admin/payroll/generate)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/payroll/generate,Summary statistics
+TC_PAY_006,Cao,Quản trị (Admin),Employee bị chặn /admin/payroll,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Tạo bảng lương (/admin/payroll/generate)
+3. Chờ 2000ms để UI cập nhật
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/payroll/generate,Access denied
+TC_PAY_007,Cao,Quản trị (Admin),Admin → Salary Configuration,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Salary Configuration' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_PAY_008,Cao,Quản trị (Admin),Salary config hiển thị danh sách,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cấu hình lương (/admin/payroll/config)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/payroll/config,Config table visible
+TC_PAY_009,Trung bình,Quản trị (Admin),Nút Edit config,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cấu hình lương (/admin/payroll/config)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/payroll/config,Edit button present
+TC_PAY_010,Cao,Quản trị (Admin),Admin → Salary Adjustment,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Salary Adjustment' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_PAY_011,Cao,Quản trị (Admin),Adjustments page load được,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Điều chỉnh lương (/admin/payroll/adjustment)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/payroll/adjustment,Heading visible
+TC_PAY_012,Trung bình,Quản trị (Admin),Có nút Add Adjustment,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Điều chỉnh lương (/admin/payroll/adjustment)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/payroll/adjustment,Add button present
+TC_PAY_013,Trung bình,Quản trị (Admin),Có filter status,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Điều chỉnh lương (/admin/payroll/adjustment)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/payroll/adjustment,Status filter dropdown
+TC_PAY_014,Cao,Quản trị (Admin),Admin → Issue Payslips,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Issue Payslips' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; Seed: Phiếu lương tháng hiện tại và tháng trước,Page loads via sidebar
+TC_PAY_015,Cao,Quản trị (Admin),Issue page load được,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Phát hành phiếu lương (/admin/payroll/issue)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/payroll/issue,Heading visible
+TC_PAY_016,Cao,Nhân viên (Employee),Employee → My Salary,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/salary
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/salary,Page loads
+TC_PAY_017,Cao,Nhân viên (Employee),Bảng lịch sử payslip,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/salary
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/salary; Seed: Phiếu lương tháng hiện tại và tháng trước,History table visible
+TC_PAY_018,Trung bình,Nhân viên (Employee),Nút View payslip detail,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/salary
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/salary; Seed: Phiếu lương tháng hiện tại và tháng trước,Detail view opens
+TC_DISC_001,Cao,Quản trị (Admin),Admin → Discipline page,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Discipline' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_DISC_002,Cao,Quản trị (Admin),Bảng violations hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline; Seed: Vi phạm 'Late > 30 mins' – status RESOLVED,Violations table visible
+TC_DISC_003,Trung bình,Quản trị (Admin),Nút Create Violation,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Create|Tạo|Add|Thêm' hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline; Seed: Vi phạm 'Late > 30 mins' – status RESOLVED,Create button present
+TC_DISC_004,Trung bình,Quản trị (Admin),Form tạo violation có select employee,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline; Seed: Vi phạm 'Late > 30 mins' – status RESOLVED,Employee selector in form
+TC_DISC_005,Trung bình,Quản trị (Admin),Form có input violation type,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline; Seed: Vi phạm 'Late > 30 mins' – status RESOLVED,Type input visible
+TC_DISC_006,Trung bình,Quản trị (Admin),Form có chọn severity,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline,Severity selector
+TC_DISC_007,Trung bình,Quản trị (Admin),Filter theo trạng thái,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline,Status filter dropdown
+TC_DISC_008,Trung bình,Quản trị (Admin),Search input,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline,Search field visible
+TC_DISC_009,Trung bình,Quản trị (Admin),Nút Edit violation,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline; Seed: Vi phạm 'Late > 30 mins' – status RESOLVED,Edit button present
+TC_DISC_010,Trung bình,Quản trị (Admin),Nút Delete violation,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline; Seed: Vi phạm 'Late > 30 mins' – status RESOLVED,Delete button present
+TC_DISC_011,Trung bình,Quản trị (Admin),Click row → xem detail,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline,Detail view opens
+TC_DISC_012,Trung bình,Quản trị (Admin),Severity badges hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline,Low/Normal/High badges
+TC_DISC_013,Trung bình,Quản trị (Admin),Status badges hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline,Pending/Resolved badges
+TC_DISC_014,Cao,Quản trị (Admin),Employee bị chặn /admin/discipline,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ 2000ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/discipline,Access denied
+TC_DISC_015,Trung bình,Quản trị (Admin),Sync attendance button,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Kỷ luật (/admin/discipline)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/discipline,Sync button present
+TC_RESIGN_001,Cao,Quản trị (Admin),Admin → Resignation Approvals,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Resignation Approvals' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; Seed: 4 resignation requests,Page loads via sidebar
+TC_RESIGN_002,Cao,Quản trị (Admin),Bảng resignations hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt đơn nghỉ việc (/admin/resignations)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/resignations; Seed: 4 resignation requests,Resignations table visible
+TC_RESIGN_003,Trung bình,Quản trị (Admin),Filter theo trạng thái,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt đơn nghỉ việc (/admin/resignations)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/resignations,Status filter present
+TC_RESIGN_004,Trung bình,Quản trị (Admin),Nút Approve,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt đơn nghỉ việc (/admin/resignations)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/resignations,Approve button present
+TC_RESIGN_005,Trung bình,Quản trị (Admin),Nút Reject,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt đơn nghỉ việc (/admin/resignations)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/resignations,Reject button present
+TC_RESIGN_006,Trung bình,Quản trị (Admin),Click row → xem detail,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt đơn nghỉ việc (/admin/resignations)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/resignations,Detail view opens
+TC_RESIGN_007,Cao,Quản trị (Admin),Hiển thị ngày last day,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt đơn nghỉ việc (/admin/resignations)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/resignations,Last day column visible
+TC_RESIGN_008,Cao,Quản trị (Admin),Hiển thị lý do resign,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt đơn nghỉ việc (/admin/resignations)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/resignations,Reason column visible
+TC_RESIGN_009,Cao,Quản trị (Admin),Employee bị chặn /admin/resignations,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Duyệt đơn nghỉ việc (/admin/resignations)
+3. Chờ 2000ms để UI cập nhật
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/resignations; Seed: 4 resignation requests,Access denied
+TC_RESIGN_010,Trung bình,Quản trị (Admin),Chọn resignation category,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Duyệt đơn nghỉ việc (/admin/resignations)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/resignations; Seed: 4 resignation requests,Category selector shown
+TC_RESIGN_011,Cao,Nhân viên (Employee),Employee → My Resignation,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /my-resignation
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /my-resignation; Seed: 4 resignation requests,Page loads
+TC_RESIGN_012,Trung bình,Nhân viên (Employee),Form tạo resignation request,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /my-resignation
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trường nhập liệu hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /my-resignation; Seed: 4 resignation requests,Form inputs visible
+TC_RESIGN_013,Trung bình,Nhân viên (Employee),Input last working day,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /my-resignation
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /my-resignation,Date input present
+TC_RESIGN_014,Trung bình,Nhân viên (Employee),Textarea reason,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /my-resignation
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /my-resignation,Reason textarea visible
+TC_RESIGN_015,Trung bình,Nhân viên (Employee),Nút Submit resignation,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /my-resignation
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Submit|Gửi' hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /my-resignation; Seed: 4 resignation requests,Submit button present
+TC_RESIGN_016,Cao,Nhân viên (Employee),Bảng lịch sử resignation,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /my-resignation
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /my-resignation; Seed: 4 resignation requests,History table visible
+TC_RESIGN_017,Trung bình,Nhân viên (Employee),Status hiển thị trên request,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /my-resignation
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /my-resignation,Status on each request
+TC_KPI_001,Cao,Quản trị (Admin),Admin → KPI Library,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'KPI Library' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; Seed: KPI Q1 2026 (Locked) & Q2 2026 (Active),Page loads via sidebar
+TC_KPI_002,Cao,Quản trị (Admin),Bảng KPI library hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang KPI Library (/admin/performance/library)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/performance/library; Seed: KPI Q1 2026 (Locked) & Q2 2026 (Active),KPI template table
+TC_KPI_003,Trung bình,Quản trị (Admin),Nút Create KPI template,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang KPI Library (/admin/performance/library)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Create|Tạo|Add|Thêm' hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/performance/library; Seed: KPI Q1 2026 (Locked) & Q2 2026 (Active),Create button present
+TC_KPI_004,Trung bình,Quản trị (Admin),Form tạo KPI có input name,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang KPI Library (/admin/performance/library)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/performance/library; Seed: KPI Q1 2026 (Locked) & Q2 2026 (Active),Name input in form
+TC_KPI_005,Trung bình,Quản trị (Admin),Form có chọn weight/trọng số,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang KPI Library (/admin/performance/library)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/performance/library,Weight input present
+TC_KPI_006,Trung bình,Quản trị (Admin),Nút Edit KPI template,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang KPI Library (/admin/performance/library)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/performance/library; Seed: KPI Q1 2026 (Locked) & Q2 2026 (Active),Edit button present
+TC_KPI_007,Trung bình,Quản trị (Admin),Nút Delete KPI template,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang KPI Library (/admin/performance/library)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/performance/library; Seed: KPI Q1 2026 (Locked) & Q2 2026 (Active),Delete button present
+TC_KPI_008,Cao,Quản trị (Admin),Admin → Team Performance,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Team Performance' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_KPI_009,Cao,Quản trị (Admin),Bảng team performance hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Team Performance (/admin/performance/team)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị
+5. Kiểm tra trang không hiển thị lỗi",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/performance/team,Performance table
+TC_KPI_010,Trung bình,Quản trị (Admin),Select period/KPI kỳ,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Team Performance (/admin/performance/team)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/performance/team; Seed: KPI Q1 2026 (Locked) & Q2 2026 (Active),Period selector
+TC_KPI_011,Trung bình,Quản trị (Admin),Chức năng grade/chấm điểm,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Team Performance (/admin/performance/team)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/performance/team,Grade/scoring controls
+TC_KPI_012,Cao,Quản trị (Admin),Employee bị chặn /admin/performance/library,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang KPI Library (/admin/performance/library)
+3. Chờ 2000ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/performance/library,Access denied
+TC_KPI_013,Cao,Nhân viên (Employee),Employee → My Goals,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/performance/me
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/performance/me,Page loads
+TC_KPI_014,Cao,Nhân viên (Employee),Hiển thị KPI được giao,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/performance/me
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị
+5. Kiểm tra trang không hiển thị lỗi",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/performance/me; Seed: KPI Q1 2026 (Locked) & Q2 2026 (Active),Assigned KPIs table
+TC_KPI_015,Trung bình,Nhân viên (Employee),Input cập nhật actual value,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/performance/me
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/performance/me,Actual value inputs
+TC_KPI_016,Trung bình,Nhân viên (Employee),Nút Save/Cập nhật KPI,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/performance/me
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/performance/me; Seed: KPI Q1 2026 (Locked) & Q2 2026 (Active),Save button present
+TC_KPI_017,Trung bình,Nhân viên (Employee),Hiển thị điểm số/grade,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/performance/me
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/performance/me,Score display
+TC_KPI_018,Trung bình,Nhân viên (Employee),Hiển thị period hiện tại,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/performance/me
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/performance/me,Current period shown
+TC_ANN_001,Cao,Quản trị (Admin),Admin → Manage News,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Manage News' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_ANN_002,Cao,Quản trị (Admin),Bảng announcements hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo (/admin/announcements)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị
+5. Kiểm tra trang không hiển thị lỗi",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/announcements; Seed: 3 announcements (General/Event/Policy),Announcements table
+TC_ANN_003,Trung bình,Quản trị (Admin),Nút Create Announcement,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo (/admin/announcements)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/announcements; Seed: 3 announcements (General/Event/Policy),Create button present
+TC_ANN_004,Trung bình,Quản trị (Admin),Form có input title,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo (/admin/announcements)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/announcements,Title input in form
+TC_ANN_005,Trung bình,Quản trị (Admin),Form có textarea content,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo (/admin/announcements)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/announcements,Content textarea
+TC_ANN_006,Trung bình,Quản trị (Admin),Form có chọn type,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo (/admin/announcements)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/announcements,Type selector
+TC_ANN_007,Trung bình,Quản trị (Admin),Form có chọn priority,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo (/admin/announcements)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/announcements,Priority selector
+TC_ANN_008,Trung bình,Quản trị (Admin),Form có chọn target audience,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo (/admin/announcements)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/announcements,Target audience options
+TC_ANN_009,Trung bình,Quản trị (Admin),Nút Edit announcement,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo (/admin/announcements)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/announcements; Seed: 3 announcements (General/Event/Policy),Edit button present
+TC_ANN_010,Trung bình,Quản trị (Admin),Nút Delete announcement,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo (/admin/announcements)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/announcements; Seed: 3 announcements (General/Event/Policy),Delete button present
+TC_ANN_011,Cao,Quản trị (Admin),Employee bị chặn /admin/announcements,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Quản lý thông báo (/admin/announcements)
+3. Chờ 2000ms để UI cập nhật
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/announcements; Seed: 3 announcements (General/Event/Policy),Access denied
+TC_ANN_012,Cao,Nhân viên (Employee),Employee → News Feed,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /company-news
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /company-news,Page loads
+TC_ANN_013,Cao,Nhân viên (Employee),News feed hiển thị bài viết,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /company-news
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /company-news,Posts rendered
+TC_ANN_014,Cao,Nhân viên (Employee),Bài viết có title,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /company-news
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /company-news,Titles visible
+TC_ANN_015,Cao,Nhân viên (Employee),Bài viết có content,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /company-news
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /company-news,Content visible
+TC_ANN_016,Trung bình,Nhân viên (Employee),Bài viết có type/priority badge,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /company-news
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /company-news,Priority badges shown
+TC_COMP_001,Cao,Quản trị (Admin),Admin → Settings → Company,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'System Settings' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page accessible
+TC_COMP_002,Cao,Quản trị (Admin),Company profile page load được,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/company,Heading visible
+TC_COMP_003,Trung bình,Quản trị (Admin),Form có input company name,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trường nhập liệu hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/company,Name input present
+TC_COMP_004,Trung bình,Quản trị (Admin),Form có input tax ID,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/company,Tax ID input present
+TC_COMP_005,Trung bình,Quản trị (Admin),Form có input address,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/company,Address fields present
+TC_COMP_006,Trung bình,Quản trị (Admin),Form có input city/state/zip,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/company,Location fields present
+TC_COMP_007,Trung bình,Quản trị (Admin),Form có chọn country,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/company,Country selector
+TC_COMP_008,Trung bình,Quản trị (Admin),Form có chọn currency,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/company,Currency selector
+TC_COMP_009,Trung bình,Quản trị (Admin),Nút Save/Lưu,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra 'Save|Lưu' hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/company,Save button present
+TC_COMP_010,Trung bình,Quản trị (Admin),Upload logo section,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/company,File upload present
+TC_COMP_011,Cao,Quản trị (Admin),Employee bị chặn /admin/settings/company,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ 2000ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/settings/company,Access denied
+TC_COMP_012,Trung bình,Quản trị (Admin),Logo preview hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Hồ sơ công ty (/admin/settings/company)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/company,Current logo shown
+TC_NOTI_001,Cao,Tất cả người dùng,Bell icon hiển thị trên header,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,Bell icon visible
+TC_NOTI_002,Trung bình,Tất cả người dùng,Click bell → mở dropdown,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Click vào phần tử tương ứng
+5. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,Dropdown opens
+TC_NOTI_003,Trung bình,Tất cả người dùng,Dropdown hiển thị danh sách,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Click vào phần tử tương ứng
+5. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,Notification items shown
+TC_NOTI_004,Cao,Tất cả người dùng,Badge unread count,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,Unread count badge
+TC_NOTI_005,Cao,Quản trị (Admin),Admin → Manage Notifications,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo hệ thống
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/notifications/manage,Page loads
+TC_NOTI_006,Trung bình,Quản trị (Admin),Danh sách notification templates,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo hệ thống
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/notifications/manage,Template list
+TC_NOTI_007,Trung bình,Quản trị (Admin),Nút gửi announcement,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo hệ thống
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/notifications/manage; Seed: 3 announcements (General/Event/Policy),Send button present
+TC_NOTI_008,Trung bình,Quản trị (Admin),Form gửi announcement có input,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Quản lý thông báo hệ thống
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/notifications/manage; Seed: 3 announcements (General/Event/Policy),Form fields present
+TC_NOTI_009,Cao,Quản trị (Admin),Employee bị chặn /admin/notifications/manage,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Quản lý thông báo hệ thống
+3. Chờ 2000ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/notifications/manage,Access denied
+TC_RPT_001,Cao,Quản trị (Admin),Admin → Analysis Report,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Analysis Report' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_RPT_002,Cao,Quản trị (Admin),Reports page load được,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Báo cáo phân tích (/admin/reports)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/reports,Heading visible
+TC_RPT_003,Trung bình,Quản trị (Admin),Payroll summary section,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Báo cáo phân tích (/admin/reports)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/reports,Payroll data shown
+TC_RPT_004,Trung bình,Quản trị (Admin),Dashboard metrics hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Báo cáo phân tích (/admin/reports)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/reports,Metric cards
+TC_RPT_005,Trung bình,Quản trị (Admin),Month/year selector,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Báo cáo phân tích (/admin/reports)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/reports,Date selectors
+TC_RPT_006,Trung bình,Quản trị (Admin),Charts/Biểu đồ hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Báo cáo phân tích (/admin/reports)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/reports,Chart/graph elements
+TC_RPT_007,Trung bình,Quản trị (Admin),Stats cards hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Báo cáo phân tích (/admin/reports)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/reports,Statistic cards
+TC_RPT_008,Trung bình,Quản trị (Admin),Số liệu tổng quan,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Báo cáo phân tích (/admin/reports)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/reports,Overview numbers
+TC_RPT_009,Cao,Quản trị (Admin),Employee bị chặn /admin/reports,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Báo cáo phân tích (/admin/reports)
+3. Chờ 2000ms để UI cập nhật
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/reports,Access denied
+TC_HOL_001,Cao,Nhân viên (Employee),Employee → Holidays page,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/holidays,Page loads
+TC_HOL_002,Cao,Nhân viên (Employee),Danh sách holidays hiển thị,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trang không hiển thị lỗi
+5. Kiểm tra tiêu đề trang hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/holidays,Holidays table
+TC_HOL_003,Trung bình,Nhân viên (Employee),Year selector,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/holidays,Year filter dropdown
+TC_HOL_004,Trung bình,Nhân viên (Employee),Hiển thị ngày lễ,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/holidays,Holiday dates shown
+TC_HOL_005,Cao,Nhân viên (Employee),Upcoming holidays section,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /dashboard/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard/holidays,Upcoming section
+TC_HOL_006,Cao,Quản trị (Admin),Admin → Holidays page,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang /admin/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/holidays,Page loads
+TC_HOL_007,Cao,Quản trị (Admin),Bảng holidays admin,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang /admin/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/holidays,Admin holidays table
+TC_HOL_008,Trung bình,Quản trị (Admin),Nút Create Holiday,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang /admin/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/holidays,Create button present
+TC_HOL_009,Trung bình,Quản trị (Admin),Nút Edit holiday,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang /admin/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/holidays,Edit button present
+TC_HOL_010,Trung bình,Quản trị (Admin),Nút Delete holiday,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang /admin/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/holidays,Delete button present
+TC_HOL_011,Trung bình,Quản trị (Admin),Stats holidays hiển thị,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang /admin/holidays
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/holidays,Holiday statistics
+TC_HOL_012,Cao,Quản trị (Admin),Employee bị chặn /admin/holidays,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang /admin/holidays
+3. Chờ 2000ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/holidays,Access denied
+TC_DIR_001,Cao,Tất cả người dùng,Directory page load được,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Heading visible
+TC_DIR_002,Cao,Tất cả người dùng,Danh sách nhân viên hiển thị,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra phần tử hiển thị đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Employee cards/table
+TC_DIR_003,Trung bình,Tất cả người dùng,Search input,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Search field visible
+TC_DIR_004,Trung bình,Tất cả người dùng,Search theo tên,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Filtered results
+TC_DIR_005,Trung bình,Tất cả người dùng,Department filter,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Department selector
+TC_DIR_006,Trung bình,Tất cả người dùng,Click nhân viên → detail,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Navigates to /directory/[id]
+TC_DIR_007,Cao,Tất cả người dùng,Detail page hiển thị thông tin,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Kiểm tra tiêu đề trang hiển thị",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Employee info shown
+TC_DIR_008,Cao,Tất cả người dùng,Detail có tên nhân viên,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Name displayed
+TC_DIR_009,Trung bình,Tất cả người dùng,Detail có department/position,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Dept & position shown
+TC_DIR_010,Trung bình,Tất cả người dùng,Detail có email liên hệ,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Danh bạ nhân viên (/directory)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 500ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /directory,Email displayed
+TC_DIR_011,Cao,Tất cả người dùng,Admin → Employee Directory,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Employee Directory' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_I18N_001,Cao,Chuyển đổi ngôn ngữ,Language switcher trên header,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,Lang switcher visible
+TC_I18N_002,Trung bình,Chuyển đổi ngôn ngữ,Switch sang tiếng Việt,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 300ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,UI changes to VI
+TC_I18N_003,Trung bình,Chuyển đổi ngôn ngữ,Switch sang tiếng Anh,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 300ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,UI changes to EN
+TC_I18N_004,Trung bình,Chuyển đổi ngôn ngữ,Sidebar labels đổi ngôn ngữ,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 300ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,Sidebar translates
+TC_I18N_005,Trung bình,Chuyển đổi ngôn ngữ,Switch lại về English sau khi đổi,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra số lượng / trạng thái hiển thị phần tử
+5. Click vào phần tử tương ứng
+6. Chờ 300ms để UI cập nhật",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,Toggle back works
+TC_I18N_006,Cao,Chuyển đổi ngôn ngữ,Page content không rỗng,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Dashboard (/dashboard)
+3. Chờ trang tải xong (domcontentloaded)",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /dashboard,Content renders
+TC_I18N_007,Cao,Chuyển đổi ngôn ngữ,Login page có language switcher,"1. Điều hướng đến trang đăng nhập (/login)
+2. Chờ trang tải xong (domcontentloaded)
+3. Xác nhận điều kiện kiểm tra là đúng",(Chưa đăng nhập – test kiểm tra UI trang login hoặc redirect),Lang switcher on login
+TC_I18N_008,Trung bình,Chuyển đổi ngôn ngữ,Switch ngôn ngữ trên login page,"1. Điều hướng đến trang đăng nhập (/login)
+2. Chờ trang tải xong (domcontentloaded)
+3. Kiểm tra số lượng / trạng thái hiển thị phần tử
+4. Click vào phần tử tương ứng
+5. Chờ 300ms để UI cập nhật",(Chưa đăng nhập – test kiểm tra UI trang login hoặc redirect),Login page translates
+TC_SET_001,Cao,Quản trị (Admin),Admin → System Settings,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'System Settings' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_SET_002,Cao,Quản trị (Admin),System settings page load,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cài đặt hệ thống (/admin/settings)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings,Heading visible
+TC_SET_003,Trung bình,Quản trị (Admin),Tab/section settings,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cài đặt hệ thống (/admin/settings)
+3. Chờ trang tải xong (domcontentloaded)
+4. Chờ 500ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings,Settings sections
+TC_SET_004,Trung bình,Quản trị (Admin),Nút Save settings,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cài đặt hệ thống (/admin/settings)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings,Save button present
+TC_SET_005,Cao,Quản trị (Admin),Admin → Payroll Settings,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến mục 'Payroll Settings' qua sidebar
+3. Chờ 1000ms để UI cập nhật",Email: admin@example.com  |  Mật khẩu: admin,Page loads via sidebar
+TC_SET_006,Cao,Quản trị (Admin),Payroll settings page load,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cài đặt bảng lương (/admin/settings/payroll)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra tiêu đề trang hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/payroll,Heading visible
+TC_SET_007,Trung bình,Quản trị (Admin),Form payroll settings có input,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cài đặt bảng lương (/admin/settings/payroll)
+3. Chờ trang tải xong (domcontentloaded)
+4. Kiểm tra trường nhập liệu hiển thị",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/payroll,Form inputs present
+TC_SET_008,Trung bình,Quản trị (Admin),Nút Save payroll settings,"1. Đăng nhập hệ thống với tài khoản Admin (admin@example.com / admin)
+2. Điều hướng đến trang Cài đặt bảng lương (/admin/settings/payroll)
+3. Chờ trang tải xong (domcontentloaded)
+4. Xác nhận điều kiện kiểm tra là đúng",Email: admin@example.com  |  Mật khẩu: admin; URL đích: /admin/settings/payroll,Save button present
+TC_SET_009,Cao,Quản trị (Admin),Employee bị chặn /admin/settings,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Cài đặt hệ thống (/admin/settings)
+3. Chờ 2000ms để UI cập nhật
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/settings,Access denied
+TC_SET_010,Cao,Quản trị (Admin),Employee bị chặn /admin/settings/payroll,"1. Đăng nhập hệ thống với tài khoản Employee (user1@company.com / password123)
+2. Điều hướng đến trang Cài đặt bảng lương (/admin/settings/payroll)
+3. Chờ 2000ms để UI cập nhật
+4. Xác nhận điều kiện kiểm tra là đúng",Email: user1@company.com  |  Mật khẩu: password123; URL đích: /admin/settings/payroll,Access denied

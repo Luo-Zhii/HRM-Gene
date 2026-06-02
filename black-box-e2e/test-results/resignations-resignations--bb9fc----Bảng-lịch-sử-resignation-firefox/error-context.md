@@ -1,0 +1,190 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: resignations/resignations.spec.ts >> [M11] Resignations - Employee >> TC_RESIGN_016 - Bảng lịch sử resignation
+- Location: specs/resignations/resignations.spec.ts:113:7
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: locator('table, [role="table"]').first()
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 10000ms
+  - waiting for locator('table, [role="table"]').first()
+
+```
+
+```yaml
+- alert
+- complementary:
+  - link "Logo":
+    - /url: /dashboard
+    - img "Logo"
+  - navigation:
+    - link "Dashboard":
+      - /url: /dashboard
+    - link "News Feed":
+      - /url: /company-news
+    - link "Staff Directory":
+      - /url: /directory
+    - button "My Workspace"
+    - link "Timekeeping":
+      - /url: /dashboard/timekeeping
+    - link "Leave Management":
+      - /url: /dashboard/leave
+    - link "My Goals":
+      - /url: /dashboard/performance/me
+    - link "My Salary":
+      - /url: /dashboard/salary
+    - link "My Resignation":
+      - /url: /my-resignation
+- banner:
+  - textbox "Search pages & features..."
+  - button "🇬🇧 EN"
+  - button "1"
+  - button "Cuong Intern C":
+    - paragraph: Cuong
+    - paragraph: Intern
+    - text: C
+- main:
+  - heading "My Resignation" [level=1]
+  - paragraph: Submit your formal notice and track your offboarding request.
+  - tablist:
+    - tab "Submit Notice" [selected]
+    - tab "Tracking & History"
+  - tabpanel "Submit Notice":
+    - text: Formal Resignation Notice Once submitted securely, your request will be reviewed by HR. Please ensure your requested last day provides sufficient handover time according to your contract. Requested Last Day of Work *
+    - textbox "Select last day"
+    - paragraph: Pick the final date you intend to be employed.
+    - text: Reason / Handover Notes *
+    - textbox "Please provide details regarding your resignation, expected handover plan, and any other notes for HR and your Manager."
+    - button "Submit Notice"
+    - paragraph: By submitting, you formally request to terminate your employment.
+```
+
+# Test source
+
+```ts
+  16  | 
+  17  |   test('TC_RESIGN_003 - Có filter theo trạng thái', async ({ adminPage: page }) => {
+  18  |     await page.goto('/admin/resignations');
+  19  |     await page.waitForLoadState('domcontentloaded');
+  20  |     await expect(page.locator('select').first()).toBeVisible({ timeout: 10000 });
+  21  |   });
+  22  | 
+  23  |   test('TC_RESIGN_004 - Nút Approve', async ({ adminPage: page }) => {
+  24  |     await page.goto('/admin/resignations');
+  25  |     await page.waitForLoadState('domcontentloaded');
+  26  |     const btn = page.locator('button').filter({ hasText: /Approve|Duyệt/i }).first();
+  27  |     expect(await btn.count()).toBeGreaterThanOrEqual(0);
+  28  |   });
+  29  | 
+  30  |   test('TC_RESIGN_005 - Nút Reject', async ({ adminPage: page }) => {
+  31  |     await page.goto('/admin/resignations');
+  32  |     await page.waitForLoadState('domcontentloaded');
+  33  |     const btn = page.locator('button').filter({ hasText: /Reject|Từ chối/i }).first();
+  34  |     expect(await btn.count()).toBeGreaterThanOrEqual(0);
+  35  |   });
+  36  | 
+  37  |   test('TC_RESIGN_006 - Click row → xem detail', async ({ adminPage: page }) => {
+  38  |     await page.goto('/admin/resignations');
+  39  |     await page.waitForLoadState('domcontentloaded');
+  40  |     const row = page.locator('table tbody tr, [role="row"]').first();
+  41  |     if (await row.isVisible()) {
+  42  |       await row.click();
+  43  |       await page.waitForTimeout(500);
+  44  |     }
+  45  |   });
+  46  | 
+  47  |   test('TC_RESIGN_007 - Hiển thị ngày last day', async ({ adminPage: page }) => {
+  48  |     await page.goto('/admin/resignations');
+  49  |     await page.waitForLoadState('domcontentloaded');
+  50  |     await page.waitForTimeout(500);
+  51  |   });
+  52  | 
+  53  |   test('TC_RESIGN_008 - Hiển thị lý do resign', async ({ adminPage: page }) => {
+  54  |     await page.goto('/admin/resignations');
+  55  |     await page.waitForLoadState('domcontentloaded');
+  56  |     await page.waitForTimeout(500);
+  57  |   });
+  58  | 
+  59  |   test('TC_RESIGN_009 - Employee bị chặn /admin/resignations', async ({ employeePage: page }) => {
+  60  |     await page.goto('/admin/resignations');
+  61  |     await page.waitForTimeout(2000);
+  62  |     const onPage = page.url().includes('/admin/resignations');
+  63  |     if (onPage) {
+  64  |       await expect(page.locator('body')).not.toBeEmpty();
+  65  |     }
+  66  |     expect(true).toBeTruthy();
+  67  |   });
+  68  | 
+  69  |   test('TC_RESIGN_010 - Chọn resignation category khi approve/reject', async ({ adminPage: page }) => {
+  70  |     await page.goto('/admin/resignations');
+  71  |     await page.waitForLoadState('domcontentloaded');
+  72  |     const btn = page.locator('button').filter({ hasText: /Approve|Duyệt/i }).first();
+  73  |     if (await btn.isVisible()) {
+  74  |       await btn.click();
+  75  |       await page.waitForTimeout(500);
+  76  |     }
+  77  |   });
+  78  | });
+  79  | 
+  80  | test.describe('[M11] Resignations - Employee', () => {
+  81  | 
+  82  |   test('TC_RESIGN_011 - Employee → My Resignation', async ({ employeePage: page }) => {
+  83  |     await page.goto('/my-resignation');
+  84  |     await page.waitForLoadState('domcontentloaded');
+  85  |     await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 10000 });
+  86  |   });
+  87  | 
+  88  |   test('TC_RESIGN_012 - Form tạo resignation request', async ({ employeePage: page }) => {
+  89  |     await page.goto('/my-resignation');
+  90  |     await page.waitForLoadState('domcontentloaded');
+  91  |     await expect(page.locator('input, textarea, select').first()).toBeVisible({ timeout: 10000 });
+  92  |   });
+  93  | 
+  94  |   test('TC_RESIGN_013 - Input last working day', async ({ employeePage: page }) => {
+  95  |     await page.goto('/my-resignation');
+  96  |     await page.waitForLoadState('domcontentloaded');
+  97  |     const dateInput = page.locator('input[type="date"]');
+  98  |     expect(await dateInput.count()).toBeGreaterThanOrEqual(0);
+  99  |   });
+  100 | 
+  101 |   test('TC_RESIGN_014 - Textarea reason', async ({ employeePage: page }) => {
+  102 |     await page.goto('/my-resignation');
+  103 |     await page.waitForLoadState('domcontentloaded');
+  104 |     await expect(page.locator('textarea').first()).toBeVisible({ timeout: 10000 });
+  105 |   });
+  106 | 
+  107 |   test('TC_RESIGN_015 - Nút Submit resignation', async ({ employeePage: page }) => {
+  108 |     await page.goto('/my-resignation');
+  109 |     await page.waitForLoadState('domcontentloaded');
+  110 |     await expect(page.getByRole('button').filter({ hasText: /Submit|Gửi/i }).first()).toBeVisible();
+  111 |   });
+  112 | 
+  113 |   test('TC_RESIGN_016 - Bảng lịch sử resignation', async ({ employeePage: page }) => {
+  114 |     await page.goto('/my-resignation');
+  115 |     await page.waitForLoadState('domcontentloaded');
+> 116 |     await expect(page.locator('table, [role="table"]').first()).toBeVisible({ timeout: 10000 });
+      |                                                                 ^ Error: expect(locator).toBeVisible() failed
+  117 |   });
+  118 | 
+  119 |   test('TC_RESIGN_017 - Status hiển thị trên request của tôi', async ({ employeePage: page }) => {
+  120 |     await page.goto('/my-resignation');
+  121 |     await page.waitForLoadState('domcontentloaded');
+  122 |     await page.waitForTimeout(500);
+  123 |   });
+  124 | });
+  125 | 
+```
