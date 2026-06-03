@@ -77,7 +77,7 @@ describe('ContractsService', () => {
     });
 
     // [TC_BE_CONTRA_115]
-    it('Tạo hợp đồng lao động mới cho nhân viên',
+    it('Tạo hợp đồng lao động mới cho nhân viên', async () => {
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
       contractRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({ contract_id: 10 }); 
       salaryConfigRepo.findOne.mockResolvedValue({ base_salary: '1000' });

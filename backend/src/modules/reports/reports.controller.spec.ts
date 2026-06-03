@@ -24,7 +24,7 @@ describe('ReportsController', () => {
 
   describe('payrollSummary', () => {
     // [TC_BE_REPORT_288]
-    it('payrollSummary controller: Gọi service với tham số đã parse (string → number)',
+    it('payrollSummary controller: Gọi service với tham số đã parse (string → number)', async () => {
       mockService.payrollSummary.mockResolvedValue({});
       expect(await controller.payrollSummary('2', '2026')).toEqual({});
       expect(mockService.payrollSummary).toHaveBeenCalledWith(2, 2026);

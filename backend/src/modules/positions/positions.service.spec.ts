@@ -36,13 +36,13 @@ describe('PositionsService', () => {
 
   describe('operations', () => {
     // [TC_BE_POSITI_284]
-    it('findOne: Ném NotFoundException khi chức vụ không tồn tại',
+    it('findOne: Ném NotFoundException khi chức vụ không tồn tại', async () => {
       posRepo.findOne.mockResolvedValueOnce(null);
       await expect(service.findOne(1)).rejects.toThrow(NotFoundException);
     });
 
     // [TC_BE_POSITI_285]
-    it('update: Cập nhật tên chức vụ thành công',
+    it('update: Cập nhật tên chức vụ thành công', async () => {
       posRepo.findOne.mockResolvedValueOnce({ position_id: 1, position_name: 'A' });
       posRepo.save.mockResolvedValue({});
       posRepo.findOne.mockResolvedValueOnce({ position_id: 1, position_name: 'B' });
@@ -52,7 +52,7 @@ describe('PositionsService', () => {
     });
 
     // [TC_BE_POSITI_286]
-    it('remove: Ném BadRequestException khi còn nhân viên thuộc chức vụ',
+    it('remove: Ném BadRequestException khi còn nhân viên thuộc chức vụ', async () => {
       posRepo.findOne.mockResolvedValueOnce({ position_id: 1 });
       employeeRepo.count.mockResolvedValue(1);
 
@@ -60,7 +60,7 @@ describe('PositionsService', () => {
     });
 
     // [TC_BE_POSITI_287]
-    it('remove: Xóa chức vụ thành công khi không có nhân viên',
+    it('remove: Xóa chức vụ thành công khi không có nhân viên', async () => {
       posRepo.findOne.mockResolvedValueOnce({ position_id: 1 });
       employeeRepo.count.mockResolvedValue(0);
       posRepo.remove.mockResolvedValue({});

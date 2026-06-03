@@ -50,14 +50,14 @@ describe('ReportsService', () => {
 
   describe('payrollSummary', () => {
     // [TC_BE_REPORT_291]
-    it('payrollSummary service: Xử lý dataset rỗng, trả về employees_processed = 0',
+    it('payrollSummary service: Xử lý dataset rỗng, trả về employees_processed = 0', async () => {
       payslipRepo.find.mockResolvedValue([]);
       const res = await service.payrollSummary(1, 2026);
       expect(res.employees_processed).toBe(0);
     });
 
     // [TC_BE_REPORT_292]
-    it('payrollSummary service: Tính toán tổng lương và lương theo phòng ban từ payslip',
+    it('payrollSummary service: Tính toán tổng lương và lương theo phòng ban từ payslip', async () => {
       payslipRepo.find.mockResolvedValue([
         { gross_salary: '100', net_salary: '90', bonus: '0', deductions: '10', employee: { department: { department_name: 'IT' } } }
       ]);
@@ -71,7 +71,7 @@ describe('ReportsService', () => {
 
   describe('getDashboardData', () => {
     // [TC_BE_REPORT_293]
-    it('getDashboardData service: Tổng hợp dữ liệu dashboard (salary trend, headcount, turnover, personnel by dept)',
+    it('getDashboardData service: Tổng hợp dữ liệu dashboard (salary trend, headcount, turnover, personnel by dept)', async () => {
       // Mocking for 12 months execution logic accurately bridging abstractions securely
       periodRepo.findOne.mockResolvedValue(null);
       payslipRepo.find.mockResolvedValue([]);

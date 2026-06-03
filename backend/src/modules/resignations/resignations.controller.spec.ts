@@ -27,13 +27,13 @@ describe('ResignationsController', () => {
 
   describe('create / findMyRequests', () => {
     // [TC_BE_RESIGN_294]
-    it('Từ chối truy cập khi user không có quyền (chưa đăng nhập hoặc role thường)',
+    it('Từ chối truy cập khi user không có quyền (chưa đăng nhập hoặc role thường)', async () => {
       expect(() => controller.create({ user: {} } as any, {} as any)).toThrow(ForbiddenException);
       expect(() => controller.findMyRequests({ user: {} } as any)).toThrow(ForbiddenException);
     });
 
     // [TC_BE_RESIGN_295]
-    it('Tạo đơn thôi việc và lấy danh sách đơn của user đã đăng nhập',
+    it('Tạo đơn thôi việc và lấy danh sách đơn của user đã đăng nhập', async () => {
       mockService.create.mockResolvedValue({});
       mockService.findMyRequests.mockResolvedValue([]);
       
@@ -44,7 +44,7 @@ describe('ResignationsController', () => {
 
   describe('findAll / updateStatus', () => {
     // [TC_BE_RESIGN_296]
-    it('Lấy tất cả đơn thôi việc và cập nhật trạng thái (Admin/HR)',
+    it('Lấy tất cả đơn thôi việc và cập nhật trạng thái (Admin/HR)', async () => {
       mockService.findAll.mockResolvedValue([]);
       mockService.updateStatus.mockResolvedValue({});
       

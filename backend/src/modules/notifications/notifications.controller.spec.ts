@@ -26,7 +26,7 @@ describe('NotificationsController', () => {
 
   describe('endpoints', () => {
     // [TC_BE_NOTIFI_212]
-    it('Kiểm tra toàn bộ endpoint notifications: getUserNotifications, markAsRead, deleteNotification, createAnnouncement',
+    it('Kiểm tra toàn bộ endpoint notifications: getUserNotifications, markAsRead, deleteNotification, createAnnouncement', async () => {
       const mockUser = { user: { employee_id: 1, position: { position_name: 'Admin' } } };
       
       mockService.getUserNotifications.mockResolvedValue([]);

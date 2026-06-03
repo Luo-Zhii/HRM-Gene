@@ -27,7 +27,7 @@ describe('PositionsController', () => {
 
   describe('endpoints', () => {
     // [TC_BE_POSITI_283]
-    it('Tạo chức vụ mới trong hệ thống',
+    it('Tạo chức vụ mới trong hệ thống', async () => {
       mockService.create.mockResolvedValue({});
       mockService.findAll.mockResolvedValue([]);
       mockService.findOne.mockResolvedValue({});

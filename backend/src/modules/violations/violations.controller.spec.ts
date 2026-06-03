@@ -44,14 +44,14 @@ describe('ViolationsController', () => {
 
   describe('findAll', () => {
     // [TC_BE_VIOLAT_325]
-    it('findAll: Admin với manage:system xem tất cả vi phạm (không filter)',
+    it('findAll: Admin với manage:system xem tất cả vi phạm (không filter)', async () => {
       const req = { user: { permissions: ['manage:system'] } };
       await controller.findAll(req);
       expect(mockService.findAll).toHaveBeenCalledWith(undefined);
     });
 
     // [TC_BE_VIOLAT_326]
-    it('findAll: Employee thường chỉ xem vi phạm của chính mình (filter theo employee_id)',
+    it('findAll: Employee thường chỉ xem vi phạm của chính mình (filter theo employee_id)', async () => {
       const req = { user: { permissions: [], employee_id: 3 } };
       await controller.findAll(req);
       expect(mockService.findAll).toHaveBeenCalledWith(3);
@@ -74,7 +74,7 @@ describe('ViolationsController', () => {
     });
     
     // [TC_BE_VIOLAT_329]
-    it('findOne: Admin HR xem vi phạm bất kỳ (không filter employee_id)',
+    it('findOne: Admin HR xem vi phạm bất kỳ (không filter employee_id)', async () => {
       const req = { user: { permissions: ['manage:employees'] } };
       await controller.findOne(10, req);
       expect(mockService.findOne).toHaveBeenCalledWith(10, undefined);
@@ -83,13 +83,13 @@ describe('ViolationsController', () => {
 
   describe('update / remove', () => {
     // [TC_BE_VIOLAT_330]
-    it('Cập nhật thông tin biên bản vi phạm',
+    it('Cập nhật thông tin biên bản vi phạm', async () => {
       mockService.update.mockResolvedValue({});
       expect(await controller.update(1, {} as any)).toEqual({});
     });
 
     // [TC_BE_VIOLAT_331]
-    it('Xóa biên bản vi phạm',
+    it('Xóa biên bản vi phạm', async () => {
       mockService.remove.mockResolvedValue({});
       expect(await controller.remove(1)).toEqual({});
     });

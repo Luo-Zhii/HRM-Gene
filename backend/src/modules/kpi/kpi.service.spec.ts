@@ -93,7 +93,7 @@ describe('KpiService', () => {
     });
 
     // [TC_BE_KPI_187]
-    it('Thiết lập chỉ tiêu KPI cho nhân viên',
+    it('Thiết lập chỉ tiêu KPI cho nhân viên', async () => {
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
       kpiPeriodRepo.findOne.mockResolvedValue({ id: 1, name: 'P' });
       
@@ -108,7 +108,7 @@ describe('KpiService', () => {
 
   describe('updateActual', () => {
     // [TC_BE_KPI_188]
-    it('updateActual: Giá trị NaN được giữ nguyên actual_value=0 và set status SUBMITTED',
+    it('updateActual: Giá trị NaN được giữ nguyên actual_value=0 và set status SUBMITTED', async () => {
       assignmentRepo.findOne.mockResolvedValue({ actual_value: 0, employee: { employee_id: 1 }, period: { id: 1 } });
       assignmentRepo.save.mockImplementation((a: any) => a);
 
@@ -120,7 +120,7 @@ describe('KpiService', () => {
 
   describe('calculateFinalKpiScore', () => {
     // [TC_BE_KPI_189]
-    it('Đánh giá kết quả KPI của nhân viên',
+    it('Đánh giá kết quả KPI của nhân viên', async () => {
       assignmentRepo.find.mockResolvedValue([
         { weight: 50, manager_score: 60, target_value: 50 }, // 120% completion (bounded)
         { weight: 50, actual_value: 40, target_value: 50 }, // 80% completion (fallback to actual since manager_score null)
@@ -132,7 +132,7 @@ describe('KpiService', () => {
     });
 
     // [TC_BE_KPI_190]
-    it('Đánh giá kết quả KPI của nhân viên',
+    it('Đánh giá kết quả KPI của nhân viên', async () => {
       assignmentRepo.find.mockResolvedValue([]);
       expect(await service.calculateFinalKpiScore(1, 1)).toBe(0);
     });

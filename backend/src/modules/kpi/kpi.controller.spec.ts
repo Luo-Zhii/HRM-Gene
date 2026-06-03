@@ -97,7 +97,7 @@ describe('KpiController', () => {
 
   describe('getEmployeeAssignments / getMyPerformance / calculateScore', () => {
     // [TC_BE_KPI_181]
-    it('getEmployeeAssignments: Lấy danh sách KPI assignment của nhân viên',
+    it('getEmployeeAssignments: Lấy danh sách KPI assignment của nhân viên', async () => {
       await controller.getEmployeeAssignments(1, 2);
       expect(mockService.getEmployeeAssignments).toHaveBeenCalledWith(1, 2);
     });
