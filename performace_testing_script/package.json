@@ -4,10 +4,11 @@
   "description": "k6 performance testing framework for the HRM NestJS/Next.js monorepo",
   "private": true,
   "scripts": {
-    "smoke":  "k6 run -e TEST_TYPE=smoke  tests/main-test.js",
-    "load":   "k6 run -e TEST_TYPE=load   tests/main-test.js",
+    "smoke": "k6 run -e TEST_TYPE=smoke  tests/main-test.js",
+    "load": "k6 run -e TEST_TYPE=load   tests/main-test.js",
     "stress": "k6 run -e TEST_TYPE=stress tests/main-test.js",
-    "soak":   "k6 run -e TEST_TYPE=soak   tests/main-test.js"
+    "soak": "k6 run -e TEST_TYPE=soak   tests/main-test.js",
+    "k6:report": "node run-k6.js"
   },
   "devDependencies": {
     "@types/k6": "latest"
