@@ -23,7 +23,82 @@ semgrep_sast:
     GIT_STRATEGY: clone
   script:
     - echo "[SAST] Running Semgrep source code scan..."
-    - docker run --rm -v "${PWD}:/src" returntocorp/semgrep semgrep scan --config auto --html -o /src/${SEMGREP_REPORT}.html /src || true
+    - docker run --rm -v "${PWD}:/src" returntocorp/semgrep semgrep scan --config auto --json -o /src/${SEMGREP_REPORT}.json /src || true
+    - |
+      python3 - <<'PYEOF'
+      import json, os, html, datetime
+      report_base = os.environ.get("SEMGREP_REPORT", "semgrep_report")
+      json_path   = report_base + ".json"
+      html_path   = report_base + ".html"
+      try:
+          with open(json_path) as f:
+              data = json.load(f)
+      except Exception as e:
+          data = {"results": [], "errors": [str(e)]}
+      results = data.get("results", [])
+      errors  = data.get("errors", [])
+      sev_color = {"ERROR": "#e53935", "WARNING": "#fb8c00", "INFO": "#1e88e5"}
+      rows = ""
+      for r in results:
+          sev   = r.get("extra", {}).get("severity", "INFO").upper()
+          color = sev_color.get(sev, "#757575")
+          path  = html.escape(r.get("path", ""))
+          line  = r.get("start", {}).get("line", "")
+          msg   = html.escape(r.get("extra", {}).get("message", "").strip())
+          rule  = html.escape(r.get("check_id", ""))
+          code  = html.escape(r.get("extra", {}).get("lines", "").strip())
+          rows += f"""<tr>
+            <td><span style="background:{color};color:#fff;padding:2px 8px;border-radius:4px;font-size:12px">{sev}</span></td>
+            <td><code>{path}:{line}</code></td>
+            <td>{msg}</td>
+            <td style="font-size:11px;color:#888">{rule}</td>
+            <td><pre style="margin:0;font-size:11px;background:#1e1e2e;color:#cdd6f4;padding:4px 8px;border-radius:4px">{code}</pre></td>
+          </tr>"""
+      total  = len(results)
+      errors_count = len(errors)
+      ts     = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+      page = f"""<!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Semgrep SAST Report</title>
+        <style>
+          *{{box-sizing:border-box;margin:0;padding:0}}
+          body{{font-family:Inter,system-ui,sans-serif;background:#0f0f1a;color:#e0e0e0;padding:32px}}
+          h1{{font-size:28px;font-weight:700;color:#a6e3a1;margin-bottom:4px}}
+          .sub{{color:#888;margin-bottom:24px;font-size:14px}}
+          .badges{{display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap}}
+          .badge{{padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600}}
+          .b-total{{background:#1e1e2e;border:1px solid #444;color:#cdd6f4}}
+          .b-err{{background:#3b1a1a;border:1px solid #e53935;color:#ef9a9a}}
+          .b-warn{{background:#2d2010;border:1px solid #fb8c00;color:#ffcc80}}
+          .b-info{{background:#0d1f35;border:1px solid #1e88e5;color:#90caf9}}
+          table{{width:100%;border-collapse:collapse;background:#1a1a2e;border-radius:10px;overflow:hidden}}
+          thead{{background:#12122a}}
+          th{{padding:12px 16px;text-align:left;font-size:13px;color:#888;text-transform:uppercase;letter-spacing:.5px}}
+          td{{padding:10px 16px;border-bottom:1px solid #2a2a40;font-size:13px;vertical-align:top}}
+          tr:last-child td{{border-bottom:none}}
+          tr:hover td{{background:#1e1e36}}
+          .empty{{text-align:center;padding:40px;color:#555;font-size:16px}}
+        </style>
+      </head>
+      <body>
+        <h1>🔍 Semgrep SAST Report</h1>
+        <div class="sub">Generated: {ts}</div>
+        <div class="badges">
+          <span class="badge b-total">Total findings: {total}</span>
+          <span class="badge b-err">Errors (parse): {errors_count}</span>
+        </div>
+        <table>
+          <thead><tr><th>Severity</th><th>Location</th><th>Message</th><th>Rule</th><th>Code</th></tr></thead>
+          <tbody>{"" if rows else '<tr><td colspan="5" class="empty">✅ No findings detected</td></tr>'}{rows}</tbody>
+        </table>
+      </body>
+      </html>"""
+      with open(html_path, "w") as f:
+          f.write(page)
+      print(f"[SAST] HTML report written → {html_path}  ({total} findings)")
+      PYEOF
   after_script:
     - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
@@ -156,7 +231,23 @@ owasp_zap_dast:
     - if [ -z "$TARGET_URL" ]; then echo "ERROR - TARGET_URL variable is not configured in GitLab CI/CD Variables!"; exit 1; fi
   script:
     - echo "[DAST] Running OWASP ZAP baseline scan against $TARGET_URL ..."
-    - docker run --rm -v $(pwd):/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t $TARGET_URL -r ${OWASP_ZAP_REPORT}.html || true
+    - REPORT_FILE="${OWASP_ZAP_REPORT}.html"
+    - docker run --rm -v $(pwd):/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t $TARGET_URL -r $REPORT_FILE || true
+    - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
+    - |
+      if [ ! -f "$REPORT_FILE" ]; then
+        echo "[DAST] WARNING - ZAP did not produce a report. Creating placeholder HTML..."
+        cat > "$REPORT_FILE" <<HTMLEOF
+      <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>ZAP DAST Report</title>
+      <style>body{font-family:sans-serif;background:#0f0f1a;color:#e0e0e0;padding:40px;text-align:center}</style></head>
+      <body><h1 style="color:#fb8c00">&#9888; ZAP Scan Report Not Generated</h1>
+      <p>The OWASP ZAP scan did not produce a report file.</p>
+      <p>Target URL: $TARGET_URL</p>
+      <p>Please check the job log for details.</p></body></html>
+      HTMLEOF
+      fi
+    - echo "[DAST] Report file:"
+    - ls -lah "$REPORT_FILE" || true
   after_script:
     - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
@@ -165,8 +256,9 @@ owasp_zap_dast:
     - main
   artifacts:
     paths:
-      - ${OWASP_ZAP_REPORT}.html
+      - "${OWASP_ZAP_REPORT}.html"
     expire_in: 7 days
+    when: always
 
 # ==========================================
 # STAGE 6: PERFORMANCE TESTING (k6)
