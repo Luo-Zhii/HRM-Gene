@@ -70,7 +70,7 @@ async function run() {
     ],
     // 🔥 QUAN TRỌNG: dropSchema: true sẽ xóa sạch DB cũ và tạo lại từ đầu.
     dropSchema: true,
-    synchronize: true, 
+    synchronize: true,
   } as any);
 
   await ds.initialize();
@@ -128,7 +128,7 @@ async function run() {
   }));
 
   console.log("🌱 Creating Permissions...");
-  
+
   // ROLES
   const p_get_perms = await permRepo.save({ permission_name: "Get Grouped Permissions", method: "GET", apiPath: "/api/admin/permissions/grouped", module_group: "ROLES" });
   const p_update_perms = await permRepo.save({ permission_name: "Assign Permissions", method: "PUT", apiPath: "/api/admin/roles/:id/permissions", module_group: "ROLES" });
@@ -159,10 +159,10 @@ async function run() {
   const p_announcements = await permRepo.save({ permission_name: "Manage Announcements", method: "POST", apiPath: "/api/announcements", module_group: "ADMIN" });
   const p_depts = await permRepo.save({ permission_name: "Manage Departments", method: "POST", apiPath: "/api/admin/departments", module_group: "ADMIN" });
   const p_settings = await permRepo.save({ permission_name: "Manage System Settings", method: "PATCH", apiPath: "/api/admin/settings", module_group: "ADMIN" });
-  
+
   const p_salaries = await permRepo.save({ permission_name: "Manage Salaries", method: "PUT", apiPath: "/api/admin/salary", module_group: "PAYROLL" });
   const p_adjustments = await permRepo.save({ permission_name: "Manage Adjustments", method: "POST", apiPath: "/api/payroll/adjustments", module_group: "PAYROLL" });
-  
+
   const p_leave_rules = await permRepo.save({ permission_name: "Manage Leave Rules", method: "PUT", apiPath: "/api/admin/leave/rules", module_group: "LEAVE" });
   const p_attendance = await permRepo.save({ permission_name: "View Attendance History", method: "GET", apiPath: "/api/attendance/admin/all", module_group: "ATTENDANCE" });
 
@@ -224,7 +224,7 @@ async function run() {
     { position: posDirector, permission: p_adjustments },
     { position: posDirector, permission: p_leave_rules },
     { position: posDirector, permission: p_attendance },
-    
+
     // Manager gets GET and PATCH permissions only (excluding delete/create/update configs)
     { position: posManager, permission: p_get_perms },
     { position: posManager, permission: p_get_roles },
@@ -233,12 +233,12 @@ async function run() {
     { position: posManager, permission: p_get_company },
     { position: posManager, permission: p_payroll }, // GET
     { position: posManager, permission: p_leave },   // GET
-    
+
     // Staff gets ONLY GET permissions
     { position: posStaff, permission: p_get_employees },
     { position: posStaff, permission: p_get_company },
     { position: posStaff, permission: p_leave },
-    
+
     // Intern gets minimal
     { position: posIntern, permission: p_leave },
   ]);
@@ -319,11 +319,11 @@ async function run() {
   // --- 8. CREATE CONTRACTS & SALARY HISTORY ---
   console.log("🌱 Creating Contracts & Salary History...");
   const contracts: Contract[] = [];
-  
+
   for (const employee of employees) {
     const joinDate = randomDate(twoYearsAgo, now);
     const contractType = randomElement([ContractType.OFFICIAL, ContractType.PROBATION, ContractType.PART_TIME]);
-    
+
     // Salary variance by position to create a wide spread (5M - 100M)
     let baseSalary = 0;
     switch (employee.position?.position_name) {
@@ -349,10 +349,10 @@ async function run() {
 
     const contract = await contractRepo.save(contractRepo.create({
       employee: employee,
-      contract_number: `CNT-${employee.employee_id}-${Math.floor(Math.random()*10000)}`,
+      contract_number: `CNT-${employee.employee_id}-${Math.floor(Math.random() * 10000)}`,
       contract_type: contractType,
       start_date: formatDate(joinDate),
-      end_date: undefined, 
+      end_date: undefined,
       status: ContractStatus.ACTIVE,
       salary_rate: String(baseSalary),
     }));
@@ -391,7 +391,7 @@ async function run() {
     if (!contract) continue;
 
     const base = parseFloat((contract as any).salary_rate);
-    
+
     await salaryConfigRepo.save(salaryConfigRepo.create({
       employee: employee,
       base_salary: String(base),
@@ -430,7 +430,7 @@ async function run() {
       if (month === 2) {
         actualDays = randomBetween(15, 18);
       }
-      
+
       let unpaidLeaveDays = 0;
       if (Math.random() < 0.05) {
         unpaidLeaveDays = randomBetween(1, 3);
@@ -546,7 +546,7 @@ async function run() {
   console.log("🌱 Creating Leave Requests & Resignations...");
   for (let i = 0; i < 15; i++) {
     const emp = randomElement(activeEmployees);
-    const mng = randomElement(activeEmployees.filter(e => 
+    const mng = randomElement(activeEmployees.filter(e =>
       e.position?.position_name === "Manager" || e.position?.position_name === "Director"
     ));
     const leaveType = randomElement([annualLeave, sickLeave, unpaidLeave]);
@@ -555,7 +555,7 @@ async function run() {
     end.setDate(start.getDate() + randomBetween(0, 4));
 
     const statusOpt = randomElement(['Approved', 'Pending', 'Rejected']);
-    
+
     await leaveRepo.save(leaveRepo.create({
       employee: emp,
       leave_type: leaveType,
@@ -618,7 +618,7 @@ async function run() {
   for (const emp of activeEmployees) {
     const isSales = emp.department?.department_name === "Sales";
     const isEng = emp.department?.department_name === "Engineering";
-    
+
     const relevantLibrary = isSales ? kpiLib2 : (isEng ? kpiLib3 : kpiLib1);
 
     // Passed period

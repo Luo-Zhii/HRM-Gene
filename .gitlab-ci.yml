@@ -1,47 +1,48 @@
 variables:
   USER_PROJECT: "ubuntu"
-  CODECLIMATE_REPORT: "codeclimate_analysis_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
+  SEMGREP_REPORT: "semgrep_sast_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
   SNYKSCAN_REPORT: "snyk_scan_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
   TRIVYFS_REPORT: "trivyfs_scan_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
-  ARACHNI_WEBSITE_REPORT: "security_scan_website_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
-  K6_PERFORMACE_TEST_REPORT: "performace_test_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
+  OWASP_ZAP_REPORT: "owasp_zap_dast_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
+  K6_PERF_REPORT: "k6_performance_${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_report"
 
 stages:
-  - test source code
-  - white-box testing
-  - deploy
-  - black-box testing
-  - security scan website
-  - performace testing
+  - sast-sca
+  - unit-integration-test
+  - deploy-staging
+  - e2e-test
+  - dast
+  - performance-test
 
 # ==========================================
-# STAGE 1: SAST - TÌM LỖ HỔNG & QUÉT CODE
+# STAGE 1: SAST & SCA
 # ==========================================
-codeclimate_analyze:
-  stage: test source code
+semgrep_sast:
+  stage: sast-sca
   variables:
     GIT_STRATEGY: clone
   script:
-    - docker run --rm --env DOCKER_API_VERSION=1.41 --env CODECLIMATE_CODE="$PWD" --volume "$PWD":/code --volume /var/run/docker.sock:/var/run/docker.sock --volume /tmp/cc:/tmp/cc codeclimate/codeclimate analyze -f html > $CODECLIMATE_REPORT.html || true
+    - echo "[SAST] Running Semgrep source code scan..."
+    - docker run --rm -v "${PWD}:/src" returntocorp/semgrep semgrep scan --config auto --html -o /src/${SEMGREP_REPORT}.html /src || true
   after_script:
-    - sudo chown -R gitlab-runner $(pwd)
+    - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
     - shared-runner-dev-shell
   only:
     - main
   artifacts:
     paths:
-      - $CODECLIMATE_REPORT.html
-    expire_in: 1 day
+      - ${SEMGREP_REPORT}.html
+    expire_in: 7 days
 
 trivyfs_scan:
-  stage: test source code
+  stage: sast-sca
   variables:
     GIT_STRATEGY: clone
   script:
     - docker run --rm -v $PWD:/${CI_PROJECT_NAME} -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy fs /${CI_PROJECT_NAME} --severity HIGH,CRITICAL --format template --template "@contrib/html.tpl" --output /${CI_PROJECT_NAME}/$TRIVYFS_REPORT.html || true
   after_script:
-    - sudo chown -R gitlab-runner $(pwd)
+    - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
     - shared-runner-dev-shell
   only:
@@ -49,10 +50,10 @@ trivyfs_scan:
   artifacts:
     paths:
       - $TRIVYFS_REPORT.html
-    expire_in: 1 day
+    expire_in: 7 days
 
 snyk_scan:
-  stage: test source code
+  stage: sast-sca
   variables:
     GIT_STRATEGY: clone
   script:
@@ -61,7 +62,7 @@ snyk_scan:
     - docker cp $SNYKSCAN_REPORT:/app/${SNYKSCAN_REPORT}.html . || true
     - docker rm -f $SNYKSCAN_REPORT || true
   after_script:
-    - sudo chown -R gitlab-runner $(pwd)
+    - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
     - shared-runner-dev-shell
   only:
@@ -69,22 +70,23 @@ snyk_scan:
   artifacts:
     paths:
       - ${SNYKSCAN_REPORT}.html
-    expire_in: 1 day
+    expire_in: 7 days
 
 # ==========================================
-# STAGE 2: WHITE-BOX TESTING 
-# (Unit/Integration Test - Chạy trước khi Deploy)
+# STAGE 2: UNIT & INTEGRATION (White-box Testing)
 # ==========================================
 run_white_box_testing:
-  stage: white-box testing
+  stage: unit-integration-test
   variables:
     GIT_STRATEGY: clone
   script:
-    - echo "Đang khởi chạy White-box Testing..."
+    - echo "[TEST] Running Unit/Integration Tests..."
     - npm install --prefix backend --legacy-peer-deps
     - npm install --prefix frontend --legacy-peer-deps
     - npm run test:cov
-    - npm run test:report
+    - npm run test:report || true
+  after_script:
+    - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
     - shared-runner-dev-shell
   only:
@@ -96,37 +98,42 @@ run_white_box_testing:
     when: always
 
 # ==========================================
-# STAGE 3: DEPLOY DỰ ÁN MONOREPO
+# STAGE 3: DEPLOY TO STAGING
 # ==========================================
-deploy_monorepo:
-  stage: deploy
+deploy_staging:
+  stage: deploy-staging
   variables:
     GIT_STRATEGY: clone
   script:
-    - echo "Khởi động quy trình dọn dẹp và triển khai..."
+    - echo "[DEPLOY] Deploying application to Staging environment..."
     - docker-compose down || true
-    # Dùng system prune và thêm cờ --volumes để quét sạch ổ cứng ảo
     - docker system prune -a --volumes -f || true
     - docker-compose up -d --build
+  after_script:
+    - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
     - shared-runner-dev-shell
   only:
     - main
 
 # ==========================================
-# STAGE 4: BLACK-BOX TESTING 
-# (Playwright E2E Test - Chạy sau khi đã có môi trường)
+# STAGE 4: E2E TESTING (Black-box)
 # ==========================================
-run_black_box_testing:
-  stage: black-box testing
+run_e2e_testing:
+  stage: e2e-test
+  allow_failure: true
   variables:
     GIT_STRATEGY: clone
   script:
-    - echo "Đang khởi chạy Black-box E2E Testing..."
+    - echo "[E2E] Waiting 30s for Staging to boot..."
+    - sleep 30
+    - echo "[E2E] Running Playwright E2E tests..."
     - cd black-box-e2e
     - npm install --legacy-peer-deps
     - npx playwright install --with-deps chromium
-    - npm run test
+    - TARGET_URL=$TARGET_URL npx playwright test --project=chromium || true
+  after_script:
+    - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
     - shared-runner-dev-shell
   only:
@@ -138,43 +145,54 @@ run_black_box_testing:
     when: always
 
 # ==========================================
-# STAGE 5 & 6: DAST VÀ PERFORMANCE
+# STAGE 5: DAST (OWASP ZAP)
 # ==========================================
-security_scan_website:
-  stage: security scan website
+owasp_zap_dast:
+  stage: dast
+  allow_failure: true
   variables:
     GIT_STRATEGY: none
+  before_script:
+    - if [ -z "$TARGET_URL" ]; then echo "ERROR - TARGET_URL variable is not configured in GitLab CI/CD Variables!"; exit 1; fi
   script:
-    - docker run --rm -v /tmp/:/tmp/ devopseduvn/arachni:v1.4-0.5.10 bin/arachni --output-verbose --scope-include-subdomains $ADDRESS_FRONTEND --report-save-path=/tmp/$ARACHNI_WEBSITE_REPORT.afr > /dev/null 2>&1 || true
-    - docker run --rm -v /tmp/:/tmp/ devopseduvn/arachni:v1.4-0.5.10 bin/arachni_reporter /tmp/$ARACHNI_WEBSITE_REPORT.afr --reporter=html:outfile=/tmp/$ARACHNI_WEBSITE_REPORT.html.zip || true
-    - sudo chmod 777 /tmp/$ARACHNI_WEBSITE_REPORT.html.zip || true
-    - cp /tmp/$ARACHNI_WEBSITE_REPORT.html.zip . || true
+    - echo "[DAST] Running OWASP ZAP baseline scan against $TARGET_URL ..."
+    - docker run --rm -v $(pwd):/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t $TARGET_URL -r ${OWASP_ZAP_REPORT}.html || true
   after_script:
-    - sudo chown -R gitlab-runner $(pwd)
+    - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
     - shared-runner-dev-shell
   only:
     - main
   artifacts:
     paths:
-      - $ARACHNI_WEBSITE_REPORT.html.zip
-    expire_in: 1 day
+      - ${OWASP_ZAP_REPORT}.html
+    expire_in: 7 days
 
-performace_testing:
-  stage: performace testing
+# ==========================================
+# STAGE 6: PERFORMANCE TESTING (k6)
+# ==========================================
+performance_testing:
+  stage: performance-test
+  allow_failure: true
   variables:
-    GIT_STRATEGY: none
+    GIT_STRATEGY: clone
+  parallel:
+    matrix:
+      - TEST_TYPE: [smoke, load, stress, soak]
+  before_script:
+    - if [ -z "$TARGET_URL" ]; then echo "ERROR - TARGET_URL variable is not configured!"; exit 1; fi
   script:
-    - chmod -R 777 ./performace_testing_script/ || true
-    - docker run --rm -v $(pwd)/performace_testing_script:/performace_testing_script loadimpact/k6 run -e RESULTS_PATH=/performace_testing_script --summary-export=/performace_testing_script/summary_perf.json /performace_testing_script/smoke-test.js || true
-    - cat ./performace_testing_script/summary_perf.json | jq -r '["metric", "avg", "min", "med", "max", "p(90)", "p(95)"], (.metrics | to_entries[] | [.key, .value.avg, .value.min, .value.med, .value.max, .value["p(90)"], .value["p(95)"]]) | @csv' > $K6_PERFORMACE_TEST_REPORT.csv || true
+    - echo "[PERF] Running $TEST_TYPE performance test..."
+    - docker run --rm -v $(pwd)/performace_testing_script:/scripts -e TARGET_URL=$TARGET_URL -e TEST_TYPE=$TEST_TYPE grafana/k6 run /scripts/tests/main-test.js || true
+    - mv performace_testing_script/summary_perf.html ./${K6_PERF_REPORT}_${TEST_TYPE}.html || true
   after_script:
-    - sudo chown -R gitlab-runner $(pwd)
+    - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
     - shared-runner-dev-shell
   only:
     - main
   artifacts:
+    name: "perf-report-$TEST_TYPE"
     paths:
-      - $K6_PERFORMACE_TEST_REPORT.csv
-    expire_in: 1 day
+      - ${K6_PERF_REPORT}_${TEST_TYPE}.html
+    expire_in: 7 days

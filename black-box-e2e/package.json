@@ -4,7 +4,7 @@
   "private": true,
   "description": "HRM-Gene Black-Box E2E Tests with Playwright (IEEE-829)",
   "scripts": {
-    "test": "playwright test --config=playwright.config.ts --workers=2 --timeout=100000",
+    "test": "playwright test --config=playwright.config.ts --workers=4",
     "test:headed": "playwright test --config=playwright.config.ts --headed --timeout=100000",
     "test:chromium": "playwright test --config=playwright.config.ts --project=chromium --timeout=100000",
     "test:firefox": "playwright test --config=playwright.config.ts --project=firefox --timeout=100000",
