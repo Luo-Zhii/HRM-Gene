@@ -8,7 +8,9 @@ variables:
 
 stages:
   - test source code
+  - white-box testing
   - deploy
+  - black-box testing
   - security scan website
   - performace testing
 
@@ -70,7 +72,30 @@ snyk_scan:
     expire_in: 1 day
 
 # ==========================================
-# STAGE 2: DEPLOY DỰ ÁN MONOREPO
+# STAGE 2: WHITE-BOX TESTING 
+# (Unit/Integration Test - Chạy trước khi Deploy)
+# ==========================================
+run_white_box_testing:
+  stage: white-box testing
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - echo "Đang khởi chạy White-box Testing..."
+    - npm install
+    - npm run test:cov
+    - npm run test:report
+  tags:
+    - shared-runner-dev-shell
+  only:
+    - main
+  artifacts:
+    paths:
+      - white-box-coverage-test-reports/
+    expire_in: 7 days
+    when: always
+
+# ==========================================
+# STAGE 3: DEPLOY DỰ ÁN MONOREPO
 # ==========================================
 deploy_monorepo:
   stage: deploy
@@ -88,7 +113,31 @@ deploy_monorepo:
     - main
 
 # ==========================================
-# STAGE 3 & 4: DAST VÀ PERFORMANCE
+# STAGE 4: BLACK-BOX TESTING 
+# (Playwright E2E Test - Chạy sau khi đã có môi trường)
+# ==========================================
+run_black_box_testing:
+  stage: black-box testing
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - echo "Đang khởi chạy Black-box E2E Testing..."
+    - cd black-box-e2e
+    - npm install
+    - npx playwright install --with-deps chromium
+    - npm run test
+  tags:
+    - shared-runner-dev-shell
+  only:
+    - main
+  artifacts:
+    paths:
+      - black-box-e2e/e2e-report/
+    expire_in: 7 days
+    when: always
+
+# ==========================================
+# STAGE 5 & 6: DAST VÀ PERFORMANCE
 # ==========================================
 security_scan_website:
   stage: security scan website
