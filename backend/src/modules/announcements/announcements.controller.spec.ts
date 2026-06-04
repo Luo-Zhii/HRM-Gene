@@ -4,6 +4,7 @@ import { AnnouncementsService } from './announcements.service';
 
 describe('AnnouncementsController', () => {
   let controller: AnnouncementsController;
+  let module: TestingModule;
 
   const mockService = {
     create: jest.fn(),
@@ -12,8 +13,8 @@ describe('AnnouncementsController', () => {
     delete: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [AnnouncementsController],
       providers: [
         { provide: AnnouncementsService, useValue: mockService },
@@ -21,6 +22,9 @@ describe('AnnouncementsController', () => {
     }).compile();
 
     controller = module.get<AnnouncementsController>(AnnouncementsController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

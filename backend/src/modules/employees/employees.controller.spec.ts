@@ -4,6 +4,7 @@ import { EmployeesService } from './employees.service';
 
 describe('EmployeesController', () => {
   let controller: EmployeesController;
+  let module: TestingModule;
 
   const mockSvc = {
     create: jest.fn(),
@@ -15,8 +16,8 @@ describe('EmployeesController', () => {
     remove: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [EmployeesController],
       providers: [
         { provide: EmployeesService, useValue: mockSvc },
@@ -24,6 +25,9 @@ describe('EmployeesController', () => {
     }).compile();
 
     controller = module.get<EmployeesController>(EmployeesController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

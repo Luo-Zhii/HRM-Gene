@@ -18,6 +18,7 @@ describe('EmployeesService', () => {
   let deptRepo: any;
   let posRepo: any;
   let dataSource: any;
+  let module: TestingModule;
 
   const mockNotificationsService = {
     createNotification: jest.fn().mockResolvedValue({}),
@@ -27,34 +28,35 @@ describe('EmployeesService', () => {
     getScopeWhere: jest.fn().mockReturnValue({}),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  const mockEmployeeRepo = {
+    findOne: jest.fn(),
+    find: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
+  };
+
+  const mockDeptRepo = {
+    findOne: jest.fn(),
+    save: jest.fn(),
+  };
+
+  const mockPosRepo = {
+    findOne: jest.fn(),
+  };
+
+  const mockDataSource = {
+    query: jest.fn().mockResolvedValue([]),
+  };
+
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         EmployeesService,
-        {
-          provide: getRepositoryToken(Employee),
-          useValue: {
-            findOne: jest.fn(),
-            find: jest.fn(),
-            create: jest.fn(),
-            save: jest.fn(),
-            remove: jest.fn(),
-          },
-        },
-        {
-          provide: getRepositoryToken(Department),
-          useValue: {
-            findOne: jest.fn(),
-            save: jest.fn(),
-          },
-        },
-        {
-          provide: getRepositoryToken(Position),
-          useValue: {
-            findOne: jest.fn(),
-          },
-        },
-        { provide: DataSource, useValue: { query: jest.fn().mockResolvedValue([]) } },
+        { provide: getRepositoryToken(Employee), useValue: mockEmployeeRepo },
+        { provide: getRepositoryToken(Department), useValue: mockDeptRepo },
+        { provide: getRepositoryToken(Position), useValue: mockPosRepo },
+        { provide: DataSource, useValue: mockDataSource },
         { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: DataScopeService, useValue: mockDataScopeService },
       ],
@@ -65,7 +67,11 @@ describe('EmployeesService', () => {
     deptRepo = module.get(getRepositoryToken(Department));
     posRepo = module.get(getRepositoryToken(Position));
     dataSource = module.get<DataSource>(DataSource);
-    jest.clearAllMocks();
+  });
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    mockNotificationsService.createNotification.mockResolvedValue({});
   });
 
   // ==================== CREATE ====================

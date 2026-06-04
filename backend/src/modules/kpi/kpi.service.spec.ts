@@ -12,6 +12,8 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('KpiService', () => {
   let service: KpiService;
+  let module: TestingModule;
+  let kpiLibRepo: any, kpiPeriodRepo: any, assignmentRepo: any, employeeRepo: any;
 
   const mockRepo = {
     findOne: jest.fn(),
@@ -42,10 +44,8 @@ describe('KpiService', () => {
     }),
   };
 
-  let kpiLibRepo: any, kpiPeriodRepo: any, assignmentRepo: any, employeeRepo: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         KpiService,
         { provide: getRepositoryToken(KpiLibrary), useValue: mockRepo },
@@ -63,6 +63,9 @@ describe('KpiService', () => {
     kpiPeriodRepo = module.get(getRepositoryToken(KpiPeriod));
     assignmentRepo = module.get(getRepositoryToken(KpiAssignment));
     employeeRepo = module.get(getRepositoryToken(Employee));
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -78,7 +81,7 @@ describe('KpiService', () => {
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
       kpiLibRepo.create.mockReturnValue({ name: 'name', created_by: { employee_id: 1 } });
       kpiLibRepo.save.mockResolvedValue({ id: 1 });
-      
+
       const res = await service.createLibrary({} as any, 1);
       expect(res).toEqual({ id: 1 });
       expect(kpiLibRepo.create).toHaveBeenCalled();
@@ -96,10 +99,10 @@ describe('KpiService', () => {
     it('Thiết lập chỉ tiêu KPI cho nhân viên', async () => {
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
       kpiPeriodRepo.findOne.mockResolvedValue({ id: 1, name: 'P' });
-      
+
       const dto = { employee_id: 1, period_id: 1, assignments: [{ weight: 100, kpi_library_id: 2, target_value: 50 }] };
       const res = await service.assignKpis(dto as any);
-      
+
       expect(res.length).toBe(1);
       expect(res[0].weight).toBe(100);
       expect(notificationMock.createNotification).toHaveBeenCalled();
@@ -125,7 +128,7 @@ describe('KpiService', () => {
         { weight: 50, manager_score: 60, target_value: 50 }, // 120% completion (bounded)
         { weight: 50, actual_value: 40, target_value: 50 }, // 80% completion (fallback to actual since manager_score null)
       ]);
-      
+
       const res = await service.calculateFinalKpiScore(1, 1);
       // 50 * 120% = 60; 50 * 80% = 40; Total = 100
       expect(res).toBe(100);

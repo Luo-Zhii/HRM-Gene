@@ -11,6 +11,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('TimeKeepingService', () => {
   let service: TimeKeepingService;
+  let module: TestingModule;
 
   const mockTkRepo = {
     findOne: jest.fn(),
@@ -50,8 +51,8 @@ describe('TimeKeepingService', () => {
     createNotification: jest.fn().mockResolvedValue({}),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         TimeKeepingService,
         { provide: DataSource, useValue: mockDataSource },
@@ -64,6 +65,9 @@ describe('TimeKeepingService', () => {
     }).compile();
 
     service = module.get<TimeKeepingService>(TimeKeepingService);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

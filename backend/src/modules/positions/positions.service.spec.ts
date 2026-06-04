@@ -7,6 +7,8 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('PositionsService', () => {
   let service: PositionsService;
+  let module: TestingModule;
+  let posRepo: any, employeeRepo: any;
 
   const mockRepo = {
     find: jest.fn(),
@@ -17,10 +19,8 @@ describe('PositionsService', () => {
     count: jest.fn(),
   };
 
-  let posRepo: any, employeeRepo: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         PositionsService,
         { provide: getRepositoryToken(Position), useValue: mockRepo },
@@ -31,6 +31,9 @@ describe('PositionsService', () => {
     service = module.get<PositionsService>(PositionsService);
     posRepo = module.get(getRepositoryToken(Position));
     employeeRepo = module.get(getRepositoryToken(Employee));
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -46,7 +49,7 @@ describe('PositionsService', () => {
       posRepo.findOne.mockResolvedValueOnce({ position_id: 1, position_name: 'A' });
       posRepo.save.mockResolvedValue({});
       posRepo.findOne.mockResolvedValueOnce({ position_id: 1, position_name: 'B' });
-      
+
       const res = await service.update(1, { position_name: 'B' });
       expect(res.position_name).toBe('B');
     });

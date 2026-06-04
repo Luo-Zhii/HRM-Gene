@@ -10,6 +10,7 @@ import { BadRequestException } from '@nestjs/common';
 
 describe('LeaveService', () => {
   let service: LeaveService;
+  let module: TestingModule;
 
   const mockLeaveReqRepo = {
     find: jest.fn(),
@@ -58,8 +59,8 @@ describe('LeaveService', () => {
     return qb;
   }
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         LeaveService,
         { provide: getRepositoryToken(LeaveRequest), useValue: mockLeaveReqRepo },
@@ -71,6 +72,9 @@ describe('LeaveService', () => {
     }).compile();
 
     service = module.get<LeaveService>(LeaveService);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

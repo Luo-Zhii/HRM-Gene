@@ -4,6 +4,7 @@ import { KpiService } from './kpi.service';
 
 describe('KpiController', () => {
   let controller: KpiController;
+  let module: TestingModule;
 
   const mockService = {
     createLibrary: jest.fn(),
@@ -19,8 +20,8 @@ describe('KpiController', () => {
     calculateFinalKpiScore: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [KpiController],
       providers: [
         { provide: KpiService, useValue: mockService },
@@ -28,6 +29,9 @@ describe('KpiController', () => {
     }).compile();
 
     controller = module.get<KpiController>(KpiController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -101,13 +105,13 @@ describe('KpiController', () => {
       await controller.getEmployeeAssignments(1, 2);
       expect(mockService.getEmployeeAssignments).toHaveBeenCalledWith(1, 2);
     });
-    
+
     // [TC_BE_KPI_182]
     it('getMyPerformance: Lấy KPI của chính mình (không cần employee_id trên URL)', async () => {
       await controller.getMyPerformance({ user: { employee_id: 1 } }, 2);
       expect(mockService.getEmployeeAssignments).toHaveBeenCalledWith(1, 2);
     });
-    
+
     // [TC_BE_KPI_183]
     it('calculateScore: Gọi service.calculateFinalKpiScore với employee_id và period_id', async () => {
       await controller.calculateScore(1, 2);

@@ -5,6 +5,7 @@ import { ForbiddenException } from '@nestjs/common';
 
 describe('ResignationsController', () => {
   let controller: ResignationsController;
+  let module: TestingModule;
 
   const mockService = {
     create: jest.fn(),
@@ -13,8 +14,8 @@ describe('ResignationsController', () => {
     updateStatus: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [ResignationsController],
       providers: [
         { provide: ResignationsService, useValue: mockService },
@@ -22,6 +23,9 @@ describe('ResignationsController', () => {
     }).compile();
 
     controller = module.get<ResignationsController>(ResignationsController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -36,7 +40,7 @@ describe('ResignationsController', () => {
     it('Tạo đơn thôi việc và lấy danh sách đơn của user đã đăng nhập', async () => {
       mockService.create.mockResolvedValue({});
       mockService.findMyRequests.mockResolvedValue([]);
-      
+
       expect(await controller.create({ user: { employee_id: 1 } } as any, {} as any)).toEqual({});
       expect(await controller.findMyRequests({ user: { employee_id: 1 } } as any)).toEqual([]);
     });
@@ -47,7 +51,7 @@ describe('ResignationsController', () => {
     it('Lấy tất cả đơn thôi việc và cập nhật trạng thái (Admin/HR)', async () => {
       mockService.findAll.mockResolvedValue([]);
       mockService.updateStatus.mockResolvedValue({});
-      
+
       expect(await controller.findAll({} as any)).toEqual([]);
       expect(await controller.updateStatus(1, {} as any)).toEqual({});
     });

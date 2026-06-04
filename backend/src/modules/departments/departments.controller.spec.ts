@@ -4,6 +4,7 @@ import { DepartmentsService } from './departments.service';
 
 describe('DepartmentsController', () => {
   let controller: DepartmentsController;
+  let module: TestingModule;
 
   const mockSvc = {
     create: jest.fn(),
@@ -13,8 +14,8 @@ describe('DepartmentsController', () => {
     remove: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [DepartmentsController],
       providers: [
         { provide: DepartmentsService, useValue: mockSvc },
@@ -22,6 +23,9 @@ describe('DepartmentsController', () => {
     }).compile();
 
     controller = module.get<DepartmentsController>(DepartmentsController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

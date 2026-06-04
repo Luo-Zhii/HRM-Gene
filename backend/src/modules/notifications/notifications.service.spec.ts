@@ -8,6 +8,7 @@ import { NotFoundException } from '@nestjs/common';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
+  let module: TestingModule;
 
   const mockRepo = {
     findOne: jest.fn(),
@@ -22,8 +23,8 @@ describe('NotificationsService', () => {
     sendNotificationToUser: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         NotificationsService,
         { provide: getRepositoryToken(Notification), useValue: mockRepo },
@@ -33,6 +34,9 @@ describe('NotificationsService', () => {
     }).compile();
 
     service = module.get<NotificationsService>(NotificationsService);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

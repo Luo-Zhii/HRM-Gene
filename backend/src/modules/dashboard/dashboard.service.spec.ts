@@ -10,16 +10,16 @@ import { AnnouncementsService } from '../announcements/announcements.service';
 
 describe('DashboardService', () => {
   let service: DashboardService;
+  let module: TestingModule;
+  let leaveRepo: any, resignationRepo: any, leaveBalanceRepo: any, announcementsService: any;
 
   const repoMockFactory = () => ({
     count: jest.fn(),
     findOne: jest.fn(),
   });
 
-  let leaveRepo: any, resignationRepo: any, leaveBalanceRepo: any, announcementsService: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         DashboardService,
         { provide: getRepositoryToken(LeaveRequest), useFactory: repoMockFactory },
@@ -36,6 +36,9 @@ describe('DashboardService', () => {
     resignationRepo = module.get(getRepositoryToken(ResignationRequest));
     leaveBalanceRepo = module.get(getRepositoryToken(LeaveBalance));
     announcementsService = module.get<AnnouncementsService>(AnnouncementsService);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -44,10 +47,10 @@ describe('DashboardService', () => {
     it('should return employee dashboard data accurately and find correct user id', async () => {
       announcementsService.getFeed.mockResolvedValue([{ title: 'News 1' }, { title: 'News 2' }]);
       leaveBalanceRepo.findOne.mockResolvedValue({ remaining_days: 10 });
-      
+
       const user = { employee_id: 1 };
       const result = await service.getEmployeeData(user);
-      
+
       expect(result.stats.ptoBalance).toBe(10);
       expect(result.recentAnnouncements.length).toBe(2);
       expect(result.nextHoliday).toBeDefined();
@@ -57,10 +60,10 @@ describe('DashboardService', () => {
     it('should handle zero PTO balance when no record is found', async () => {
       announcementsService.getFeed.mockResolvedValue([]);
       leaveBalanceRepo.findOne.mockResolvedValue(null);
-      
+
       const user = { sub: 2 };
       const result = await service.getEmployeeData(user);
-      
+
       expect(result.stats.ptoBalance).toBe(0);
       expect(result.recentAnnouncements.length).toBe(0);
     });
@@ -71,9 +74,9 @@ describe('DashboardService', () => {
     it('should return admin statistics accurately', async () => {
       leaveRepo.count.mockResolvedValue(5);
       resignationRepo.count.mockResolvedValue(2);
-      
+
       const result = await service.getAdminData();
-      
+
       expect(result.pendingApprovals.leaveRequests).toBe(5);
       expect(result.pendingApprovals.resignations).toBe(2);
     });

@@ -10,6 +10,8 @@ import { SalaryConfig } from '../../entities/salary-config.entity';
 
 describe('ReportsService', () => {
   let service: ReportsService;
+  let payslipRepo: any, contractRepo: any, employeeRepo: any, periodRepo: any;
+  let module: TestingModule;
 
   const qbMock = {
     leftJoinAndSelect: jest.fn().mockReturnThis(),
@@ -25,10 +27,8 @@ describe('ReportsService', () => {
     createQueryBuilder: jest.fn().mockReturnValue(qbMock),
   });
 
-  let payslipRepo: any, contractRepo: any, employeeRepo: any, periodRepo: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         ReportsService,
         { provide: getRepositoryToken(Payslip), useFactory: repoMockFactory },
@@ -45,6 +45,9 @@ describe('ReportsService', () => {
     contractRepo = module.get(getRepositoryToken(Contract));
     employeeRepo = module.get(getRepositoryToken(Employee));
     periodRepo = module.get(getRepositoryToken(PayrollPeriod));
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

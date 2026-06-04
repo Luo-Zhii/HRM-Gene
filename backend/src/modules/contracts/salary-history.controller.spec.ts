@@ -6,14 +6,15 @@ import { NotFoundException } from '@nestjs/common';
 
 describe('SalaryHistoryController', () => {
   let controller: SalaryHistoryController;
+  let module: TestingModule;
 
   const mockRepo = {
     find: jest.fn(),
     findOne: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [SalaryHistoryController],
       providers: [
         { provide: getRepositoryToken(SalaryHistory), useValue: mockRepo },
@@ -21,6 +22,9 @@ describe('SalaryHistoryController', () => {
     }).compile();
 
     controller = module.get<SalaryHistoryController>(SalaryHistoryController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -29,9 +33,9 @@ describe('SalaryHistoryController', () => {
     it('findAll: Admin với manage:system xem lịch sử lương theo employee_id query', async () => {
       mockRepo.find.mockResolvedValue([]);
       const req = { user: { permissions: ['manage:system'], employee_id: 1 } };
-      
+
       const result = await controller.findAll(req, '2');
-      
+
       expect(mockRepo.find).toHaveBeenCalledWith({
         where: { employee: { employee_id: 2 } },
         relations: ['employee'],
@@ -44,9 +48,9 @@ describe('SalaryHistoryController', () => {
     it('findAll: Employee thường chỉ xem lịch sử lương của chính mình', async () => {
       mockRepo.find.mockResolvedValue([]);
       const req = { user: { permissions: [], employee_id: 3 } };
-      
+
       await controller.findAll(req);
-      
+
       expect(mockRepo.find).toHaveBeenCalledWith({
         where: { employee: { employee_id: 3 } },
         relations: ['employee'],
@@ -60,9 +64,9 @@ describe('SalaryHistoryController', () => {
     it('findOne: Employee thường bị giới hạn chỉ xem lịch sử lương của chính mình', async () => {
       mockRepo.findOne.mockResolvedValue({ history_id: 10 });
       const req = { user: { permissions: [], employee_id: 3 } };
-      
+
       const result = await controller.findOne(10, req);
-      
+
       expect(mockRepo.findOne).toHaveBeenCalledWith({
         where: { history_id: 10, employee: { employee_id: 3 } },
         relations: ['employee'],
@@ -74,7 +78,7 @@ describe('SalaryHistoryController', () => {
     it('findOne: Ném NotFoundException khi không tìm thấy lịch sử lương', async () => {
       mockRepo.findOne.mockResolvedValue(null);
       const req = { user: { permissions: ['manage:system'], employee_id: 1 } };
-      
+
       await expect(controller.findOne(10, req)).rejects.toThrow(NotFoundException);
     });
   });

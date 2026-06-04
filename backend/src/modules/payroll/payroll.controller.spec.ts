@@ -6,6 +6,7 @@ import { AdjustmentType } from '../../entities/salary-adjustment.entity';
 
 describe('PayrollController', () => {
   let controller: PayrollController;
+  let module: TestingModule;
 
   const mockService = {
     generatePayslips: jest.fn(),
@@ -29,8 +30,8 @@ describe('PayrollController', () => {
     markPayslipPaid: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [PayrollController],
       providers: [
         { provide: PayrollService, useValue: mockService },
@@ -38,6 +39,9 @@ describe('PayrollController', () => {
     }).compile();
 
     controller = module.get<PayrollController>(PayrollController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

@@ -7,6 +7,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('DepartmentsService', () => {
   let service: DepartmentsService;
+  let module: TestingModule;
 
   const mockDeptRepo = {
     create: jest.fn(),
@@ -25,8 +26,8 @@ describe('DepartmentsService', () => {
     count: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         DepartmentsService,
         { provide: getRepositoryToken(Department), useValue: mockDeptRepo },
@@ -35,6 +36,9 @@ describe('DepartmentsService', () => {
     }).compile();
 
     service = module.get<DepartmentsService>(DepartmentsService);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

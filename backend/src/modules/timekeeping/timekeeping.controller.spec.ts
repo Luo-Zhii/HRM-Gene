@@ -7,6 +7,7 @@ import { CompanySettings } from '../../entities/company-settings.entity';
 
 describe('TimeKeepingController', () => {
   let controller: TimeKeepingController;
+  let module: TestingModule;
 
   const mockService = {
     generateDynamicQr: jest.fn(),
@@ -14,8 +15,8 @@ describe('TimeKeepingController', () => {
     recordCheckInByIP: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [TimeKeepingController],
       providers: [
         { provide: TimeKeepingService, useValue: mockService },
@@ -24,6 +25,9 @@ describe('TimeKeepingController', () => {
     }).compile();
 
     controller = module.get<TimeKeepingController>(TimeKeepingController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -51,7 +55,7 @@ describe('TimeKeepingController', () => {
     it('Check-in thành công qua QR và IP khi user hợp lệ', async () => {
       mockService.recordCheckInByDynamicQr.mockResolvedValue({});
       mockService.recordCheckInByIP.mockResolvedValue({});
-      
+
       expect(await controller.checkInQr({ user: { employee_id: 1 } }, 't')).toEqual({});
       expect(await controller.checkInIp({ user: { employee_id: 1 }, ip: '1.2.3.4' })).toEqual({});
     });

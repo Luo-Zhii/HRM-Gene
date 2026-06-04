@@ -8,6 +8,7 @@ import { NotificationType } from '../../entities/notification.entity';
 
 describe('AnnouncementsService', () => {
   let service: AnnouncementsService;
+  let module: TestingModule;
 
   const mockAnnouncementRepo = {
     create: jest.fn(),
@@ -25,8 +26,8 @@ describe('AnnouncementsService', () => {
     createNotification: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         AnnouncementsService,
         { provide: getRepositoryToken(Announcement), useValue: mockAnnouncementRepo },
@@ -36,6 +37,9 @@ describe('AnnouncementsService', () => {
     }).compile();
 
     service = module.get<AnnouncementsService>(AnnouncementsService);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -47,7 +51,7 @@ describe('AnnouncementsService', () => {
       mockAnnouncementRepo.save.mockResolvedValue(dto);
 
       const result = await service.create(dto as any);
-      
+
       expect(result).toEqual(dto);
       expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
     });

@@ -4,6 +4,7 @@ import { NotificationsService } from './notifications.service';
 
 describe('NotificationsController', () => {
   let controller: NotificationsController;
+  let module: TestingModule;
 
   const mockService = {
     getUserNotifications: jest.fn(),
@@ -12,8 +13,8 @@ describe('NotificationsController', () => {
     sendAnnouncementToAll: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [NotificationsController],
       providers: [
         { provide: NotificationsService, useValue: mockService },
@@ -21,6 +22,9 @@ describe('NotificationsController', () => {
     }).compile();
 
     controller = module.get<NotificationsController>(NotificationsController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -28,16 +32,16 @@ describe('NotificationsController', () => {
     // [TC_BE_NOTIFI_212]
     it('Kiểm tra toàn bộ endpoint notifications: getUserNotifications, markAsRead, deleteNotification, createAnnouncement', async () => {
       const mockUser = { user: { employee_id: 1, position: { position_name: 'Admin' } } };
-      
+
       mockService.getUserNotifications.mockResolvedValue([]);
       expect(await controller.getUserNotifications(mockUser)).toEqual([]);
-      
+
       mockService.markAsRead.mockResolvedValue({});
       expect(await controller.markAsRead('1', mockUser)).toEqual({});
-      
+
       mockService.deleteNotification.mockResolvedValue({});
       expect(await controller.deleteNotification('1', mockUser)).toEqual({});
-      
+
       mockService.sendAnnouncementToAll.mockResolvedValue({});
       expect(await controller.createAnnouncement({ title: 't', message: 'm' }, mockUser)).toEqual({});
     });

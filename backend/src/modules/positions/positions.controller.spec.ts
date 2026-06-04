@@ -4,6 +4,7 @@ import { PositionsService } from './positions.service';
 
 describe('PositionsController', () => {
   let controller: PositionsController;
+  let module: TestingModule;
 
   const mockService = {
     create: jest.fn(),
@@ -13,8 +14,8 @@ describe('PositionsController', () => {
     remove: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [PositionsController],
       providers: [
         { provide: PositionsService, useValue: mockService },
@@ -22,6 +23,9 @@ describe('PositionsController', () => {
     }).compile();
 
     controller = module.get<PositionsController>(PositionsController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -33,7 +37,7 @@ describe('PositionsController', () => {
       mockService.findOne.mockResolvedValue({});
       mockService.update.mockResolvedValue({});
       mockService.remove.mockResolvedValue({});
-      
+
       expect(await controller.create({} as any)).toEqual({});
       expect(await controller.findAll()).toEqual([]);
       expect(await controller.findOne(1)).toEqual({});

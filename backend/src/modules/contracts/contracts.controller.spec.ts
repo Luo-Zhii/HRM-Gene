@@ -5,6 +5,7 @@ import { ForbiddenException } from '@nestjs/common';
 
 describe('ContractsController', () => {
   let controller: ContractsController;
+  let module: TestingModule;
 
   const mockService = {
     create: jest.fn(),
@@ -15,8 +16,8 @@ describe('ContractsController', () => {
     remove: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [ContractsController],
       providers: [
         { provide: ContractsService, useValue: mockService },
@@ -24,6 +25,9 @@ describe('ContractsController', () => {
     }).compile();
 
     controller = module.get<ContractsController>(ContractsController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -40,7 +44,7 @@ describe('ContractsController', () => {
     it('findAll: Admin với manage:system xem tất cả hợp đồng', async () => {
       mockService.findAll.mockResolvedValue({ data: [] });
       const req = { user: { permissions: ['manage:system'], employee_id: 1 } };
-      
+
       await controller.findAll(req, '2');
       expect(mockService.findAll).toHaveBeenCalledWith(2, 1, 10, undefined, undefined, undefined);
     });
@@ -49,7 +53,7 @@ describe('ContractsController', () => {
     it('findAll: Employee thường chỉ xem hợp đồng của chính mình', async () => {
       mockService.findAll.mockResolvedValue({ data: [] });
       const req = { user: { permissions: [], employee_id: 3 } };
-      
+
       await controller.findAll(req);
       expect(mockService.findAll).toHaveBeenCalledWith(3, 1, 10, undefined, undefined, undefined);
     });

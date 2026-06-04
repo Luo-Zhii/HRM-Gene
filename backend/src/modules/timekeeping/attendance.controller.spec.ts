@@ -4,13 +4,14 @@ import { TimeKeepingService } from './timekeeping.service';
 
 describe('AttendanceAdminController', () => {
   let controller: AttendanceAdminController;
+  let module: TestingModule;
 
   const mockService = {
     getAllForAdmin: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [AttendanceAdminController],
       providers: [
         { provide: TimeKeepingService, useValue: mockService },
@@ -18,6 +19,9 @@ describe('AttendanceAdminController', () => {
     }).compile();
 
     controller = module.get<AttendanceAdminController>(AttendanceAdminController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

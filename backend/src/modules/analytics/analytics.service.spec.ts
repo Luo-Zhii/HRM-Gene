@@ -13,6 +13,7 @@ import { ResignationRequest } from '../../entities/resignation-request.entity';
 
 describe('AnalyticsService', () => {
   let service: AnalyticsService;
+  let module: TestingModule;
 
   const createQueryBuilderMock = () => {
     const qb = {
@@ -35,8 +36,8 @@ describe('AnalyticsService', () => {
 
   let contractRepo: any, payslipRepo: any, kpiRepo: any, deptRepo: any, employeeRepo: any;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         AnalyticsService,
         { provide: getRepositoryToken(Contract), useFactory: repoMock },
@@ -57,6 +58,9 @@ describe('AnalyticsService', () => {
     kpiRepo = module.get(getRepositoryToken(KpiAssignment));
     deptRepo = module.get(getRepositoryToken(Department));
     employeeRepo = module.get(getRepositoryToken(Employee));
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -71,7 +75,7 @@ describe('AnalyticsService', () => {
         .mockResolvedValueOnce(3) // newHiresLastMonth
         .mockResolvedValueOnce(2) // resignedThisMonth
         .mockResolvedValueOnce(1); // resignedLastMonth
-      
+
       // Provide fluctuation fallback (12 loops)
       for (let i = 0; i < 12; i++) contractQb.getCount.mockResolvedValueOnce(50 - i);
 

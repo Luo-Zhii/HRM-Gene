@@ -4,6 +4,7 @@ import { LeaveService } from './leave.service';
 
 describe('LeaveController', () => {
   let controller: LeaveController;
+  let module: TestingModule;
 
   const mockService = {
     getLeaveTypes: jest.fn(),
@@ -14,8 +15,8 @@ describe('LeaveController', () => {
     approveLeaveRequest: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [LeaveController],
       providers: [
         { provide: LeaveService, useValue: mockService },
@@ -23,6 +24,9 @@ describe('LeaveController', () => {
     }).compile();
 
     controller = module.get<LeaveController>(LeaveController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -58,7 +62,7 @@ describe('LeaveController', () => {
       mockService.submitRequest.mockResolvedValue({ id: 1 });
       const req = { user: { employee_id: 1 } };
       const body = { leave_type_id: 2, start_date: '2026', end_date: '2026', reason: 'sick' };
-      
+
       expect(await controller.submitLeaveRequest(req, body)).toEqual({ id: 1 });
       expect(mockService.submitRequest).toHaveBeenCalledWith(1, 2, '2026', '2026', 'sick');
     });
@@ -78,7 +82,7 @@ describe('LeaveController', () => {
       mockService.approveLeaveRequest.mockResolvedValue({});
       const req = { user: { employee_id: 2 } };
       const body = { status: 'Approved', reason: 'note' };
-      
+
       expect(await controller.approveLeaveRequest('1', req, body)).toEqual({});
       expect(mockService.approveLeaveRequest).toHaveBeenCalledWith(1, 'Approved', 2, 'note');
     });

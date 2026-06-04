@@ -5,6 +5,7 @@ import { BadRequestException } from '@nestjs/common';
 
 describe('CompanyProfileController', () => {
   let controller: CompanyProfileController;
+  let module: TestingModule;
 
   const mockService = {
     getProfile: jest.fn(),
@@ -12,8 +13,8 @@ describe('CompanyProfileController', () => {
     updateLogo: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [CompanyProfileController],
       providers: [
         { provide: CompanyProfileService, useValue: mockService },
@@ -21,6 +22,9 @@ describe('CompanyProfileController', () => {
     }).compile();
 
     controller = module.get<CompanyProfileController>(CompanyProfileController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -37,9 +41,9 @@ describe('CompanyProfileController', () => {
     it('should load current profile and update it', async () => {
       mockService.getProfile.mockResolvedValue({ id: 1 });
       mockService.updateProfile.mockResolvedValue({ id: 1, name: 'T' });
-      
+
       const res = await controller.updateProfile({ company_name: 'T' });
-      
+
       expect(mockService.updateProfile).toHaveBeenCalledWith(1, { company_name: 'T' });
       expect(res).toEqual({ id: 1, name: 'T' });
     });
@@ -55,10 +59,10 @@ describe('CompanyProfileController', () => {
     it('should update profile logo URL', async () => {
       mockService.getProfile.mockResolvedValue({ id: 1 });
       mockService.updateLogo.mockResolvedValue({ id: 1, logo_url: 'u' });
-      
+
       const file = { filename: 'a.png' } as any;
       const res = await controller.uploadLogo(file);
-      
+
       expect(mockService.updateLogo).toHaveBeenCalledWith(1, '/uploads/company/a.png');
       expect(res).toEqual({ id: 1, logo_url: 'u' });
     });

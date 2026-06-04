@@ -4,6 +4,7 @@ import { AdminService } from './admin.service';
 
 describe('AdminController', () => {
   let controller: AdminController;
+  let module: TestingModule;
 
   const mockAdminService = {
     getAllSettings: jest.fn(),
@@ -24,8 +25,8 @@ describe('AdminController', () => {
     seedDemoData: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [AdminController],
       providers: [
         { provide: AdminService, useValue: mockAdminService },
@@ -33,6 +34,9 @@ describe('AdminController', () => {
     }).compile();
 
     controller = module.get<AdminController>(AdminController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

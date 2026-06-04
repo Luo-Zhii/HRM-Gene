@@ -19,6 +19,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('PayrollService', () => {
   let service: PayrollService;
+  let module: TestingModule;
 
   // Re-create mock repo for each test to avoid cross-test contamination
   function createMockRepo() {
@@ -59,33 +60,9 @@ describe('PayrollService', () => {
     query: jest.fn().mockResolvedValue([]),
   };
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     mockRepo = createMockRepo();
-    mockNotificationsService.createNotification = jest.fn().mockResolvedValue({});
-    mockDataSource.transaction = jest.fn(async (cb: any) => {
-      const manager = {
-        getRepository: jest.fn().mockReturnValue({
-          findOne: jest.fn().mockResolvedValue(null),
-          create: jest.fn().mockImplementation((d: any) => d),
-          save: jest.fn().mockResolvedValue({}),
-        }),
-      };
-      return cb(manager);
-    });
-    mockDataSource.getRepository = jest.fn().mockReturnValue({
-      createQueryBuilder: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        groupBy: jest.fn().mockReturnThis(),
-        getRawMany: jest.fn().mockResolvedValue([]),
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      }),
-    });
-
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         PayrollService,
         { provide: DataSource, useValue: mockDataSource },
@@ -106,6 +83,33 @@ describe('PayrollService', () => {
     }).compile();
 
     service = module.get<PayrollService>(PayrollService);
+  });
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    mockNotificationsService.createNotification.mockResolvedValue({});
+    mockDataSource.transaction.mockImplementation(async (cb: any) => {
+      const manager = {
+        getRepository: jest.fn().mockReturnValue({
+          findOne: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockImplementation((d: any) => d),
+          save: jest.fn().mockResolvedValue({}),
+        }),
+      };
+      return cb(manager);
+    });
+    mockDataSource.getRepository.mockReturnValue({
+      createQueryBuilder: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([]),
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      }),
+    });
   });
 
   // ==================== PIT (Personal Income Tax) Calculation ====================

@@ -4,6 +4,7 @@ import { ViolationsService } from './violations.service';
 
 describe('ViolationsController', () => {
   let controller: ViolationsController;
+  let module: TestingModule;
 
   const mockService = {
     create: jest.fn(),
@@ -14,8 +15,8 @@ describe('ViolationsController', () => {
     remove: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [ViolationsController],
       providers: [
         { provide: ViolationsService, useValue: mockService },
@@ -23,6 +24,9 @@ describe('ViolationsController', () => {
     }).compile();
 
     controller = module.get<ViolationsController>(ViolationsController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -72,7 +76,7 @@ describe('ViolationsController', () => {
       await controller.findOne(10, req);
       expect(mockService.findOne).toHaveBeenCalledWith(10, 3);
     });
-    
+
     // [TC_BE_VIOLAT_329]
     it('findOne: Admin HR xem vi phạm bất kỳ (không filter employee_id)', async () => {
       const req = { user: { permissions: ['manage:employees'] } };

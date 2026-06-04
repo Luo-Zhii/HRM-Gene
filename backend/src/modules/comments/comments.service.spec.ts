@@ -10,6 +10,8 @@ import { NotFoundException } from '@nestjs/common';
 
 describe('CommentsService', () => {
   let service: CommentsService;
+  let module: TestingModule;
+  let commentRepo: any, leaveRepo: any, resignationRepo: any;
 
   const repoMockFactory = () => ({
     create: jest.fn(),
@@ -22,10 +24,8 @@ describe('CommentsService', () => {
     createNotification: jest.fn(),
   };
 
-  let commentRepo: any, leaveRepo: any, resignationRepo: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         CommentsService,
         { provide: getRepositoryToken(Comment), useFactory: repoMockFactory },
@@ -39,6 +39,10 @@ describe('CommentsService', () => {
     commentRepo = module.get(getRepositoryToken(Comment));
     leaveRepo = module.get(getRepositoryToken(LeaveRequest));
     resignationRepo = module.get(getRepositoryToken(ResignationRequest));
+  });
+
+  beforeEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
   });
 
@@ -48,9 +52,9 @@ describe('CommentsService', () => {
       commentRepo.create.mockReturnValue({ authorId: 2 });
       commentRepo.save.mockResolvedValue({ id: '1' });
       leaveRepo.findOne.mockResolvedValue({ request_id: 10, employee: { employee_id: 2 } });
-      
+
       jest.spyOn(service, 'findOne').mockResolvedValue({
-        id: '1', 
+        id: '1',
         author: { first_name: 'John', last_name: 'Doe' }
       } as any);
 
@@ -66,9 +70,9 @@ describe('CommentsService', () => {
       commentRepo.create.mockReturnValue({ authorId: 1 });
       commentRepo.save.mockResolvedValue({ id: '1' });
       resignationRepo.findOne.mockResolvedValue({ id: 20, employee: { employee_id: 5 } });
-      
+
       jest.spyOn(service, 'findOne').mockResolvedValue({
-        id: '1', 
+        id: '1',
         author: { first_name: 'Admin', last_name: 'User' }
       } as any);
 
@@ -84,7 +88,7 @@ describe('CommentsService', () => {
       commentRepo.create.mockReturnValue({ authorId: 1 });
       commentRepo.save.mockResolvedValue({ id: '1' });
       leaveRepo.findOne.mockRejectedValue(new Error('DB Error'));
-      
+
       jest.spyOn(service, 'findOne').mockResolvedValue({} as any);
       const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 

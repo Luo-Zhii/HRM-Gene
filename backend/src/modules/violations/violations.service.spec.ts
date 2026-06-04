@@ -9,6 +9,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('ViolationsService', () => {
   let service: ViolationsService;
+  let module: TestingModule;
 
   const mockViolationRepo = {
     findOne: jest.fn(),
@@ -31,8 +32,8 @@ describe('ViolationsService', () => {
     createNotification: jest.fn().mockResolvedValue({}),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         ViolationsService,
         { provide: getRepositoryToken(Violation), useValue: mockViolationRepo },
@@ -43,6 +44,9 @@ describe('ViolationsService', () => {
     }).compile();
 
     service = module.get<ViolationsService>(ViolationsService);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

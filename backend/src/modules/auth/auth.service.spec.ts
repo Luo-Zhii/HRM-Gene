@@ -14,6 +14,12 @@ jest.mock('bcrypt');
 
 describe('AuthService', () => {
   let service: AuthService;
+  let module: TestingModule;
+  let employeeRepo: any;
+  let ppRepo: any;
+  let permissionRepo: any;
+  let positionRepo: any;
+  let departmentRepo: any;
 
   const mockJwtService = { sign: jest.fn() };
   const mockEmployeeRepo = { findOne: jest.fn(), save: jest.fn(), create: jest.fn() };
@@ -22,8 +28,8 @@ describe('AuthService', () => {
   const mockPpRepo = { find: jest.fn() };
   const mockPermissionRepo = { find: jest.fn() };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: JwtService, useValue: mockJwtService },
@@ -36,6 +42,14 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
+    employeeRepo = module.get(getRepositoryToken(Employee));
+    ppRepo = module.get(getRepositoryToken(PositionPermission));
+    permissionRepo = module.get(getRepositoryToken(Permission));
+    positionRepo = module.get(getRepositoryToken(Position));
+    departmentRepo = module.get(getRepositoryToken(Department));
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

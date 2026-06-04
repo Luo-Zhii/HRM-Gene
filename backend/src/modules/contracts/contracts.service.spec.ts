@@ -11,6 +11,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 describe('ContractsService', () => {
   let service: ContractsService;
+  let module: TestingModule;
+  let contractRepo: any, employeeRepo: any, salaryHistoryRepo: any, salaryConfigRepo: any;
 
   let qbInstance: any;
 
@@ -38,11 +40,8 @@ describe('ContractsService', () => {
     createQueryBuilder: jest.fn().mockImplementation(createQueryBuilderMock),
   });
 
-  let contractRepo: any, employeeRepo: any, salaryHistoryRepo: any, salaryConfigRepo: any;
-
-  beforeEach(async () => {
-    qbInstance = null;
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         ContractsService,
         { provide: getRepositoryToken(Contract), useFactory: repoMockFactory },
@@ -59,6 +58,10 @@ describe('ContractsService', () => {
     employeeRepo = module.get(getRepositoryToken(Employee));
     salaryHistoryRepo = module.get(getRepositoryToken(SalaryHistory));
     salaryConfigRepo = module.get(getRepositoryToken(SalaryConfig));
+  });
+
+  beforeEach(() => {
+    qbInstance = null;
     jest.clearAllMocks();
   });
 
@@ -79,7 +82,7 @@ describe('ContractsService', () => {
     // [TC_BE_CONTRA_115]
     it('Tạo hợp đồng lao động mới cho nhân viên', async () => {
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
-      contractRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({ contract_id: 10 }); 
+      contractRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({ contract_id: 10 });
       salaryConfigRepo.findOne.mockResolvedValue({ base_salary: '1000' });
       contractRepo.create.mockReturnValue({ status: ContractStatus.ACTIVE });
       contractRepo.save.mockResolvedValue({ contract_id: 10 });
@@ -99,7 +102,7 @@ describe('ContractsService', () => {
     it('findAll: Cấu hình phân trang và filter với query builder', async () => {
       const qb = contractRepo.createQueryBuilder();
       const result = await service.findAll(1, 1, 10, 'search', 'Active', 'Official');
-      
+
       expect(qb.andWhere).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ employeeId: 1 }));
       expect(qb.getManyAndCount).toHaveBeenCalled();
       expect(result.data).toEqual([]);
@@ -135,7 +138,7 @@ describe('ContractsService', () => {
       const contract = { employee: { employee_id: 1 }, contract_id: 1, contract_number: 'C1', status: ContractStatus.EXPIRED, salary_rate: '1000' };
       contractRepo.findOne.mockResolvedValue(contract);
       contractRepo.save.mockResolvedValue(contract);
-      
+
       await service.update(1, { status: ContractStatus.ACTIVE, salary_rate: '1500' });
 
       expect(salaryHistoryRepo.create).toHaveBeenCalled();

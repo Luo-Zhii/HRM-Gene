@@ -16,6 +16,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('AdminService', () => {
   let service: AdminService;
+  let module: TestingModule;
 
   const repoMockFactory = () => ({
     find: jest.fn(),
@@ -33,8 +34,8 @@ describe('AdminService', () => {
 
   let settingsRepo: any, deptRepo: any, positionRepo: any, permissionRepo: any, posPermRepo: any, employeeRepo: any, contractRepo: any, salaryHistoryRepo: any, payslipRepo: any, payrollPeriodRepo: any, salaryConfigRepo: any;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         AdminService,
         { provide: getRepositoryToken(CompanySettings), useFactory: repoMockFactory },
@@ -63,6 +64,9 @@ describe('AdminService', () => {
     payslipRepo = module.get(getRepositoryToken(Payslip));
     payrollPeriodRepo = module.get(getRepositoryToken(PayrollPeriod));
     salaryConfigRepo = module.get(getRepositoryToken(SalaryConfig));
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -102,8 +106,8 @@ describe('AdminService', () => {
   describe('Departments', () => {
     // [TC_BE_ADMIN_022]
     it('getAllDepartments', async () => {
-      deptRepo.find.mockResolvedValue([{ 
-        department_name: 'HR', 
+      deptRepo.find.mockResolvedValue([{
+        department_name: 'HR',
         manager: { employee_id: 1, first_name: 'John', last_name: 'Doe' },
         employees: [{ contracts: [{ status: ContractStatus.ACTIVE, salary_rate: '1000' }] }]
       }]);
@@ -137,7 +141,7 @@ describe('AdminService', () => {
       employeeRepo.count.mockResolvedValue(5);
       await expect(service.deleteDepartment(1)).rejects.toThrow(BadRequestException);
     });
-    
+
     // [TC_BE_ADMIN_027]
     it('deleteDepartment success', async () => {
       deptRepo.findOne.mockResolvedValue({});
@@ -180,8 +184,8 @@ describe('AdminService', () => {
       employeeRepo.findOne.mockResolvedValue({ employee_id: 1 });
       deptRepo.findOne.mockResolvedValueOnce({ department_id: 2 });
       positionRepo.findOne.mockResolvedValue({ position_id: 3 });
-      deptRepo.findOne.mockResolvedValueOnce(null); 
-      
+      deptRepo.findOne.mockResolvedValueOnce(null);
+
       const res = await service.transferEmployee(1, 2, 3);
       expect(res.message).toBe("Employee transferred successfully");
     });
@@ -199,7 +203,7 @@ describe('AdminService', () => {
       employeeRepo.find.mockResolvedValue([{ employee_id: 1 }]);
       payrollPeriodRepo.findOne.mockResolvedValue({ id: 1 });
       payslipRepo.findOne.mockResolvedValue(null);
-      
+
       const result = await service.seedDemoData(1);
       expect(result.message).toBe('Demo data seeded successfully');
     });

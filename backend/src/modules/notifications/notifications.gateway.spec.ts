@@ -4,13 +4,14 @@ import { JwtService } from '@nestjs/jwt';
 
 describe('NotificationsGateway', () => {
   let gateway: NotificationsGateway;
+  let module: TestingModule;
 
   const mockJwtService = {
     verify: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       providers: [
         NotificationsGateway,
         { provide: JwtService, useValue: mockJwtService },
@@ -18,6 +19,9 @@ describe('NotificationsGateway', () => {
     }).compile();
 
     gateway = module.get<NotificationsGateway>(NotificationsGateway);
+  });
+
+  beforeEach(() => {
     gateway.server = {
       to: jest.fn().mockReturnThis(),
       emit: jest.fn(),

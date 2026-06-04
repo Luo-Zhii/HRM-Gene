@@ -5,7 +5,7 @@ import { BadRequestException, NotFoundException, UnauthorizedException, Forbidde
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let service: AuthService;
+  let module: TestingModule;
 
   const mockAuthService = {
     validateUser: jest.fn(),
@@ -23,8 +23,8 @@ describe('AuthController', () => {
     set: jest.fn(),
   } as any;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
@@ -32,7 +32,9 @@ describe('AuthController', () => {
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
-    service = module.get<AuthService>(AuthService);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

@@ -4,14 +4,15 @@ import { ReportsService } from './reports.service';
 
 describe('ReportsController', () => {
   let controller: ReportsController;
+  let module: TestingModule;
 
   const mockService = {
     payrollSummary: jest.fn(),
     getDashboardData: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
       controllers: [ReportsController],
       providers: [
         { provide: ReportsService, useValue: mockService },
@@ -19,6 +20,9 @@ describe('ReportsController', () => {
     }).compile();
 
     controller = module.get<ReportsController>(ReportsController);
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
