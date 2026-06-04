@@ -294,7 +294,7 @@ function ProfileContent() {
                   tFn={t}
                 />
                 <FormInput label={t("profile.address")} name="address" value={formData.address} onChange={(e: any) => setFormData({ ...formData, address: e.target.value })} disabled={!isEditing} maxLength={200} />
-                
+
                 {/* Department Edit */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Department</Label>
@@ -332,18 +332,10 @@ function ProfileContent() {
 
         {/* SETTINGS AREA */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="space-y-6">
-            <h3 className="font-bold border-b pb-2">{t("profile.notifications")}</h3>
-            <ToggleRow title={t("profile.emailMessages")} checked={settings.email_notifications} onChange={(v: any) => setSettings({ ...settings, email_notifications: v })} disabled={!isEditing} />
-            <h3 className="font-bold border-b pb-2 mt-4">{t("profile.appearance")}</h3>
-            <ToggleRow title={t("profile.darkMode")} checked={settings.dark_mode} onChange={(v: any) => setSettings({ ...settings, dark_mode: v })} disabled={!isEditing} />
-          </div>
+
           <div className="space-y-4">
             <h3 className="font-bold border-b pb-2">{t("profile.security")}</h3>
-            <div className="bg-slate-50 p-4 rounded-xl flex items-center justify-between">
-              <div className="flex items-center gap-3"><ShieldCheck className="text-blue-600 w-5 h-5" /><span className="text-sm font-bold">{t("profile.enable2fa")}</span></div>
-              <CustomToggle checked={settings.two_factor_auth} onChange={(v) => setSettings({ ...settings, two_factor_auth: v })} disabled={!isEditing} />
-            </div>
+
             {viewingOwnProfile && (
               <Button
                 onClick={() => setShowPasswordDialog(true)}
@@ -355,14 +347,7 @@ function ProfileContent() {
               </Button>
             )}
           </div>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between border-b pb-2"><h3 className="font-bold">{t("profile.pushNotifications")}</h3><CustomToggle checked={settings.push_notifications} onChange={(v) => setSettings({ ...settings, push_notifications: v })} disabled={!isEditing} /></div>
-            <div className={`space-y-4 ${!settings.push_notifications && 'opacity-30 pointer-events-none'}`}>
-              <ToggleRow title={t("profile.taskReminders")} checked={settings.task_reminders} onChange={(v: any) => setSettings({ ...settings, task_reminders: v })} disabled={!isEditing} />
-              <ToggleRow title={t("profile.announcements")} checked={settings.announcements} onChange={(v: any) => setSettings({ ...settings, announcements: v })} disabled={!isEditing} />
-              <ToggleRow title={t("profile.dailyReports")} checked={settings.daily_reports} onChange={(v: any) => setSettings({ ...settings, daily_reports: v })} disabled={!isEditing} />
-            </div>
-          </div>
+
         </div>
 
         {/* BANK ACCOUNT */}
@@ -498,9 +483,9 @@ function ProfileContent() {
                       </TableHeader>
                       <TableBody>
                         {payslips.map((p: any) => {
-                          const period = p.pay_period || (p.payroll_period ? `${String(p.payroll_period.month).padStart(2,"0")}/${p.payroll_period.year}` : "—");
-                          const fmtVND = (v: any) => new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND",minimumFractionDigits:0}).format(parseFloat(v)||0);
-                          const statusMap: Record<string,string> = { Pending: "bg-amber-100 text-amber-700", Approved: "bg-blue-100 text-blue-700", Paid: "bg-emerald-100 text-emerald-700" };
+                          const period = p.pay_period || (p.payroll_period ? `${String(p.payroll_period.month).padStart(2, "0")}/${p.payroll_period.year}` : "—");
+                          const fmtVND = (v: any) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", minimumFractionDigits: 0 }).format(parseFloat(v) || 0);
+                          const statusMap: Record<string, string> = { Pending: "bg-amber-100 text-amber-700", Approved: "bg-blue-100 text-blue-700", Paid: "bg-emerald-100 text-emerald-700" };
                           return (
                             <TableRow key={p.payslip_id} className="text-sm">
                               <TableCell className="font-medium">{period}</TableCell>
@@ -580,9 +565,8 @@ function FormInput({ label, value, onChange, disabled, name, maxLength, error, p
         disabled={disabled}
         maxLength={maxLength}
         placeholder={!disabled ? placeholder : undefined}
-        className={`bg-slate-50 border h-11 focus-visible:ring-blue-500 disabled:opacity-100 disabled:text-slate-500 ${
-          error ? "border-red-400 focus-visible:ring-red-400 bg-red-50" : "border-transparent"
-        }`}
+        className={`bg-slate-50 border h-11 focus-visible:ring-blue-500 disabled:opacity-100 disabled:text-slate-500 ${error ? "border-red-400 focus-visible:ring-red-400 bg-red-50" : "border-transparent"
+          }`}
       />
       {error && <p className="text-xs text-red-500 mt-1">{tFn ? tFn(error) : error}</p>}
     </div>
@@ -601,9 +585,8 @@ function BankField({ label, value, isEditing, onChange, mono, uppercase, error, 
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className={`bg-slate-50 border focus-visible:ring-blue-500 ${
-              error ? "border-red-400 focus-visible:ring-red-400 bg-red-50" : "border-transparent"
-            }`}
+            className={`bg-slate-50 border focus-visible:ring-blue-500 ${error ? "border-red-400 focus-visible:ring-red-400 bg-red-50" : "border-transparent"
+              }`}
           />
           {error && <p className="text-xs text-red-500 mt-1">{tFn ? tFn(error) : error}</p>}
         </div>
