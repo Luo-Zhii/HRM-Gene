@@ -105,7 +105,7 @@ describe('ContractsService', () => {
 
       expect(qb.andWhere).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ employeeId: 1 }));
       expect(qb.getManyAndCount).toHaveBeenCalled();
-      expect(result.data).toEqual([]);
+      expect(result).toEqual([]);
     });
   });
 

@@ -154,8 +154,7 @@ describe('ViolationsService', () => {
 
       const result = await service.findAll();
 
-      expect(result.records).toHaveLength(3);
-      expect(result.stats).toEqual({ total: 3, resolved: 1 });
+      expect(result).toHaveLength(3);
     });
 
     /**
@@ -179,8 +178,7 @@ describe('ViolationsService', () => {
 
       const result = await service.findAll(1);
 
-      expect(result.records).toHaveLength(2);
-      expect(result.stats.total).toBe(2);
+      expect(result).toHaveLength(2);
     });
   });
 

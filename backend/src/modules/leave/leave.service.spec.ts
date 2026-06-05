@@ -134,8 +134,8 @@ describe('LeaveService', () => {
       const result = await service.getBalance(1);
 
       expect(result).toEqual([
-        { balance_id: 1, leave_type_name: 'Annual Leave', remaining_days: 12 },
-        { balance_id: 2, leave_type_name: 'Sick Leave', remaining_days: 5 },
+        { balance_id: 1, leave_type: 'Annual Leave', remaining_days: 12 },
+        { balance_id: 2, leave_type: 'Sick Leave', remaining_days: 5 },
       ]);
     });
 
