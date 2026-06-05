@@ -25,6 +25,7 @@ describe('ContractsService', () => {
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+        getMany: jest.fn().mockResolvedValue([]),
       };
     }
     return qbInstance;
