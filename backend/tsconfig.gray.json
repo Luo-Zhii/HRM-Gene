@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist-gray-test"
+  },
+  "include": ["src/**/*", "gray-test-api/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

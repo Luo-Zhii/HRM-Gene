@@ -35,6 +35,7 @@ export class KpiController {
   }
 
   @Get("library")
+  @Permissions("manage:system")
   getLibrary() {
     return this.kpiService.getLibrary();
   }

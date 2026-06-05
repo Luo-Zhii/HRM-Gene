@@ -11,6 +11,6 @@
     "k6:report": "node run-k6.js"
   },
   "devDependencies": {
-    "@types/k6": "latest"
+    "@types/k6": "^2.0.0"
   }
 }

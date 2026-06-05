@@ -47,7 +47,7 @@ export class LeaveService {
     });
     return balances.map((b) => ({
       balance_id: b.balance_id,
-      leave_type_name: b.leave_type?.name,
+      leave_type: b.leave_type?.name,
       remaining_days: b.remaining_days,
     }));
   }

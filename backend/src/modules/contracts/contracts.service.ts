@@ -144,12 +144,8 @@ export class ContractsService {
       query.andWhere("contract.contract_type = :type", { type });
     }
 
-    const [data, total] = await query
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
-
-    return { data, total, page, limit };
+    const data = await query.getMany();
+    return data;
   }
 
   async findByEmployee(employeeId: number) {

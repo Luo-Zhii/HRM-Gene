@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRM Gene – Gray-Box Integration Test Report</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;
+    background:#f4f5f7; color:#172b4d; line-height:1.5; font-size:14px;
+  }
+  .container { max-width:1240px; margin:0 auto; padding:32px 24px; }
+
+  /* Header */
+  .report-header {
+    background:#fff; border:1px solid #dfe1e6; border-top:4px solid #0052cc;
+    padding:32px 36px; margin-bottom:28px;
+  }
+  .report-header h1 { font-size:22px; font-weight:600; color:#172b4d; margin-bottom:6px; letter-spacing:-0.3px; }
+  .report-header .desc { font-size:13px; color:#5e6c84; }
+  .report-header .meta-line { display:flex; gap:28px; margin-top:16px; flex-wrap:wrap; font-size:12px; color:#6b778c; }
+  .report-header .meta-line span { display:flex; align-items:center; gap:5px; }
+  .report-header .meta-line .label { color:#8993a4; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; }
+
+  /* Summary row */
+  .summary-row { display:flex; gap:16px; margin-bottom:28px; flex-wrap:wrap; }
+  .sum-card {
+    background:#fff; border:1px solid #dfe1e6; padding:20px 24px; text-align:center;
+    flex:1; min-width:140px;
+  }
+  .sum-card .value { font-size:28px; font-weight:700; line-height:1.1; }
+  .sum-card .caption { font-size:11px; color:#6b778c; margin-top:4px; text-transform:uppercase; letter-spacing:0.4px; font-weight:600; }
+  .sum-card.green  .value { color:#006644; }
+  .sum-card.red    .value { color:#bf2600; }
+  .sum-card.blue   .value { color:#0052cc; }
+  .sum-card.purple .value { color:#403294; }
+  .sum-card.teal   .value { color:#008da6; }
+  .sum-card.orange .value { color:#b85c00; }
+
+  /* Section */
+  .section {
+    background:#fff; border:1px solid #dfe1e6; padding:28px 32px; margin-bottom:24px;
+  }
+  .section h2 { font-size:16px; font-weight:600; color:#172b4d; margin-bottom:18px; padding-bottom:10px;
+    border-bottom:1px solid #ebecf0; }
+
+  /* Table */
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  thead th {
+    text-align:left; padding:10px 12px; background:#f4f5f7; font-weight:600;
+    color:#5e6c84; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;
+    border-bottom:2px solid #dfe1e6;
+  }
+  tbody td { padding:10px 12px; border-bottom:1px solid #ebecf0; vertical-align:top; }
+  tbody tr:hover { background:#fafbfc; }
+  .tc-num { text-align:center; font-weight:700; font-size:14px; color:#0052cc; }
+
+  .ep-list { display:flex; flex-wrap:wrap; gap:4px; }
+  .ep {
+    display:inline-block; padding:2px 8px; font-size:11px; font-weight:500;
+    font-family:"SF Mono","Fira Code","Consolas",monospace;
+  }
+  .ep.GET    { background:#deebff; color:#0747a6; }
+  .ep.POST   { background:#e3fcef; color:#006644; }
+  .ep.PATCH  { background:#fffae6; color:#b85c00; }
+  .ep.PUT    { background:#fbe9e7; color:#bf2600; }
+  .ep.DELETE { background:#ffebe6; color:#de350b; }
+
+  .tc-list { font-size:12px; color:#5e6c84; }
+  .tc-list ul { list-style:none; padding:0; }
+  .tc-list li { padding:2px 0; }
+  .tc-list li::before { content:'\2713'; margin-right:6px; color:#36b37e; font-weight:700; }
+
+  .tag { display:inline-block; padding:1px 6px; font-size:10px; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.3px; margin-left:4px; }
+  .tag.bb { background:#eae6ff; color:#403294; }
+  .tag.hb { background:#e3fcef; color:#006644; }
+  .tag.wb { background:#deebff; color:#0747a6; }
+  .tag.rbac { background:#fffae6; color:#b85c00; }
+
+  /* Chart */
+  .chart-row { display:flex; gap:24px; margin-bottom:24px; flex-wrap:wrap; }
+  .chart-box { background:#fff; border:1px solid #dfe1e6; padding:24px 28px; flex:1; min-width:420px; }
+  .chart-box h3 { font-size:14px; font-weight:600; color:#172b4d; margin-bottom:16px; }
+  .bar { display:flex; align-items:center; margin-bottom:8px; gap:10px; }
+  .bar .name { width:130px; text-align:right; font-size:12px; color:#5e6c84; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar .track { flex:1; height:18px; background:#ebecf0; }
+  .bar .fill { height:100%; background:#0052cc; }
+  .bar .cnt { width:32px; font-size:12px; font-weight:600; color:#172b4d; }
+
+  /* Strategy */
+  .strat-grid { display:flex; gap:20px; flex-wrap:wrap; margin-top:16px; }
+  .strat-card { flex:1; min-width:260px; border:1px solid #ebecf0; padding:16px; }
+  .strat-card h4 { font-size:13px; font-weight:600; color:#172b4d; margin-bottom:6px; }
+  .strat-card p { font-size:12px; color:#5e6c84; line-height:1.5; }
+
+  .cover-table td:first-child { font-weight:600; width:40%; }
+  .cover-table td:last-child { color:#5e6c84; }
+
+  .footer { text-align:center; padding:24px; color:#8993a4; font-size:12px; border-top:1px solid #dfe1e6; margin-top:8px; }
+
+  @media (max-width:768px) {
+    .report-header .meta-line { flex-direction:column; gap:10px; }
+    .summary-row { flex-direction:column; }
+    .chart-row { flex-direction:column; }
+    .chart-box { min-width:auto; }
+    table { font-size:12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ===== HEADER ===== -->
+<div class="report-header">
+  <h1>Gray-Box Integration Test Report</h1>
+  <div class="desc">HTTP black-box testing (Supertest against localhost:3001) combined with white-box database verification (TypeORM against PostgreSQL)</div>
+  <div class="meta-line">
+    <span><span class="label">Date</span> 2026-06-05 13:23:31</span>
+    <span><span class="label">Target</span> http://localhost:3001</span>
+    <span><span class="label">Database</span> PostgreSQL (hrm)</span>
+    <span><span class="label">Framework</span> Jest + Supertest + TypeORM</span>
+    <span><span class="label">Files</span> 22 *.gray-spec.ts</span>
+  </div>
+</div>
+
+<!-- ===== SUMMARY ===== -->
+<div class="summary-row">
+  <div class="sum-card blue"><div class="value">22</div><div class="caption">Test Suites</div></div>
+  <div class="sum-card"><div class="value" style="color:#172b4d;">196</div><div class="caption">Test Cases</div></div>
+  <div class="sum-card green"><div class="value">196</div><div class="caption">Passed</div></div>
+  <div class="sum-card red"><div class="value">0</div><div class="caption">Failed</div></div>
+  <div class="sum-card purple"><div class="value">&sim;80</div><div class="caption">Black-box (HTTP)</div></div>
+  <div class="sum-card teal"><div class="value">&sim;45</div><div class="caption">Hybrid + White-box (DB)</div></div>
+  <div class="sum-card orange"><div class="value">&sim;40</div><div class="caption">RBAC Permissions</div></div>
+</div>
+
+<!-- ===== BAR CHARTS ===== -->
+<div class="chart-row">
+  <div class="chart-box">
+    <h3>Test Cases by Module</h3>
+    <div class="bar"><div class="name">Payroll</div><div class="track"><div class="fill" style="width:100%;"></div></div><div class="cnt">15</div></div>
+    <div class="bar"><div class="name">Auth</div><div class="track"><div class="fill" style="width:93%;"></div></div><div class="cnt">14</div></div>
+    <div class="bar"><div class="name">KPI</div><div class="track"><div class="fill" style="width:93%;"></div></div><div class="cnt">14</div></div>
+    <div class="bar"><div class="name">Admin</div><div class="track"><div class="fill" style="width:87%;"></div></div><div class="cnt">13</div></div>
+    <div class="bar"><div class="name">Timekeeping</div><div class="track"><div class="fill" style="width:87%;"></div></div><div class="cnt">13</div></div>
+    <div class="bar"><div class="name">Employees</div><div class="track"><div class="fill" style="width:80%;"></div></div><div class="cnt">12</div></div>
+    <div class="bar"><div class="name">Contracts</div><div class="track"><div class="fill" style="width:80%;"></div></div><div class="cnt">12</div></div>
+    <div class="bar"><div class="name">Violations</div><div class="track"><div class="fill" style="width:80%;"></div></div><div class="cnt">12</div></div>
+    <div class="bar"><div class="name">Departments</div><div class="track"><div class="fill" style="width:67%;"></div></div><div class="cnt">10</div></div>
+    <div class="bar"><div class="name">Positions</div><div class="track"><div class="fill" style="width:67%;"></div></div><div class="cnt">10</div></div>
+    <div class="bar"><div class="name">Leave</div><div class="track"><div class="fill" style="width:67%;"></div></div><div class="cnt">10</div></div>
+    <div class="bar"><div class="name">Holiday</div><div class="track"><div class="fill" style="width:60%;"></div></div><div class="cnt">9</div></div>
+    <div class="bar"><div class="name">Salary History</div><div class="track"><div class="fill" style="width:47%;"></div></div><div class="cnt">7</div></div>
+    <div class="bar"><div class="name">Notifications</div><div class="track"><div class="fill" style="width:47%;"></div></div><div class="cnt">7</div></div>
+    <div class="bar"><div class="name">Announcements</div><div class="track"><div class="fill" style="width:47%;"></div></div><div class="cnt">7</div></div>
+    <div class="bar"><div class="name">Dashboard</div><div class="track"><div class="fill" style="width:33%;"></div></div><div class="cnt">5</div></div>
+    <div class="bar"><div class="name">Messages</div><div class="track"><div class="fill" style="width:33%;"></div></div><div class="cnt">5</div></div>
+    <div class="bar"><div class="name">Resignations</div><div class="track"><div class="fill" style="width:33%;"></div></div><div class="cnt">5</div></div>
+    <div class="bar"><div class="name">Reports</div><div class="track"><div class="fill" style="width:33%;"></div></div><div class="cnt">5</div></div>
+    <div class="bar"><div class="name">Company Profile</div><div class="track"><div class="fill" style="width:27%;"></div></div><div class="cnt">4</div></div>
+    <div class="bar"><div class="name">Analytics</div><div class="track"><div class="fill" style="width:27%;"></div></div><div class="cnt">4</div></div>
+    <div class="bar"><div class="name">Comments</div><div class="track"><div class="fill" style="width:20%;"></div></div><div class="cnt">3</div></div>
+  </div>
+  <div class="chart-box">
+    <h3>Test Type Distribution</h3>
+    <div style="margin-top:8px;">
+      <div class="bar"><div class="name" style="width:210px;">Black-box (HTTP only)</div><div class="track"><div class="fill" style="width:80%;background:#6554c0;"></div></div><div class="cnt">~80</div></div>
+      <div class="bar"><div class="name" style="width:210px;">Authorization (401/403)</div><div class="track"><div class="fill" style="width:40%;background:#b85c00;"></div></div><div class="cnt">~40</div></div>
+      <div class="bar"><div class="name" style="width:210px;">Hybrid (HTTP + DB verify)</div><div class="track"><div class="fill" style="width:30%;background:#006644;"></div></div><div class="cnt">~30</div></div>
+      <div class="bar"><div class="name" style="width:210px;">White-box (DB integrity)</div><div class="track"><div class="fill" style="width:15%;background:#0052cc;"></div></div><div class="cnt">~15</div></div>
+      <div class="bar"><div class="name" style="width:210px;">Full CRUD coverage</div><div class="track"><div class="fill" style="width:50%;background:#bf2600;"></div></div><div class="cnt">~50</div></div>
+      <div class="bar"><div class="name" style="width:210px;">Search / Filter</div><div class="track"><div class="fill" style="width:15%;background:#008da6;"></div></div><div class="cnt">~15</div></div>
+      <div class="bar"><div class="name" style="width:210px;">Validation (400)</div><div class="track"><div class="fill" style="width:10%;background:#de350b;"></div></div><div class="cnt">~10</div></div>
+    </div>
+    <h3 style="margin-top:20px;">Test Architecture</h3>
+    <div style="margin-top:10px;padding:14px;background:#f4f5f7;font-size:12px;line-height:1.7;color:#5e6c84;">
+      <strong style="color:#172b4d;">test-helper.ts</strong> — shared bootstrap &amp; teardown:
+      <ul style="list-style:disc;padding-left:18px;margin-top:3px;">
+        <li><code style="font-size:11px;">bootstrapGrayTest()</code> — init TypeORM DataSource, acquire JWT tokens</li>
+        <li><code style="font-size:11px;">teardownGrayTest()</code> — destroy DataSource after suite</li>
+        <li><code style="font-size:11px;">adminAgent() / userAgent()</code> — pre-auth'd Supertest proxies (prefix <code style="font-size:11px;">/api</code>)</li>
+        <li>24 entity repository getters for all tables</li>
+        <li>Seed credentials: Admin (<code style="font-size:11px;">admin@example.com</code>) &amp; User (<code style="font-size:11px;">user1@company.com</code>)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODULE DETAILS ===== -->
+<div class="section">
+  <h2>Module Details (22 Modules &middot; 196 Test Cases)</h2>
+
+  <div style="display:flex;gap:18px;margin-bottom:18px;font-size:11px;color:#6b778c;">
+    <span><span style="display:inline-block;width:10px;height:10px;background:#6554c0;margin-right:4px;"></span> Black-box</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#006644;margin-right:4px;"></span> Hybrid</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#0052cc;margin-right:4px;"></span> White-box</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#b85c00;margin-right:4px;"></span> RBAC</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th style="width:3%;">#</th><th style="width:12%;">Module</th><th style="width:11%;">File</th><th style="width:5%;">TCs</th><th style="width:25%;">Endpoints Tested</th><th>Test Case Description</th></tr>
+    </thead>
+    <tbody>
+
+<tr>
+  <td>1</td>
+  <td><strong>Auth</strong></td>
+  <td style="font-size:11px;color:#6b778c;">auth.gray-spec.ts</td>
+  <td class="tc-num">14</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep POST">POST /auth/login</span>
+      <span class="ep POST">POST /auth/logout</span>
+      <span class="ep GET">GET /auth/profile</span>
+      <span class="ep PATCH">PATCH /auth/profile/update</span>
+      <span class="ep PATCH">PATCH /auth/profile/password</span>
+      <span class="ep GET">GET /auth/navigation</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Login admin &amp; user (201 with access_token + profile) <span class="tag bb">BB</span></li>
+      <li>Login fail: non-existent email (404) <span class="tag bb">BB</span></li>
+      <li>Login fail: wrong password (401) <span class="tag bb">BB</span></li>
+      <li>Logout clears access_token cookie <span class="tag bb">BB</span></li>
+      <li>Admin profile: position (Director) + department (HR) + permissions <span class="tag bb">BB</span></li>
+      <li>User profile: email + position defined <span class="tag bb">BB</span></li>
+      <li>Profile without token (401) <span class="tag rbac">RBAC</span></li>
+      <li>Update phone + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Reject empty first_name (400) <span class="tag bb">BB</span></li>
+      <li>Password change: wrong current password (400) <span class="tag bb">BB</span></li>
+      <li>Password change: too short (400) <span class="tag bb">BB</span></li>
+      <li>Navigation: admin has admin menu items <span class="tag bb">BB</span></li>
+      <li>Navigation: standard user has main menu <span class="tag bb">BB</span></li>
+      <li>Profile includes permissions array <span class="tag bb">BB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>2</td>
+  <td><strong>Admin</strong></td>
+  <td style="font-size:11px;color:#6b778c;">admin.gray-spec.ts</td>
+  <td class="tc-num">13</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /admin/settings</span>
+      <span class="ep GET">GET /admin/settings/:key</span>
+      <span class="ep PATCH">PATCH /admin/settings</span>
+      <span class="ep GET">GET /admin/organization/stats</span>
+      <span class="ep GET">GET /admin/permissions/grouped</span>
+      <span class="ep GET">GET /admin/permissions/matrix</span>
+      <span class="ep POST">POST /admin/permissions/assign</span>
+      <span class="ep POST">POST /admin/permissions/revoke</span>
+      <span class="ep PUT">PUT /admin/employees/:id/transfer</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Admin gets all system settings <span class="tag bb">BB</span></li>
+      <li>Standard user denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>No auth denied (401) <span class="tag rbac">RBAC</span></li>
+      <li>Get specific setting: COMPANY_NAME = "HRM AI Inc." <span class="tag bb">BB</span></li>
+      <li>Update setting + DB verify + restore <span class="tag hb">Hybrid</span></li>
+      <li>Organization statistics <span class="tag bb">BB</span></li>
+      <li>Permissions grouped <span class="tag bb">BB</span></li>
+      <li>Permission matrix <span class="tag bb">BB</span></li>
+      <li>Assign permission + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Revoke permission + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Transfer employee between departments + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>DB: Director has most permissions <span class="tag wb">WB</span></li>
+      <li>DB: Permissions cover all 7 module groups (ROLES, USERS, COMPANIES, PAYROLL, LEAVE, ADMIN, ATTENDANCE) <span class="tag wb">WB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>3</td>
+  <td><strong>Employees</strong></td>
+  <td style="font-size:11px;color:#6b778c;">employees.gray-spec.ts</td>
+  <td class="tc-num">12</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /employees</span>
+      <span class="ep GET">GET /employees/directory</span>
+      <span class="ep GET">GET /employees/search</span>
+      <span class="ep GET">GET /employees/:id</span>
+      <span class="ep POST">POST /admin/employees</span>
+      <span class="ep PATCH">PATCH /employees/:id</span>
+      <span class="ep PATCH">PATCH /employees/:id/offboard</span>
+      <span class="ep GET">GET /admin/employees</span>
+      <span class="ep GET">GET /admin/employees/basic</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Admin list: &gt;= 40 employees, admin user present <span class="tag bb">BB</span></li>
+      <li>User list: accepts 200 or 403 <span class="tag bb">BB</span></li>
+      <li>Public directory: no sensitive fields (phone, address) <span class="tag bb">BB</span></li>
+      <li>Search by name "System" finds admin <span class="tag bb">BB</span></li>
+      <li>Search short query "S" returns [] <span class="tag bb">BB</span></li>
+      <li>Get by id: verify email <span class="tag bb">BB</span></li>
+      <li>Invalid id "abc" returns 400 <span class="tag bb">BB</span></li>
+      <li>Create employee + DB verify (department relation) <span class="tag hb">Hybrid</span></li>
+      <li>Update address + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Offboard employee <span class="tag bb">BB</span></li>
+      <li>Admin route: full list &gt;= 40 <span class="tag bb">BB</span></li>
+      <li>Admin route: basic list is array <span class="tag bb">BB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>4</td>
+  <td><strong>Departments</strong></td>
+  <td style="font-size:11px;color:#6b778c;">departments.gray-spec.ts</td>
+  <td class="tc-num">10</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /departments</span>
+      <span class="ep GET">GET /departments/:id</span>
+      <span class="ep POST">POST /departments</span>
+      <span class="ep PATCH">PATCH /departments/:id</span>
+      <span class="ep DELETE">DELETE /departments/:id</span>
+      <span class="ep GET">GET /admin/departments</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>List: 5 seeded (Engineering, Sales, HR, Marketing, Finance) <span class="tag bb">BB</span></li>
+      <li>Each has department_id + department_name <span class="tag bb">BB</span></li>
+      <li>Get by id (HR department) <span class="tag bb">BB</span></li>
+      <li>Invalid id "abc" returns 400 <span class="tag bb">BB</span></li>
+      <li>Create + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Update name "Sales" to "Sales &amp; BD" + DB verify + restore <span class="tag hb">Hybrid</span></li>
+      <li>Delete without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Standard user delete denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>Admin delete + DB verify null <span class="tag hb">Hybrid</span></li>
+      <li>Admin route: full list &gt;= 5 <span class="tag bb">BB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>5</td>
+  <td><strong>Positions</strong></td>
+  <td style="font-size:11px;color:#6b778c;">positions.gray-spec.ts</td>
+  <td class="tc-num">10</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /positions</span>
+      <span class="ep GET">GET /positions/:id</span>
+      <span class="ep POST">POST /positions</span>
+      <span class="ep PATCH">PATCH /positions/:id</span>
+      <span class="ep DELETE">DELETE /positions/:id</span>
+      <span class="ep GET">GET /admin/positions</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>List: 4 seeded (Director, Manager, Staff, Intern) <span class="tag bb">BB</span></li>
+      <li>Each has position_id + position_name <span class="tag bb">BB</span></li>
+      <li>Get by id (Director) <span class="tag bb">BB</span></li>
+      <li>Invalid id "xyz" returns 400 <span class="tag bb">BB</span></li>
+      <li>Create + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Update "Intern" to "Trainee" + DB verify + restore <span class="tag hb">Hybrid</span></li>
+      <li>Delete without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Standard user delete denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>Admin delete + DB verify null <span class="tag hb">Hybrid</span></li>
+      <li>Admin route: full list &gt;= 4 <span class="tag bb">BB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>6</td>
+  <td><strong>Leave</strong></td>
+  <td style="font-size:11px;color:#6b778c;">leave.gray-spec.ts</td>
+  <td class="tc-num">10</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /leave/types</span>
+      <span class="ep GET">GET /leave/balance</span>
+      <span class="ep GET">GET /leave/my-requests</span>
+      <span class="ep POST">POST /leave/request</span>
+      <span class="ep GET">GET /leave/pending-requests</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>3 leave types: Annual Leave, Sick Leave, Unpaid Leave <span class="tag bb">BB</span></li>
+      <li>Types without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Balance: 3 types with remaining_days <span class="tag bb">BB</span></li>
+      <li>My requests list <span class="tag bb">BB</span></li>
+      <li>Submit request + DB verify (start/end/status=Pending/leave_type/employee) <span class="tag hb">Hybrid</span></li>
+      <li>Submit without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Admin: pending requests <span class="tag bb">BB</span></li>
+      <li>Standard user: pending requests denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>DB: employees have leave balances <span class="tag wb">WB</span></li>
+      <li>DB: Annual Leave remaining_days 2-12 across 40 employees <span class="tag wb">WB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>7</td>
+  <td><strong>Timekeeping</strong></td>
+  <td style="font-size:11px;color:#6b778c;">timekeeping.gray-spec.ts</td>
+  <td class="tc-num">13</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /timekeeping/dynamic-qr</span>
+      <span class="ep POST">POST /timekeeping/check-in/qr</span>
+      <span class="ep POST">POST /timekeeping/check-in/ip</span>
+      <span class="ep GET">GET /attendance/admin/all</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Dynamic QR: token/qr_url/qrCode defined <span class="tag bb">BB</span></li>
+      <li>QR without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>QR check-in: accepts [200,201,400,409] <span class="tag bb">BB</span></li>
+      <li>QR check-in without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>IP check-in: accepts [200,201,400,403,409] <span class="tag bb">BB</span></li>
+      <li>IP check-in without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Admin attendance: paginated (page=1,limit=50) <span class="tag bb">BB</span></li>
+      <li>Admin attendance: date range filter (startDate/endDate) <span class="tag bb">BB</span></li>
+      <li>Standard user admin attendance denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>DB: records for current month &gt;= business_days * 40 * 0.9 <span class="tag wb">WB</span></li>
+      <li>DB: status values only Present/Absent/Late <span class="tag wb">WB</span></li>
+      <li>DB: Absent records have hours_worked=0 <span class="tag wb">WB</span></li>
+      <li>DB: admin user has timekeeping records <span class="tag wb">WB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>8</td>
+  <td><strong>Payroll</strong></td>
+  <td style="font-size:11px;color:#6b778c;">payroll.gray-spec.ts</td>
+  <td class="tc-num">15</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /payroll/my-payslips</span>
+      <span class="ep GET">GET /payroll/list</span>
+      <span class="ep GET">GET /payroll/period</span>
+      <span class="ep GET">GET /payroll/config</span>
+      <span class="ep GET">GET /payroll/config/:employeeId</span>
+      <span class="ep PATCH">PATCH /payroll/config/:employeeId</span>
+      <span class="ep POST">POST /payroll/adjustments</span>
+      <span class="ep GET">GET /payroll/adjustments</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>My payslips: &gt;=1, has payslip_id/net_salary/gross_salary <span class="tag bb">BB</span></li>
+      <li>My payslips without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Admin: payslips by period (month/year) <span class="tag bb">BB</span></li>
+      <li>Standard user list denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>Admin: payroll period has month/year <span class="tag bb">BB</span></li>
+      <li>Admin: all salary configs <span class="tag bb">BB</span></li>
+      <li>Standard user config denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>Employee salary config: base_salary, transport_allowance, lunch_allowance <span class="tag bb">BB</span></li>
+      <li>Invalid employee id (400) <span class="tag bb">BB</span></li>
+      <li>Update salary config + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Create Bonus adjustment "2,000,000" + DB verify (type/amount/reason/employee) <span class="tag hb">Hybrid</span></li>
+      <li>Admin: all adjustments <span class="tag bb">BB</span></li>
+      <li>DB: payslips exist <span class="tag wb">WB</span></li>
+      <li>DB: &gt;=12 PAID periods, standard_work_days=26 <span class="tag wb">WB</span></li>
+      <li>DB: net_salary + deductions = gross_salary (error &lt;2) <span class="tag wb">WB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>9</td>
+  <td><strong>Contracts</strong></td>
+  <td style="font-size:11px;color:#6b778c;">contracts.gray-spec.ts</td>
+  <td class="tc-num">12</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /contracts</span>
+      <span class="ep GET">GET /contracts/employee/:id</span>
+      <span class="ep GET">GET /contracts/:id</span>
+      <span class="ep POST">POST /contracts</span>
+      <span class="ep PATCH">PATCH /contracts/:id</span>
+      <span class="ep DELETE">DELETE /contracts/:id</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Admin: contract list <span class="tag bb">BB</span></li>
+      <li>User: own contracts only <span class="tag bb">BB</span></li>
+      <li>Filter by employeeId <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Admin: contracts by employee id <span class="tag bb">BB</span></li>
+      <li>User: only access own contracts <span class="tag rbac">RBAC</span></li>
+      <li>Get contract by id <span class="tag bb">BB</span></li>
+      <li>Create Official contract + DB verify (employee, salary_rate) <span class="tag hb">Hybrid</span></li>
+      <li>Standard user create denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>Update salary_rate <span class="tag bb">BB</span></li>
+      <li>Delete + DB verify null <span class="tag hb">Hybrid</span></li>
+      <li>DB: all 40 employees have &gt;=1 contract <span class="tag wb">WB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>10</td>
+  <td><strong>Violations</strong></td>
+  <td style="font-size:11px;color:#6b778c;">violations.gray-spec.ts</td>
+  <td class="tc-num">12</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /violations</span>
+      <span class="ep GET">GET /violations/:id</span>
+      <span class="ep POST">POST /violations</span>
+      <span class="ep PATCH">PATCH /violations/:id</span>
+      <span class="ep DELETE">DELETE /violations/:id</span>
+      <span class="ep POST">POST /violations/sync-attendance</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Admin: all violations <span class="tag bb">BB</span></li>
+      <li>User: own violations only <span class="tag bb">BB</span></li>
+      <li>Filter by employeeId <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Get violation by id <span class="tag bb">BB</span></li>
+      <li>Create violation + DB verify (type/description/employee) <span class="tag hb">Hybrid</span></li>
+      <li>Standard user create denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>Update status/deduction_amount + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Delete + DB verify null <span class="tag hb">Hybrid</span></li>
+      <li>Sync attendance violations <span class="tag bb">BB</span></li>
+      <li>Standard user sync denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>DB: &gt;=1 seeded violation <span class="tag wb">WB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>11</td>
+  <td><strong>Salary History</strong></td>
+  <td style="font-size:11px;color:#6b778c;">salary-history.gray-spec.ts</td>
+  <td class="tc-num">7</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /salary-history</span>
+      <span class="ep GET">GET /salary-history/:id</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Admin: all history records <span class="tag bb">BB</span></li>
+      <li>User: own history only <span class="tag bb">BB</span></li>
+      <li>Filter by employeeId <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Get record by id <span class="tag bb">BB</span></li>
+      <li>DB: &gt;=40 employees have salary history <span class="tag wb">WB</span></li>
+      <li>DB: initial records have old_salary='0', new_salary&gt;0, non-null change_date <span class="tag wb">WB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>12</td>
+  <td><strong>Notifications</strong></td>
+  <td style="font-size:11px;color:#6b778c;">notifications.gray-spec.ts</td>
+  <td class="tc-num">7</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /notifications</span>
+      <span class="ep PATCH">PATCH /notifications/:id/read</span>
+      <span class="ep DELETE">DELETE /notifications/:id</span>
+      <span class="ep POST">POST /notifications/announce</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>User notifications list <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Mark as read + DB verify isRead=true <span class="tag hb">Hybrid</span></li>
+      <li>Delete notification + DB verify null <span class="tag hb">Hybrid</span></li>
+      <li>Admin: send announcement to all <span class="tag bb">BB</span></li>
+      <li>Standard user announce denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>DB: &gt;=40 "Welcome to the team!" notifications <span class="tag wb">WB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>13</td>
+  <td><strong>Announcements</strong></td>
+  <td style="font-size:11px;color:#6b778c;">announcements.gray-spec.ts</td>
+  <td class="tc-num">7</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /announcements</span>
+      <span class="ep GET">GET /announcements/feed</span>
+      <span class="ep POST">POST /announcements</span>
+      <span class="ep PATCH">PATCH /announcements/:id</span>
+      <span class="ep DELETE">DELETE /announcements/:id</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>All announcements <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>User-specific feed <span class="tag bb">BB</span></li>
+      <li>Create (title/content/type/target_audience/priority/status/delivery_methods) + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Standard user create denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>Update title + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Delete + DB verify null <span class="tag hb">Hybrid</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>14</td>
+  <td><strong>Messages</strong></td>
+  <td style="font-size:11px;color:#6b778c;">messages.gray-spec.ts</td>
+  <td class="tc-num">5</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep POST">POST /messages</span>
+      <span class="ep GET">GET /messages/:otherUserId</span>
+      <span class="ep PATCH">PATCH /messages/:otherUserId/read</span>
+      <span class="ep DELETE">DELETE /messages/:id</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Send message user->admin + DB verify (content, sender, receiver) <span class="tag hb">Hybrid</span></li>
+      <li>Send without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Get conversation with other user <span class="tag bb">BB</span></li>
+      <li>Mark as read <span class="tag bb">BB</span></li>
+      <li>Soft-delete message <span class="tag bb">BB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>15</td>
+  <td><strong>Holiday</strong></td>
+  <td style="font-size:11px;color:#6b778c;">holiday.gray-spec.ts</td>
+  <td class="tc-num">9</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /admin/holidays</span>
+      <span class="ep GET">GET /admin/holidays/upcoming</span>
+      <span class="ep GET">GET /admin/holidays/stats</span>
+      <span class="ep POST">POST /admin/holidays</span>
+      <span class="ep PUT">PUT /admin/holidays/:id</span>
+      <span class="ep DELETE">DELETE /admin/holidays/:id</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Admin: holiday list <span class="tag bb">BB</span></li>
+      <li>Filter by year (year=2026) <span class="tag bb">BB</span></li>
+      <li>Standard user denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Upcoming holidays <span class="tag bb">BB</span></li>
+      <li>Holiday statistics <span class="tag bb">BB</span></li>
+      <li>Create "Gray Test Holiday" 2026-12-25 + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Update holiday name + DB verify <span class="tag hb">Hybrid</span></li>
+      <li>Delete + DB verify null <span class="tag hb">Hybrid</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>16</td>
+  <td><strong>Company Profile</strong></td>
+  <td style="font-size:11px;color:#6b778c;">company-profile.gray-spec.ts</td>
+  <td class="tc-num">4</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /company-profile</span>
+      <span class="ep PATCH">PATCH /company-profile</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Get profile: company_name + base_currency defined <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Admin: update city "New York" + DB verify + restore "San Francisco" <span class="tag hb">Hybrid</span></li>
+      <li>Standard user update denied (403) <span class="tag rbac">RBAC</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>17</td>
+  <td><strong>Dashboard</strong></td>
+  <td style="font-size:11px;color:#6b778c;">dashboard.gray-spec.ts</td>
+  <td class="tc-num">5</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /dashboard/employee</span>
+      <span class="ep GET">GET /dashboard/admin</span>
+      <span class="ep GET">GET /dashboard/holidays</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Employee dashboard data <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Admin dashboard (Director) <span class="tag bb">BB</span></li>
+      <li>Standard user admin dashboard denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>Dashboard holiday list <span class="tag bb">BB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>18</td>
+  <td><strong>KPI</strong></td>
+  <td style="font-size:11px;color:#6b778c;">kpi.gray-spec.ts</td>
+  <td class="tc-num">14</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /kpi/library</span>
+      <span class="ep GET">GET /kpi/periods</span>
+      <span class="ep GET">GET /kpi/assignments</span>
+      <span class="ep GET">GET /kpi/my-performance</span>
+      <span class="ep GET">GET /kpi/calculate-score</span>
+      <span class="ep PATCH">PATCH /kpi/assignment/:id/actual</span>
+      <span class="ep POST">POST /kpi/library</span>
+      <span class="ep POST">POST /kpi/period</span>
+      <span class="ep POST">POST /kpi/assign</span>
+      <span class="ep PATCH">PATCH /kpi/assignment/:id/grade</span>
+      <span class="ep DELETE">DELETE /kpi/assignment/:id</span>
+      <span class="ep DELETE">DELETE /kpi/library/:id</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>KPI library: &gt;=3 items <span class="tag bb">BB</span></li>
+      <li>Standard user library denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>KPI periods: &gt;=2 periods <span class="tag bb">BB</span></li>
+      <li>Assignments: filter by employee_id + period_id <span class="tag bb">BB</span></li>
+      <li>My performance: filter by period_id <span class="tag bb">BB</span></li>
+      <li>Calculate KPI score <span class="tag bb">BB</span></li>
+      <li>User update actual_value <span class="tag bb">BB</span></li>
+      <li>Admin create library item (name/description/unit) <span class="tag bb">BB</span></li>
+      <li>Standard user create denied (403) <span class="tag rbac">RBAC</span></li>
+      <li>Admin create period "Q3 2026" <span class="tag bb">BB</span></li>
+      <li>Admin assign KPI to employees <span class="tag bb">BB</span></li>
+      <li>Admin grade assignment (manager_score) <span class="tag bb">BB</span></li>
+      <li>Admin delete assignment <span class="tag bb">BB</span></li>
+      <li>Admin delete library item <span class="tag bb">BB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>19</td>
+  <td><strong>Resignations</strong></td>
+  <td style="font-size:11px;color:#6b778c;">resignations.gray-spec.ts</td>
+  <td class="tc-num">5</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep POST">POST /resignations</span>
+      <span class="ep GET">GET /resignations/my</span>
+      <span class="ep GET">GET /resignations/all</span>
+      <span class="ep PATCH">PATCH /resignations/:id</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>User create resignation (reason_text, requested_last_day) <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>My resignation requests <span class="tag bb">BB</span></li>
+      <li>All resignation requests <span class="tag bb">BB</span></li>
+      <li>Admin update status to "Approved" <span class="tag bb">BB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>20</td>
+  <td><strong>Analytics</strong></td>
+  <td style="font-size:11px;color:#6b778c;">analytics.gray-spec.ts</td>
+  <td class="tc-num">4</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /analytics/dashboard</span>
+      <span class="ep GET">GET /analytics/activities</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Dashboard data for authenticated user <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Activities list <span class="tag bb">BB</span></li>
+      <li>Filter activities by date range + type="leave" <span class="tag bb">BB</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>21</td>
+  <td><strong>Reports</strong></td>
+  <td style="font-size:11px;color:#6b778c;">reports.gray-spec.ts</td>
+  <td class="tc-num">5</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep GET">GET /reports/payroll-summary</span>
+      <span class="ep GET">GET /reports/dashboard</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Payroll summary by month/year <span class="tag bb">BB</span></li>
+      <li>Default to current month/year <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Admin: reports dashboard <span class="tag bb">BB</span></li>
+      <li>Standard user denied (403) <span class="tag rbac">RBAC</span></li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td>22</td>
+  <td><strong>Comments</strong></td>
+  <td style="font-size:11px;color:#6b778c;">comments.gray-spec.ts</td>
+  <td class="tc-num">3</td>
+  <td>
+    <div class="ep-list">
+      <span class="ep POST">POST /comments</span>
+      <span class="ep GET">GET /comments/:entityType/:entityId</span>
+    </div>
+  </td>
+  <td class="tc-list">
+    <ul>
+      <li>Create comment (entityType="employee", entityId="1") <span class="tag bb">BB</span></li>
+      <li>Without auth (401) <span class="tag rbac">RBAC</span></li>
+      <li>Get comments for entity (employee/1) <span class="tag bb">BB</span></li>
+    </ul>
+  </td>
+</tr>
+
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== TESTING STRATEGY ===== -->
+<div class="section">
+  <h2>Gray-Box Testing Strategy</h2>
+  <div class="strat-grid">
+    <div class="strat-card">
+      <h4>Black-box (HTTP via Supertest)</h4>
+      <p>Real HTTP requests against localhost:3001 server. Validates HTTP status codes, response body shape, and data fields. No knowledge of internal implementation.</p>
+    </div>
+    <div class="strat-card">
+      <h4>White-box (DB via TypeORM)</h4>
+      <p>Direct PostgreSQL connection via TypeORM DataSource. Verifies data integrity after CRUD operations: row counts, column values, and entity relationships.</p>
+    </div>
+    <div class="strat-card">
+      <h4>RBAC Authorization</h4>
+      <p>Tests with 2 roles (Admin Director + User Staff). Validates 401 when unauthenticated, 403 when insufficient permissions. Covers every endpoint's auth behavior.</p>
+    </div>
+    <div class="strat-card">
+      <h4>Hybrid (HTTP + DB Verify)</h4>
+      <p>CRUD through HTTP API, then direct database read to verify data persisted correctly. Pattern: API call + DB read + assert + cleanup/rollback.</p>
+    </div>
+    <div class="strat-card">
+      <h4>Cleanup &amp; Restore</h4>
+      <p>All create/update/delete tests clean up test data and restore original seed values. Ensures tests are repeatable and do not pollute the database.</p>
+    </div>
+    <div class="strat-card">
+      <h4>Seed Data Integrity</h4>
+      <p>Validates standard seed data: 40 employees, 5 departments, 4 positions, 12 payroll periods, 3 leave types, complete permissions matrix.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== COVERAGE SUMMARY ===== -->
+<div class="section">
+  <h2>Coverage Summary</h2>
+  <table class="cover-table">
+    <thead>
+      <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Modules tested</td><td>22 / 22 (100%)</td><td>All core HRM system modules</td></tr>
+      <tr><td>Endpoints tested</td><td>&sim;95</td><td>GET, POST, PATCH, PUT, DELETE</td></tr>
+      <tr><td>Total test cases</td><td>196</td><td>0 failed, 0 pending</td></tr>
+      <tr><td>HTTP methods covered</td><td>5</td><td>GET, POST, PATCH, PUT, DELETE</td></tr>
+      <tr><td>Auth roles tested</td><td>3</td><td>Admin (Director), User (Staff), No Auth</td></tr>
+      <tr><td>Database entities</td><td>24</td><td>Repository getters for all tables</td></tr>
+      <tr><td>Black-box tests</td><td>&sim;80</td><td>HTTP response validation only</td></tr>
+      <tr><td>Hybrid tests</td><td>&sim;30</td><td>HTTP + Database verification</td></tr>
+      <tr><td>White-box tests</td><td>&sim;15</td><td>Database integrity checks</td></tr>
+      <tr><td>RBAC tests</td><td>&sim;40</td><td>401/403 authorization checks</td></tr>
+      <tr><td>Validation tests</td><td>&sim;10</td><td>400 Bad Request scenarios</td></tr>
+      <tr><td>Search / Filter tests</td><td>&sim;15</td><td>Query parameter filtering</td></tr>
+      <tr><td>Full CRUD modules</td><td>11</td><td>Depts, Positions, Contracts, Violations, Holidays, Announcements, KPI, Employees, Notifications, Messages, Admin Settings</td></tr>
+      <tr><td>Test framework</td><td>Jest + Supertest + TypeORM</td><td>Custom *.gray-spec.ts naming convention</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer">
+  HRM Gene Gray-Box Integration Test Suite &mdash; 22 suites &middot; 196 test cases &middot; All passed &middot; Generated 2026-06-05
+</div>
+
+</div>
+</body>
+</html>

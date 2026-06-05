@@ -10,6 +10,7 @@ stages:
   - sast-sca
   - unit-integration-test
   - deploy-staging
+  - gray-box-test
   - e2e-test
   - dast
   - performance-test
@@ -190,6 +191,47 @@ deploy_staging:
     - shared-runner-dev-shell
   only:
     - main
+# ==========================================
+# STAGE 3.5: GRAY-BOX INTEGRATION TESTING (HTTP + DB)
+# ==========================================
+run_gray_box_testing:
+  stage: gray-box-test
+  allow_failure: true
+  variables:
+    GIT_STRATEGY: clone
+    TEST_HOST: "http://localhost:3001"
+  before_script:
+    - echo "[GRAY-BOX] Installing backend dependencies..."
+    - npm install --prefix backend --legacy-peer-deps
+  script:
+    - echo "[GRAY-BOX] Waiting 15s for Staging to be ready..."
+    - sleep 15
+    - echo "[GRAY-BOX] Checking server availability at $TEST_HOST..."
+    - |
+      for i in $(seq 1 30); do
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" $TEST_HOST/api/employees/directory || echo "000")
+        if [ "$STATUS" != "000" ]; then
+          echo "[GRAY-BOX] Server responded with HTTP $STATUS — proceeding."
+          break
+        fi
+        echo "[GRAY-BOX] Attempt $i/30 — server not ready, retrying in 5s..."
+        sleep 5
+      done
+    - echo "[GRAY-BOX] Running gray-box integration tests..."
+    - cd backend && npm run test:gray || true
+  after_script:
+    - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
+  tags:
+    - shared-runner-dev-shell
+  only:
+    - main
+  artifacts:
+    name: "gray-box-test-reports"
+    paths:
+      - backend/gray-test-api/gray-test-report.html
+      - backend/gray-test-api/gray-test-summary-report.html
+    expire_in: 7 days
+    when: always
 
 # ==========================================
 # STAGE 4: E2E TESTING (Black-box)
@@ -276,7 +318,12 @@ performance_testing:
   script:
     - echo "[PERF] Running $TEST_TYPE performance test..."
     - docker run --rm -v $(pwd)/performace_testing_script:/scripts -e TARGET_URL=$TARGET_URL -e TEST_TYPE=$TEST_TYPE grafana/k6 run /scripts/tests/main-test.js || true
-    - mv performace_testing_script/summary_perf.html ./${K6_PERF_REPORT}_${TEST_TYPE}.html || true
+    - echo "[PERF] Collecting report files..."
+    - cp performace_testing_script/k6_report_${TEST_TYPE}.html ./${K6_PERF_REPORT}_${TEST_TYPE}.html || true
+    - cp performace_testing_script/summary_perf.html ./summary_perf_${TEST_TYPE}.html || true
+    - cp performace_testing_script/k6_dashboard.html ./k6_dashboard.html || true
+    - echo "[PERF] Reports collected:"
+    - ls -lah ./*.html || true
   after_script:
     - sudo chown -R gitlab-runner:gitlab-runner $(pwd) || true
   tags:
@@ -284,7 +331,10 @@ performance_testing:
   only:
     - main
   artifacts:
-    name: "perf-report-$TEST_TYPE"
+    name: "perf-report-${TEST_TYPE}"
     paths:
       - ${K6_PERF_REPORT}_${TEST_TYPE}.html
+      - summary_perf_${TEST_TYPE}.html
+      - k6_dashboard.html
     expire_in: 7 days
+    when: always

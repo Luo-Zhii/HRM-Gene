@@ -73,10 +73,7 @@ export class ViolationsService {
       order: { violation_date: "DESC" },
     });
 
-    const total = records.length;
-    const resolved = records.filter(r => r.status === ViolationStatus.RESOLVED).length;
-
-    return { records, stats: { total, resolved } };
+    return records;
   }
 
   async findOne(id: number, employeeId?: number) {

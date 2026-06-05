@@ -1,0 +1,33 @@
+{
+  "preset": "ts-jest",
+  "testEnvironment": "node",
+  "rootDir": ".",
+  "testRegex": "gray-test-api/.*\\.gray-spec\\.ts$",
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleNameMapper": {
+    "^@/(.*)$": "<rootDir>/src/$1"
+  },
+  "transform": {
+    "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "tsconfig.gray.json" }]
+  },
+  "maxWorkers": 4,
+  "testTimeout": 30000,
+  "reporters": [
+    "default",
+    [
+      "jest-html-reporter",
+      {
+        "pageTitle": "HRM Gray-Box Integration Test Report",
+        "outputPath": "./gray-test-api/gray-test-report.html",
+        "includeFailureMsg": true,
+        "includeSuiteFailure": true,
+        "dateFormat": "yyyy-mm-dd HH:MM:ss",
+        "sort": "status",
+        "executionTimeWarningThreshold": 5,
+        "darkTheme": false,
+        "includeConsoleLog": true,
+        "logo": ""
+      }
+    ]
+  ]
+}
