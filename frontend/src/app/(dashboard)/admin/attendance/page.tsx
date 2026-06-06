@@ -154,6 +154,10 @@ export default function AttendanceHistoryPage() {
   }, [authLoading, user]);
 
   const applyFilter = () => {
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      setError("Start Date cannot be greater than End Date");
+      return;
+    }
     loadAttendance(1, startDate || null, endDate || null, searchEmployee || null);
   };
 
