@@ -290,7 +290,7 @@ function timeAgo(dateStr: string): string {
   if (diffHr < 24) return `${diffHr}h ago`;
   const diffDay = Math.floor(diffHr / 24);
   if (diffDay < 7) return `${diffDay}d ago`;
-  return new Date(dateStr).toLocaleDateString();
+  return new Date(dateStr).toLocaleDateString([], { timeZone: 'Asia/Ho_Chi_Minh' });
 }
 
 function getNotificationStyle(type: string) {

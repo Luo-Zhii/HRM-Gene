@@ -20,6 +20,7 @@ import EmployeeTable, { EmployeeRow } from "@/components/EmployeeTable";
 import EditEmployeeModal from "@/components/EditEmployeeModal";
 import { canManageEmployees } from "@/lib/adminAccess";
 import { Can } from "@/components/Can";
+import { DatePicker } from "@/components/ui/datepicker";
 
 export default function AdminEmployeeDirectoryPage() {
   const router = useRouter();
@@ -48,6 +49,19 @@ export default function AdminEmployeeDirectoryPage() {
   const [editEmployee, setEditEmployee] = useState<EmployeeRow | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   const showToast = (title: string, desc: string, type: "success" | "error") => {
     setToastMsg({ title, desc, type });
@@ -330,11 +344,9 @@ export default function AdminEmployeeDirectoryPage() {
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">
                   {t("offboard.resignationDate")} <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="date"
-                  required
-                  value={resignationDate}
-                  onChange={(e) => setResignationDate(e.target.value)}
+                <DatePicker
+                  selected={parseLocalDate(resignationDate)}
+                  onSelect={(date) => setResignationDate(date ? getLocalDateString(date) : "")}
                   className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>

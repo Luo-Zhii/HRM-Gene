@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { DatePicker } from "@/components/ui/datepicker";
 import { useTranslation } from "react-i18next";
 
 interface KpiLibrary {
@@ -41,6 +42,19 @@ export default function KpiLibraryPage() {
   });
   const [periodFormData, setPeriodFormData] = useState({ name: "", start_date: "", end_date: "" });
   const [kpiPeriods, setKpiPeriods] = useState<any[]>([]);
+
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   const fetchKpis = async () => {
     try {
@@ -307,11 +321,21 @@ export default function KpiLibraryPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>{t("performance.startDate")}</Label>
-                  <Input type="date" value={periodFormData.start_date} onChange={(e) => setPeriodFormData({ ...periodFormData, start_date: e.target.value })} />
+                  <DatePicker 
+                    selected={parseLocalDate(periodFormData.start_date)} 
+                    onSelect={(date) => setPeriodFormData({ ...periodFormData, start_date: date ? getLocalDateString(date) : "" })} 
+                    maxDate={parseLocalDate(periodFormData.end_date) || undefined}
+                    className="w-full h-10 px-3 bg-white border border-gray-200 rounded-md"
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label>{t("performance.endDate")}</Label>
-                  <Input type="date" value={periodFormData.end_date} onChange={(e) => setPeriodFormData({ ...periodFormData, end_date: e.target.value })} />
+                  <DatePicker 
+                    selected={parseLocalDate(periodFormData.end_date)} 
+                    onSelect={(date) => setPeriodFormData({ ...periodFormData, end_date: date ? getLocalDateString(date) : "" })} 
+                    minDate={parseLocalDate(periodFormData.start_date) || undefined}
+                    className="w-full h-10 px-3 bg-white border border-gray-200 rounded-md"
+                  />
                 </div>
               </div>
               <Button className="w-full bg-blue-600 text-white" onClick={handleCreatePeriod} disabled={submitting}>{t("performance.createPeriod")}</Button>

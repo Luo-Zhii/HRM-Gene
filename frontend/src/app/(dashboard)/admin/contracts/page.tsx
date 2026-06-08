@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Search, Plus, Edit2, FileText, X, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/datepicker";
 import { useTranslation } from "react-i18next";
 
 // Interface Definitions
@@ -76,6 +77,19 @@ export default function AdminContractsPage() {
     file_url: ""
   });
   const [isSaving, setIsSaving] = useState(false);
+
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   // Debounce search
   useEffect(() => {
@@ -389,11 +403,21 @@ export default function AdminContractsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblStartDate")}</Label>
-                    <Input type="date" required className="h-11 bg-slate-50 border-slate-200" value={formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : ''} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} />
+                    <DatePicker
+                      selected={formData.start_date ? parseLocalDate(formData.start_date.split('T')[0]) : null}
+                      onSelect={(date) => setFormData({ ...formData, start_date: date ? getLocalDateString(date) : '' })}
+                      maxDate={formData.end_date ? parseLocalDate(formData.end_date.split('T')[0]) || undefined : undefined}
+                      className="w-full h-11 bg-slate-50 border-slate-200"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblEndDate")}</Label>
-                    <Input type="date" className="h-11 bg-slate-50 border-slate-200" value={formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : ''} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} />
+                    <DatePicker
+                      selected={formData.end_date ? parseLocalDate(formData.end_date.split('T')[0]) : null}
+                      onSelect={(date) => setFormData({ ...formData, end_date: date ? getLocalDateString(date) : '' })}
+                      minDate={formData.start_date ? parseLocalDate(formData.start_date.split('T')[0]) || undefined : undefined}
+                      className="w-full h-11 bg-slate-50 border-slate-200"
+                    />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("contracts.lblSalaryRate")}</Label>

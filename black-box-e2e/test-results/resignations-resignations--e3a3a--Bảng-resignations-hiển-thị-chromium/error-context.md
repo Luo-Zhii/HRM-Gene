@@ -6,8 +6,8 @@
 
 # Test info
 
-- Name: resignations/resignations.spec.ts >> [M11] Resignations - Employee >> TC_RESIGN_016 - Bảng lịch sử resignation
-- Location: specs/resignations/resignations.spec.ts:113:7
+- Name: resignations/resignations.spec.ts >> [M11] Resignations - Admin >> TC_RESIGN_002 - Bảng resignations hiển thị
+- Location: specs/resignations/resignations.spec.ts:11:7
 
 # Error details
 
@@ -38,44 +38,64 @@ Call log:
     - link "Staff Directory":
       - /url: /directory
     - button "My Workspace"
-    - link "Timekeeping":
-      - /url: /dashboard/timekeeping
-    - link "Leave Management":
-      - /url: /dashboard/leave
-    - link "My Goals":
-      - /url: /dashboard/performance/me
-    - link "My Salary":
-      - /url: /dashboard/salary
-    - link "My Resignation":
-      - /url: /my-resignation
+    - paragraph: Administration
+    - button "People"
+    - button "Attend & Leave"
+    - link "Attendance History":
+      - /url: /admin/attendance
+    - link "QR Display (Tablet)":
+      - /url: /admin/qr-display
+    - link "Leave Approvals":
+      - /url: /admin/leave-approvals
+    - link "Resignation Approvals":
+      - /url: /admin/resignations
+    - link "Public Holidays":
+      - /url: /admin/holidays
+    - button "Payroll"
+    - button "Performance"
+    - button "Communication"
+    - button "Analytics"
+  - link "System Settings":
+    - /url: /admin/settings
+  - link "Payroll Settings":
+    - /url: /admin/settings/payroll
 - banner:
   - textbox "Search pages & features..."
   - button "🇬🇧 EN"
   - button "9+"
-  - button "Hoa Intern H":
-    - paragraph: Hoa
-    - paragraph: Intern
-    - text: H
+  - button "System Director S":
+    - paragraph: System
+    - paragraph: Director
+    - text: S
 - main:
-  - heading "My Resignation" [level=1]
-  - paragraph: Submit your formal notice and track your offboarding request.
-  - tablist:
-    - tab "Submit Notice" [selected]
-    - tab "Tracking & History"
-  - tabpanel "Submit Notice":
-    - text: Formal Resignation Notice Once submitted securely, your request will be reviewed by HR. Please ensure your requested last day provides sufficient handover time according to your contract. Requested Last Day of Work *
-    - textbox "Select last day"
-    - paragraph: Pick the final date you intend to be employed.
-    - text: Reason / Handover Notes *
-    - textbox "Please provide details regarding your resignation, expected handover plan, and any other notes for HR and your Manager."
-    - button "Submit Notice"
-    - paragraph: By submitting, you formally request to terminate your employment.
+  - heading "Resignation Approvals" [level=1]
+  - paragraph: Review employee resignation requests, classify exit reasons for analytics, and process offboarding.
+  - heading "Pending & History" [level=2]
+  - button "Refresh Data"
+  - heading "No requests detected" [level=3]
+  - paragraph: The digital resignation queue is currently empty. All clear!
 - alert
 ```
 
 # Test source
 
 ```ts
+  1   | import { test, expect } from '../../fixtures/auth';
+  2   | import { Sidebar } from '../../pages/base';
+  3   | 
+  4   | test.describe('[M11] Resignations - Admin', () => {
+  5   | 
+  6   |   test('TC_RESIGN_001 - Admin → Resignation Approvals', async ({ adminPage: page }) => {
+  7   |     await new Sidebar(page).navigateTo('Resignation Approvals');
+  8   |     await page.waitForTimeout(1000);
+  9   |   });
+  10  | 
+  11  |   test('TC_RESIGN_002 - Bảng resignations hiển thị', async ({ adminPage: page }) => {
+  12  |     await page.goto('/admin/resignations');
+  13  |     await page.waitForLoadState('domcontentloaded');
+> 14  |     await expect(page.locator('table, [role="table"]').first()).toBeVisible({ timeout: 10000 });
+      |                                                                 ^ Error: expect(locator).toBeVisible() failed
+  15  |   });
   16  | 
   17  |   test('TC_RESIGN_003 - Có filter theo trạng thái', async ({ adminPage: page }) => {
   18  |     await page.goto('/admin/resignations');
@@ -175,16 +195,4 @@ Call log:
   112 | 
   113 |   test('TC_RESIGN_016 - Bảng lịch sử resignation', async ({ employeePage: page }) => {
   114 |     await page.goto('/my-resignation');
-  115 |     await page.waitForLoadState('domcontentloaded');
-> 116 |     await expect(page.locator('table, [role="table"]').first()).toBeVisible({ timeout: 10000 });
-      |                                                                 ^ Error: expect(locator).toBeVisible() failed
-  117 |   });
-  118 | 
-  119 |   test('TC_RESIGN_017 - Status hiển thị trên request của tôi', async ({ employeePage: page }) => {
-  120 |     await page.goto('/my-resignation');
-  121 |     await page.waitForLoadState('domcontentloaded');
-  122 |     await page.waitForTimeout(500);
-  123 |   });
-  124 | });
-  125 | 
 ```

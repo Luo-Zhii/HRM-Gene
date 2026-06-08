@@ -12,6 +12,7 @@ import { Search, Plus, Edit2, RefreshCw, X, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/datepicker";
 import { useTranslation } from "react-i18next";
 
 interface Violation {
@@ -67,6 +68,19 @@ export default function AdminDisciplinePage() {
     description: ""
   });
   const [isSaving, setIsSaving] = useState(false);
+
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   const fetchViolations = async () => {
     if (authLoading || !user) return;
@@ -347,7 +361,11 @@ export default function AdminDisciplinePage() {
 
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("discipline.lblDate")}</Label>
-                    <Input type="date" required className="h-11 bg-slate-50 border-slate-200" value={formData.violation_date ? new Date(formData.violation_date).toISOString().split('T')[0] : ''} onChange={(e) => setFormData({ ...formData, violation_date: e.target.value })} />
+                    <DatePicker
+                      selected={formData.violation_date ? parseLocalDate(formData.violation_date.split('T')[0]) : null}
+                      onSelect={(date) => setFormData({ ...formData, violation_date: date ? getLocalDateString(date) : '' })}
+                      className="w-full h-11 bg-slate-50 border-slate-200"
+                    />
                   </div>
 
                   <div className="space-y-2">

@@ -32,6 +32,9 @@ import { ResignationRequest, ResignationStatus } from "../src/entities/resignati
 import { CompanyProfile } from "../src/entities/company-profile.entity";
 import { SalaryAdjustment, AdjustmentType, AdjustmentStatus } from "../src/entities/salary-adjustment.entity";
 import { Notification, NotificationType } from "../src/entities/notification.entity";
+import { Comment } from "../src/entities/comment.entity";
+import { Message } from "../src/entities/message.entity";
+import { PublicHoliday } from "../src/entities/public-holiday.entity";
 
 // Helper functions
 function randomElement<T>(arr: T[]): T {
@@ -67,6 +70,7 @@ async function run() {
       SalaryHistory, SalaryConfig, PayrollPeriod,
       Announcement, KpiLibrary, KpiPeriod, KpiAssignment,
       ResignationRequest, CompanyProfile, SalaryAdjustment, Notification,
+      Comment, Message, PublicHoliday,
     ],
     // 🔥 QUAN TRỌNG: dropSchema: true sẽ xóa sạch DB cũ và tạo lại từ đầu.
     dropSchema: true,
@@ -567,6 +571,98 @@ async function run() {
       admin_note: statusOpt !== 'Pending' ? "Reviewed by management" : undefined
     }));
   }
+
+  // GUARANTEED data for E2E tests: create requests for user1@company.com
+  // so Admin tests (TC_LEAVE_015-019) and E2E tests (TC_LEAVE_020-035) have data to work with
+  console.log("🌱 Creating guaranteed test data for user1 & user2...");
+  const testUser1 = employees.find(e => e.email === "user1@company.com");
+  const testUser2 = employees.find(e => e.email === "user2@company.com");
+  const adminUser2 = employees.find(e => e.email === "admin@example.com");
+  const todayStr = formatDate(new Date());
+
+  // Create 2 Pending requests for user1 (for delete, view, approve, reject tests)
+  if (testUser1) {
+    const futureStart1 = new Date();
+    futureStart1.setDate(futureStart1.getDate() + 5);
+    const futureEnd1 = new Date(futureStart1);
+    futureEnd1.setDate(futureEnd1.getDate() + 2);
+
+    await leaveRepo.save(leaveRepo.create({
+      employee: testUser1,
+      leave_type: annualLeave,
+      start_date: formatDate(futureStart1),
+      end_date: formatDate(futureEnd1),
+      reason: "Family event - seeded for E2E tests",
+      status: "Pending",
+    }));
+
+    const futureStart2 = new Date();
+    futureStart2.setDate(futureStart2.getDate() + 30);
+    const futureEnd2 = new Date(futureStart2);
+    futureEnd2.setDate(futureEnd2.getDate() + 1);
+
+    await leaveRepo.save(leaveRepo.create({
+      employee: testUser1,
+      leave_type: sickLeave,
+      start_date: formatDate(futureStart2),
+      end_date: formatDate(futureEnd2),
+      reason: "Medical appointment - seeded for E2E tests",
+      status: "Pending",
+    }));
+
+    // Create 1 Approved request for user1 (for revoke test TC_035, overlap test TC_022)
+    const approvedStart = new Date();
+    approvedStart.setDate(approvedStart.getDate() + 10);
+    const approvedEnd = new Date(approvedStart);
+    approvedEnd.setDate(approvedEnd.getDate() + 3);
+
+    await leaveRepo.save(leaveRepo.create({
+      employee: testUser1,
+      leave_type: annualLeave,
+      start_date: formatDate(approvedStart),
+      end_date: formatDate(approvedEnd),
+      reason: "Pre-approved vacation - seeded for revoke test",
+      status: "Approved",
+      manager_approver: adminUser2 ?? undefined,
+      admin_note: "Enjoy your vacation!",
+    }));
+
+    // Create 1 Rejected request
+    const rejectedStart = new Date();
+    rejectedStart.setDate(rejectedStart.getDate() - 5);
+    const rejectedEnd = new Date(rejectedStart);
+    rejectedEnd.setDate(rejectedEnd.getDate() + 1);
+
+    await leaveRepo.save(leaveRepo.create({
+      employee: testUser1,
+      leave_type: unpaidLeave,
+      start_date: formatDate(rejectedStart),
+      end_date: formatDate(rejectedEnd),
+      reason: "Personal errand",
+      status: "Rejected",
+      manager_approver: adminUser2 ?? undefined,
+      admin_note: "Team shortage that week",
+    }));
+  }
+
+  // Create Pending requests for user2 (for admin list diversity)
+  if (testUser2) {
+    const start2 = new Date();
+    start2.setDate(start2.getDate() + 7);
+    const end2 = new Date(start2);
+    end2.setDate(end2.getDate() + 1);
+
+    await leaveRepo.save(leaveRepo.create({
+      employee: testUser2,
+      leave_type: annualLeave,
+      start_date: formatDate(start2),
+      end_date: formatDate(end2),
+      reason: "Short trip",
+      status: "Pending",
+    }));
+  }
+
+  console.log("✅ Guaranteed test data created for users 1 & 2");
 
   for (let i = 0; i < 4; i++) {
     const emp = randomElement(activeEmployees);

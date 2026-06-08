@@ -213,6 +213,11 @@ export default function StaffDirectoryPage() {
                         {isDeleted ? t("directory.messageDeleted", "This message was deleted") : m.content}
                       </div>
                     </div>
+                    {!isDeleted && m.created_at && (
+                      <span className="text-[9px] text-gray-400 mt-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' })}
+                      </span>
+                    )}
                   </div>
                 );
               })

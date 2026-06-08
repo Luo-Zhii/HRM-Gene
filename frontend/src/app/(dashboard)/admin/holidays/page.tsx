@@ -6,6 +6,7 @@ import {
   X, Globe, Building2, Star, ChevronLeft, ChevronRight,
   CheckCircle2, AlertTriangle, Loader2
 } from "lucide-react";
+import { DatePicker } from "@/components/ui/datepicker";
 
 interface Holiday {
   id: number;
@@ -40,6 +41,19 @@ const MONTH_NAMES = [
 
 const formatDate = (d: string) =>
   new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+const parseLocalDate = (dateStr: string) => {
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const getLocalDateString = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 export default function HolidaysPage() {
   const { user } = useAuth();
@@ -379,13 +393,21 @@ export default function HolidaysPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5">Start Date <span className="text-red-500">*</span></label>
-                  <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <DatePicker
+                    selected={parseLocalDate(form.date)}
+                    onSelect={date => setForm(f => ({ ...f, date: date ? getLocalDateString(date) : "" }))}
+                    maxDate={parseLocalDate(form.end_date) || undefined}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm h-[42px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5">End Date <span className="text-gray-400">(optional)</span></label>
-                  <input type="date" value={form.end_date} min={form.date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <DatePicker
+                    selected={parseLocalDate(form.end_date)}
+                    onSelect={date => setForm(f => ({ ...f, end_date: date ? getLocalDateString(date) : "" }))}
+                    minDate={parseLocalDate(form.date) || undefined}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm h-[42px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
               </div>
               <div>

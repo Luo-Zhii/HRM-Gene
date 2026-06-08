@@ -69,3 +69,7 @@
     @apply font-bold text-slate-800;
   }
 }
+
+.react-datepicker-popper {
+  z-index: 99999 !important;
+}

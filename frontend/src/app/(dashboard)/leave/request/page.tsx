@@ -1,11 +1,25 @@
 "use client";
 import React, { useState } from "react";
+import { DatePicker } from "@/components/ui/datepicker";
 
 export default function LeaveRequestPage() {
   const [leaveType, setLeaveType] = useState("1");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
+
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   const submit = async () => {
     const body = {
@@ -39,24 +53,24 @@ export default function LeaveRequestPage() {
             <option value="2">Sick Leave</option>
           </select>
         </label>
-        <label className="block">
+        <div className="block">
           Start Date
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="ml-2"
+          <DatePicker
+            selected={parseLocalDate(startDate)}
+            onSelect={(date) => setStartDate(date ? getLocalDateString(date) : "")}
+            maxDate={parseLocalDate(endDate) || undefined}
+            className="ml-2 w-full border p-2"
           />
-        </label>
-        <label className="block">
+        </div>
+        <div className="block">
           End Date
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="ml-2"
+          <DatePicker
+            selected={parseLocalDate(endDate)}
+            onSelect={(date) => setEndDate(date ? getLocalDateString(date) : "")}
+            minDate={parseLocalDate(startDate) || undefined}
+            className="ml-2 w-full border p-2"
           />
-        </label>
+        </div>
         <label className="block">
           Reason
           <textarea

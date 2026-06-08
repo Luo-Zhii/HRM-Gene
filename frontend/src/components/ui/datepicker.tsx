@@ -30,7 +30,9 @@ const CustomDatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
         disabled={disabled}
         minDate={minDate}
         maxDate={maxDate}
-        dateFormat="yyyy-MM-dd"
+        dateFormat="dd/MM/yyyy"
+        popperClassName="z-[9999]"
+        portalId="root-portal"
       />
     );
   }

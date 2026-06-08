@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { canManageLeave } from "@/lib/adminAccess";
 import { Calendar, Clock, FileText, User as UserIcon, Building2, Briefcase, Mail, LayoutGrid, List as ListIcon, CheckCircle2, XCircle, X, MessageSquare } from "lucide-react";
 import ContextualChat from "@/components/ContextualChat";
+import { DatePicker } from "@/components/ui/datepicker";
 import { useTranslation } from "react-i18next";
 
 interface LeaveRequest {
@@ -62,6 +63,19 @@ const calculateWorkingDays = (startDate: string, endDate: string): number => {
     days = diffDays + 1;
   }
   return days;
+};
+
+const getLocalDateString = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const parseLocalDate = (dateStr: string) => {
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
 };
 
 export default function LeaveApprovalsPage() {
@@ -372,24 +386,24 @@ export default function LeaveApprovalsPage() {
             <Label htmlFor="filter-start" className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
               From Date
             </Label>
-            <input
-              id="filter-start"
-              type="date"
-              value={filterStartDate}
-              onChange={(e) => setFilterStartDate(e.target.value)}
-              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            <DatePicker
+              selected={parseLocalDate(filterStartDate)}
+              onSelect={(date) => setFilterStartDate(date ? getLocalDateString(date) : "")}
+              maxDate={parseLocalDate(filterEndDate) || undefined}
+              placeholderText="From Date..."
+              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm"
             />
           </div>
           <div>
             <Label htmlFor="filter-end" className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
               To Date
             </Label>
-            <input
-              id="filter-end"
-              type="date"
-              value={filterEndDate}
-              onChange={(e) => setFilterEndDate(e.target.value)}
-              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            <DatePicker
+              selected={parseLocalDate(filterEndDate)}
+              onSelect={(date) => setFilterEndDate(date ? getLocalDateString(date) : "")}
+              minDate={parseLocalDate(filterStartDate) || undefined}
+              placeholderText="To Date..."
+              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm"
             />
           </div>
           <div>

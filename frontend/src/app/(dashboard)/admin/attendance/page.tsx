@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/datepicker";
 
 type AttendanceRecord = {
   timekeeping_id: number;
@@ -66,6 +67,12 @@ export default function AttendanceHistoryPage() {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
+  };
+
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
   };
 
   const [startDate, setStartDate] = useState(() => {
@@ -248,20 +255,20 @@ export default function AttendanceHistoryPage() {
             <div className="flex flex-col md:flex-row md:items-end md:space-x-4 space-y-3 md:space-y-0">
               <div className="flex flex-col space-y-1">
                 <label className="text-sm text-slate-600">{t("attendance.lblStartDate")}</label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="border rounded px-3 py-2 text-sm"
+                <DatePicker
+                  selected={parseLocalDate(startDate)}
+                  onSelect={(date) => setStartDate(date ? getLocalDateString(date) : "")}
+                  maxDate={parseLocalDate(endDate) || undefined}
+                  className="w-[140px] h-9 border rounded px-3 py-1.5 text-sm"
                 />
               </div>
               <div className="flex flex-col space-y-1">
                 <label className="text-sm text-slate-600">{t("attendance.lblEndDate")}</label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="border rounded px-3 py-2 text-sm"
+                <DatePicker
+                  selected={parseLocalDate(endDate)}
+                  onSelect={(date) => setEndDate(date ? getLocalDateString(date) : "")}
+                  minDate={parseLocalDate(startDate) || undefined}
+                  className="w-[140px] h-9 border rounded px-3 py-1.5 text-sm"
                 />
               </div>
               <div className="flex flex-col space-y-1 w-full md:w-64">

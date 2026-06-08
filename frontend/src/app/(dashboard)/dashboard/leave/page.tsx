@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, Eye, MessageSquare, Clock, Calendar, FileText, Info } from "lucide-react";
+import { CalendarDays, Eye, MessageSquare, Clock, Calendar, FileText, Info, Trash2 } from "lucide-react";
 import ContextualChat from "@/components/ContextualChat";
 import {
   Dialog,
@@ -130,6 +130,14 @@ export default function LeavePage() {
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState<number | null>(null);
+
+  const formatDisplayDate = (dateString: string) => {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return "";
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  };
 
   // Calculate total days
   const totalDays = useMemo(
@@ -235,6 +243,35 @@ export default function LeavePage() {
     }
   };
 
+  const handleDeleteRequest = (requestId: number) => {
+    setRequestToDelete(requestId);
+    setDeleteModalOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (!requestToDelete) return;
+    
+    try {
+      const res = await fetch(`/api/leave/request/${requestToDelete}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: "Leave request deleted!" });
+        setDeleteModalOpen(false);
+        setRequestToDelete(null);
+        await loadRequests();
+        await loadBalance();
+      } else {
+        const json = await res.json();
+        toast({ title: "Error", description: json?.message || "Failed to delete request", variant: "destructive" });
+      }
+    } catch (err) {
+      toast({ title: "Error", description: "Error deleting request", variant: "destructive" });
+    }
+  };
+
   const getTotalDaysForType = (leaveTypeName: string): number => {
     const type = leaveTypes.find((lt) => lt.name === leaveTypeName);
     return type?.default_days_allocated || 0;
@@ -330,7 +367,7 @@ export default function LeavePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label className="text-sm font-semibold text-gray-700">Start Date *</Label>
-                  <DatePicker selected={startDate} onSelect={setStartDate} placeholderText="Select start date" className="mt-1.5 w-full h-11 rounded-lg border-gray-300" />
+                  <DatePicker selected={startDate} onSelect={setStartDate} maxDate={endDate || undefined} placeholderText="Select start date" className="mt-1.5 w-full h-11 rounded-lg border-gray-300" />
                 </div>
                 <div>
                   <Label className="text-sm font-semibold text-gray-700">End Date *</Label>
@@ -389,7 +426,7 @@ export default function LeavePage() {
                       <TableRow key={req.request_id} className="hover:bg-gray-50/50 border-b border-gray-50">
                         <TableCell className="font-semibold text-gray-900 pl-6 py-4">{req.leave_type_name}</TableCell>
                         <TableCell className="text-sm text-gray-600 whitespace-nowrap">
-                          {new Date(req.start_date).toLocaleDateString()} - {new Date(req.end_date).toLocaleDateString()}
+                          {formatDisplayDate(req.start_date)} - {formatDisplayDate(req.end_date)}
                         </TableCell>
                         <TableCell className="text-sm font-bold text-gray-700 text-center">{days}</TableCell>
                         <TableCell>
@@ -403,7 +440,7 @@ export default function LeavePage() {
                         <TableCell className="text-sm text-gray-500 max-w-[200px] truncate" title={req.reason}>
                           {req.reason || "—"}
                         </TableCell>
-                        <TableCell className="text-right pr-6">
+                        <TableCell className="text-right pr-6 space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -412,6 +449,16 @@ export default function LeavePage() {
                           >
                             <Eye className="w-4 h-4 mr-2" /> View
                           </Button>
+                          {req.status === 'Pending' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteRequest(req.request_id)}
+                              className="text-rose-600 font-semibold hover:bg-rose-50 rounded-lg"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -447,11 +494,11 @@ export default function LeavePage() {
                 <div className="grid grid-cols-3 gap-4 mt-8">
                   <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-md">
                     <p className="text-[10px] uppercase font-bold text-blue-200/80 mb-1 flex items-center gap-1.5"><Calendar className="w-3 h-3" /> Start Date</p>
-                    <p className="font-bold text-base">{new Date(selectedRequest.start_date).toLocaleDateString()}</p>
+                    <p className="font-bold text-base">{formatDisplayDate(selectedRequest.start_date)}</p>
                   </div>
                   <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-md">
                     <p className="text-[10px] uppercase font-bold text-blue-200/80 mb-1 flex items-center gap-1.5"><Calendar className="w-3 h-3" /> End Date</p>
-                    <p className="font-bold text-base">{new Date(selectedRequest.end_date).toLocaleDateString()}</p>
+                    <p className="font-bold text-base">{formatDisplayDate(selectedRequest.end_date)}</p>
                   </div>
                   <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-md">
                     <p className="text-[10px] uppercase font-bold text-blue-200/80 mb-1 flex items-center gap-1.5"><Clock className="w-3 h-3" /> Duration</p>
@@ -499,6 +546,26 @@ export default function LeavePage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* --- CONFIRM DELETE MODAL --- */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-gray-900">Delete Request</DialogTitle>
+            <DialogDescription className="text-gray-500 mt-2">
+              Are you sure you want to delete this leave request? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={executeDelete}>
+              Delete
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

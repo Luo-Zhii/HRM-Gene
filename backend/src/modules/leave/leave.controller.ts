@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -48,6 +49,12 @@ export class LeaveController {
       end_date,
       reason
     );
+  }
+
+  @Delete("request/:id")
+  async deleteRequest(@Param("id") id: string, @Request() req: any) {
+    const employeeId = req.user?.employee_id;
+    return this.svc.deleteRequest(parseInt(id, 10), employeeId);
   }
 
   // === Manager/HR Endpoints (Protected) ===

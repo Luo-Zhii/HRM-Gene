@@ -9,6 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, UserPlus, UserMinus, Download, Calendar, MapPin, Filter, FileSpreadsheet } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DatePicker } from "@/components/ui/datepicker";
 import { useTranslation } from "react-i18next";
 
 interface DashboardData {
@@ -70,6 +71,19 @@ export default function AnalyticsDashboard() {
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
   const [filterType, setFilterType] = useState("All");
+
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -520,28 +534,28 @@ export default function AnalyticsDashboard() {
               {/* Start Date */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("reports.filterStartDate")}</label>
-                <input
-                  type="date"
-                  value={filterStartDate}
-                  onChange={(e) => {
-                    setFilterStartDate(e.target.value);
+                <DatePicker
+                  selected={parseLocalDate(filterStartDate)}
+                  onSelect={(date) => {
+                    setFilterStartDate(date ? getLocalDateString(date) : "");
                     setFilterMonth("");
                   }}
-                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  maxDate={parseLocalDate(filterEndDate) || undefined}
+                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-700"
                 />
               </div>
 
               {/* End Date */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("reports.filterEndDate")}</label>
-                <input
-                  type="date"
-                  value={filterEndDate}
-                  onChange={(e) => {
-                    setFilterEndDate(e.target.value);
+                <DatePicker
+                  selected={parseLocalDate(filterEndDate)}
+                  onSelect={(date) => {
+                    setFilterEndDate(date ? getLocalDateString(date) : "");
                     setFilterMonth("");
                   }}
-                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  minDate={parseLocalDate(filterStartDate) || undefined}
+                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-semibold text-slate-700"
                 />
               </div>
 

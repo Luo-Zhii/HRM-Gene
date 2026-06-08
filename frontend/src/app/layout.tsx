@@ -20,6 +20,7 @@ export default function RootLayout({
         <I18nProvider>
           <AuthProvider>{children}</AuthProvider>
         </I18nProvider>
+        <div id="root-portal" className="relative z-[9999]"></div>
       </body>
     </html>
   );

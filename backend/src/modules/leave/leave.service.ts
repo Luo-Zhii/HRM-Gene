@@ -47,7 +47,7 @@ export class LeaveService {
     });
     return balances.map((b) => ({
       balance_id: b.balance_id,
-      leave_type: b.leave_type?.name,
+      leave_type_name: b.leave_type?.name,
       remaining_days: b.remaining_days,
     }));
   }
@@ -159,6 +159,21 @@ export class LeaveService {
       status: leaveRequest.status,
       message: "Leave request submitted successfully",
     };
+  }
+
+  // Employee: Delete a leave request
+  async deleteRequest(requestId: number, employeeId: number) {
+    const request = await this.leaveReqRepo.findOne({
+      where: { request_id: requestId, employee: { employee_id: employeeId } },
+    });
+    if (!request) {
+      throw new BadRequestException("Leave request not found or you don't have permission to delete it");
+    }
+    if (request.status !== "Pending") {
+      throw new BadRequestException("Only pending requests can be deleted");
+    }
+    await this.leaveReqRepo.remove(request);
+    return { message: "Leave request deleted successfully" };
   }
 
   // Manager/HR: Get all leave requests for review (formerly just pending)

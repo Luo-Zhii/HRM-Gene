@@ -43,6 +43,7 @@ export default function ContextualChat({ entityType, entityId }: ContextualChatP
     try {
       const token = localStorage.getItem("access_token") || localStorage.getItem("token");
       const res = await fetch(`/api/comments/${entityType}/${entityId}`, {
+        credentials: "include",
         headers: {
           ...(token ? { "Authorization": `Bearer ${token}` } : {})
         },
@@ -87,6 +88,7 @@ export default function ContextualChat({ entityType, entityId }: ContextualChatP
       const token = localStorage.getItem("access_token") || localStorage.getItem("token");
       const res = await fetch("/api/comments", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { "Authorization": `Bearer ${token}` } : {})
@@ -174,7 +176,7 @@ export default function ContextualChat({ entityType, entityId }: ContextualChatP
                   
                   {/* Time Tooltip-like style */}
                   <span className={`text-[9px] text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 -translate-y-1/2 whitespace-nowrap ${isMe ? '-left-10' : '-right-10'}`}>
-                    {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' })}
                   </span>
                 </div>
               </div>
