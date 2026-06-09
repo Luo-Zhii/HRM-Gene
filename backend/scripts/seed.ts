@@ -373,17 +373,79 @@ async function run() {
 
     if (Math.random() < 0.15) {
       const type = Math.random() < 0.66 ? AdjustmentType.BONUS : AdjustmentType.PENALTY;
+      // Distribute adjustments across past months for variety
+      const adjustmentMonth = Math.floor(Math.random() * 3) + 3; // 03-05/2026
       await salaryAdjRepo.save(salaryAdjRepo.create({
         employee: employee,
         type: type,
         amount: String(randomBetween(500000, 3000000)),
-        applied_month: "04/2026",
+        applied_month: `${String(adjustmentMonth).padStart(2, '0')}/2026`,
         reason: type === AdjustmentType.BONUS ? "Excellent Performance" : "Policy Violation",
         status: AdjustmentStatus.APPROVED,
         created_by_id: adminUser.employee_id,
       }));
     }
   }
+
+  // --- 8.6 GUARANTEED ADJUSTMENTS for E2E Tests ---
+  console.log("🌱 Creating guaranteed adjustments for E2E payroll tests...");
+  const testUser1ForAdj = employees.find(e => e.email === "user1@company.com");
+  const testUser2ForAdj = employees.find(e => e.email === "user2@company.com");
+  const curMonth = now.getMonth() + 1;
+  const curYear = now.getFullYear();
+  const futMonth = curMonth === 12 ? 1 : curMonth + 1;
+  const futYear = curMonth === 12 ? curYear + 1 : curYear;
+  const currentMonthFormatted = `${String(curMonth).padStart(2, '0')}/${curYear}`;
+  const futureMonthFormatted = `${String(futMonth).padStart(2, '0')}/${futYear}`;
+
+  if (testUser1ForAdj) {
+    // Current month penalty for TC_PAY_020
+    await salaryAdjRepo.save(salaryAdjRepo.create({
+      employee: testUser1ForAdj,
+      type: AdjustmentType.PENALTY,
+      amount: "300000",
+      applied_month: currentMonthFormatted,
+      reason: "Minor policy violation - seeded",
+      status: AdjustmentStatus.APPROVED,
+      created_by_id: adminUser.employee_id,
+    }));
+
+    // Current month bonus for variety
+    await salaryAdjRepo.save(salaryAdjRepo.create({
+      employee: testUser1ForAdj,
+      type: AdjustmentType.BONUS,
+      amount: "2000000",
+      applied_month: currentMonthFormatted,
+      reason: "Project completion bonus - seeded",
+      status: AdjustmentStatus.APPROVED,
+      created_by_id: adminUser.employee_id,
+    }));
+
+    // Future month bonus for TC_PAY_021
+    await salaryAdjRepo.save(salaryAdjRepo.create({
+      employee: testUser1ForAdj,
+      type: AdjustmentType.BONUS,
+      amount: "1500000",
+      applied_month: futureMonthFormatted,
+      reason: "Upcoming performance bonus - seeded",
+      status: AdjustmentStatus.APPROVED,
+      created_by_id: adminUser.employee_id,
+    }));
+  }
+
+  if (testUser2ForAdj) {
+    // Current month penalty for user2
+    await salaryAdjRepo.save(salaryAdjRepo.create({
+      employee: testUser2ForAdj,
+      type: AdjustmentType.PENALTY,
+      amount: "500000",
+      applied_month: currentMonthFormatted,
+      reason: "Late submission - seeded",
+      status: AdjustmentStatus.APPROVED,
+      created_by_id: adminUser.employee_id,
+    }));
+  }
+  console.log("✅ Guaranteed adjustments created for E2E tests");
   console.log(`✅ Created ${contracts.length} contracts`);
 
   // --- 9. SALARY CONFIGS ---
@@ -407,22 +469,51 @@ async function run() {
   }
 
   // --- 10. PAYROLL & PAYSLIPS ---
-  console.log("🌱 Generating Payslips...");
+  console.log("🌱 Generating Payroll Periods & Payslips...");
   const periods: PayrollPeriod[] = [];
+  const currentMonth = now.getMonth() + 1;  // June = 6
+  const currentYear = now.getFullYear();     // 2026
+
+  // Create past 12 months of periods (skip current month payslips for E2E testability)
   for (let i = 0; i < 12; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const month = d.getMonth() + 1;
+    const year = d.getFullYear();
+    const isCurrentMonth = month === currentMonth && year === currentYear;
+
     const p = await payrollPeriodRepo.save(payrollPeriodRepo.create({
-      month: d.getMonth() + 1,
-      year: d.getFullYear(),
-      status: PayrollPeriodStatus.PAID,
+      month,
+      year,
+      // Current month: DRAFT (so E2E tests can generate fresh)
+      // Previous months: PAID
+      status: isCurrentMonth ? PayrollPeriodStatus.DRAFT : PayrollPeriodStatus.PAID,
       standard_work_days: 26
     }));
     periods.push(p);
   }
 
+  // Also create next month period (July 2026) as DRAFT for future-month E2E tests
+  const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+  const nextMonthYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+  const futurePeriod = await payrollPeriodRepo.save(payrollPeriodRepo.create({
+    month: nextMonth,
+    year: nextMonthYear,
+    status: PayrollPeriodStatus.DRAFT,
+    standard_work_days: 26
+  }));
+  periods.push(futurePeriod);
+
   const HOURS_PER_DAY = 8;
   for (const period of periods) {
     const month = period.month;
+    const year = period.year;
+    const isCurrentOrFuture =
+      (month === currentMonth && year === currentYear) ||
+      (month === nextMonth && year === nextMonthYear);
+
+    // Skip payslip generation for current and future months (E2E tests will generate them)
+    if (isCurrentOrFuture) continue;
+
     for (const emp of activeEmployees) {
       const contract = contracts.find(c => c.employee.employee_id === emp.employee_id);
       if (!contract) continue;

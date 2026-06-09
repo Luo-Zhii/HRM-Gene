@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">77.69% </span>
+                <span class="strong">73.72% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>101/130</span>
+                <span class='fraction'>101/137</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">62.5% </span>
+                <span class="strong">58.82% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>40/64</span>
+                <span class='fraction'>40/68</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">57.14% </span>
+                <span class="strong">53.33% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>8/14</span>
+                <span class='fraction'>8/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80.5% </span>
+                <span class="strong">76% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>95/118</span>
+                <span class='fraction'>95/125</span>
             </div>
         
             
@@ -433,7 +433,22 @@
 <a name='L368'></a><a href='#L368'>368</a>
 <a name='L369'></a><a href='#L369'>369</a>
 <a name='L370'></a><a href='#L370'>370</a>
-<a name='L371'></a><a href='#L371'>371</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
+<a name='L371'></a><a href='#L371'>371</a>
+<a name='L372'></a><a href='#L372'>372</a>
+<a name='L373'></a><a href='#L373'>373</a>
+<a name='L374'></a><a href='#L374'>374</a>
+<a name='L375'></a><a href='#L375'>375</a>
+<a name='L376'></a><a href='#L376'>376</a>
+<a name='L377'></a><a href='#L377'>377</a>
+<a name='L378'></a><a href='#L378'>378</a>
+<a name='L379'></a><a href='#L379'>379</a>
+<a name='L380'></a><a href='#L380'>380</a>
+<a name='L381'></a><a href='#L381'>381</a>
+<a name='L382'></a><a href='#L382'>382</a>
+<a name='L383'></a><a href='#L383'>383</a>
+<a name='L384'></a><a href='#L384'>384</a>
+<a name='L385'></a><a href='#L385'>385</a>
+<a name='L386'></a><a href='#L386'>386</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -594,6 +609,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -966,6 +996,21 @@ export class LeaveService {
     };
   }
 &nbsp;
+  // Employee: Delete a leave request
+<span class="fstat-no" title="function not covered" >  async </span>deleteRequest(requestId: number, employeeId: number) {
+    const request = <span class="cstat-no" title="statement not covered" >await this.leaveReqRepo.findOne({</span>
+      where: { request_id: requestId, employee: { employee_id: employeeId } },
+    });
+<span class="cstat-no" title="statement not covered" >    if (!request) {</span>
+<span class="cstat-no" title="statement not covered" >      throw new BadRequestException("Leave request not found or you don't have permission to delete it");</span>
+    }
+<span class="cstat-no" title="statement not covered" >    if (request.status !== "Pending") {</span>
+<span class="cstat-no" title="statement not covered" >      throw new BadRequestException("Only pending requests can be deleted");</span>
+    }
+<span class="cstat-no" title="statement not covered" >    await this.leaveReqRepo.remove(request);</span>
+<span class="cstat-no" title="statement not covered" >    return { message: "Leave request deleted successfully" };</span>
+  }
+&nbsp;
   // Manager/HR: Get all leave requests for review (formerly just pending)
 <span class="fstat-no" title="function not covered" >  async </span>getPendingRequests() {
     const requests = <span class="cstat-no" title="statement not covered" >await this.leaveReqRepo.find({</span>
@@ -1180,7 +1225,7 @@ export class LeaveService {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-04T15:13:34.880Z
+                at 2026-06-08T20:04:25.892Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
